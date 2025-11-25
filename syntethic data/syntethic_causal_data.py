@@ -7,24 +7,25 @@ import matplotlib.pyplot as plt
 
 class SyntheticCausalSystem:
 
-    def __init__(self, n_features: int =10, random_state: Optional[int] = None, min_num_connected_edges: Optional[int] = 2):
+    def __init__(self, n_features: int =10, random_state: Optional[int] = None, min_num_connected_edges: Optional[int] = 2, edge_probability: Optional[float]=0.3):
 
         self.n_features= n_features
         self.random_state = random_state
         self.min_num_connected_edges = min_num_connected_edges
+        self.edge_probability=edge_probability
         if random_state is not None:
             np.random.seed(random_state)
 
         self.adjacency_matrix = None
         self.confounders_pais = []
 
-    def _create_dag_structure(self, edge_probability: float = 0.3) -> np.ndarray:
+    def _create_dag_structure(self) -> np.ndarray:
 
         adjacency = np.zeros((self.n_features,self.n_features))
 
         for i in range(self.n_features):
             for j in range(i +1, self.n_features):
-                if np.random.random() < edge_probability:
+                if np.random.random() < self.edge_probability:
                     adjacency[i,j] = 1
         
         # Make sure at least some edges exist
@@ -50,7 +51,7 @@ class SyntheticCausalSystem:
             n_affected = min(np.random.randint(2,4), len(available_nodes))
             affected = np.random.choice(available_nodes, size=n_affected, replace=False)
 
-            confounder_info.append(len(confounder_info),affected.tolist())
+            confounder_info.append((len(confounder_info),affected.tolist()))
 
         return confounder_info
     
