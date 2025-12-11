@@ -123,6 +123,92 @@ class SyntheticCausalSystem:
 
         return df , self.adjacency_matrix, confounder_info
     
+    def generate_nonlinear_system(self,
+                               n_samples: int = 1000,
+                               with_confounders: bool= False,
+                               noise_std: float = 0.5,
+                               y_parents_ratio: float =0.4) -> Tuple[ pd.DataFrame, np.ndarray]:
+        
+        # Create Dag structure
+        self.adjacency_matrix = self._create_dag_structure()
+
+        # initialize data
+        data = np.zeros((n_samples, self.n_features))
+
+        # Add confounders if requested
+        confounder_info = []
+        if with_confounders:
+            confounder_info = self._add_confounders(n_confounders=2)
+
+            for conf_id, affected_nodes in confounder_info:
+                # Generate confounder variable
+                confounder = np.random.randn(n_samples)
+
+                # Affect the specified nodes with non-linear relationships
+                for node in affected_nodes:
+                    func_type = np.random.choice(["square","tanh","exp"])
+                    coef = np.random.uniform(0.3, 0.8) * np.random.choice([-1, 1])
+
+                    if func_type == 'square':
+                        data[:, node] += coef * confounder ** 2
+                    elif func_type == 'tanh':
+                        data[:, node] += coef * np.tanh(confounder)
+                    else:
+                        data[:, node] += coef * (np.exp(confounder / 2) - 1)
+
+            # Generate data following the causal structure with non-linear functions
+            for j in range(self.n_features):
+                parents = np.where(self.adjacency_matrix[:,j] == 1)[0]
+
+                for parent in parents:
+                    # Use different non-linear functions
+                    func_type = np.random.choice(["square","cube","tanh","sin"])
+                    coef = np.random.uniform(0.3, 0.8) * np.random.choice([-1, 1])
+
+                    if func_type == 'square':
+                        data[:, j] += coef * data[:, parent] ** 2
+                    elif func_type == 'cube':
+                        data[:, j] += coef * data[:, parent] ** 3
+                    elif func_type == 'tanh':
+                        data[:, j] += coef * np.tanh(data[:, parent])
+                    else:
+                        data[:, j] += coef * np.sin(data[:, parent])
+
+                # Add Gausian noise 
+                data[:, j] += np.random.normal(0, noise_std, n_samples)
+
+        # Generate outcome variable Y with non-linear relationships
+        y = np.zeros(n_samples)
+
+        # Select subset of features to affect Y
+        n_parents= max(1, int(self.n_features * y_parents_ratio))
+        y_parents_indices = np.random.choice(self.n_features, size=n_parents, replace=False)
+
+        # Y is affected by selected parents with non-linear relationships
+        for parent_idx in y_parents_indices:
+            func_type = np.random.choice(["linear","square","tanh","sin"])
+            coef = np.random.uniform(0.3, 0.8) * np.random.choice([-1, 1])
+
+            if func_type == 'linear':
+                y += coef * data[:, parent_idx]
+            elif func_type == 'square':
+                y += coef * data[:, parent_idx] ** 2
+            elif func_type == 'tanh':
+                y += coef * np.tanh(data[:, parent_idx])
+            else:
+                y += coef * np.sin(data[:, parent_idx])
+        # Add noise to Y
+        y += np.random.normal(0 ,noise_std, n_samples)
+
+        # Store Y parent indices for visualization
+        self.y_parent_indices = y_parents_indices.tolist()
+
+        # Create DataFrame with Y
+        columns = [f"X{i}" for i in range(self.n_features)] +["Y"]
+        df = pd.DataFrame(np.column_stack([data, y]), columns=columns)
+
+        return df, self.adjacency_matrix, confounder_info
+        
 
     def visualize_causal_graph(self, adjacency_matrix: np.ndarray,
                                confounder_info: List = None,
