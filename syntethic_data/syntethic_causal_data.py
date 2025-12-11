@@ -186,13 +186,13 @@ class SyntheticCausalSystem:
 
         # Y is affected by selected parents with non-linear relationships
         for parent_idx in y_parents_indices:
-            func_type = np.random.choice(["linear","square","tanh","sin"])
+            func_type = np.random.choice(["square","cube","tanh","sin"])
             coef = np.random.uniform(0.3, 0.8) * np.random.choice([-1, 1])
 
-            if func_type == 'linear':
-                y += coef * data[:, parent_idx]
-            elif func_type == 'square':
+            if func_type == 'square':
                 y += coef * data[:, parent_idx] ** 2
+            elif func_type == 'cube':
+                y += coef * data[:,parent_idx] ** 3
             elif func_type == 'tanh':
                 y += coef * np.tanh(data[:, parent_idx])
             else:
@@ -209,6 +209,108 @@ class SyntheticCausalSystem:
 
         return df, self.adjacency_matrix, confounder_info
         
+    def generate_mixed_system(self,
+                               n_samples: int = 1000,
+                               with_confounders: bool= False,
+                               noise_std: float = 0.5,
+                               linear_ratio: float = 0.5,
+                               y_parents_ratio: float =0.4) -> Tuple[ pd.DataFrame, np.ndarray]:
+        
+        # Create Dag structure
+        self.adjacency_matrix = self._create_dag_structure()
+
+        # initialize data
+        data = np.zeros((n_samples, self.n_features))
+
+        # Determinmde wich edges are linear vs non-linear
+        edges = np.argwhere(self.adjacency_matrix==1)
+        n_edges = len(edges)
+        n_linear = int(n_edges * linear_ratio)
+
+        # Randomly assing edges to be linear or non-lienar
+        edge_types = ["linear"] * n_linear + ["nonlinear"] * (n_edges -n_linear)
+        np.random.shuffle(edge_types)
+
+        # Add confounders if requested
+        confounder_info = []
+        if with_confounders:
+            confounder_info = self._add_confounders(n_confounders=2)
+
+            for  conf_id, affected_nodes in confounder_info:
+                # Generate confounder variable
+                confounder = np.random.randn(n_samples)
+
+                for idx, node in enumerate(affected_nodes):
+                    if  idx % 2 == 0:
+                        coef = np.random.uniform(0.5, 1.5) * np.random.choice([-1, 1])
+                        data[:, node] += coef * confounder
+                    else: # Non-linear
+                        coef = np.random.uniform(0.3, 0.8) * np.random.choice([-1, 1])
+                        data[:, node] += coef * np.tanh(confounder)
+        # Generate data following the causal structure
+        for edge_idx, (parent, child) in enumerate(edges):
+            edge_type = edge_types[edge_idx]
+
+            if edge_type == 'linear':
+                coef = np.random.uniform(0.5,1.5) * np.random.choice([-1, 1])
+                data[:, child] += coef * data[:, parent]
+            else: # non-linear
+                func_type = np.random.choice(["square","cube","tanh","sin"])
+                coef = np.random.uniform(0.3, 0.8) * np.random.choice([-1, 1])
+
+                if func_type == 'square':
+                    data[:, child] += coef * data[:, parent] ** 2
+                elif func_type == 'cube':
+                    data[:, child] += coef * data[:,parent] ** 3
+                elif func_type == 'tanh':
+                    data[:, child] += coef * np.tanh(data[:, parent])
+                else:
+                    data[:, child] += coef * np.sin(data[:, parent])
+
+        # Add noise to each variable
+        for j in range(self.n_features):
+            data[:, j] += np.random.normal(0, noise_std, n_samples)
+
+        # Generate outcome variable Y with mixed relationship
+        y = np.zeros(n_samples)
+
+        # Select subset of features to affect Y
+
+        n_parents = max(1, int(self.n_features * y_parents_ratio))
+        y_parents_indices = np.random.choice(self.n_features, size= n_parents, replace=False)
+
+        # Y is affected by selected parents with mixed linear/non-linear relationships
+        for idx, parent_idx in enumerate(y_parents_indices):
+            if idx % 2 ==0: # linear
+                coef = np.random.uniform(0.5, 2.0) * np.random.choice([-1, 1])
+                y += coef * data[:, parent_idx]
+            else: # Non-linear
+                func_type = np.random.choice(["square","cube","tanh","sin"])
+                coef = np.random.uniform(0.3, 0.8) * np.random.choice([-1, 1])
+
+                if func_type == 'square':
+                     y += coef * data[:, parent_idx] ** 2
+                elif func_type == 'cube':
+                    y += coef * data[:,parent_idx] ** 3
+                elif func_type == 'tanh':
+                    y += coef * np.tanh(data[:, parent_idx])
+                else:
+                    y += coef * np.sin(data[:, parent_idx])
+
+        # Add noise to Y
+        y += np.random.normal(0, noise_std, n_samples)
+
+        # store Y parent indices for visualization
+        self.y_parent_indices = y_parents_indices.tolist()
+
+        # Create DataFrame with Y
+        columns = [f"X{i}" for i in range(self.n_features)] +["Y"]
+        df = pd.DataFrame(np.column_stack([data, y]), columns=columns)
+
+        # TODO: save the relationships and coeficient of each x variable to Y, this is would be the real value of the shap_value 
+        return df, self.adjacency_matrix, confounder_info, edge_types
+
+
 
     def visualize_causal_graph(self, adjacency_matrix: np.ndarray,
                                confounder_info: List = None,
