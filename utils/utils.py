@@ -123,7 +123,7 @@ def visualize_comparison(true_adj, discovered_adj, features_names,
     if u_nodes:
          nx.draw_networkx_nodes(G_true,pos_true,nodelist=u_nodes,
                                node_color='lightcoral', node_size=900,
-                               alpha=0.9, ax=ax1)
+                               alpha=0.9, ax=ax1, node_shape='s')
     
     x_to_x_edges = [(u,v) for u,v in G_true.edges()
                     if u.startswith('X') and v.startswith('X')]

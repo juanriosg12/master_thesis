@@ -10,6 +10,7 @@ from causallearn.search.ConstraintBased.FCI import fci
 from causallearn.search.ScoreBased.GES import ges
 from causallearn.utils.cit import fisherz, kci, chisq
 from causallearn.search.FCMBased.lingam import DirectLiNGAM
+from causallearn.graph.Endpoint import Endpoint
 from causallearn.search.FCMBased import lingam
 from causallearn.utils.GraphUtils import GraphUtils
 
@@ -51,16 +52,17 @@ class CausalDiscoveryMethod:
         n = len(feature_names)
 
         try:
-            # Get the graph matrix
-            graph_matrix = graph.graph
 
             for i in range(n):
                 for j in range(i + 1, n):
-                    # Check for bidirected edge pattern
-                    # -1 indicates no edge, 1 indicates edge with specific endpoint
-                    if graph_matrix[i,j] !=0 and graph_matrix[j,i] !=0:
-                        # Potential bidirected edge suggesting confounder
-                        confounders.append((feature_names[i],feature_names[j]))
+                    edge = graph.get_edge(graph.nodes[i], graph.nodes[j])
+
+                    if edge is not None:
+                        endpoint_i = edge.get_endpoint1()
+                        endpoint_j = edge.get_endpoint2()
+
+                        if endpoint_i == Endpoint.ARROW and endpoint_j == Endpoint.ARROW:
+                            confounders.append((feature_names[i], feature_names[j]))
         except Exception as e:
             warnings.warn(f"Could not detect confounders: {str(e)}")
 
