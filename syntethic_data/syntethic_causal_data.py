@@ -117,11 +117,19 @@ class SyntheticCausalSystem:
         # Store Y parent indices for visualization
         self.y_parent_indices = y_parents_indices.tolist()
 
+        # Extend adjacency matrix to include Y variable
+        complete_adjacency = np.zeros((self.n_features + 1, self.n_features + 1))
+        complete_adjacency[:self.n_features, :self.n_features] = self.adjacency_matrix
+
+        # Add edges from X variables to Y
+        for parent_idx in y_parents_indices:
+            complete_adjacency[parent_idx, self.n_features] = 1
+
         columns = [f'X{i}' for i in range(self.n_features)] + ["Y"]
         df = pd.DataFrame(np.column_stack([data,y]),columns=columns)
 
 
-        return df , self.adjacency_matrix, confounder_info
+        return df , complete_adjacency, confounder_info
     
     def generate_nonlinear_system(self,
                                n_samples: int = 1000,
@@ -202,12 +210,20 @@ class SyntheticCausalSystem:
 
         # Store Y parent indices for visualization
         self.y_parent_indices = y_parents_indices.tolist()
+        
+        # Extend adjacency matrix to include Y variable
+        complete_adjacency = np.zeros((self.n_features + 1, self.n_features + 1))
+        complete_adjacency[:self.n_features, :self.n_features] = self.adjacency_matrix
+
+        # Add edges from X variables to Y
+        for parent_idx in y_parents_indices:
+            complete_adjacency[parent_idx, self.n_features] = 1
 
         # Create DataFrame with Y
         columns = [f"X{i}" for i in range(self.n_features)] +["Y"]
         df = pd.DataFrame(np.column_stack([data, y]), columns=columns)
 
-        return df, self.adjacency_matrix, confounder_info
+        return df, complete_adjacency, confounder_info
         
     def generate_mixed_system(self,
                                n_samples: int = 1000,
@@ -303,14 +319,20 @@ class SyntheticCausalSystem:
         # store Y parent indices for visualization
         self.y_parent_indices = y_parents_indices.tolist()
 
+        # Extend adjacency matrix to include Y variable
+        complete_adjacency = np.zeros((self.n_features + 1, self.n_features + 1))
+        complete_adjacency[:self.n_features, :self.n_features] = self.adjacency_matrix
+
+        # Add edges from X variables to Y
+        for parent_idx in y_parents_indices:
+            complete_adjacency[parent_idx, self.n_features] = 1
+
         # Create DataFrame with Y
         columns = [f"X{i}" for i in range(self.n_features)] +["Y"]
         df = pd.DataFrame(np.column_stack([data, y]), columns=columns)
 
         # TODO: save the relationships and coeficient of each x variable to Y, this is would be the real value of the shap_value 
-        return df, self.adjacency_matrix, confounder_info, edge_types
-
-
+        return df, complete_adjacency, confounder_info, edge_types
 
     def visualize_causal_graph(self, adjacency_matrix: np.ndarray,
                                confounder_info: List = None,

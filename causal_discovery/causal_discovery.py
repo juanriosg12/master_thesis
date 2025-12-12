@@ -9,6 +9,7 @@ from causallearn.search.ConstraintBased.PC import pc
 from causallearn.search.ConstraintBased.FCI import fci
 from causallearn.search.ScoreBased.GES import ges
 from causallearn.utils.cit import fisherz, kci, chisq
+from causallearn.search.FCMBased.lingam import DirectLiNGAM
 from causallearn.search.FCMBased import lingam
 from causallearn.utils.GraphUtils import GraphUtils
 
@@ -123,7 +124,7 @@ class CausalDiscoveryMethod:
 class PCWithFCI(CausalDiscoveryMethod):
 
 
-    def __init_(self,alpha: float = 0.05, indep_test: str= 'fisherz'):
+    def __init__(self,alpha: float = 0.05, indep_test: str= 'fisherz'):
 
         super().__init__(alpha=alpha, indep_test=indep_test)
         self.pc_result= None
@@ -152,6 +153,7 @@ class PCWithFCI(CausalDiscoveryMethod):
             pc_graph = self.pc_result.G
             adjacency_pc = self._extract_adjacency_from_graph(pc_graph, n_features)
 
+
             print(f"PC discovered {np.sum(adjacency_pc != 0)} edges")
 
         except Exception as e:
@@ -162,27 +164,28 @@ class PCWithFCI(CausalDiscoveryMethod):
         print(" Running FCI algorithm for confounder detection...")
 
         try:
-            self.fci_result = fci(
+            self.fci_result, edges = fci(
                 data_array,
                 alpha=self.alpha,
-                independence_test_method=indep_test_func,
+                indep_test=indep_test_func,
                 stable=True
             )
 
             # Extract confounders from FCI result
-            fci_graph = self.fci_result.G
-            confounders= self._detect_confounders_from_graph(fci, feature_names)
+            fci_graph = self.fci_result
+            confounders= self._detect_confounders_from_graph(fci_graph, feature_names)
 
             print(f"FCI detected {len(confounders)} potential confounders pairs")
         
         except Exception as e:
-            print(f"FCI detected {len(confounders)} potential confounder pairs")
+            print(f"FCI algorithm failed: {str(e)}")
             confounders = []
 
-            self.discovered_graph = adjacency_pc
-            self.confounders = confounders
+        self.discovered_graph = adjacency_pc
+        self.confounders = confounders
 
-            return adjacency_pc, confounders
+
+        return adjacency_pc, confounders
         
     def get_causal_relationships(self, data: pd.DataFrame) -> Dict:
 
@@ -192,13 +195,93 @@ class PCWithFCI(CausalDiscoveryMethod):
             'method': 'PC + FCI',
             'adjacency_matrix': adjacency,
             'confounders': confounders,
-            'features_names': data.columns.tolist(),
+            'feature_names': data.columns.tolist(),
             'n_edges': np.sum(adjacency!=0),
             'n_confounders_pairs': len(confounders)
         }
 
         return results
+
+class LiNGAMWithFCI(CausalDiscoveryMethod):
+
+    def __init__(self,alpha: float = 0.05, indep_test: str= 'fisherz'):
+
+        super().__init__(alpha=alpha, indep_test=indep_test)
+        self.lingam_result= None
+        self.fci_result = None
     
+    def discover_structure(self, data: pd.DataFrame) -> Tuple[np.ndarray, List]:
+
+        print("Running LiNGAM algorithm for causal structure discovery...")
+
+        data_array = data.values
+        feature_names = data.columns.tolist()
+        n_features = len(feature_names)
+
+        # Run LiNGAM algorithm
+        try:
+            model = DirectLiNGAM()
+            model.fit(data_array)
+
+            adjacency_lingam = model.adjacency_matrix_
+            
+            threashold = 0.01
+            adjacency_lingam[np.abs(adjacency_lingam) < threashold] = 0
+
+            adjacency_binary = (np.abs(adjacency_lingam) > 0).astype(int)
+
+            print(f"LiNGAM discovered {np.sum(adjacency_binary != 0)} edges")
+
+            self.lingam_result = model
+        except Exception as e:
+            print(f"LiNGAM algorithm failed: {str(e)}")
+            adjacency_binary = np.zeros((n_features, n_features))
+        
+        # Run FCI algorithm for confounder detection
+        print("Running FCI algorithm for confounder detection...")
+
+
+        indep_test_func = self._get_independence_test()
+
+        try:
+            self.fci_result, edges = fci(
+                data_array,
+                alpha=self.alpha,
+                indep_test=indep_test_func,
+                stable=True
+            )
+
+            # Extract confounders from FCI result
+            fci_graph = self.fci_result
+            confounders= self._detect_confounders_from_graph(fci_graph, feature_names)
+
+            print(f"FCI detected {len(confounders)} potential confounders pairs")
+        
+        except Exception as e:
+            print(f"FCI algorithm failed: {str(e)}")
+            confounders = []
+
+        self.discovered_graph = adjacency_binary
+        self.confounders = confounders
+
+        return adjacency_binary, confounders
+    
+    def get_causal_relationships(self, data: pd.DataFrame) -> Dict:
+
+
+        adjacency, confounders = self.discover_structure(data)
+
+        results = {
+            'method': 'LiNGAM + FCI',
+            'adjacency_matrix': adjacency,
+            'confounders': confounders,
+            'feature_names': data.columns.tolist(),
+            'n_edges': np.sum(adjacency!=0),
+            'n_confounders_pairs': len(confounders)
+        }
+
+        return results 
+
 
 def compare_with_ground_truth( discovered_adj: np.ndarray,
                               true_adj: np.ndarray,
