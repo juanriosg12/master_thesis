@@ -237,7 +237,25 @@ class LiNGAMWithFCI(CausalDiscoveryMethod):
             self.lingam_result = model
         except Exception as e:
             print(f"LiNGAM algorithm failed: {str(e)}")
-            adjacency_binary = np.zeros((n_features, n_features))
+            print(f"Trying ICA-based LiNGAm as fallback...")
+            try:
+                # Fallback to ICA-based LiNGAM
+                from causallearn.search.FCMBased.lingam import ICALiNGAM
+                
+                model = ICALiNGAM()
+                model.fit(data_array)
+                adjacency_lingam = model.adjacency_matrix_
+                
+                threashold = 0.01
+                adjacency_lingam[np.abs(adjacency_lingam) < threashold] = 0
+                adjacency_binary = (np.abs(adjacency_lingam) > 0).astype(int)
+
+                print(f"ICA-LiNGAM discovered {np.sum(adjacency_binary !=0 )} edges")
+                self.lingam_result = model
+
+            except Exception as e2:
+                print(f"ICA-LiNGAM also failed: {str(e2)}")
+                adjacency_binary = np.zeros((n_features, n_features))
         
         # Run FCI algorithm for confounder detection
         print("Running FCI algorithm for confounder detection...")
