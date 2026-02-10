@@ -1,1 +1,1 @@
-from .syntethic_causal_data import SyntheticCausalSystem 
+from .syntethic_causal_data import SyntheticCausalSystem

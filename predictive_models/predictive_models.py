@@ -24,12 +24,8 @@ from sklearn.neural_network import MLPRegressor
 
 # LightGBM
 import lightgbm as lgb
-
-# Neuoral network
-import torch
-import torch.nn as nn
-import torch.optim as optim
-from torch.utils.data import TensorDataset, DataLoader
+import joblib
+from pathlib import Path
 
 # Hyperparameter optimization
 import optuna
@@ -85,6 +81,15 @@ class PredictiveModel:
         }
 
         return metrics
+    
+    def save (self, filepath: str):
+
+        raise NotImplementedError("Subclasses must implement save()")
+    
+    @classmethod
+    def load(cls, filepath: str):
+
+        raise NotImplementedError("Subclass must imlement load()")
     
 class LGBMRegressor(PredictiveModel):
     
@@ -196,6 +201,42 @@ class LGBMRegressor(PredictiveModel):
 
         return importance
     
+    def save(self, filepath: str):
+        
+        filepath = Path(filepath)
+
+        model_data = {
+            'model': self.model,
+            "selected_features": self.selected_features,
+            'best_params': self.best_params,
+            'metrics': self.metrics,
+            'n_trials': self.n_trials,
+            'random_state': self.random_state
+        }
+        
+        joblib.dump(model_data, str(filepath) + '.pkl')
+        print(f"LightGBM model saved to {filepath}.pkl")
+
+    @classmethod
+    def load(cls, filepath: str) -> 'LGBMRegressor':
+        filepath = Path(filepath)
+        # Load model data
+        model_data = joblib.load(str(filepath)+ '.pkl')
+
+        # Create instance 
+        instance = cls(random_state= model_data["random_state"],
+                       n_trials=model_data["n_trials"])
+        
+        # Restore attributes
+        instance.model = model_data["model"]
+        instance.selected_features = model_data["selected_features"]
+        instance.best_params = model_data["best_params"]
+        instance.metrics = model_data["metrics"]
+
+        print(f"LightGBM model loaded from {filepath}.pkl")
+        return instance
+
+    
 class NeuralNetRegressor(PredictiveModel):
 
     def __init__(self, random_state: int = 42, n_trials: int =20):
@@ -213,7 +254,7 @@ class NeuralNetRegressor(PredictiveModel):
             ])
 
             # Training parameters 
-            alpha = trial.suggest_float('alpha,', 1e-5, 1e-2, log=True) #L2 regularization
+            alpha = trial.suggest_float('alpha', 1e-5, 1e-2, log=True) #L2 regularization
             learning_rate_init = trial.suggest_float('learning_rate_init',1e-4, 1e-2, log=True)
             batch_size = trial.suggest_categorical('batch_size', [16, 32, 64, 'auto'])
             activation = trial.suggest_categorical('activation', ['relu','tanh'])
@@ -246,6 +287,8 @@ class NeuralNetRegressor(PredictiveModel):
                                     sampler= optuna.samplers.TPESampler(seed=self.random_state))
         study.optimize(objective, n_trials=self.n_trials, show_progress_bar=False)
 
+        print(study)
+        print(study.best_params.keys())
         # Extract best parameters
         best_params = study.best_params
         n_layers = best_params['n_layers']
@@ -323,8 +366,8 @@ class NeuralNetRegressor(PredictiveModel):
         y_train_pred = self.model.predict(X_train_scaled)
         y_val_pred = self.model.predict(X_val_scaled)
 
-        train_metrics = self.evaluate(y_train.values, y_train_pred.values, prefix='train_')
-        val_metrics = self.evaluate(y_val.values, y_val_pred.values, prefix='val_')
+        train_metrics = self.evaluate(y_train.values, y_train_pred, prefix='train_')
+        val_metrics = self.evaluate(y_val.values, y_val_pred, prefix='val_')
 
         self.metrics = {**train_metrics, **val_metrics}
 
@@ -338,6 +381,41 @@ class NeuralNetRegressor(PredictiveModel):
         predictions = self.model.predict(X_scaled)
 
         return predictions
+    
+    def save(self, filepath: str):
+
+        filepath = Path(filepath)
+
+        model_data = {
+            'model': self.model,
+            'scaler': self.scaler,
+            'selected_features': self.selected_features,
+            'best_params': self.best_params,
+            'metrics': self.metrics,
+            'n_trials': self.n_trials,
+            'random_state': self.random_state
+        }
+        joblib.dump(model_data, str(filepath) + '.pkl')
+        print(f"Neural Network model saved to {filepath}.pkl")
+
+    @classmethod
+    def load(cls, filepath: str) -> 'NeuralNetRegressor':
+
+        filepath = Path(filepath)
+
+        model_data = joblib.load(str(filepath)+'.pkl')
+        
+        instance = cls(random_state= model_data['random_state'],
+                         n_trials = model_data['n_trials'])
+        
+        instance.model = model_data["model"]
+        instance.scaler = model_data["scaler"]
+        instance.selected_features = model_data["selected_features"]
+        instance.best_params = model_data['best_params']
+        instance.metrics = model_data["metrics"]
+
+        print(f"Neural Network model loaded from {filepath}.pkl")
+        return instance
 
 
 def train_predictive_models(data: pd.DataFrame,
@@ -392,6 +470,7 @@ def train_predictive_models(data: pd.DataFrame,
         for model_name, metrics in results['metrics'].items()
     }).T
 
-    print(comparison_df[['val_rmse','val_mae','val_r2','val_mape']].to_string())
+    print(comparison_df[['val_rmse','val_mae','val_r2','val_mse']].to_string())
+
 
     return results
