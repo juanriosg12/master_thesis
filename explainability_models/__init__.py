@@ -1,1 +1,1 @@
-from .shapley_values import ShapleyExplainer, ShapleyFromScratch
+from .shapley_values import ShapleyExplainer, ShapleyFromScratch, CausalShapley
