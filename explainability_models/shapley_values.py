@@ -1,7 +1,7 @@
 import numpy as np
 import math
 import pandas as pd
-from typing import Dict, List, Optional, Tuple, Any
+from typing import Callable, Dict, List, Optional, Tuple, Any
 from itertools import chain, combinations, permutations
 import warnings
 warnings.filterwarnings('ignore')
@@ -543,6 +543,460 @@ class CausalShapley(ShapleyFromScratch):
 
         return self.shap_values
 
+class ShapleyFlow:
+    """
+    Shapley Flow implementatiojn based on Wang et al. (2021)
+    Compute edge attributions in a DAG using recursive DFS with random
+    permutations of children, following Algorithm 1 from the paper
 
+    Use on-manifold perturbation with conditional expectatios:
+    - Features are smpled from conditional distributions P(X-i | non-missing predecessors)
+    - When an edge is active, the feature uses its forground value
+    - When and edge is not active, the feature is treated as missing and sampled conditionally
+
+
+    Reference: Wang & Venkatasubramanian (2021) "Shapley Flow: A Graph-based
+    Approach to Interpreting Model Predictions
+    """
+    def __init__(self, graph_structure: Dict[int, List[int]],
+                 background_data: np.ndarray,
+                 model: Optional[BaseEstimator] = None,
+                 source_nodes: Optional[List[int]] = None,
+                 sink_node: Optional[int] = None,
+                 n_samples: int = 100,
+                 random_state: Optional[int] = None):
+        """
+        Initiliaze Shapley Flow Calculator
+
+        Parameters:
+        -----------
+        graph_structure: Dict[int, List[int]]
+            Adjacency list where graph_structure[u] = list of children of u
+        backgourd_data: np.ndarray
+            Background data for conditional sampling (n_samples x n_features)
+        model: BaseEstimator, optional
+            Model for predcition (required if sin_node is specified)
+        source_nodes: List[int]
+            list of source/input node identifiers (auto-detected if None)
+        sink_node: int
+            Identifeier for the final output node (for model prediction)
+        n_samples: int
+            Number of Monte Carlo samples (random permutations)
+        random_state: int, optional
+            Randome seed for reproducibility
+        """
+
+        self.graph = graph_structure
+        self.background_data = background_data
+        self.model = model
+        self.source_nodes = source_nodes
+        self.sink_node = sink_node
+        self.n_samples = n_samples
+
+        self.rng = np.random.RandomState(random_state)
+
+        # Build reverse graph (parents for each node)
+        self.parents = {node:[] for node in graph_structure.keys()}
+        for parent, children in graph_structure.items():
+            for child in children:
+                if child not in self.parents:
+                    self.parents[child] = []
+                self.parents[child].append(parent)
+
+        # Auto-detect source nodes if not provided
+        if source_nodes is None: 
+            self.source_nodes = [node for node in graph_structure.keys()
+                                if len(self.parents.get(node,[])) == 0]
+        else:
+            self.source_nodes = source_nodes
+
+        # Edge attributions (will be computed)
+        self.edge_attributions = {}
+        for parent, children in graph_structure.items():
+            for child in children:
+                self.edge_attributions[(parent,child)]= 0.0
+
+    def _sample_conditional(self, node: int, observed_nodes: Dict[int, float]) -> float:
+
+        if len(observed_nodes) == 0:
+            # No conditioning information : sample from marginal
+            return self.background_data[self.rng.randint(len(self.background_data)), node]
+        
+        # Extract conditioning features and values
+        cond_indices = list(observed_nodes.keys())
+        cond_values = np.array([observed_nodes[i] for i in cond_indices])
+
+        bg_cond = self.background_data[:, cond_indices]
+        distances = np.sum((bg_cond-cond_values) ** 2, axis =1)
+
+        # Use K nearest neighbors (k=10 or 10% of data, whichever is smaller)
+        k = min(10, max(1, len(self.background_data) // 10 ))
+        nearest_indices = np.argpartition(distances,k)[:k]
+
+        candidate_values = self.background_data[nearest_indices,node]
+        sampled_value = candidate_values[self.rng.randint(len(candidate_values))]
+
+        return sampled_value
+
+    def _evaluate_system(self, history: List[Tuple[int,int]],
+                         x_foreground: Dict[int,float],
+                         x_background: Dict[int,float]) -> float:
+        """
+        Evaluate the system state given active edges (history)
+
+       
+
+        Parameters:
+        -----------
+        history: List[Tuple[int,int]]
+            List of active edges (u,v)
+        x_foreground: Dict[int, float]
+            Foreground values for all nodes
+        x_background: Dict[int, float]
+            Background values for all nodes
+        
+        Returns:
+        output: float
+            Value at the sink node (model prediction or computed value)
+        """
+        history_set = set(history)
+        node_values = {}
+
+        observed_nodes = {}
+
+        # Identify which nodes are observed (ahave active incoming edges) vs missing
+        for node in self.graph.keys():
+            # Check if this node has any active incoming edge
+            has_active_incoming = any((parent,node) in history_set
+                                      for parent in self.parents.get(node, []))
+
+            # Source nodes with active outgoing edges are always observed
+            if node in self.source_nodes:
+                has_active_outgoing = any((node, child) in history_set 
+                                          for child in self.graph.get(node,[]))
+                if has_active_outgoing:
+                    node_values[node] = x_foreground.get(node,0.0)
+                    observed_nodes[node] = node_values[node]
+
+            elif has_active_incoming:
+                node_values[node] = x_foreground.get(node, 0.0)
+                observed_nodes[node] = node_values[node]
+            
+        all_nodes = set(self.graph.keys()) | set( child for children in self.graph.values() for child in children) 
+        missing_nodes = [ n for n in all_nodes if n not in observed_nodes]
+        
+        # Sample missing nodes from their conditional distributions
+        # Interactively condition on increasinly more nodes (topological order)
+        max_iterations = len(missing_nodes)+1
+
+        for _ in range(max_iterations):
+            made_progress = False
+
+            for node in missing_nodes:
+                if node in node_values:
+                    continue
+                
+                # Sample from conditional distributiion given currently observed nodes
+                node_values[node] = self._sample_conditional(node,observed_nodes)
+                made_progress = True
+
+            if not made_progress:
+                break
+        # Predict using the model
+        n_features = self.background_data.shape[1]
+        feature_indices = [ i for i in range(n_features) if i!= self.sink_node]
+        x_features = np.array([node_values.get(idx,0.0) for idx in feature_indices])
+
+        result = self.model.predict(x_features.reshape(1,-1))[0]
+
+        return result
+    
+    def _dfs(self, node: int, history: List[Tuple[int, int]],
+             x_foreground: Dict[int, float],
+             x_background: Dict[int, float]) -> None:
+        """
+        Recursive DFS for one trial (one permutation path)
+
+        At each node, processes children in a random order, computing
+        the marginal contribution of each edge and accumulating to global
+        edge attributions.
+
+        Parameters:
+        -----------
+        node: int
+            Current node
+        history: List[Tuple[int, int]]
+        x_foreground: Dict[int, float]
+            Foreground values for source nodes
+        x_background: Dict[int, float]
+            Background values for source nodes
+        """
+        # Base case: reached sink
+        if node == self.sink_node:
+            return
+        
+        # Get children of current node
+        children = self.graph.get(node,[])
+
+        if len(children) == 0:
+            return
+
+        # Random permutation of children for THIS trial
+        perm_children = self.rng.permutation(children).tolist()
+
+        # Optization: compute value_beofre once and reuse
+        current_value = self._evaluate_system(history,x_foreground,x_background)
+
+        for child in perm_children:
+            edge = (node, child)
+            new_history = history + [edge]
+
+            # Compute marginal contribution of adding this edge
+            # Reuse previous value as value_before
+            value_after = self._evaluate_system(new_history, x_foreground, x_background)
+            marginal = value_after - current_value
+
+            # Accumulate to edge attributio (will average later)
+            self.edge_attributions[edge] += marginal
+
+            # Update current value for next iteration (sequentail reuse)
+            current_value = value_after
+
+            # Recurse with edge in history
+            self._dfs(child, new_history, x_foreground, x_background)
+
+    def compute(self, x_foreground: Dict[int, float],
+                x_background: Dict[int, float]) -> Dict[Tuple[ int, int], float]:
+        """
+        Compute Shapley Flow Edge attributions.
+
+        Runs n_samples trials, where each trial does a DFS traversal
+        with random permutations of children at each node.
+
+        Parameters:
+        -----------
+        x_foreground: Dict[int, float]
+            Foreground values for source nodes
+        x_background: Dict[int, float]
+            Background values for source nodes
+        
+        Returns:
+        --------
+        attributions: Dict[Tuple[int, int], float]
+            Edge attribution mapping (u,v) -> importance score
+        """
+
+        for edge in self.edge_attributions:
+            self.edge_attributions[edge] = 0.0
+
+
+        print(f"Computing Shapley Flow with { self.n_samples} trials...")
+
+        #Run n_samples Monte Carlo trials
+        for trial in range(self.n_samples):
+            # Each trial: DFS form each source with random permutations
+            for source in self.source_nodes:
+                self._dfs(source,[], x_foreground, x_background)
+
+        # Average acrross trials
+        for edge in self.edge_attributions:
+            self.edge_attributions[edge] /= self.n_samples
+
+
+        # Sanity check: verify efficiency axiom 
+        total_attribution = sum(self.edge_attributions.values())
+        n_eval_samples = 10
+        f_x_samples = []
+        f_x_prime_samples = []
+        for _ in range(n_eval_samples):
+            f_x_samples.append(self._evaluate_system(list(self.edge_attributions.keys()),
+                                                     x_foreground, x_background))
+            f_x_prime_samples.append(self._evaluate_system([],x_foreground, x_background))
+        f_x = np.mean(f_x_samples)
+        f_x_prime = np.mean(f_x_prime_samples)
+        expected_total = f_x - f_x_prime
+
+        print(f" Total edge attributions: {total_attribution:.6f}")
+        print(f" Expected (f(x) - f(x')) : {expected_total:.6f}")
+        print(f" Difference: {abs(total_attribution - expected_total)}")
+
+        return self.edge_attributions
+    
+    def get_node_attributions(self) -> Dict[int, float]:
+        """
+        Aggregate edge attributions to get node-level importance
+
+        Returns: 
+        --------
+        node_attr : Dict[int, float]
+            Node importance scores (sum of outgoing edge attributions)
+        """
+
+        node_attr = {}
+        for (u, v), score in self.edge_attributions.items():
+            node_attr[u] = node_attr.get(u, 0.0) + score
+        return node_attr
+    
+class ShapleyFlowWrapper:
+    """
+    Wrapper for ShapleyFlow to work with trained ML models
+
+    Converts a trained model + causal DAG into the graph structure 
+    required by the core ShapleyFlow alrgorithm, using on-manifold
+    perturbatiuon with conditional expectations.
+    """
+
+    def __init__(self, model: BaseEstimator,
+                background_data: pd.DataFrame,
+                causal_graph: np.ndarray,
+                y_index: int,
+                n_samples: int = 100,
+                random_state: Optional[int] = None):
+        """
+        Initialize wrapper.
+
+        Parameters:
+        -----------
+        model: BaseEstimator
+            Trained predictive model
+        background_data : pd.DataFrame
+            Reference dataset for conditional sampling
+        causal_graph : np.ndarray
+            Adjancency matrix where causal_graph[i,j]=1 means i causes j
+        y_index : int
+            Index of the outcome variable Y
+        n_samples : int
+            Number of Monte Carlo samples
+        random_state : int , optional
+            Random seed
+        """
+        self.model = model
+        self.background_data_df = background_data
+        self.background_data = background_data.values
+        self.features_names = background_data.columns.tolist()
+        self.n_features = len(self.features_names)
+        self.y_index = y_index
+        self.n_samples = n_samples
+        self.rng = np.random.RandomState(random_state)
+
+        # Extract directed graph 
+        self.directed_graph = self._extract_directed_graph(causal_graph)
+
+        # Build graph structure for ShapleyFlow
+        self.graph_structure = {}
+        for i in range(self.n_features):
+            children = [j for j in range(self.n_features) if self.directed_graph[i,j] !=0]
+            self.graph_structure[i] = children
+
+        self.source_nodes = []
+        for i in range(self.n_features):
+            has_parent = any(self.directed_graph[j, i] != 0 for j in range(self.n_features))
+            if not has_parent:
+                self.source_nodes.append(i)
+
+        # if no sources found (e.g., cycles), use all non-Y nodes as sources
+        if not self.source_nodes:
+            self.source_nodes = [i for i in range(self.n_features) if i!= y_index]
+
+        print(f"ShapleyFlowWrapper initialized:")
+        print(f" Features: {self.n_features}")
+        print(f" Y index: {self.y_index}")
+        print(f" Source nodes: {self.source_nodes}")
+        print(f" Edges: {sum(len(v) for v in self.graph_structure.values())}")
+        print(f" Using on-manifold perturbation with condtional expectatiosn")
+
+
+    def _extract_directed_graph(self, causal_graph: np.ndarray) -> np.ndarray:
+        """Extract directed edges from causal graph."""
+        if causal_graph.shape != (self.n_features, self.n_features):
+            raise ValueError(
+                f"causal_graph shape {causal_graph.shape} does not match features"
+            )
+        directed = np.zeros((self.n_features, self.n_features), dtype=int)
+
+        # Check if binary adjacency matrix
+        unique_vals = set(np.unique(causal_graph).tolist())
+        if unique_vals.issubset({0,1}):
+            return causal_graph.astype(int)
+
+        for i in range(self.n_features):
+            for j in range(i+1, self.n_features):
+                a = causal_graph[i, j]
+                b = causal_graph[j, i]
+
+                if a == -1 and b == 1:
+                    directed[i, j] = 1
+                elif a == 1 and b == -1:
+                    directed[j, i] = 1
+
+        return directed
+
+
+    def explain(self, X: pd.DataFrame) -> np.ndarray:
+        """
+        Compute Shapley Flow values for instance.
+
+        Parameters:
+        ----------
+        X : pd.DataFrame
+            Instances to explain
+
+        Return:
+        ------
+        shap_values : np.ndarray
+            Node-level importance scores (n_samples x n_features)
+        """
+        X_values = X.values
+        n_instances = len(X_values)
+
+        self.shap_values = np.zeros((n_instances, self.n_features))
+
+        print(f"Computing Shapley Flow for {n_instances} instances...")
+
+        for i, instance in enumerate(X_values):
+            # Create value functionss for this instance
+
+            flow = ShapleyFlow(
+                graph_structure=self.graph_structure,
+                background_data=self.background_data,
+                model=self.model,
+                source_nodes=self.source_nodes,
+                sink_node=self.y_index,
+                n_samples=self.n_samples,
+                random_state=self.rng.randint(0,100000)
+            )
+            # Prepare forground and background
+            x_foreground = {j: instance[j] for j in range(self.n_features)}
+
+            # Sample random background 
+            bg_idx = self.rng.randint(0, len(self.background_data))
+            x_background = {j: self.background_data[bg_idx,j] for j in range(self.n_features)}
+
+            # Compute edge attributions
+            edge_attrs = flow.compute(x_foreground,x_background)
+
+            node_attrs = flow.get_node_attributions()
+
+            for node_idx, score in node_attrs.items():
+                self.shap_values[i, node_idx] = score
+
+            if (i +1) % max(1, n_instances// 10) == 0:
+                print(f" Progress: {i + 1}/{n_instances}")
+        
+        return self.shap_values
+    
+    def get_feature_importance(self) -> pd.DataFrame:
+        """Get mean absolute importance per feature"""
+        if not hasattr(self, 'shap_values'):
+            raise ValueError("Must call explain() first")
+
+        mean_abs_values = np.abs(self.shap_values).mean(axis=0)
+
+        importance_df = pd.DataFrame({
+            'feature' : self.features_names,
+            'importance' : mean_abs_values
+        })
+
+        return importance_df.sort_values('importance', ascending=False).reset_index(drop=True)
 
 
