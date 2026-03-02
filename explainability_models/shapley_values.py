@@ -662,46 +662,38 @@ class ShapleyFlow:
         history_set = set(history)
         node_values = {}
 
-        observed_nodes = {}
+        # Special case: empty history means baseline (all features at background)
+        if len(history) == 0:
+            for idx in range(self.background_data.shape[1]):
+                node_values[idx] = x_background.get(idx, 0.0)
+        else:
+            # Identify which nodes are observed (connected by active edges)
+            observed_nodes = {}
 
-        # Identify which nodes are observed (ahave active incoming edges) vs missing
-        for node in self.graph.keys():
-            # Check if this node has any active incoming edge
-            has_active_incoming = any((parent,node) in history_set
-                                      for parent in self.parents.get(node, []))
-
-            # Source nodes with active outgoing edges are always observed
-            if node in self.source_nodes:
-                has_active_outgoing = any((node, child) in history_set 
-                                          for child in self.graph.get(node,[]))
-                if has_active_outgoing:
-                    node_values[node] = x_foreground.get(node,0.0)
-                    observed_nodes[node] = node_values[node]
-
-            elif has_active_incoming:
-                node_values[node] = x_foreground.get(node, 0.0)
-                observed_nodes[node] = node_values[node]
-            
-        all_nodes = set(self.graph.keys()) | set( child for children in self.graph.values() for child in children) 
-        missing_nodes = [ n for n in all_nodes if n not in observed_nodes]
-        
-        # Sample missing nodes from their conditional distributions
-        # Interactively condition on increasinly more nodes (topological order)
-        max_iterations = len(missing_nodes)+1
-
-        for _ in range(max_iterations):
-            made_progress = False
-
-            for node in missing_nodes:
-                if node in node_values:
-                    continue
+            for node in self.graph.keys():
+                # Check if this node has any active incoming edge
+                has_active_incoming = any((parent,node) in history_set
+                                          for parent in self.parents.get(node,[]))
                 
-                # Sample from conditional distributiion given currently observed nodes
-                node_values[node] = self._sample_conditional(node,observed_nodes)
-                made_progress = True
+                # Source nodes: foreground if active in outgoing, backgroung otherwise
+                if node in self.source_nodes:
+                    has_active_outgoing = any((node, child) in history
+                                              for child in self.graph.get(node,[]))
+                    if has_active_outgoing:
+                        node_values[node] = x_foreground.get(node, 0.0)
+                        observed_nodes[node] = node_values[node]
+                    else:
+                        node_values[node] = x_background.get(node, 0.0)
+                        observed_nodes[node] = node_values[node]
+                elif has_active_incoming:
+                    node_values[node] = x_foreground.get(node, 0.0)
+                    observed_nodes[node] = node_values[node]
+            # For missing nodes, use background values
+            all_nodes = set(self.graph.keys() | set(child for children in self.graph.values() for child in children))
+            for node in all_nodes:
+                if node not in node_values:
+                    node_values[node] = x_background.get(node, 0.0)
 
-            if not made_progress:
-                break
         # Predict using the model
         n_features = self.background_data.shape[1]
         feature_indices = [ i for i in range(n_features) if i!= self.sink_node]
@@ -717,9 +709,8 @@ class ShapleyFlow:
         """
         Recursive DFS for one trial (one permutation path)
 
-        At each node, processes children in a random order, computing
-        the marginal contribution of each edge and accumulating to global
-        edge attributions.
+        Processes children in random order, computes marginal contributions,
+        and accumulates to global edge attributions.
 
         Parameters:
         -----------
@@ -752,7 +743,6 @@ class ShapleyFlow:
             new_history = history + [edge]
 
             # Compute marginal contribution of adding this edge
-            # Reuse previous value as value_before
             value_after = self._evaluate_system(new_history, x_foreground, x_background)
             marginal = value_after - current_value
 
@@ -764,6 +754,7 @@ class ShapleyFlow:
 
             # Recurse with edge in history
             self._dfs(child, new_history, x_foreground, x_background)
+
 
     def compute(self, x_foreground: Dict[int, float],
                 x_background: Dict[int, float]) -> Dict[Tuple[ int, int], float]:
@@ -797,6 +788,9 @@ class ShapleyFlow:
             # Each trial: DFS form each source with random permutations
             for source in self.source_nodes:
                 self._dfs(source,[], x_foreground, x_background)
+            # # Pick ONE random source per trial
+            # source = self.source_nodes[self.rng.randint(len(self.source_nodes))]
+            # self._dfs(source,[], x_foreground,x_background)
 
         # Average acrross trials
         for edge in self.edge_attributions:
@@ -805,7 +799,7 @@ class ShapleyFlow:
 
         # Sanity check: verify efficiency axiom 
         total_attribution = sum(self.edge_attributions.values())
-        n_eval_samples = 10
+        n_eval_samples = self.n_samples
         f_x_samples = []
         f_x_prime_samples = []
         for _ in range(n_eval_samples):
@@ -815,10 +809,13 @@ class ShapleyFlow:
         f_x = np.mean(f_x_samples)
         f_x_prime = np.mean(f_x_prime_samples)
         expected_total = f_x - f_x_prime
+        relative_error = abs(total_attribution - expected_total) / (abs(expected_total) + 1e-10)
 
         print(f" Total edge attributions: {total_attribution:.6f}")
         print(f" Expected (f(x) - f(x')) : {expected_total:.6f}")
-        print(f" Difference: {abs(total_attribution - expected_total)}")
+        print(f" Difference: {abs(total_attribution - expected_total)}" 
+              f"using {n_eval_samples} samples to calculate f(x) and f(x')")
+        print(f" Relative error: {relative_error:.4f}")
 
         return self.edge_attributions
     
@@ -945,11 +942,23 @@ class ShapleyFlowWrapper:
         ------
         shap_values : np.ndarray
             Node-level importance scores (n_samples x n_features)
+            Only includes input features, excludes Y since it always has 0 attribution
         """
         X_values = X.values
         n_instances = len(X_values)
 
-        self.shap_values = np.zeros((n_instances, self.n_features))
+        # Exclude Y from shap_Values since it always has 0 attribution and match other class outputs
+        n_input_features = self.n_features - 1
+        self.shap_values = np.zeros((n_instances, n_input_features))
+        
+        # Create mapping from node idex to shap_values column index
+        # All features before Y keep their. index, features after Y shift down by 1
+        self.node_to_shap_idx = {}
+        shap_idx = 0
+        for node_idx in range(self.n_features):
+            if node_idx != self.y_index:
+                self.node_to_shap_idx[node_idx] = shap_idx
+                shap_idx +=1
 
         print(f"Computing Shapley Flow for {n_instances} instances...")
 
@@ -978,7 +987,8 @@ class ShapleyFlowWrapper:
             node_attrs = flow.get_node_attributions()
 
             for node_idx, score in node_attrs.items():
-                self.shap_values[i, node_idx] = score
+                if node_idx != self.y_index:
+                    self.shap_values[i, self.node_to_shap_idx[node_idx]] = score
 
             if (i +1) % max(1, n_instances// 10) == 0:
                 print(f" Progress: {i + 1}/{n_instances}")
@@ -986,14 +996,17 @@ class ShapleyFlowWrapper:
         return self.shap_values
     
     def get_feature_importance(self) -> pd.DataFrame:
-        """Get mean absolute importance per feature"""
+        """Get mean absolute importance per feature (excluding Y)"""
         if not hasattr(self, 'shap_values'):
             raise ValueError("Must call explain() first")
 
         mean_abs_values = np.abs(self.shap_values).mean(axis=0)
 
+        features_names_without_y = [name for i, name in enumerate(self.features_names)
+                                    if i!=self.y_index]
+
         importance_df = pd.DataFrame({
-            'feature' : self.features_names,
+            'feature' : features_names_without_y,
             'importance' : mean_abs_values
         })
 
