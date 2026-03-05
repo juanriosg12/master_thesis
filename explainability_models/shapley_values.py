@@ -543,6 +543,343 @@ class CausalShapley(ShapleyFromScratch):
 
         return self.shap_values
 
+
+class CausalShapleyPostInterventional(ShapleyFromScratch):
+    """
+    Compute Causal Shapley values using post-interventional sampling
+
+    Implements the rigorous alogrithm from Heskes et at. (2020):
+    "Causal Shapley Values: Exploiting Causal Knowledge to Explain
+    Individual Predictions of Complex Models"
+
+    This correctly handeles confounding by distinguishing:
+    - CONFOUNDED components: sample features independently
+    - NON-CONFOUNDED components: sample features jointly (preserve mutual interactions)
+    """
+
+    def __init__(self, model: BaseEstimator,
+                 background_data: pd.DataFrame,
+                 causal_graph_components: List[List[int]],
+                 confounded_info: Dict[int,bool],
+                 get_parents_dict: Dict[int, List[int]],
+                 n_samples: int = 100,
+                 M_inner_samples: int = 50,
+                 random_state: Optional[int] = None):
+        
+        super.__init__(model, background_data, n_samples = 100, random_state= random_state)
+
+        # Store causal structure
+        self.causal_graph_components = causal_graph_components
+        self.confounded_info = confounded_info
+        self.get_parents_dict = get_parents_dict
+        self.n_samples = n_samples
+        self.M_inner_samples = M_inner_samples
+
+        # Build component membership map for quick lookup
+        self.feature_to_component = {}
+        for comp_idx, features in enumerate(causal_graph_components):
+            for feature in features:
+                self.feature_to_component[feature] = comp_idx
+
+        # Precompute statistics for Gaussian conditional sampling
+        self._precompute_statistics()
+
+        print("CausalShapleyPostInterventional Initialzied:")
+        print(f" Features: {self.n_features}")
+        print(f" Components: {len(causal_graph_components)} (in topological order)")
+        for comp_idx, comp in enumerate(causal_graph_components):
+            conf_status = "CONFOUNDED" if confounded_info.get(comp_idx, False) else "NON-CONFOUNDED"
+            parents = get_parents_dict(comp_idx, [])
+            print(f" Component {comp_idx}: features {comp}, {conf_status}, parents {parents}")
+        print(f" Outer samples (permutations): {n_samples}")
+        print(f" Inner samples (per coalition): {M_inner_samples}")
+
+    def _precompute_statistics(self):
+        """Precompute mean and covariance for Gaussian condtional sampling"""
+        self.mean = np.mean(self.background_data,axis=0)
+        self.cov = np.cov(self.background_data.T)
+
+        # Add small regularization to ensure postive definitness
+        self.cov += np.eye(self.n_features) * 1e-6
+
+    def _sample_conditional_gaussian(self, target_features: List[int],
+                                     conditioning_features: List[int],
+                                     conditioning_values: np.ndarray) -> np.ndarray:
+        """
+        Sample P(X_target | X_conditioning = values) using Gaussian assumption.
+
+        Uses the conditional Gaussian formula for X_A | X_B ~ N
+
+        Parameters:
+        -----------
+        target_features : List[int]
+            Feature indices to sample
+        conditioning_features: List[int]
+            Features indices being conditioned on
+        conditioning_values: np.ndarray
+            Values of conditioning features
+        
+        Returns:
+        --------
+        samples : np.ndarray
+            Sampled values for target features
+        """
+
+        if len(conditioning_features) == 0:
+            # No conditioning: sample from marginal
+            if len(target_features) == 1:
+                return np.array([self.rng.normal(self.mean[target_features[0]],
+                                                 np.sqrt(self.cov[target_features[0],target_features[0]]))])
+            else:
+                cov_target = self.cov[np.ix_(target_features,target_features)]
+                return self.rng.multivariate_normal(self.mean[target_features],cov_target)
+            
+        try:
+            #Extract covariance submatrices
+            Sigma_AA = self.cov[np.ix_(target_features,target_features)]
+            Sigma_BB = self.cov[np.ix_(conditioning_features,conditioning_features)]
+            Sigma_AB = self.cov[np.ix_(target_features,conditioning_features)]
+
+            # Conditional mean
+            Sigma_BB_inv = np.linalg.pinv(Sigma_BB)
+            conditional_mean = (self.mean[target_features]+
+                                Sigma_AB @ Sigma_BB_inv @ (conditioning_values - self.mean[conditioning_features]))
+            
+            # Conditional covariance
+            conditional_cov = Sigma_AA - Sigma_AB @ Sigma_BB_inv @ Sigma_AB.T
+
+            # Ensure positive definiteness
+            conditional_cov = (conditional_cov + conditional_cov.T) / 2
+            eigvals = np.linalg.eigvalsh(conditional_cov)
+            if eigvals.min() < 1e-6:
+                conditional_cov += np.eye(len(target_features)) * (1e-6 - eigvals.min())
+
+            # Sample
+            if len(target_features) == 1:
+                return np.array([self.rng.normal(conditional_mean[0],np.sqrt(conditional_cov[0,0]))])
+            else: 
+                return self.rng.multivariate_normal(conditional_mean,conditional_cov)
+        except:
+            # Fallback: sample from marginal if conditioning fails
+            print("Warning: Gaussian conditioning failed, sampling from marginal distribution")
+            if len(target_features) == 1:
+                return np.array([self.mean[target_features[0]]])
+            else:
+                return self.mean[target_features]
+            
+    def _sample_post_interventional(self, S: List[int], x_instance: np.ndarray) -> np.ndarray:
+        """
+        Sample from post-interventional distribution P(X | do(X_S = x_S))
+        
+        This is the core algorithm from Heskes et al. (2020)
+
+        Algorithm:
+        1. Fix X_S = X_S (interventional values from instance)
+        2. For each compontent t in topological roder:
+            - Identify missing geatures (not in S) withing component
+            - Get parents vales ( already determined from topoloical ordering)
+            - IF component is CONFOUNDED:
+                Sample missing features IDEPENDENLTY conditional on parents only 
+                (Intervention breaks dependencies between features in componen)
+            - ELSE (component is NON-CONFOUNDED):
+                Sample missing features JOINTLY conditional on parents + sibligs in S
+                (Features have mutual intereactions, not confounding)
+
+        Parameters:
+        ----------
+        S: List[int]
+            Coaliton of features (intervened features)
+        x_instance: np.ndarray
+            Instance values to explain
+        Returns:
+        --------
+        samples : np.ndarray
+            M_inner_samples complete features vectores samples from do-distribution
+        """
+
+        S_set = set(S)
+        samples = []
+        for _ in range(self.M_inner_samples):
+            # Initialize sample vector
+            sample = np.zeros(self.n_features)
+
+            # Step 1: Fix interventional values X_s = X_s
+            for feature in S:
+                sample[feature] = x_instance[feature]
+            
+            # Step 2: Iterate through components in topological order
+            for comp_idx, component in enumerate(self.causal_graph_components):
+                # Identify fixed vs missing features in this component
+                fixed_in_comp = [f for f in component if f in S_set]
+                missing_in_comp = [f for f in component if f not in S_set]
+
+                if len(missing_in_comp) == 0:
+                    # All features in component are fixed, nothing to sample
+                    continue
+
+                # Get parent values (parents are in earlier components, already determined)
+                parent_features = self.get_parents_dict.get(comp_idx, [])
+                parent_values = sample[parent_features] if len(parent_features) > 0 else np.array([])
+
+                # CRITICAL DISTINTION: Confounded vs Non-confounded
+                if self.confounded_info.get(comp_idx, False):
+                    # CONFOUNDED COMPONENT
+                    # Sample each missing feature INDEPENDENTLY conditional on parents only
+                    for feature in missing_in_comp:
+                        if len(parent_features)>0:
+                            sampled_values = self._sample_conditional_gaussian(
+                                target_features=[feature],
+                                conditioning_features=parent_features,
+                                conditioning_values=parent_values
+                            )[0]
+                        else:
+                            # No parents: sample from marginal
+                            sampled_values = self.rng.normal(self.mean[feature],
+                                                            np.sqrt(self.cov[feature,feature]))
+                else:
+                    # NON-CONFOUNDED COMPONENT
+                    # Sample missing features JOINTLY conditional on parents + siblings in S
+
+                    # NOTE : For non-Gaussian or complex distributions, this step should 
+                    # be refined using Gibbs sampling to properly capture joint dependencies
+
+                    # Conditional set: parents + fixed siblings in component
+                    conditioning_features = list(parent_features) + fixed_in_comp
+                    conditioning_values = sample[conditioning_features] if len(conditioning_features) > 0 else np.array([])
+
+                    if len(conditioning_features) > 0:
+                        sampled_values = self._sample_conditional_gaussian(
+                            target_features=missing_in_comp,
+                            conditioning_features=conditioning_features,
+                            conditioning_values=conditioning_values
+                        )
+                    else:
+                        # No conditioning: sample from joint marginal
+                        if len(missing_in_comp) == 1:
+                            sampled_values = np.array([self.rng.normal(self.mean[missing_in_comp[0]],
+                                                                      np.sqrt(self.cov[missing_in_comp[0],missing_in_comp[0]]))])
+                        else:
+                            cov_missing = self.cov[np.ix_(missing_in_comp,missing_in_comp)]
+                            sampled_values = self.rng.multivariate_normal(self.mean[missing_in_comp],cov_missing)
+                    
+                    for feature, value in zip(missing_in_comp,sampled_values):
+                        sampled_values[feature] = value
+            samples.append(sample)
+
+        return np.array(samples)
+    
+    def _compute_value_function(self, S: List[int], x_instance: np.ndarray) -> float:
+        """
+        Compute causal value fucntion v(S) = E[f(x) | do(X_S = x_S)]
+
+        Samples M_inner_samples from the post-interventional distribution and
+        averages the model predictions
+
+        Parameters:
+        -----------
+        S : List[int]
+            Coalition of features
+        x_instance: np.ndarray
+            Instance to explain
+
+        Returns:
+        -------
+        value : float
+            Expected prediction E[f(x) | do(X_S = x_S)]
+        """
+        # Sample from post-interventional distribution
+        samples = self._sample_post_interventional(S,x_instance)
+
+        # Predict on all samples
+        predictions = self.model.predict(samples)
+
+        return predictions.mean()
+    
+    def _compute_monte_carlo_causal_shapley(self, instance: np.ndarray) -> np.ndarray:
+        """
+        Compute Causal Shapley values using Monte Carlo permutation Sampling
+
+        Outer Loop (n_samples iterations):
+        - Sample random permutation of features
+        - Initialize empty coalition S = 0
+        - For each feature J in permutation order:
+            * Compute v(S) using inner sampling loop
+            * compute v(S u {j} ) using iiner sampling loop
+            * Marginal contribution = V(S u {j}) - V(S)
+            * Add to features j's Shapley value
+            * Add j to coalition: S = S u {j}
+
+        Parameters:
+        ----------
+        instance: np.ndarray
+            Instance to explain
+        
+        Returns:
+        --------
+        shapley_values : np.ndarray
+            Causal Shapley values for each feature
+        """
+
+        shapley_values = np.zeros(self.n_features)
+
+        for perm_idx in range(self.n_samples):
+            # Sample random permutation of all features
+            # TODO: For Asymmetric Causal Shaply, enforce topological ordering
+            perm = self.rng.permutation(self.n_features).to_list()
+
+            # Initialize empty coaliton
+            coalition = []
+
+            # Track previous value to compute marginals efficiently
+            prev_value = self.baaseline_value
+
+            # Iterate through features in permutation order
+            for feature in perm:
+                coalition.append(feature)
+
+                # Compute v(S u {j}) using post-interventional sampling (inner loop)
+                curr_value= self._compute_value_function(coalition,instance)
+
+                marginal_contribution = curr_value - prev_value
+
+                shapley_values[feature] +=marginal_contribution
+
+                prev_value = curr_value
+        
+        # Average over all permutation
+        shapley_values /= self.n_samples
+
+        return shapley_values
+    
+    def explain(self, X: pd.DataFrame) -> np.ndarray :
+        """
+        Compute Causal Shapley values with post interventional sampling.
+
+        Parameters:
+        ----------
+        X : pd.DataFrame
+            Instances to explain
+
+        Returns:
+        --------
+        shap_values : np.ndarray
+            Causal Shapley values (shape: n_samples x n_features)
+        """
+        print(f"Computing Causal Shapley values (post-interventional sampling)...")
+        print(f"    Permutations: {self.n_samples}")
+        print(f"    Samples per coalition {self.M_inner_samples}")
+
+        X_values = X.values
+        n_instances = len(X_values)
+
+        self.shap_values = np.zeros((n_instances, self.n_features))
+        for i, instance in enumerate(X_values):
+            self.shap_values[i] = self._compute_monte_carlo_causal_shapley(instance)
+
+            if ( i + 1) % max(1, n_instances // 10) == 0:
+                print(f" Progress: {i + 1}/{n_instances} instances")
+
+
 class ShapleyFlow:
     """
     Shapley Flow implementatiojn based on Wang et al. (2021)
@@ -634,9 +971,9 @@ class ShapleyFlow:
         nearest_indices = np.argpartition(distances,k)[:k]
 
         candidate_values = self.background_data[nearest_indices,node]
-        sampled_value = candidate_values[self.rng.randint(len(candidate_values))]
+        sampled_values = candidate_values[self.rng.randint(len(candidate_values))]
 
-        return sampled_value
+        return sampled_values
 
     def _evaluate_system(self, history: List[Tuple[int,int]],
                          x_foreground: Dict[int,float],
