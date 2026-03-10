@@ -9,6 +9,7 @@ warnings.filterwarnings('ignore')
 import shap
 
 from sklearn.base import BaseEstimator
+import networkx as nx
 
 
 class ShapleyExplainer: 
@@ -238,7 +239,7 @@ class ShapleyFromScratch:
         shapley_values : np.ndarray
             Shapley values (shape: n_samples x n_features)
         """
-        print(f"Computin Shapley values from scratch using {method} method...")
+        print(f"Computing Shapley values from scratch using {method} method...")
 
         X_values = X.values
         n_instances = len(X_values)
@@ -284,13 +285,91 @@ class ShapleyFromScratch:
         return pd.DataFrame(self.shap_values, columns=self.feature_names, index= X.abs)
     
 
-class CausalShapley(ShapleyFromScratch):
+class TrueShapley(ShapleyFromScratch):
+    """
+    Compute Shapley values using the true data generation function instead of a model.
+    This provides ground truth feature importance for validation purposes.
+    """
+    
+    def __init__(self, true_generator: Callable, background_data: pd.DataFrame,
+                 n_samples: int = 1000, random_state: Optional[int] = None):
+        """
+        Args:
+            true_generator: Callable that takes X (n_samples, n_features) and returns Y (n_samples,)
+            background_data: Background dataset for Shapley computation
+            n_samples: Number of Monte Carlo samples for Shapley approximation
+            random_state: Random seed for reproducibility
+        """
+        # We don't have a model, so we'll pass None and override _predict_coalition
+        self.true_generator = true_generator
+        self.background_data = background_data
+        self.feature_names = background_data.columns.tolist()
+        self.n_features = len(self.feature_names)
+        self.n_samples = n_samples
+        
+        # Set random state
+        if random_state is not None:
+            np.random.seed(random_state)
+            self.rng = np.random.RandomState(random_state)
+        else:
+            self.rng = np.random.RandomState()
+        
+        # Compute baseline value as expected output over background data
+        self.baseline_value = np.mean(self.true_generator(background_data.values))
+        
+        self.shap_values = None
+    
+    def _predict_coalition(self, instance: np.ndarray, coalition: list) -> float:
+        """
+        Predict using true generator for a coalition of features.
+        
+        Args:
+            instance: Single instance to explain (n_features,)
+            coalition: List of feature indices in the coalition
+        
+        Returns:
+            Expected Y value for this coalition
+        """
+        # Create samples by combining instance features (in coalition) with random background features (not in coalition)
+        samples = np.tile(instance, (self.n_samples, 1))
+        
+        # Convert coalition list to set for faster lookup
+        coalition_set = set(coalition)
+        
+        # For features not in coalition, sample from background
+        for j in range(self.n_features):
+            if j not in coalition_set:
+                # Sample random values from background for feature j
+                random_indices = self.rng.choice(len(self.background_data), size=self.n_samples, replace=True)
+                samples[:, j] = self.background_data.values[random_indices, j]
+        
+        # Compute Y using true generator and average
+        predictions = self.true_generator(samples)
+        return np.mean(predictions)
+
+
+class AsymmetricShapley(ShapleyFromScratch):
 
     def __init__(self, model: BaseEstimator, background_data: pd.DataFrame,
                  causal_graph: np.ndarray, n_samples: int = 1000,
-                 random_sate: Optional [int] = None ):
+                 random_sate: Optional [int] = None,
+                 asymmetric_method: str = 'frye'):
+        """
+        Initialize Asymmetric Shapley explainer.
+        
+        Parameters:
+        -----------
+        asymmetric_method : str
+            Method for sampling causal permutations:
+            - 'frye': True Asymmetric Shapley (Frye et al.) - only enforces direct parent constraints
+            - 'strict': Strict topological ordering by depth layers
+        """
         
         super().__init__(model, background_data, n_samples,random_sate)
+        
+        if asymmetric_method not in ['frye', 'strict']:
+            raise ValueError(f"asymmetric_method must be 'frye' or 'strict', got {asymmetric_method}")
+        self.asymmetric_method = asymmetric_method
 
         self.causal_graph = causal_graph
         self.directed_graph = self._extract_directed_graph(causal_graph)
@@ -308,6 +387,7 @@ class CausalShapley(ShapleyFromScratch):
 
         self.topological_order = self._topological_sort()
         print(f"Topological order of features: {self.topological_order}")
+        print(f"Using asymmetric method: {self.asymmetric_method}")
 
     def _extract_directed_graph(self, causal_graph: np.ndarray) -> np.ndarray:
         """
@@ -458,8 +538,18 @@ class CausalShapley(ShapleyFromScratch):
 
         return shapley_values
     
-    def _sample_causal_permutation(self) -> List[int]:
-
+    def _sample_causal_permutation_strict(self) -> List[int]:
+        """
+        Sample causal permutation using STRICT topological ordering by depth layers.
+        
+        This enforces full topological ordering: all features at depth k come before
+        all features at depth k+1. More restrictive than necessary for causal validity.
+        
+        Returns:
+        --------
+        perm : List[int]
+            Valid causal permutation
+        """
         # start with topological order
         perm = self.topological_order.copy()
 
@@ -488,12 +578,55 @@ class CausalShapley(ShapleyFromScratch):
 
         return result
     
+    def _sample_causal_permutation_frye(self) -> List[int]:
+        """
+        Sample causal permutation using TRUE Asymmetric Shapley (Frye et al.).
+        
+        Only enforces direct parent constraints: each feature i must appear after
+        its direct parents. Unrelated features can appear in any order, allowing
+        more permutations than strict topological ordering.
+        
+        Algorithm: Greedily build permutation by randomly selecting from features
+        whose parents are already in the permutation.
+        
+        Returns:
+        --------
+        perm : List[int]
+            Valid causal permutation (uniform over all valid permutations)
+        """
+        perm = []
+        remaining = set(range(self.n_features))
+        
+        while remaining:
+            # Find all features whose parents are already in the permutation
+            candidates = []
+            for feature in remaining:
+                # Check if all parents of this feature are already in perm
+                if self.parents[feature].issubset(set(perm)):
+                    candidates.append(feature)
+            
+            # If no candidates, we have a cycle (shouldn't happen with valid DAG)
+            if not candidates:
+                warnings.warn("No valid candidates found - possible cycle in graph. Using arbitrary order.")
+                candidates = list(remaining)
+            
+            # Randomly select one candidate (uniform sampling)
+            selected = candidates[self.rng.randint(len(candidates))]
+            perm.append(selected)
+            remaining.remove(selected)
+        
+        return perm
+    
     def _compute_monte_carlo_causal_shapley(self, instance: np.ndarray) -> np.ndarray:
 
         shapley_values = np.zeros(self.n_features)
 
         for _ in range(self.n_samples):
-            perm = self._sample_causal_permutation()
+            # Sample permutation using selected method
+            if self.asymmetric_method == 'frye':
+                perm = self._sample_causal_permutation_frye()
+            else:  # 'strict'
+                perm = self._sample_causal_permutation_strict()
 
             prev_value = self.baseline_value
             coalition = []
@@ -517,7 +650,8 @@ class CausalShapley(ShapleyFromScratch):
     
     def explain(self, X: pd.DataFrame, method: str = 'monte_carlo') -> np.ndarray:
 
-        print(f"Computin Causal Shapley values using {method} method...")
+        print(f"Computing Causal Shapley values using {method} method...")
+        print(f"Asymmetric sampling: {self.asymmetric_method}")
         print(f"Respecting causal graph with {np.sum(self.causal_graph != 0)} edges")
 
         X_values = X.values
@@ -544,7 +678,7 @@ class CausalShapley(ShapleyFromScratch):
         return self.shap_values
 
 
-class CausalShapleyPostInterventional(ShapleyFromScratch):
+class CausalShapley(ShapleyFromScratch):
     """
     Compute Causal Shapley values using post-interventional sampling
 
@@ -559,25 +693,28 @@ class CausalShapleyPostInterventional(ShapleyFromScratch):
 
     def __init__(self, model: BaseEstimator,
                  background_data: pd.DataFrame,
-                 causal_graph_components: List[List[int]],
-                 confounded_info: Dict[int,bool],
-                 get_parents_dict: Dict[int, List[int]],
+                 discovered_adj: np.ndarray,
+                 discovered_conf: List[Tuple[str,str]],
+                 feature_names: List[str],
                  n_samples: int = 100,
                  M_inner_samples: int = 50,
                  random_state: Optional[int] = None):
         
-        super.__init__(model, background_data, n_samples = 100, random_state= random_state)
+        super().__init__(model, background_data, n_samples,random_state)
 
         # Store causal structure
-        self.causal_graph_components = causal_graph_components
-        self.confounded_info = confounded_info
-        self.get_parents_dict = get_parents_dict
+        print(f"Initialized components")
+
+        self.causal_graph_components,self.confounded_info, self.parents_dict = self._extract_causal_structure_for_shapley(discovered_adj,discovered_conf,feature_names)
+        
+        print("Components initialized")
+        
         self.n_samples = n_samples
         self.M_inner_samples = M_inner_samples
 
         # Build component membership map for quick lookup
         self.feature_to_component = {}
-        for comp_idx, features in enumerate(causal_graph_components):
+        for comp_idx, features in enumerate(self.causal_graph_components):
             for feature in features:
                 self.feature_to_component[feature] = comp_idx
 
@@ -586,14 +723,127 @@ class CausalShapleyPostInterventional(ShapleyFromScratch):
 
         print("CausalShapleyPostInterventional Initialzied:")
         print(f" Features: {self.n_features}")
-        print(f" Components: {len(causal_graph_components)} (in topological order)")
-        for comp_idx, comp in enumerate(causal_graph_components):
-            conf_status = "CONFOUNDED" if confounded_info.get(comp_idx, False) else "NON-CONFOUNDED"
-            parents = get_parents_dict(comp_idx, [])
+        print(f" Components: {len(self.causal_graph_components)} (in topological order)")
+        for comp_idx, comp in enumerate(self.causal_graph_components):
+            conf_status = "CONFOUNDED" if self.confounded_info.get(comp_idx, False) else "NON-CONFOUNDED"
+            parents = self.parents_dict.get(comp_idx, [])
             print(f" Component {comp_idx}: features {comp}, {conf_status}, parents {parents}")
         print(f" Outer samples (permutations): {n_samples}")
         print(f" Inner samples (per coalition): {M_inner_samples}")
 
+    def _extract_causal_structure_for_shapley(self,
+                                               causal_graph: np.ndarray,
+                                               confounders: List[Tuple[str,str]],
+                                               feature_names: List[str]
+                               ) -> Tuple[List[List[int]],Dict[int,bool],Dict[int,List[int]]]:
+        """Extract directed edges from causal graph."""
+        if causal_graph.shape != (self.n_features, self.n_features):
+            raise ValueError(
+                f"causal_graph shape {causal_graph.shape} does not match features"
+            )
+        directed = np.zeros((self.n_features, self.n_features), dtype=int)
+
+        # Check if binary adjacency matrix
+        unique_vals = set(np.unique(causal_graph).tolist())
+        if unique_vals.issubset({0,1}):
+            directed = causal_graph.astype(int)
+        else:
+            for i in range(self.n_features):
+                for j in range(i+1, self.n_features):
+                    a = causal_graph[i, j]
+                    b = causal_graph[j, i]
+
+                    if a == -1 and b == 1:
+                        directed[i, j] = 1
+                    elif a == 1 and b == -1:
+                        directed[j, i] = 1
+
+        n_features = len(feature_names)
+
+        confounded_pairs = set()
+        for feat1,feat2 in confounders:
+            try:
+                idx1 = feature_names.index(feat1)
+                idx2 = feature_names.index(feat2)
+                confounded_pairs.add((min(idx1, idx2),max(idx1,idx2)))
+            except ValueError:
+                continue
+
+        G = nx.DiGraph()
+        G.add_nodes_from(range(n_features))
+        for i in range(n_features):
+            for j in range(n_features):
+                if directed[i,j] !=0:
+                    G.add_edge(i,j)
+
+        #Topological sort
+        try: 
+            topo_order = list(nx.topological_sort(G))
+        except:
+            print(f"Topological order from networkx failed"
+                  "Using simple ordering")
+            topo_order = list(range(n_features))
+        
+        # Group confounded features into components
+        # Features are confounded if they share a bidirected edge
+        confounded_groups = []
+        remaining_features = set(topo_order)
+
+        for idx1, idx2 in confounded_pairs:
+            # Check if feature are already in a group
+            found_group = None
+            for group in confounded_groups:
+                if idx1 in group or idx2 in group:
+                    found_group = group
+                    break
+
+            if found_group is not None:
+                found_group.add(idx1)
+                found_group.add(idx2)
+            else:
+                confounded_groups.append({idx1,idx2})
+
+            remaining_features.discard(idx1)
+            remaining_features.discard(idx2)
+
+        # Build componets: confounded groups + individual features
+        components = []
+        component_map = {} # Maps feature idx to component idx
+
+        # Add confounded groups first (in topological order)
+        for group in confounded_groups:
+            group_list = sorted(group, key= lambda x: topo_order.index(x))
+            comp_idx = len(components)
+            components.append(group_list)
+            for feat_idx in group_list:
+                component_map[feat_idx] = comp_idx
+
+        # Add remaining individual features
+        for feat_idx in sorted(remaining_features, key = lambda x : topo_order.index(x)):
+            comp_idx = len(components)
+            components.append([feat_idx])
+            component_map[feat_idx] = comp_idx
+
+        # Build parent dictionary for each component
+        confounded_info = {}
+        for comp_idx, comp in enumerate(components):
+            # component is confounded if it has multple features (shared confounder)
+            confounded_info[comp_idx] = len(comp) > 1
+
+        # Build parent dictionary for each component
+        parents_dict = {}
+        for comp_idx, comp_features in enumerate(components):
+            parents = set()
+            for feat_idx in comp_features:
+                # Find parents of this feature
+                for parent_idx in range(n_features):
+                    if directed[parent_idx, feat_idx] != 0:
+                        if parent_idx in component_map and component_map[parent_idx] < comp_idx:
+                            parents.add(parent_idx)
+            parents_dict[comp_idx] = sorted(list(parents))
+
+        return components, confounded_info, parents_dict
+    
     def _precompute_statistics(self):
         """Precompute mean and covariance for Gaussian condtional sampling"""
         self.mean = np.mean(self.background_data,axis=0)
@@ -718,7 +968,7 @@ class CausalShapleyPostInterventional(ShapleyFromScratch):
                     continue
 
                 # Get parent values (parents are in earlier components, already determined)
-                parent_features = self.get_parents_dict.get(comp_idx, [])
+                parent_features = self.parents_dict.get(comp_idx, [])
                 parent_values = sample[parent_features] if len(parent_features) > 0 else np.array([])
 
                 # CRITICAL DISTINTION: Confounded vs Non-confounded
@@ -727,15 +977,16 @@ class CausalShapleyPostInterventional(ShapleyFromScratch):
                     # Sample each missing feature INDEPENDENTLY conditional on parents only
                     for feature in missing_in_comp:
                         if len(parent_features)>0:
-                            sampled_values = self._sample_conditional_gaussian(
+                            sampled_value = self._sample_conditional_gaussian(
                                 target_features=[feature],
                                 conditioning_features=parent_features,
                                 conditioning_values=parent_values
                             )[0]
                         else:
                             # No parents: sample from marginal
-                            sampled_values = self.rng.normal(self.mean[feature],
+                            sampled_value = self.rng.normal(self.mean[feature],
                                                             np.sqrt(self.cov[feature,feature]))
+                        sample[feature] = sampled_value
                 else:
                     # NON-CONFOUNDED COMPONENT
                     # Sample missing features JOINTLY conditional on parents + siblings in S
@@ -763,7 +1014,7 @@ class CausalShapleyPostInterventional(ShapleyFromScratch):
                             sampled_values = self.rng.multivariate_normal(self.mean[missing_in_comp],cov_missing)
                     
                     for feature, value in zip(missing_in_comp,sampled_values):
-                        sampled_values[feature] = value
+                        sample[feature] = value
             samples.append(sample)
 
         return np.array(samples)
@@ -825,13 +1076,13 @@ class CausalShapleyPostInterventional(ShapleyFromScratch):
         for perm_idx in range(self.n_samples):
             # Sample random permutation of all features
             # TODO: For Asymmetric Causal Shaply, enforce topological ordering
-            perm = self.rng.permutation(self.n_features).to_list()
+            perm = self.rng.permutation(self.n_features).tolist()
 
             # Initialize empty coaliton
             coalition = []
 
             # Track previous value to compute marginals efficiently
-            prev_value = self.baaseline_value
+            prev_value = self.baseline_value
 
             # Iterate through features in permutation order
             for feature in perm:
@@ -879,6 +1130,7 @@ class CausalShapleyPostInterventional(ShapleyFromScratch):
             if ( i + 1) % max(1, n_instances // 10) == 0:
                 print(f" Progress: {i + 1}/{n_instances} instances")
 
+        return self.shap_values
 
 class ShapleyFlow:
     """

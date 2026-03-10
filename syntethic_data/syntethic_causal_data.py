@@ -18,6 +18,7 @@ class SyntheticCausalSystem:
 
         self.adjacency_matrix = None
         self.confounders_pais = []
+        self.y_generation_params = None  # Will store Y generation parameters
 
     def _create_dag_structure(self) -> np.ndarray:
 
@@ -107,8 +108,11 @@ class SyntheticCausalSystem:
         n_parents = max(1, int(self.n_features * y_parents_ratio))
         y_parents_indices = np.random.choice(self.n_features, size=n_parents, replace=False)
 
+        # Store Y generation parameters (coefficients for each parent)
+        y_coefficients = {}
         for parent_idx in y_parents_indices:
             coef = np.random.uniform(0.5,2.0) * np.random.choice([-1,1])
+            y_coefficients[int(parent_idx)] = coef
             y += coef * data[:, parent_idx]
 
         # add noise to Y
@@ -116,6 +120,15 @@ class SyntheticCausalSystem:
 
         # Store Y parent indices for visualization
         self.y_parent_indices = y_parents_indices.tolist()
+        
+        # Store Y generation parameters for ground truth Shapley computation
+        self.y_generation_params = {
+            'type': 'linear',
+            'coefficients': y_coefficients,
+            'parent_indices': y_parents_indices.tolist(),
+            'noise_std': noise_std,
+            'weights': weights  # Store the full weight matrix for feature dependencies
+        }
 
         # Extend adjacency matrix to include Y variable
         complete_adjacency = np.zeros((self.n_features + 1, self.n_features + 1))
@@ -164,26 +177,26 @@ class SyntheticCausalSystem:
                     else:
                         data[:, node] += coef * (np.exp(confounder / 2) - 1)
 
-            # Generate data following the causal structure with non-linear functions
-            for j in range(self.n_features):
-                parents = np.where(self.adjacency_matrix[:,j] == 1)[0]
+        # Generate data following the causal structure with non-linear functions
+        for j in range(self.n_features):
+            parents = np.where(self.adjacency_matrix[:,j] == 1)[0]
 
-                for parent in parents:
-                    # Use different non-linear functions
-                    func_type = np.random.choice(["square","cube","tanh","sin"])
-                    coef = np.random.uniform(0.3, 0.8) * np.random.choice([-1, 1])
+            for parent in parents:
+                # Use different non-linear functions
+                func_type = np.random.choice(["square","cube","tanh","sin"])
+                coef = np.random.uniform(0.3, 0.8) * np.random.choice([-1, 1])
 
-                    if func_type == 'square':
-                        data[:, j] += coef * data[:, parent] ** 2
-                    elif func_type == 'cube':
-                        data[:, j] += coef * data[:, parent] ** 3
-                    elif func_type == 'tanh':
-                        data[:, j] += coef * np.tanh(data[:, parent])
-                    else:
-                        data[:, j] += coef * np.sin(data[:, parent])
+                if func_type == 'square':
+                    data[:, j] += coef * data[:, parent] ** 2
+                elif func_type == 'cube':
+                    data[:, j] += coef * data[:, parent] ** 3
+                elif func_type == 'tanh':
+                    data[:, j] += coef * np.tanh(data[:, parent])
+                else:
+                    data[:, j] += coef * np.sin(data[:, parent])
 
-                # Add Gausian noise 
-                data[:, j] += np.random.normal(0, noise_std, n_samples)
+            # Add Gausian noise 
+            data[:, j] += np.random.normal(0, noise_std, n_samples)
 
         # Generate outcome variable Y with non-linear relationships
         y = np.zeros(n_samples)
@@ -193,9 +206,13 @@ class SyntheticCausalSystem:
         y_parents_indices = np.random.choice(self.n_features, size=n_parents, replace=False)
 
         # Y is affected by selected parents with non-linear relationships
+        y_coefficients = {}
+        y_func_types = {}
         for parent_idx in y_parents_indices:
             func_type = np.random.choice(["square","cube","tanh","sin"])
             coef = np.random.uniform(0.3, 0.8) * np.random.choice([-1, 1])
+            y_coefficients[int(parent_idx)] = coef
+            y_func_types[int(parent_idx)] = func_type
 
             if func_type == 'square':
                 y += coef * data[:, parent_idx] ** 2
@@ -210,6 +227,15 @@ class SyntheticCausalSystem:
 
         # Store Y parent indices for visualization
         self.y_parent_indices = y_parents_indices.tolist()
+        
+        # Store Y generation parameters for ground truth Shapley computation
+        self.y_generation_params = {
+            'type': 'nonlinear',
+            'coefficients': y_coefficients,
+            'func_types': y_func_types,
+            'parent_indices': y_parents_indices.tolist(),
+            'noise_std': noise_std
+        }
         
         # Extend adjacency matrix to include Y variable
         complete_adjacency = np.zeros((self.n_features + 1, self.n_features + 1))
@@ -296,13 +322,19 @@ class SyntheticCausalSystem:
         y_parents_indices = np.random.choice(self.n_features, size= n_parents, replace=False)
 
         # Y is affected by selected parents with mixed linear/non-linear relationships
+        y_coefficients = {}
+        y_func_types = {}
         for idx, parent_idx in enumerate(y_parents_indices):
             if idx % 2 ==0: # linear
                 coef = np.random.uniform(0.5, 2.0) * np.random.choice([-1, 1])
+                y_coefficients[int(parent_idx)] = coef
+                y_func_types[int(parent_idx)] = 'linear'
                 y += coef * data[:, parent_idx]
             else: # Non-linear
                 func_type = np.random.choice(["square","cube","tanh","sin"])
                 coef = np.random.uniform(0.3, 0.8) * np.random.choice([-1, 1])
+                y_coefficients[int(parent_idx)] = coef
+                y_func_types[int(parent_idx)] = func_type
 
                 if func_type == 'square':
                      y += coef * data[:, parent_idx] ** 2
@@ -318,6 +350,15 @@ class SyntheticCausalSystem:
 
         # store Y parent indices for visualization
         self.y_parent_indices = y_parents_indices.tolist()
+        
+        # Store Y generation parameters for ground truth Shapley computation
+        self.y_generation_params = {
+            'type': 'mixed',
+            'parent_indices': y_parents_indices.tolist(),
+            'coefficients': y_coefficients,
+            'func_types': y_func_types,
+            'noise_std': noise_std
+        }
 
         # Extend adjacency matrix to include Y variable
         complete_adjacency = np.zeros((self.n_features + 1, self.n_features + 1))
@@ -333,6 +374,73 @@ class SyntheticCausalSystem:
 
         # TODO: save the relationships and coeficient of each x variable to Y, this is would be the real value of the shap_value 
         return df, complete_adjacency, confounder_info, edge_types
+
+    def get_true_y_generator(self):
+        """
+        Returns a function that computes Y from X using the true generation parameters.
+        This function can be used to compute ground truth Shapley values.
+        
+        Returns:
+            callable: A function that takes an array of shape (n_samples, n_features) 
+                     and returns Y values of shape (n_samples,)
+        """
+        if self.y_generation_params is None:
+            raise ValueError("No Y generation parameters found. Generate data first.")
+        
+        params = self.y_generation_params
+        parent_indices = params['parent_indices']
+        coefficients = params['coefficients']
+        gen_type = params['type']
+        
+        if gen_type == 'linear':
+            def generator(X):
+                """Linear generator: Y = sum(coef_i * X_i)"""
+                y = np.zeros(X.shape[0])
+                for parent_idx in parent_indices:
+                    y += coefficients[parent_idx] * X[:, parent_idx]
+                return y
+                
+        elif gen_type == 'nonlinear':
+            func_types = params['func_types']
+            
+            def generator(X):
+                """Nonlinear generator: Y = sum(coef_i * f_i(X_i))"""
+                y = np.zeros(X.shape[0])
+                for parent_idx in parent_indices:
+                    coef = coefficients[parent_idx]
+                    func_type = func_types[parent_idx]
+                    if func_type == 'square':
+                        y += coef * X[:, parent_idx] ** 2
+                    elif func_type == 'cube':
+                        y += coef * X[:, parent_idx] ** 3
+                    elif func_type == 'tanh':
+                        y += coef * np.tanh(X[:, parent_idx])
+                    else:  # sin
+                        y += coef * np.sin(X[:, parent_idx])
+                return y
+                
+        else:  # mixed
+            func_types = params['func_types']
+            
+            def generator(X):
+                """Mixed generator: Y = sum(coef_i * f_i(X_i)) with linear and nonlinear f_i"""
+                y = np.zeros(X.shape[0])
+                for parent_idx in parent_indices:
+                    coef = coefficients[parent_idx]
+                    func_type = func_types[parent_idx]
+                    if func_type == 'linear':
+                        y += coef * X[:, parent_idx]
+                    elif func_type == 'square':
+                        y += coef * X[:, parent_idx] ** 2
+                    elif func_type == 'cube':
+                        y += coef * X[:, parent_idx] ** 3
+                    elif func_type == 'tanh':
+                        y += coef * np.tanh(X[:, parent_idx])
+                    else:  # sin
+                        y += coef * np.sin(X[:, parent_idx])
+                return y
+        
+        return generator
 
     def visualize_causal_graph(self, adjacency_matrix: np.ndarray,
                                confounder_info: List = None,

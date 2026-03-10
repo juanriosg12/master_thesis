@@ -187,7 +187,9 @@ class LGBMRegressor(PredictiveModel):
 
     def predict(self, X: pd.DataFrame) -> np.ndarray:
         if self.selected_features is not None:
-            X = X[self.selected_features]
+            if isinstance(X, pd.DataFrame):
+                X = X[self.selected_features]
+            # If X is numpy array, assume features are already selected
         return self.model.predict(X)
     
     def get_feature_importance(self) -> pd.DataFrame:
@@ -375,7 +377,9 @@ class NeuralNetRegressor(PredictiveModel):
     
     def predict( self, X: pd.DataFrame) -> np.ndarray:
         if self.selected_features is not None:
-            X = X[self.selected_features]
+            if isinstance(X, pd.DataFrame):
+                X = X[self.selected_features]
+            # If X is numpy array, assume features are already selected
 
         X_scaled = self.scaler.transform(X)
         predictions = self.model.predict(X_scaled)
