@@ -12,7 +12,6 @@ Steps:
 5. Calculate Shapley values using all methods and compare against ground truth
 
 Author: Juan Rios
-Date: March 10, 2026
 """
 
 # ============================================================================
