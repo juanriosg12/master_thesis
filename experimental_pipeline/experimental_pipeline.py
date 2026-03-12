@@ -835,7 +835,7 @@ def main():
         run_causal_discovery(dataset_configs)
         
         # Step 4: Train models
-        train_all_models(dataset_configs)faewq
+        train_all_models(dataset_configs)
         
         # Step 5: Calculate Shapley values
         calculate_all_shapley_values(dataset_configs)
