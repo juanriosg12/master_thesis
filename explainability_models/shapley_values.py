@@ -258,8 +258,9 @@ class ShapleyFromScratch:
             else: 
                 raise ValueError(f"Unknown method: {method}")
             
-            if (i + 1) % max(1, n_instances //10) == 0:
-                print(f" Progress: {i + 1}/{n_instances} instances")
+            # Progress indicator removed for cleaner output
+            # if (i + 1) % max(1, n_instances //10) == 0:
+            #     print(f" Progress: {i + 1}/{n_instances} instances")
 
         return self.shap_values
     
@@ -383,11 +384,13 @@ class AsymmetricShapley(ShapleyFromScratch):
         self.parents = {}
         for j in range(self.n_features):
             self.parents[j] = set(np.where(self.directed_graph[:, j] != 0)[0])
-            print(f"Feature {self.feature_names[j]} has parents: {[self.feature_names[p] for p in self.parents[j]]}")
+            # Detailed parent info removed for cleaner output
+            # print(f"Feature {self.feature_names[j]} has parents: {[self.feature_names[p] for p in self.parents[j]]}")
 
         self.topological_order = self._topological_sort()
-        print(f"Topological order of features: {self.topological_order}")
-        print(f"Using asymmetric method: {self.asymmetric_method}")
+        # Detailed structure info removed for cleaner output
+        # print(f"Topological order of features: {self.topological_order}")
+        # print(f"Using asymmetric method: {self.asymmetric_method}")
 
     def _extract_directed_graph(self, causal_graph: np.ndarray) -> np.ndarray:
         """
@@ -651,8 +654,9 @@ class AsymmetricShapley(ShapleyFromScratch):
     def explain(self, X: pd.DataFrame, method: str = 'monte_carlo') -> np.ndarray:
 
         print(f"Computing Causal Shapley values using {method} method...")
-        print(f"Asymmetric sampling: {self.asymmetric_method}")
-        print(f"Respecting causal graph with {np.sum(self.causal_graph != 0)} edges")
+        # Detailed configuration info removed for cleaner output
+        # print(f"Asymmetric sampling: {self.asymmetric_method}")
+        # print(f"Respecting causal graph with {np.sum(self.causal_graph != 0)} edges")
 
         X_values = X.values
         n_instances = len(X_values)
@@ -672,8 +676,9 @@ class AsymmetricShapley(ShapleyFromScratch):
             else:
                 raise ValueError(f"Unkown method: {method}. Use 'exact' or 'monte_carlo' ")
             
-            if (i + 1) % max(1, n_instances//10) == 0:
-                print(f" Progress: {i + 1}/{n_instances} instances")
+            # Progress indicator removed for cleaner output
+            # if (i + 1) % max(1, n_instances//10) == 0:
+            #     print(f" Progress: {i + 1}/{n_instances} instances")
 
         return self.shap_values
 
@@ -703,11 +708,12 @@ class CausalShapley(ShapleyFromScratch):
         super().__init__(model, background_data, n_samples,random_state)
 
         # Store causal structure
-        print(f"Initialized components")
+        # Verbose initialization removed for cleaner output
+        # print(f"Initialized components")
 
         self.causal_graph_components,self.confounded_info, self.parents_dict = self._extract_causal_structure_for_shapley(discovered_adj,discovered_conf,feature_names)
         
-        print("Components initialized")
+        # print("Components initialized")
         
         self.n_samples = n_samples
         self.M_inner_samples = M_inner_samples
@@ -721,15 +727,16 @@ class CausalShapley(ShapleyFromScratch):
         # Precompute statistics for Gaussian conditional sampling
         self._precompute_statistics()
 
-        print("CausalShapleyPostInterventional Initialzied:")
-        print(f" Features: {self.n_features}")
-        print(f" Components: {len(self.causal_graph_components)} (in topological order)")
-        for comp_idx, comp in enumerate(self.causal_graph_components):
-            conf_status = "CONFOUNDED" if self.confounded_info.get(comp_idx, False) else "NON-CONFOUNDED"
-            parents = self.parents_dict.get(comp_idx, [])
-            print(f" Component {comp_idx}: features {comp}, {conf_status}, parents {parents}")
-        print(f" Outer samples (permutations): {n_samples}")
-        print(f" Inner samples (per coalition): {M_inner_samples}")
+        # Verbose initialization removed for cleaner output
+        # print("CausalShapleyPostInterventional Initialzied:")
+        # print(f" Features: {self.n_features}")
+        # print(f" Components: {len(self.causal_graph_components)} (in topological order)")
+        # for comp_idx, comp in enumerate(self.causal_graph_components):
+        #     conf_status = "CONFOUNDED" if self.confounded_info.get(comp_idx, False) else "NON-CONFOUNDED"
+        #     parents = self.parents_dict.get(comp_idx, [])
+        #     print(f" Component {comp_idx}: features {comp}, {conf_status}, parents {parents}")
+        # print(f" Outer samples (permutations): {n_samples}")
+        # print(f" Inner samples (per coalition): {M_inner_samples}")
 
     def _extract_causal_structure_for_shapley(self,
                                                causal_graph: np.ndarray,
@@ -779,9 +786,16 @@ class CausalShapley(ShapleyFromScratch):
         #Topological sort
         try: 
             topo_order = list(nx.topological_sort(G))
-        except:
-            print(f"Topological order from networkx failed"
-                  "Using simple ordering")
+        except nx.NetworkXError as e:
+            # Topological sort fails when graph has cycles
+            print(f"WARNING: Topological sort failed - graph contains cycles!")
+            print(f"         This violates the DAG assumption for Causal Shapley.")
+            print(f"         Using simple ordering (results may be unreliable).")
+            print(f"         Error: {e}")
+            topo_order = list(range(n_features))
+        except Exception as e:
+            print(f"WARNING: Topological sort failed with unexpected error: {e}")
+            print(f"         Using simple ordering.")
             topo_order = list(range(n_features))
         
         # Group confounded features into components
@@ -1117,8 +1131,9 @@ class CausalShapley(ShapleyFromScratch):
             Causal Shapley values (shape: n_samples x n_features)
         """
         print(f"Computing Causal Shapley values (post-interventional sampling)...")
-        print(f"    Permutations: {self.n_samples}")
-        print(f"    Samples per coalition {self.M_inner_samples}")
+        # Detailed configuration info removed for cleaner output
+        # print(f"    Permutations: {self.n_samples}")
+        # print(f"    Samples per coalition {self.M_inner_samples}")
 
         X_values = X.values
         n_instances = len(X_values)
@@ -1127,8 +1142,9 @@ class CausalShapley(ShapleyFromScratch):
         for i, instance in enumerate(X_values):
             self.shap_values[i] = self._compute_monte_carlo_causal_shapley(instance)
 
-            if ( i + 1) % max(1, n_instances // 10) == 0:
-                print(f" Progress: {i + 1}/{n_instances} instances")
+            # Progress indicator removed for cleaner output
+            # if ( i + 1) % max(1, n_instances // 10) == 0:
+            #     print(f" Progress: {i + 1}/{n_instances} instances")
 
         return self.shap_values
 
@@ -1321,6 +1337,12 @@ class ShapleyFlow:
         if len(children) == 0:
             return
 
+        # Extract visited nodes from current path to detect cycles
+        visited_in_path = set([node])
+        for edge in history:
+            visited_in_path.add(edge[0])
+            visited_in_path.add(edge[1])
+
         # Random permutation of children for THIS trial
         perm_children = self.rng.permutation(children).tolist()
 
@@ -1328,6 +1350,10 @@ class ShapleyFlow:
         current_value = self._evaluate_system(history,x_foreground,x_background)
 
         for child in perm_children:
+            # Skip if child creates a cycle (already in current path)
+            if child in visited_in_path:
+                continue
+                
             edge = (node, child)
             new_history = history + [edge]
 
@@ -1369,8 +1395,8 @@ class ShapleyFlow:
         for edge in self.edge_attributions:
             self.edge_attributions[edge] = 0.0
 
-
-        print(f"Computing Shapley Flow with { self.n_samples} trials...")
+        # Verbose trial info removed for cleaner output
+        # print(f"Computing Shapley Flow with { self.n_samples} trials...")
 
         #Run n_samples Monte Carlo trials
         for trial in range(self.n_samples):
@@ -1400,11 +1426,12 @@ class ShapleyFlow:
         expected_total = f_x - f_x_prime
         relative_error = abs(total_attribution - expected_total) / (abs(expected_total) + 1e-10)
 
-        print(f" Total edge attributions: {total_attribution:.6f}")
-        print(f" Expected (f(x) - f(x')) : {expected_total:.6f}")
-        print(f" Difference: {abs(total_attribution - expected_total)}" 
-              f"using {n_eval_samples} samples to calculate f(x) and f(x')")
-        print(f" Relative error: {relative_error:.4f}")
+        # Debug output removed for cleaner output
+        # print(f" Total edge attributions: {total_attribution:.6f}")
+        # print(f" Expected (f(x) - f(x')) : {expected_total:.6f}")
+        # print(f" Difference: {abs(total_attribution - expected_total)}" 
+        #       f" using {n_eval_samples} samples to calculate f(x) and f(x')")
+        # print(f" Relative error: {relative_error:.4f}")
 
         return self.edge_attributions
     
@@ -1484,13 +1511,13 @@ class ShapleyFlowWrapper:
         if not self.source_nodes:
             self.source_nodes = [i for i in range(self.n_features) if i!= y_index]
 
-        print(f"ShapleyFlowWrapper initialized:")
-        print(f" Features: {self.n_features}")
-        print(f" Y index: {self.y_index}")
-        print(f" Source nodes: {self.source_nodes}")
-        print(f" Edges: {sum(len(v) for v in self.graph_structure.values())}")
-        print(f" Using on-manifold perturbation with condtional expectatiosn")
-
+        # Verbose initialization removed for cleaner output
+        # print(f"ShapleyFlowWrapper initialized:")
+        # print(f" Features: {self.n_features}")
+        # print(f" Y index: {self.y_index}")
+        # print(f" Source nodes: {self.source_nodes}")
+        # print(f" Edges: {sum(len(v) for v in self.graph_structure.values())}")
+        # print(f" Using on-manifold perturbation with condtional expectatiosn")
 
     def _extract_directed_graph(self, causal_graph: np.ndarray) -> np.ndarray:
         """Extract directed edges from causal graph."""
@@ -1549,7 +1576,8 @@ class ShapleyFlowWrapper:
                 self.node_to_shap_idx[node_idx] = shap_idx
                 shap_idx +=1
 
-        print(f"Computing Shapley Flow for {n_instances} instances...")
+        # Removed for cleaner output
+        # print(f"Computing Shapley Flow for {n_instances} instances...")
 
         for i, instance in enumerate(X_values):
             # Create value functionss for this instance
@@ -1579,8 +1607,9 @@ class ShapleyFlowWrapper:
                 if node_idx != self.y_index:
                     self.shap_values[i, self.node_to_shap_idx[node_idx]] = score
 
-            if (i +1) % max(1, n_instances// 10) == 0:
-                print(f" Progress: {i + 1}/{n_instances}")
+            # Progress indicator removed for cleaner output
+            # if (i +1) % max(1, n_instances// 10) == 0:
+            #     print(f" Progress: {i + 1}/{n_instances}")
         
         return self.shap_values
     

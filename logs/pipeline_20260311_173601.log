@@ -1,0 +1,188 @@
+2026-03-11 17:36:01 | Log file: /Users/juanrios/Documents/master_thesis/logs/pipeline_20260311_173601.log
+2026-03-11 17:36:01 | 
+================================================================================
+2026-03-11 17:36:01 | EXPERIMENTAL PIPELINE: CAUSAL FEATURE IMPORTANCE COMPARISON
+2026-03-11 17:36:01 | ================================================================================
+2026-03-11 17:36:01 | 
+Configuration:
+2026-03-11 17:36:01 |   - Features: 10
+2026-03-11 17:36:01 |   - Samples: 1000
+2026-03-11 17:36:01 |   - Y Parents Ratio: 0.6
+2026-03-11 17:36:01 |   - Random State: 42
+2026-03-11 17:36:01 |   - Shapley Samples: 100
+2026-03-11 17:36:01 | 
+Directories:
+2026-03-11 17:36:01 |   - Synthetic Data: /Users/juanrios/Documents/master_thesis/data/synthetic
+2026-03-11 17:36:01 |   - Processed Data: /Users/juanrios/Documents/master_thesis/data/processed
+2026-03-11 17:36:01 |   - Causal Discovery: /Users/juanrios/Documents/master_thesis/data/causal
+2026-03-11 17:36:01 |   - Explainability: /Users/juanrios/Documents/master_thesis/data/explainability
+2026-03-11 17:36:01 |   - Models: /Users/juanrios/Documents/master_thesis/models
+2026-03-11 17:36:01 |   - Logs: /Users/juanrios/Documents/master_thesis/logs
+2026-03-11 17:36:01 | 
+================================================================================
+
+2026-03-11 17:36:01 | ================================================================================
+2026-03-11 17:36:01 | STEP 1: GENERATING SYNTHETIC DATASETS
+2026-03-11 17:36:01 | ================================================================================
+2026-03-11 17:36:01 | 
+[Dataset 1/6] Generating linear system without confounders
+2026-03-11 17:36:01 |   ✓ Saved: linear_no_conf_f10_s1000_p60 | Features: 10, Samples: 1000, Y parents: 6, Edges: 12, Confounders: 0
+2026-03-11 17:36:01 | 
+[Dataset 2/6] Generating linear system with confounders
+2026-03-11 17:36:01 |   ✓ Saved: linear_conf_f10_s1000_p60 | Features: 10, Samples: 1000, Y parents: 6, Edges: 12, Confounders: 2
+2026-03-11 17:36:01 | 
+[Dataset 3/6] Generating nonlinear system without confounders
+2026-03-11 17:36:01 |   ✓ Saved: nonlinear_no_conf_f10_s1000_p60 | Features: 10, Samples: 1000, Y parents: 6, Edges: 12, Confounders: 0
+2026-03-11 17:36:01 | 
+[Dataset 4/6] Generating nonlinear system with confounders
+2026-03-11 17:36:01 |   ✓ Saved: nonlinear_conf_f10_s1000_p60 | Features: 10, Samples: 1000, Y parents: 6, Edges: 12, Confounders: 2
+2026-03-11 17:36:01 | 
+[Dataset 5/6] Generating mixed system without confounders
+2026-03-11 17:36:01 |   ✓ Saved: mixed_no_conf_f10_s1000_p60 | Features: 10, Samples: 1000, Y parents: 6, Edges: 12, Confounders: 0
+2026-03-11 17:36:01 | 
+[Dataset 6/6] Generating mixed system with confounders
+2026-03-11 17:36:01 |   ✓ Saved: mixed_conf_f10_s1000_p60 | Features: 10, Samples: 1000, Y parents: 6, Edges: 12, Confounders: 2
+2026-03-11 17:36:01 | 
+================================================================================
+2026-03-11 17:36:01 | Step 1 Complete: 6 datasets generated
+2026-03-11 17:36:01 | ================================================================================
+
+2026-03-11 17:36:01 | ================================================================================
+2026-03-11 17:36:01 | STEP 5: CALCULATING SHAPLEY VALUES
+2026-03-11 17:36:01 | ================================================================================
+2026-03-11 17:36:01 | 
+[Dataset 1/6] Processing linear_no_conf_f10_s1000_p60
+2026-03-11 17:36:01 |   [Progress: TrueShapley] Calculating ground truth...
+2026-03-11 17:36:04 |   ✓ TrueShapley completed
+2026-03-11 17:36:04 |   [Progress: 1/14] LGBM - ShapleyFromScratch
+2026-03-11 17:37:05 |   [Progress: 2/14] LGBM + PC - AsymmetricShapley
+2026-03-11 17:38:05 |   [Progress: 3/14] LGBM + PC - CausalShapley
+2026-03-11 17:41:52 |   [Progress: 4/14] LGBM + PC - ShapleyFlow
+2026-03-11 17:42:37 |   [Progress: 5/14] LGBM + LINGAM - AsymmetricShapley
+2026-03-11 17:43:38 |   [Progress: 6/14] LGBM + LINGAM - CausalShapley
+2026-03-11 17:48:18 |   [Progress: 7/14] LGBM + LINGAM - ShapleyFlow
+2026-03-11 17:50:37 |   [Progress: 8/14] NN - ShapleyFromScratch
+2026-03-11 17:50:47 |   [Progress: 9/14] NN + PC - AsymmetricShapley
+2026-03-11 17:50:56 |   [Progress: 10/14] NN + PC - CausalShapley
+2026-03-11 17:54:12 |   [Progress: 11/14] NN + PC - ShapleyFlow
+2026-03-11 17:54:19 |   [Progress: 12/14] NN + LINGAM - AsymmetricShapley
+2026-03-11 17:54:29 |   [Progress: 13/14] NN + LINGAM - CausalShapley
+2026-03-11 17:58:39 |   [Progress: 14/14] NN + LINGAM - ShapleyFlow
+2026-03-11 17:58:59 |   ✓ Completed linear_no_conf_f10_s1000_p60 in 23.0 minutes
+2026-03-11 17:58:59 | 
+[Dataset 2/6] Processing linear_conf_f10_s1000_p60
+2026-03-11 17:58:59 |   [Progress: TrueShapley] Calculating ground truth...
+2026-03-11 17:59:02 |   ✓ TrueShapley completed
+2026-03-11 17:59:02 |   [Progress: 1/14] LGBM - ShapleyFromScratch
+2026-03-11 17:59:40 |   [Progress: 2/14] LGBM + PC - AsymmetricShapley
+2026-03-11 18:00:18 |   [Progress: 3/14] LGBM + PC - CausalShapley
+2026-03-11 18:01:10 |   [Progress: 4/14] LGBM + PC - ShapleyFlow
+2026-03-11 18:02:14 |   [Progress: 5/14] LGBM + LINGAM - AsymmetricShapley
+2026-03-11 18:02:53 |   [Progress: 6/14] LGBM + LINGAM - CausalShapley
+2026-03-11 18:06:32 |   [Progress: 7/14] LGBM + LINGAM - ShapleyFlow
+2026-03-11 18:13:47 |   [Progress: 8/14] NN - ShapleyFromScratch
+2026-03-11 18:13:52 |   [Progress: 9/14] NN + PC - AsymmetricShapley
+2026-03-11 18:13:56 |   [Progress: 10/14] NN + PC - CausalShapley
+2026-03-11 18:14:23 |   [Progress: 11/14] NN + PC - ShapleyFlow
+2026-03-11 18:14:30 |   [Progress: 12/14] NN + LINGAM - AsymmetricShapley
+2026-03-11 18:14:35 |   [Progress: 13/14] NN + LINGAM - CausalShapley
+2026-03-11 18:17:44 |   [Progress: 14/14] NN + LINGAM - ShapleyFlow
+2026-03-11 18:18:39 |   ✓ Completed linear_conf_f10_s1000_p60 in 19.7 minutes
+2026-03-11 18:18:39 | 
+[Dataset 3/6] Processing nonlinear_no_conf_f10_s1000_p60
+2026-03-11 18:18:39 |   [Progress: TrueShapley] Calculating ground truth...
+2026-03-11 18:18:42 |   ✓ TrueShapley completed
+2026-03-11 18:18:42 |   [Progress: 1/14] LGBM - ShapleyFromScratch
+2026-03-11 18:19:06 |   [Progress: 2/14] LGBM + PC - AsymmetricShapley
+2026-03-11 18:19:29 |   [Progress: 3/14] LGBM + PC - CausalShapley
+2026-03-11 18:24:43 |   [Progress: 4/14] LGBM + PC - ShapleyFlow
+2026-03-11 18:26:25 |   [Progress: 5/14] LGBM + LINGAM - AsymmetricShapley
+2026-03-11 18:26:48 |   [Progress: 6/14] LGBM + LINGAM - CausalShapley
+2026-03-11 18:29:26 |   [Progress: 7/14] LGBM + LINGAM - ShapleyFlow
+2026-03-11 18:30:51 |   [Progress: 8/14] NN - ShapleyFromScratch
+2026-03-11 18:30:55 |   [Progress: 9/14] NN + PC - AsymmetricShapley
+2026-03-11 18:30:59 |   [Progress: 10/14] NN + PC - CausalShapley
+2026-03-11 18:35:53 |   [Progress: 11/14] NN + PC - ShapleyFlow
+2026-03-11 18:36:06 |   [Progress: 12/14] NN + LINGAM - AsymmetricShapley
+2026-03-11 18:36:10 |   [Progress: 13/14] NN + LINGAM - CausalShapley
+2026-03-11 18:38:25 |   [Progress: 14/14] NN + LINGAM - ShapleyFlow
+2026-03-11 18:38:35 |   ✓ Completed nonlinear_no_conf_f10_s1000_p60 in 19.9 minutes
+2026-03-11 18:38:35 | 
+[Dataset 4/6] Processing nonlinear_conf_f10_s1000_p60
+2026-03-11 18:38:35 |   [Progress: TrueShapley] Calculating ground truth...
+2026-03-11 18:38:38 |   ✓ TrueShapley completed
+2026-03-11 18:38:38 |   [Progress: 1/14] LGBM - ShapleyFromScratch
+2026-03-11 18:38:59 |   [Progress: 2/14] LGBM + PC - AsymmetricShapley
+2026-03-11 18:39:20 |   [Progress: 3/14] LGBM + PC - CausalShapley
+2026-03-11 18:46:01 |   [Progress: 4/14] LGBM + PC - ShapleyFlow
+2026-03-11 18:48:20 |   [Progress: 5/14] LGBM + LINGAM - AsymmetricShapley
+2026-03-11 18:48:41 |   [Progress: 6/14] LGBM + LINGAM - CausalShapley
+2026-03-11 18:52:58 |   [Progress: 7/14] LGBM + LINGAM - ShapleyFlow
+2026-03-11 18:53:26 |   [Progress: 8/14] NN - ShapleyFromScratch
+2026-03-11 18:53:33 |   [Progress: 9/14] NN + PC - AsymmetricShapley
+2026-03-11 18:53:40 |   [Progress: 10/14] NN + PC - CausalShapley
+2026-03-11 19:00:04 |   [Progress: 11/14] NN + PC - ShapleyFlow
+2026-03-11 19:00:24 |   [Progress: 12/14] NN + LINGAM - AsymmetricShapley
+2026-03-11 19:00:31 |   [Progress: 13/14] NN + LINGAM - CausalShapley
+2026-03-11 19:04:32 |   [Progress: 14/14] NN + LINGAM - ShapleyFlow
+2026-03-11 19:04:36 |   ✓ Completed nonlinear_conf_f10_s1000_p60 in 26.0 minutes
+2026-03-11 19:04:36 | 
+[Dataset 5/6] Processing mixed_no_conf_f10_s1000_p60
+2026-03-11 19:04:36 |   [Progress: TrueShapley] Calculating ground truth...
+2026-03-11 19:04:39 |   ✓ TrueShapley completed
+2026-03-11 19:04:39 |   [Progress: 1/14] LGBM - ShapleyFromScratch
+2026-03-11 19:05:02 |   [Progress: 2/14] LGBM + PC - AsymmetricShapley
+2026-03-11 19:05:25 |   [Progress: 3/14] LGBM + PC - CausalShapley
+2026-03-11 19:07:59 |   [Progress: 4/14] LGBM + PC - ShapleyFlow
+2026-03-11 19:12:11 |   [Progress: 5/14] LGBM + LINGAM - AsymmetricShapley
+2026-03-11 19:12:35 |   [Progress: 6/14] LGBM + LINGAM - CausalShapley
+2026-03-11 19:13:28 |   [Progress: 7/14] LGBM + LINGAM - ShapleyFlow
+2026-03-11 19:14:11 |   [Progress: 8/14] NN - ShapleyFromScratch
+2026-03-11 19:14:27 |   [Progress: 9/14] NN + PC - AsymmetricShapley
+2026-03-11 19:14:42 |   [Progress: 10/14] NN + PC - CausalShapley
+2026-03-11 19:16:57 |   [Progress: 11/14] NN + PC - ShapleyFlow
+2026-03-11 19:17:32 |   [Progress: 12/14] NN + LINGAM - AsymmetricShapley
+2026-03-11 19:17:48 |   [Progress: 13/14] NN + LINGAM - CausalShapley
+2026-03-11 19:18:25 |   [Progress: 14/14] NN + LINGAM - ShapleyFlow
+2026-03-11 19:18:31 |   ✓ Completed mixed_no_conf_f10_s1000_p60 in 13.9 minutes
+2026-03-11 19:18:31 | 
+[Dataset 6/6] Processing mixed_conf_f10_s1000_p60
+2026-03-11 19:18:31 |   [Progress: TrueShapley] Calculating ground truth...
+2026-03-11 19:18:34 |   ✓ TrueShapley completed
+2026-03-11 19:18:34 |   [Progress: 1/14] LGBM - ShapleyFromScratch
+2026-03-11 19:18:56 |   [Progress: 2/14] LGBM + PC - AsymmetricShapley
+2026-03-11 19:19:17 |   [Progress: 3/14] LGBM + PC - CausalShapley
+2026-03-11 19:23:38 |   [Progress: 4/14] LGBM + PC - ShapleyFlow
+2026-03-11 19:25:27 |   [Progress: 5/14] LGBM + LINGAM - AsymmetricShapley
+2026-03-11 19:25:49 |   [Progress: 6/14] LGBM + LINGAM - CausalShapley
+2026-03-11 19:29:09 |   [Progress: 7/14] LGBM + LINGAM - ShapleyFlow
+2026-03-11 19:29:39 |   [Progress: 8/14] NN - ShapleyFromScratch
+2026-03-11 19:29:46 |   [Progress: 9/14] NN + PC - AsymmetricShapley
+2026-03-11 19:29:53 |   [Progress: 10/14] NN + PC - CausalShapley
+2026-03-11 19:33:54 |   [Progress: 11/14] NN + PC - ShapleyFlow
+2026-03-11 19:34:10 |   [Progress: 12/14] NN + LINGAM - AsymmetricShapley
+2026-03-11 19:34:17 |   [Progress: 13/14] NN + LINGAM - CausalShapley
+2026-03-11 19:37:21 |   [Progress: 14/14] NN + LINGAM - ShapleyFlow
+2026-03-11 19:37:25 |   ✓ Completed mixed_conf_f10_s1000_p60 in 18.9 minutes
+2026-03-11 19:37:25 | 
+================================================================================
+2026-03-11 19:37:25 | Step 5 Complete: Shapley values calculated for all combinations
+2026-03-11 19:37:25 | ================================================================================
+
+2026-03-11 19:37:25 | 
+================================================================================
+2026-03-11 19:37:25 | PIPELINE COMPLETED SUCCESSFULLY!
+2026-03-11 19:37:25 | ================================================================================
+2026-03-11 19:37:25 | 
+Total execution time: 121.4 minutes (2.02 hours)
+2026-03-11 19:37:25 | 
+Results saved in:
+2026-03-11 19:37:25 |   - Synthetic data: /Users/juanrios/Documents/master_thesis/data/synthetic
+2026-03-11 19:37:25 |   - Processed data: /Users/juanrios/Documents/master_thesis/data/processed
+2026-03-11 19:37:25 |   - Causal discovery: /Users/juanrios/Documents/master_thesis/data/causal
+2026-03-11 19:37:25 |   - Models: /Users/juanrios/Documents/master_thesis/models
+2026-03-11 19:37:25 |   - Explainability: /Users/juanrios/Documents/master_thesis/data/explainability
+2026-03-11 19:37:25 |   - Logs: /Users/juanrios/Documents/master_thesis/logs
+2026-03-11 19:37:25 | 
+================================================================================
+
