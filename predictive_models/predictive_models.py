@@ -241,7 +241,7 @@ class LGBMRegressor(PredictiveModel):
     
 class NeuralNetRegressor(PredictiveModel):
 
-    def __init__(self, random_state: int = 42, n_trials: int =20):
+    def __init__(self, random_state: int = 42, n_trials: int =50):
         super().__init__(random_state=random_state)
         self.n_trials = n_trials
         self.best_params = None

@@ -61,7 +61,7 @@ from utils.utils import visualize_comparison, visualize_causal_graph, plot_shapl
 # Experimental parameters
 N_FEATURES = 10
 N_SAMPLES = 1000
-Y_PARENTS_RATIO = 0.6
+Y_PARENTS_RATIO = 0.5
 NOISE_STD = 0.5
 EDGE_PROBABILITY = 0.1
 MIN_CONNECTED_EDGES = 2
@@ -307,7 +307,7 @@ def run_causal_discovery(dataset_configs: List[Dict]):
         logging.info(f"\n[Dataset {idx}/6] Processing {filename}")
         
         # Load data and ground truth
-        data_path = SYNTHETIC_DIR / f"{filename}.parquet"
+        data_path = PROCESSED_DIR / f"{filename}_train.parquet"
         data = pd.read_parquet(data_path)
         
         adj_path = SYNTHETIC_DIR / f"{filename}_adjacency.npy"
@@ -328,6 +328,13 @@ def run_causal_discovery(dataset_configs: List[Dict]):
         logging.info("  Running PC...")
         results_pc = pc_fci.get_causal_relationships(data)
         
+        # Also run discovery on X_train for use in Step 5
+        X_train = data.drop(columns=['Y'])
+        
+        logging.info("  Discovering structure on X_train for Step 5...")
+        lingam_train_adj, _ = lingam_fci.discover_structure(X_train)
+        pc_train_adj, _ = pc_fci.discover_structure(X_train)
+        
         # Save discovery results
         for method_name, results in [('lingam', results_lingam), ('pc', results_pc)]:
             # Save results as JSON
@@ -340,6 +347,14 @@ def run_causal_discovery(dataset_configs: List[Dict]):
             results_path = CAUSAL_DIR / f"{filename}_{method_name}_results.json"
             with open(results_path, 'w') as f:
                 json.dump(results_json, f, indent=2)
+            
+            # Save train adjacency matrix for Step 5
+            if method_name == 'lingam':
+                train_adj_path = CAUSAL_DIR / f"{filename}_{method_name}_train_adjacency.npy"
+                np.save(train_adj_path, lingam_train_adj)
+            else:  # pc
+                train_adj_path = CAUSAL_DIR / f"{filename}_{method_name}_train_adjacency.npy"
+                np.save(train_adj_path, pc_train_adj)
             
             # Compare with ground truth
             comparison = compare_with_ground_truth(
@@ -664,14 +679,9 @@ def calculate_all_shapley_values(dataset_configs: List[Dict]):
                 confounders = discovery_results['confounders']
                 feature_names = discovery_results['feature_names']
                 
-                # Discover structure for asymmetric shapley
-                if discovery_method == 'pc':
-                    discoverer = PCWithFCI(alpha=PC_ALPHA, indep_test=INDEP_TEST)
-                else:
-                    discoverer = LiNGAMWithFCI(alpha=LINGAM_ALPHA, indep_test=INDEP_TEST)
-                
-                # TODO: this is not necessary the causal_graph from step 3 should be enought
-                discovered_adj, _ = discoverer.discover_structure(X_train)
+                # Load discovered adjacency matrix from X_train (computed in Step 3)
+                train_adj_path = CAUSAL_DIR / f"{filename}_{discovery_method}_train_adjacency.npy"
+                discovered_adj = np.load(train_adj_path)
                 
                 # Calculate AsymmetricShapley
                 logging.info(f"  [Progress: {progress_counter}/{total_combinations}] {model_name.upper()} + {discovery_method.upper()} - AsymmetricShapley")
