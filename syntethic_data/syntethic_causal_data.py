@@ -198,6 +198,17 @@ class SyntheticCausalSystem:
             # Add Gausian noise 
             data[:, j] += np.random.normal(0, noise_std, n_samples)
 
+        # Clip and normalize features to prevent extreme values from compounding
+        # This prevents exponential explosion when nonlinear functions are chained
+        for j in range(self.n_features):
+            # First clip extreme outliers (beyond 5 std devs)
+            mean_j = np.mean(data[:, j])
+            std_j = np.std(data[:, j])
+            if std_j > 0:
+                data[:, j] = np.clip(data[:, j], mean_j - 5*std_j, mean_j + 5*std_j)
+                # Then normalize to unit std
+                data[:, j] = (data[:, j] - np.mean(data[:, j])) / np.std(data[:, j])
+
         # Generate outcome variable Y with non-linear relationships
         y = np.zeros(n_samples)
 
@@ -210,7 +221,11 @@ class SyntheticCausalSystem:
         y_func_types = {}
         for parent_idx in y_parents_indices:
             func_type = np.random.choice(["square","cube","tanh","sin"])
-            coef = np.random.uniform(0.3, 0.8) * np.random.choice([-1, 1])
+            # Use smaller coefficients for extreme functions
+            if func_type in ["square", "cube"]:
+                coef = np.random.uniform(0.1, 0.3) * np.random.choice([-1, 1])
+            else:
+                coef = np.random.uniform(0.3, 0.8) * np.random.choice([-1, 1])
             y_coefficients[int(parent_idx)] = coef
             y_func_types[int(parent_idx)] = func_type
 
@@ -313,6 +328,17 @@ class SyntheticCausalSystem:
         for j in range(self.n_features):
             data[:, j] += np.random.normal(0, noise_std, n_samples)
 
+        # Clip and normalize features to prevent extreme values from compounding
+        # This prevents exponential explosion when nonlinear functions are chained
+        for j in range(self.n_features):
+            # First clip extreme outliers (beyond 5 std devs)
+            mean_j = np.mean(data[:, j])
+            std_j = np.std(data[:, j])
+            if std_j > 0:
+                data[:, j] = np.clip(data[:, j], mean_j - 5*std_j, mean_j + 5*std_j)
+                # Then normalize to unit std
+                data[:, j] = (data[:, j] - np.mean(data[:, j])) / np.std(data[:, j])
+
         # Generate outcome variable Y with mixed relationship
         y = np.zeros(n_samples)
 
@@ -332,7 +358,11 @@ class SyntheticCausalSystem:
                 y += coef * data[:, parent_idx]
             else: # Non-linear
                 func_type = np.random.choice(["square","cube","tanh","sin"])
-                coef = np.random.uniform(0.3, 0.8) * np.random.choice([-1, 1])
+                # Use smaller coefficients for extreme functions
+                if func_type in ["square", "cube"]:
+                    coef = np.random.uniform(0.1, 0.3) * np.random.choice([-1, 1])
+                else:
+                    coef = np.random.uniform(0.3, 0.8) * np.random.choice([-1, 1])
                 y_coefficients[int(parent_idx)] = coef
                 y_func_types[int(parent_idx)] = func_type
 

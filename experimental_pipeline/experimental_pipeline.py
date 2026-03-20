@@ -38,6 +38,7 @@ warnings.filterwarnings('ignore')
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+from sklearn.metrics import r2_score
 
 # Add parent directory to path
 sys.path.append('/Users/juanrios/Documents/master_thesis')
@@ -63,7 +64,7 @@ N_FEATURES = 10
 N_SAMPLES = 1000
 Y_PARENTS_RATIO = 0.5
 NOISE_STD = 0.5
-EDGE_PROBABILITY = 0.1
+EDGE_PROBABILITY = 0.3
 MIN_CONNECTED_EDGES = 2
 RANDOM_STATE = 42
 
@@ -431,8 +432,8 @@ def train_all_models(dataset_configs: List[Dict]):
         lgbm_model.fit(X_train, y_train)
         
         # Evaluate LGBM
-        lgbm_score = lgbm_model.model.score(X_test, y_test)
         lgbm_pred = lgbm_model.predict(X_test)
+        lgbm_score = r2_score(y_test, lgbm_pred)
         lgbm_mse = np.mean((y_test - lgbm_pred) ** 2)
         lgbm_mae = np.mean(np.abs(y_test - lgbm_pred))
         lgbm_rmse = np.sqrt(lgbm_mse)
@@ -448,8 +449,8 @@ def train_all_models(dataset_configs: List[Dict]):
         nn_model.fit(X_train, y_train)
         
         # Evaluate NN
-        nn_score = nn_model.model.score(X_test, y_test)
         nn_pred = nn_model.predict(X_test)
+        nn_score = r2_score(y_test, nn_pred)
         nn_mse = np.mean((y_test - nn_pred) ** 2)
         nn_mae = np.mean(np.abs(y_test - nn_pred))
         nn_rmse = np.sqrt(nn_mse)
