@@ -19,6 +19,28 @@ class SyntheticCausalSystem:
         self.adjacency_matrix = None
         self.confounders_pais = []
         self.y_generation_params = None  # Will store Y generation parameters
+    
+    def _normalize_variable(self, values: np.ndarray, clip_std: float = 5.0) -> np.ndarray:
+        """Normalize a variable by clipping outliers and standardizing.
+        
+        Args:
+            values: Array of values to normalize
+            clip_std: Number of standard deviations for clipping outliers
+            
+        Returns:
+            Normalized values with mean=0 and std=1
+        """
+        mean_val = np.mean(values)
+        std_val = np.std(values)
+        
+        if std_val > 1e-10:  # Avoid division by zero
+            # Clip extreme outliers
+            clipped = np.clip(values, mean_val - clip_std * std_val, mean_val + clip_std * std_val)
+            # Standardize to unit variance
+            normalized = (clipped - np.mean(clipped)) / np.std(clipped)
+            return normalized
+        else:
+            return values - mean_val  # Just center if std is too small
 
     def _create_dag_structure(self) -> np.ndarray:
 
@@ -40,10 +62,12 @@ class SyntheticCausalSystem:
 
         return adjacency
     
-    def _add_confounders(self, n_confounders: int =2)->List[Tuple[int,List[int]]]:
+    def _add_confounders(self, n_confounders: int =5)->List[Tuple[int,List[int]]]:
 
         confounder_info=[]
         available_nodes= list(range(self.n_features))
+
+        n_confounders = min(n_confounders, int(self.n_features * 0.2))  # Limit number of confounders to avoid excessive overlap
 
         for _ in range(n_confounders):
             if len(available_nodes)<2:
@@ -77,7 +101,7 @@ class SyntheticCausalSystem:
         confounder_info = []
 
         if with_confounders:
-            confounder_info = self._add_confounders(n_confounders=2)
+            confounder_info = self._add_confounders()
             
             for conf_id, affected_nodes in confounder_info:
                 confounder = np.random.rand(n_samples)
@@ -87,13 +111,17 @@ class SyntheticCausalSystem:
                     coef = np.random.uniform(0.5, 1.5) * np.random.choice([-1,1])
                     data[:, node] += coef * confounder
         
-        # Generate data followin the causal structure
+        # Generate data following the causal structure
 
         for j in range(self.n_features):
-            # Add contributions from paren nodes
+            # Add contributions from parent nodes
             parents = np.where(weights[:,j]!=0)[0]
             for parent in parents:
                 data[:,j] += weights[parent,j] * data[:, parent]
+            
+            # Normalize after accumulating parent contributions to prevent explosion
+            if len(parents) > 0:
+                data[:,j] = self._normalize_variable(data[:,j])
 
             # Add Gaussian noise
             data[:,j] += np.random.normal(0,noise_std,n_samples)
@@ -159,7 +187,7 @@ class SyntheticCausalSystem:
         # Add confounders if requested
         confounder_info = []
         if with_confounders:
-            confounder_info = self._add_confounders(n_confounders=2)
+            confounder_info = self._add_confounders()
 
             for conf_id, affected_nodes in confounder_info:
                 # Generate confounder variable
@@ -194,20 +222,13 @@ class SyntheticCausalSystem:
                     data[:, j] += coef * np.tanh(data[:, parent])
                 else:
                     data[:, j] += coef * np.sin(data[:, parent])
+            
+            # Normalize after accumulating parent contributions to prevent explosion
+            if len(parents) > 0:
+                data[:, j] = self._normalize_variable(data[:, j])
 
-            # Add Gausian noise 
+            # Add Gaussian noise 
             data[:, j] += np.random.normal(0, noise_std, n_samples)
-
-        # Clip and normalize features to prevent extreme values from compounding
-        # This prevents exponential explosion when nonlinear functions are chained
-        for j in range(self.n_features):
-            # First clip extreme outliers (beyond 5 std devs)
-            mean_j = np.mean(data[:, j])
-            std_j = np.std(data[:, j])
-            if std_j > 0:
-                data[:, j] = np.clip(data[:, j], mean_j - 5*std_j, mean_j + 5*std_j)
-                # Then normalize to unit std
-                data[:, j] = (data[:, j] - np.mean(data[:, j])) / np.std(data[:, j])
 
         # Generate outcome variable Y with non-linear relationships
         y = np.zeros(n_samples)
@@ -237,6 +258,11 @@ class SyntheticCausalSystem:
                 y += coef * np.tanh(data[:, parent_idx])
             else:
                 y += coef * np.sin(data[:, parent_idx])
+        
+        # Normalize Y to prevent extreme values
+        if len(y_parents_indices) > 0:
+            y = self._normalize_variable(y)
+        
         # Add noise to Y
         y += np.random.normal(0 ,noise_std, n_samples)
 
@@ -291,7 +317,7 @@ class SyntheticCausalSystem:
         # Add confounders if requested
         confounder_info = []
         if with_confounders:
-            confounder_info = self._add_confounders(n_confounders=2)
+            confounder_info = self._add_confounders()
 
             for  conf_id, affected_nodes in confounder_info:
                 # Generate confounder variable
@@ -305,6 +331,9 @@ class SyntheticCausalSystem:
                         coef = np.random.uniform(0.3, 0.8) * np.random.choice([-1, 1])
                         data[:, node] += coef * np.tanh(confounder)
         # Generate data following the causal structure
+        # Track which features have been updated
+        features_updated = [False] * self.n_features
+        
         for edge_idx, (parent, child) in enumerate(edges):
             edge_type = edge_types[edge_idx]
 
@@ -323,21 +352,15 @@ class SyntheticCausalSystem:
                     data[:, child] += coef * np.tanh(data[:, parent])
                 else:
                     data[:, child] += coef * np.sin(data[:, parent])
+            
+            features_updated[child] = True
+            
+            # Normalize after each edge to prevent accumulation of extreme values
+            data[:, child] = self._normalize_variable(data[:, child])
 
         # Add noise to each variable
         for j in range(self.n_features):
             data[:, j] += np.random.normal(0, noise_std, n_samples)
-
-        # Clip and normalize features to prevent extreme values from compounding
-        # This prevents exponential explosion when nonlinear functions are chained
-        for j in range(self.n_features):
-            # First clip extreme outliers (beyond 5 std devs)
-            mean_j = np.mean(data[:, j])
-            std_j = np.std(data[:, j])
-            if std_j > 0:
-                data[:, j] = np.clip(data[:, j], mean_j - 5*std_j, mean_j + 5*std_j)
-                # Then normalize to unit std
-                data[:, j] = (data[:, j] - np.mean(data[:, j])) / np.std(data[:, j])
 
         # Generate outcome variable Y with mixed relationship
         y = np.zeros(n_samples)
@@ -374,6 +397,10 @@ class SyntheticCausalSystem:
                     y += coef * np.tanh(data[:, parent_idx])
                 else:
                     y += coef * np.sin(data[:, parent_idx])
+        
+        # Normalize Y to prevent extreme values
+        if len(y_parents_indices) > 0:
+            y = self._normalize_variable(y)
 
         # Add noise to Y
         y += np.random.normal(0, noise_std, n_samples)

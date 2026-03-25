@@ -2,14 +2,14 @@
 Comprehensive Experimental Pipeline for Causal Feature Importance Methods
 
 This script runs a complete experimental pipeline comparing different Shapley value
-methods on synthetic causal data with known ground truth.
+methods on synthetic causal data.
 
 Steps:
 1. Generate synthetic datasets (6 systems: linear/nonlinear/mixed × confounders/no-confounders)
 2. Create standardized train/test splits
 3. Run causal discovery (PC and LiNGAM)
 4. Train predictive models (LGBM and NN)
-5. Calculate Shapley values using all methods and compare against ground truth
+5. Calculate Shapley values using all methods and compare across causal discovery algorithms
 
 Author: Juan Rios
 """
@@ -39,6 +39,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from sklearn.metrics import r2_score
+from scipy.stats import spearmanr
 
 # Add parent directory to path
 sys.path.append('/Users/juanrios/Documents/master_thesis')
@@ -50,7 +51,7 @@ from predictive_models.predictive_models import (
 )
 from explainability_models import (
     ShapleyExplainer, ShapleyFromScratch, AsymmetricShapley,
-    ShapleyFlowWrapper, CausalShapley, TrueShapley
+    ShapleyFlowWrapper, CausalShapley
 )
 from utils.utils import visualize_comparison, visualize_causal_graph, plot_shapley_feature_comparison
 
@@ -60,11 +61,11 @@ from utils.utils import visualize_comparison, visualize_causal_graph, plot_shapl
 # ============================================================================
 
 # Experimental parameters
-N_FEATURES = 10
+N_FEATURES = 50
 N_SAMPLES = 1000
 Y_PARENTS_RATIO = 0.5
 NOISE_STD = 0.5
-EDGE_PROBABILITY = 0.3
+EDGE_PROBABILITY = 0.5
 MIN_CONNECTED_EDGES = 2
 RANDOM_STATE = 42
 
@@ -486,98 +487,25 @@ def train_all_models(dataset_configs: List[Dict]):
 
 
 # ============================================================================
-# Helper Functions
-# ============================================================================
-
-def reconstruct_true_generator(y_generation_params: Dict):
-    """
-    Reconstruct the true Y generator function from saved parameters.
-    
-    Parameters:
-    -----------
-    y_generation_params : Dict
-        Dictionary containing generation parameters
-    
-    Returns:
-    --------
-    callable : Function that computes Y from X
-    """
-    parent_indices = y_generation_params['parent_indices']
-    coefficients = y_generation_params['coefficients']
-    gen_type = y_generation_params['type']
-    
-    # Convert string keys back to integers
-    coefficients = {int(k): v for k, v in coefficients.items()}
-    
-    if gen_type == 'linear':
-        def generator(X):
-            """Linear generator: Y = sum(coef_i * X_i)"""
-            y = np.zeros(X.shape[0])
-            for parent_idx in parent_indices:
-                y += coefficients[parent_idx] * X[:, parent_idx]
-            return y
-            
-    elif gen_type == 'nonlinear':
-        func_types = y_generation_params['func_types']
-        func_types = {int(k): v for k, v in func_types.items()}
-        
-        def generator(X):
-            """Nonlinear generator: Y = sum(coef_i * f_i(X_i))"""
-            y = np.zeros(X.shape[0])
-            for parent_idx in parent_indices:
-                coef = coefficients[parent_idx]
-                func_type = func_types[parent_idx]
-                if func_type == 'square':
-                    y += coef * X[:, parent_idx] ** 2
-                elif func_type == 'cube':
-                    y += coef * X[:, parent_idx] ** 3
-                elif func_type == 'tanh':
-                    y += coef * np.tanh(X[:, parent_idx])
-                else:  # sin
-                    y += coef * np.sin(X[:, parent_idx])
-            return y
-            
-    else:  # mixed
-        func_types = y_generation_params['func_types']
-        func_types = {int(k): v for k, v in func_types.items()}
-        
-        def generator(X):
-            """Mixed generator: Y = sum(coef_i * f_i(X_i)) with linear and nonlinear f_i"""
-            y = np.zeros(X.shape[0])
-            for parent_idx in parent_indices:
-                coef = coefficients[parent_idx]
-                func_type = func_types[parent_idx]
-                if func_type == 'linear':
-                    y += coef * X[:, parent_idx]
-                elif func_type == 'square':
-                    y += coef * X[:, parent_idx] ** 2
-                elif func_type == 'cube':
-                    y += coef * X[:, parent_idx] ** 3
-                elif func_type == 'tanh':
-                    y += coef * np.tanh(X[:, parent_idx])
-                else:  # sin
-                    y += coef * np.sin(X[:, parent_idx])
-            return y
-    
-    return generator
-
-
-# ============================================================================
 # Step 5: Calculate Shapley Values
 # ============================================================================
 
 def calculate_all_shapley_values(dataset_configs: List[Dict]):
     """
-    Calculate Shapley values using all methods for all combinations.
+    Calculate and save Shapley values using all explainability methods.
     
     For each dataset:
-      - TrueShapley (1 per dataset)
       - For each model (LGBM, NN):
-        - ShapleyFromScratch
+        - ShapleyFromScratch (no causal graph)
         - For each discovery method (PC, LiNGAM):
           - AsymmetricShapley
           - CausalShapley
           - ShapleyFlowWrapper
+    
+    Saves:
+    ------
+    - shapley_values.npy: SHAP values for each instance
+    - feature_importance.csv: Average feature importance
     
     Parameters:
     -----------
@@ -609,32 +537,11 @@ def calculate_all_shapley_values(dataset_configs: List[Dict]):
         background_data = X_train.sample(n=int(len(X_train) * BACKGROUND_RATIO), random_state=RANDOM_STATE)
         test_instances = X_test.sample(n=int(len(X_test) * TEST_INSTANCES_RATIO), random_state=RANDOM_STATE)
         
-        # Load Y generation parameters and reconstruct true generator
-        generator_params_path = SYNTHETIC_DIR / f"{filename}_y_params.json"
-        with open(generator_params_path, 'r') as f:
-            y_generation_params = json.load(f)
-        
-        true_generator = reconstruct_true_generator(y_generation_params)
-        y_parent_indices = y_generation_params['parent_indices']
-        
-        # Calculate TrueShapley (ground truth)
-        logging.info("  [Progress: TrueShapley] Calculating ground truth...")
-        true_shapley_explainer = TrueShapley(
-            true_generator=true_generator,
-            background_data=background_data,
-            n_samples=N_SHAPLEY_SAMPLES,
-            random_state=RANDOM_STATE
-        )
-        true_shapley_values = true_shapley_explainer.explain(test_instances)
-        true_importance = true_shapley_explainer.get_feature_importance()
-        
-        # Save TrueShapley results
-        true_dir = EXPLAINABILITY_DIR / filename / 'true'
-        true_dir.mkdir(parents=True, exist_ok=True)
-        
-        np.save(true_dir / 'shapley_values.npy', true_shapley_values)
-        true_importance.to_csv(true_dir / 'feature_importance.csv', index=False)
-        logging.info(f"  ✓ TrueShapley completed")
+        # Load Y parent indices (needed for parent identification metrics)
+        metadata_path = SYNTHETIC_DIR / f"{filename}_metadata.json"
+        with open(metadata_path, 'r') as f:
+            metadata = json.load(f)
+        y_parent_indices = metadata['y_parent_indices']
         
         # Process each model
         total_combinations = 2 * (1 + 2 * 3)  # 2 models * (1 scratch + 2 discovery methods * 3 causal methods)
@@ -754,8 +661,83 @@ def calculate_all_shapley_values(dataset_configs: List[Dict]):
                 
                 np.save(flow_dir / 'shapley_values.npy', flow_values)
                 flow_importance.to_csv(flow_dir / 'feature_importance.csv', index=False)
+        
+        elapsed = time.time() - start_time
+        logging.info(f"  ✓ Completed {filename} in {elapsed/60:.1f} minutes")
+    
+    logging.info(f"\n{'='*80}")
+    logging.info(f"Step 5 Complete: Shapley values calculated for all combinations")
+    logging.info(f"{'='*80}\n")
+
+
+# ============================================================================
+# Step 6: Calculate Comparison Metrics
+# ============================================================================
+
+def calculate_comparison_metrics(dataset_configs: List[Dict]):
+    """
+    Calculate parent identification metrics and create comparison visualizations.
+    
+    This step loads the saved SHAP values from Step 5 and calculates:
+    - Parent identification metrics (true parents vs non-parents)
+    - Discovered parent metrics
+    - Top-K accuracy metrics
+    - Comparison visualizations
+    
+    Parameters:
+    -----------
+    dataset_configs : List[Dict]
+        Dataset configurations from Step 1
+    """
+    logging.info("=" * 80)
+    logging.info("STEP 6: CALCULATING COMPARISON METRICS")
+    logging.info("=" * 80)
+    
+    for ds_idx, config in enumerate(dataset_configs, 1):
+        filename = config['filename']
+        logging.info(f"\n[Dataset {ds_idx}/6] Processing {filename}")
+        
+        # Load metadata for y_parent_indices
+        metadata_path = SYNTHETIC_DIR / f"{filename}_metadata.json"
+        with open(metadata_path, 'r') as f:
+            metadata = json.load(f)
+        y_parent_indices = metadata['y_parent_indices']
+        true_parents = set(y_parent_indices)
+        
+        # Load train data for feature names
+        train_path = PROCESSED_DIR / f"{filename}_train.parquet"
+        train_data = pd.read_parquet(train_path)
+        X_train = train_data.drop(columns=['Y'])
+        feature_names = X_train.columns.tolist()
+        
+        # Process each model and discovery method combination
+        for model_name in ['lgbm', 'nn']:
+            for discovery_method in ['pc', 'lingam']:
+                logging.info(f"  Processing {model_name.upper()} + {discovery_method.upper()}")
                 
-                # Calculate comparison metrics vs TrueShapley
+                # Load discovery results for discovered parents
+                results_path = CAUSAL_DIR / f"{filename}_{discovery_method}_results.json"
+                with open(results_path, 'r') as f:
+                    discovery_results = json.load(f)
+                
+                causal_graph = np.array(discovery_results['adjacency_matrix'])
+                
+                # Get discovered parent indices
+                discovered_parents_full = set()
+                for i in range(causal_graph.shape[0] - 1):  # Exclude Y itself
+                    if causal_graph[i, -1] == 1:  # Edge from Xi to Y
+                        discovered_parents_full.add(i)
+                
+                # Load SHAP values for all methods
+                scratch_dir = EXPLAINABILITY_DIR / filename / model_name / 'scratch'
+                asym_dir = EXPLAINABILITY_DIR / filename / model_name / discovery_method / 'asymmetric'
+                causal_dir = EXPLAINABILITY_DIR / filename / model_name / discovery_method / 'causal'
+                flow_dir = EXPLAINABILITY_DIR / filename / model_name / discovery_method / 'flow'
+                
+                scratch_values = np.load(scratch_dir / 'shapley_values.npy')
+                asymmetric_values = np.load(asym_dir / 'shapley_values.npy')
+                causal_values = np.load(causal_dir / 'shapley_values.npy')
+                flow_values = np.load(flow_dir / 'shapley_values.npy')
                 
                 methods_dict = {
                     'Scratch': scratch_values,
@@ -764,45 +746,113 @@ def calculate_all_shapley_values(dataset_configs: List[Dict]):
                     'Flow': flow_values
                 }
                 
+                # Calculate metrics for each method
                 comparison_metrics = {}
+                
                 for method_name, shap_vals in methods_dict.items():
-                    flat_true = true_shapley_values.flatten()
-                    flat_method = shap_vals.flatten()
+                    # Calculate mean absolute SHAP value for each feature
+                    feature_importance = np.abs(shap_vals).mean(axis=0)
                     
-                    correlation = np.corrcoef(flat_true, flat_method)[0, 1]
-                    mae = np.abs(flat_true - flat_method).mean()
-                    mse = ((flat_true - flat_method) ** 2).mean()
+                    # Metrics for TRUE parents vs non-parents
+                    true_parent_indices = list(true_parents)
+                    non_parent_indices = [i for i in range(len(feature_importance)) if i not in true_parents]
+                    
+                    if true_parent_indices:
+                        mean_importance_true_parents = feature_importance[true_parent_indices].mean()
+                        median_importance_true_parents = np.median(feature_importance[true_parent_indices])
+                    else:
+                        mean_importance_true_parents = 0.0
+                        median_importance_true_parents = 0.0
+                    
+                    if non_parent_indices:
+                        mean_importance_non_parents = feature_importance[non_parent_indices].mean()
+                        median_importance_non_parents = np.median(feature_importance[non_parent_indices])
+                    else:
+                        mean_importance_non_parents = 0.0
+                        median_importance_non_parents = 0.0
+                    
+                    # Ratio: how much more important are true parents?
+                    if mean_importance_non_parents > 0:
+                        importance_ratio_true = mean_importance_true_parents / mean_importance_non_parents
+                    else:
+                        importance_ratio_true = float('inf') if mean_importance_true_parents > 0 else 1.0
+                    
+                    # Metrics for DISCOVERED parents vs non-discovered parents
+                    discovered_parent_indices = list(discovered_parents_full)
+                    non_discovered_indices = [i for i in range(len(feature_importance)) if i not in discovered_parents_full]
+                    
+                    if discovered_parent_indices:
+                        mean_importance_discovered = feature_importance[discovered_parent_indices].mean()
+                        median_importance_discovered = np.median(feature_importance[discovered_parent_indices])
+                    else:
+                        mean_importance_discovered = 0.0
+                        median_importance_discovered = 0.0
+                    
+                    if non_discovered_indices:
+                        mean_importance_non_discovered = feature_importance[non_discovered_indices].mean()
+                        median_importance_non_discovered = np.median(feature_importance[non_discovered_indices])
+                    else:
+                        mean_importance_non_discovered = 0.0
+                        median_importance_non_discovered = 0.0
+                    
+                    # Ratio: how much more important are discovered parents?
+                    if mean_importance_non_discovered > 0:
+                        importance_ratio_discovered = mean_importance_discovered / mean_importance_non_discovered
+                    else:
+                        importance_ratio_discovered = float('inf') if mean_importance_discovered > 0 else 1.0
+                    
+                    # Top-K accuracy: are true parents in top-K features?
+                    top_k = min(5, len(feature_importance))
+                    top_k_features = set(np.argsort(feature_importance)[-top_k:])
+                    true_parents_in_top_k = len(true_parents.intersection(top_k_features))
+                    discovered_parents_in_top_k = len(discovered_parents_full.intersection(top_k_features))
                     
                     comparison_metrics[method_name] = {
-                        'correlation': float(correlation),
-                        'mae': float(mae),
-                        'mse': float(mse)
+                        # True parent metrics
+                        'mean_shap_true_parents': float(mean_importance_true_parents),
+                        'mean_shap_non_parents': float(mean_importance_non_parents),
+                        'median_shap_true_parents': float(median_importance_true_parents),
+                        'median_shap_non_parents': float(median_importance_non_parents),
+                        'importance_ratio_true_parents': float(importance_ratio_true) if importance_ratio_true != float('inf') else 999.0,
+                        
+                        # Discovered parent metrics
+                        'mean_shap_discovered_parents': float(mean_importance_discovered),
+                        'mean_shap_non_discovered': float(mean_importance_non_discovered),
+                        'median_shap_discovered_parents': float(median_importance_discovered),
+                        'median_shap_non_discovered': float(median_importance_non_discovered),
+                        'importance_ratio_discovered_parents': float(importance_ratio_discovered) if importance_ratio_discovered != float('inf') else 999.0,
+                        
+                        # Top-K metrics
+                        'true_parents_in_top5': int(true_parents_in_top_k),
+                        'discovered_parents_in_top5': int(discovered_parents_in_top_k),
+                        'total_true_parents': len(true_parents),
+                        'total_discovered_parents': len(discovered_parents_full),
+                        
+                        # Parent sets for reference
+                        'true_parent_features': sorted(list(true_parents)),
+                        'discovered_parent_features': sorted(list(discovered_parents_full))
                     }
                 
                 # Save comparison metrics
                 comparison_dir = EXPLAINABILITY_DIR / filename / model_name / discovery_method
-                metrics_path = comparison_dir / 'comparison_vs_true.json'
+                metrics_path = comparison_dir / 'method_comparison.json'
                 with open(metrics_path, 'w') as f:
                     json.dump(comparison_metrics, f, indent=2)
                 
                 # Create visualization comparing methods
-                methods_dict['True'] = true_shapley_values
-                
                 fig = plot_shapley_feature_comparison(
                     shapley_dict=methods_dict,
-                    feature_names=X_train.columns.tolist(),
-                    true_parents=y_parent_indices
+                    feature_names=feature_names
                 )
                 
                 viz_path = comparison_dir / 'feature_importance_comparison.png'
                 fig.savefig(viz_path, dpi=300, bbox_inches='tight')
                 plt.close(fig)
-        
-        elapsed = time.time() - start_time
-        logging.info(f"  ✓ Completed {filename} in {elapsed/60:.1f} minutes")
+                
+                logging.info(f"    ✓ Saved metrics and visualization")
     
     logging.info(f"\n{'='*80}")
-    logging.info(f"Step 5 Complete: Shapley values calculated for all combinations")
+    logging.info(f"Step 6 Complete: Comparison metrics calculated for all combinations")
     logging.info(f"{'='*80}\n")
 
 
@@ -849,6 +899,9 @@ def main():
         
         # Step 5: Calculate Shapley values
         calculate_all_shapley_values(dataset_configs)
+        
+        # Step 6: Calculate comparison metrics
+        calculate_comparison_metrics(dataset_configs)
         
         total_time = time.time() - pipeline_start
         
