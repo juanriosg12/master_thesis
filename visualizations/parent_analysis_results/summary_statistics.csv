@@ -1,0 +1,7 @@
+,importance_ratio_true,importance_ratio_true,importance_ratio_true,true_parent_recall,true_parent_recall,true_parent_recall,importance_ratio_discovered,importance_ratio_discovered,importance_ratio_discovered
+,mean,std,median,mean,std,median,mean,std,median
+shapley_method,,,,,,,,,
+Asymmetric,9.327,8.263,7.629,0.817,0.195,0.8,1.882,2.304,0.944
+Causal,8.343,6.343,6.218,0.833,0.163,0.8,1.954,2.124,1.146
+Flow,86.719,281.025,2.193,0.567,0.255,0.6,6.459,20.9,0.282
+Scratch,10.589,9.367,7.573,0.817,0.195,0.8,1.975,2.454,0.957
