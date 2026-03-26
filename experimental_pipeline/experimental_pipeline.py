@@ -77,7 +77,7 @@ N_SHAPLEY_SAMPLES = 100
 
 # Discovery parameters
 LINGAM_ALPHA = 0.05
-PC_ALPHA = 0.5
+PC_ALPHA = 0.05
 INDEP_TEST = "fisherz"
 
 # Directories
@@ -311,6 +311,9 @@ def run_causal_discovery(dataset_configs: List[Dict]):
         # Load data and ground truth
         data_path = PROCESSED_DIR / f"{filename}_train.parquet"
         data = pd.read_parquet(data_path)
+
+        subsample_size = min(500, len(data))  # Limit to 500 samples for discovery to speed up
+        subsample_data = data.sample(n=subsample_size, random_state=RANDOM_STATE)
         
         adj_path = SYNTHETIC_DIR / f"{filename}_adjacency.npy"
         true_adj = np.load(adj_path)
@@ -325,17 +328,16 @@ def run_causal_discovery(dataset_configs: List[Dict]):
         
         # Run discovery
         logging.info("  Running LiNGAM...")
-        results_lingam = lingam_fci.get_causal_relationships(data)
+        results_lingam = lingam_fci.get_causal_relationships(subsample_data)
         
         logging.info("  Running PC...")
-        results_pc = pc_fci.get_causal_relationships(data)
+        results_pc = pc_fci.get_causal_relationships(subsample_data)
         
         # Also run discovery on X_train for use in Step 5
-        X_train = data.drop(columns=['Y'])
         
-        logging.info("  Discovering structure on X_train for Step 5...")
-        lingam_train_adj, _ = lingam_fci.discover_structure(X_train)
-        pc_train_adj, _ = pc_fci.discover_structure(X_train)
+        logging.info("  Extracting train adjacency matrices for Step 5...")
+        lingam_train_adj = results_lingam['adjacency_matrix'][:-1, :-1]  # Exclude Y
+        pc_train_adj = results_pc['adjacency_matrix'][:-1, :-1]  # Exclude Y
         
         # Save discovery results
         for method_name, results in [('lingam', results_lingam), ('pc', results_pc)]:
