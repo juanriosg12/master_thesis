@@ -52,7 +52,8 @@ class PredictiveModel:
             return X
         
         if n_features is None:
-            n_features = min(10, X.shape[1])
+            # TODO: make this more adaptive based on dataset size and complexity
+            n_features = min(int(X.shape[1] * 0.7), X.shape[1])
 
         n_features = min(n_features, X.shape[1])
 

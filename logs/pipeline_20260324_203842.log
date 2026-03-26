@@ -1,0 +1,187 @@
+2026-03-24 20:38:42 | Log file: /Users/juanrios/Documents/master_thesis/logs/pipeline_20260324_203842.log
+2026-03-24 20:38:42 | 
+================================================================================
+2026-03-24 20:38:42 | EXPERIMENTAL PIPELINE: CAUSAL FEATURE IMPORTANCE COMPARISON
+2026-03-24 20:38:42 | ================================================================================
+2026-03-24 20:38:42 | 
+Configuration:
+2026-03-24 20:38:42 |   - Features: 50
+2026-03-24 20:38:42 |   - Samples: 1000
+2026-03-24 20:38:42 |   - Y Parents Ratio: 0.5
+2026-03-24 20:38:42 |   - Random State: 42
+2026-03-24 20:38:42 |   - Shapley Samples: 100
+2026-03-24 20:38:42 | 
+Directories:
+2026-03-24 20:38:42 |   - Synthetic Data: /Users/juanrios/Documents/master_thesis/data/synthetic
+2026-03-24 20:38:42 |   - Processed Data: /Users/juanrios/Documents/master_thesis/data/processed
+2026-03-24 20:38:42 |   - Causal Discovery: /Users/juanrios/Documents/master_thesis/data/causal
+2026-03-24 20:38:42 |   - Explainability: /Users/juanrios/Documents/master_thesis/data/explainability
+2026-03-24 20:38:42 |   - Models: /Users/juanrios/Documents/master_thesis/models
+2026-03-24 20:38:42 |   - Logs: /Users/juanrios/Documents/master_thesis/logs
+2026-03-24 20:38:42 | 
+================================================================================
+
+2026-03-24 20:38:42 | ================================================================================
+2026-03-24 20:38:42 | STEP 1: GENERATING SYNTHETIC DATASETS
+2026-03-24 20:38:42 | ================================================================================
+2026-03-24 20:38:42 | 
+[Dataset 1/6] Generating linear system without confounders
+2026-03-24 20:38:42 |   ✓ Saved: linear_no_conf_f50_s1000_p50 | Features: 50, Samples: 1000, Y parents: 25, Edges: 409, Confounders: 0
+2026-03-24 20:38:42 | 
+[Dataset 2/6] Generating linear system with confounders
+2026-03-24 20:38:42 |   ✓ Saved: linear_conf_f50_s1000_p50 | Features: 50, Samples: 1000, Y parents: 25, Edges: 409, Confounders: 2
+2026-03-24 20:38:42 | 
+[Dataset 3/6] Generating nonlinear system without confounders
+2026-03-24 20:38:42 |   ✓ Saved: nonlinear_no_conf_f50_s1000_p50 | Features: 50, Samples: 1000, Y parents: 25, Edges: 409, Confounders: 0
+2026-03-24 20:38:42 | 
+[Dataset 4/6] Generating nonlinear system with confounders
+2026-03-24 20:38:42 |   ✓ Saved: nonlinear_conf_f50_s1000_p50 | Features: 50, Samples: 1000, Y parents: 25, Edges: 409, Confounders: 2
+2026-03-24 20:38:42 | 
+[Dataset 5/6] Generating mixed system without confounders
+2026-03-24 20:38:42 |   ✓ Saved: mixed_no_conf_f50_s1000_p50 | Features: 50, Samples: 1000, Y parents: 25, Edges: 409, Confounders: 0
+2026-03-24 20:38:42 | 
+[Dataset 6/6] Generating mixed system with confounders
+2026-03-24 20:38:42 |   ✓ Saved: mixed_conf_f50_s1000_p50 | Features: 50, Samples: 1000, Y parents: 25, Edges: 409, Confounders: 2
+2026-03-24 20:38:42 | 
+================================================================================
+2026-03-24 20:38:42 | Step 1 Complete: 6 datasets generated
+2026-03-24 20:38:42 | ================================================================================
+
+2026-03-24 20:38:42 | ================================================================================
+2026-03-24 20:38:42 | STEP 2: CREATING TRAIN/TEST SPLITS
+2026-03-24 20:38:42 | ================================================================================
+2026-03-24 20:38:42 | 
+[Dataset 1/6] Processing linear_no_conf_f50_s1000_p50...
+2026-03-24 20:38:42 |   ✓ Train: (800, 51), Test: (200, 51)
+2026-03-24 20:38:42 | 
+[Dataset 2/6] Processing linear_conf_f50_s1000_p50...
+2026-03-24 20:38:42 |   ✓ Train: (800, 51), Test: (200, 51)
+2026-03-24 20:38:42 | 
+[Dataset 3/6] Processing nonlinear_no_conf_f50_s1000_p50...
+2026-03-24 20:38:42 |   ✓ Train: (800, 51), Test: (200, 51)
+2026-03-24 20:38:42 | 
+[Dataset 4/6] Processing nonlinear_conf_f50_s1000_p50...
+2026-03-24 20:38:42 |   ✓ Train: (800, 51), Test: (200, 51)
+2026-03-24 20:38:42 | 
+[Dataset 5/6] Processing mixed_no_conf_f50_s1000_p50...
+2026-03-24 20:38:42 |   ✓ Train: (800, 51), Test: (200, 51)
+2026-03-24 20:38:42 | 
+[Dataset 6/6] Processing mixed_conf_f50_s1000_p50...
+2026-03-24 20:38:42 |   ✓ Train: (800, 51), Test: (200, 51)
+2026-03-24 20:38:42 | 
+================================================================================
+2026-03-24 20:38:42 | Step 2 Complete: Train/test splits created for 6 datasets
+2026-03-24 20:38:42 | ================================================================================
+
+2026-03-24 20:38:42 | ================================================================================
+2026-03-24 20:38:42 | STEP 3: RUNNING CAUSAL DISCOVERY
+2026-03-24 20:38:42 | ================================================================================
+2026-03-24 20:38:42 | 
+[Dataset 1/6] Processing linear_no_conf_f50_s1000_p50
+2026-03-24 20:38:42 |   Running LiNGAM...
+2026-03-24 20:38:50 |   Running PC...
+2026-03-24 20:39:18 |   Discovering structure on X_train for Step 5...
+2026-03-24 20:39:51 |   ✓ LINGAM: F1=0.187, Precision=0.134, Recall=0.308
+2026-03-24 20:39:53 |   ✓ PC: F1=0.058, Precision=0.325, Recall=0.032
+2026-03-24 20:39:54 | 
+[Dataset 2/6] Processing linear_conf_f50_s1000_p50
+2026-03-24 20:39:54 |   Running LiNGAM...
+2026-03-24 20:40:03 |   Running PC...
+2026-03-24 20:40:35 |   Discovering structure on X_train for Step 5...
+2026-03-24 20:41:14 |   ✓ LINGAM: F1=0.215, Precision=0.152, Recall=0.364
+2026-03-24 20:41:16 |   ✓ PC: F1=0.067, Precision=0.357, Recall=0.037
+2026-03-24 20:41:17 | 
+[Dataset 3/6] Processing nonlinear_no_conf_f50_s1000_p50
+2026-03-24 20:41:17 |   Running LiNGAM...
+2026-03-24 20:41:17 |   Running PC...
+2026-03-24 20:41:17 |   Discovering structure on X_train for Step 5...
+2026-03-24 20:41:17 |   ✓ LINGAM: F1=0.000, Precision=0.000, Recall=0.000
+2026-03-24 20:41:17 |   ✓ PC: F1=0.000, Precision=0.000, Recall=0.000
+2026-03-24 20:41:18 | 
+[Dataset 4/6] Processing nonlinear_conf_f50_s1000_p50
+2026-03-24 20:41:18 |   Running LiNGAM...
+2026-03-24 20:41:18 |   Running PC...
+2026-03-24 20:41:18 |   Discovering structure on X_train for Step 5...
+2026-03-24 20:41:18 |   ✓ LINGAM: F1=0.000, Precision=0.000, Recall=0.000
+2026-03-24 20:41:19 |   ✓ PC: F1=0.000, Precision=0.000, Recall=0.000
+2026-03-24 20:41:19 | 
+[Dataset 5/6] Processing mixed_no_conf_f50_s1000_p50
+2026-03-24 20:41:19 |   Running LiNGAM...
+2026-03-24 20:41:32 |   Running PC...
+2026-03-24 21:10:29 |   Discovering structure on X_train for Step 5...
+2026-03-24 21:56:06 |   ✓ LINGAM: F1=0.070, Precision=0.221, Recall=0.042
+2026-03-24 21:56:07 |   ✓ PC: F1=0.227, Precision=0.178, Recall=0.311
+2026-03-24 21:56:09 | 
+[Dataset 6/6] Processing mixed_conf_f50_s1000_p50
+2026-03-24 21:56:10 |   Running LiNGAM...
+2026-03-24 21:56:17 |   Running PC...
+2026-03-24 22:06:57 |   Discovering structure on X_train for Step 5...
+2026-03-24 22:18:02 |   ✓ LINGAM: F1=0.111, Precision=0.133, Recall=0.095
+2026-03-24 22:18:03 |   ✓ PC: F1=0.197, Precision=0.232, Recall=0.171
+2026-03-24 22:18:04 | 
+================================================================================
+2026-03-24 22:18:04 | Step 3 Complete: Causal discovery completed for 6 datasets
+2026-03-24 22:18:04 | ================================================================================
+
+2026-03-24 22:18:04 | ================================================================================
+2026-03-24 22:18:04 | STEP 4: TRAINING PREDICTIVE MODELS
+2026-03-24 22:18:04 | ================================================================================
+2026-03-24 22:18:04 | 
+[Dataset 1/6] Training models for linear_no_conf_f50_s1000_p50
+2026-03-24 22:18:04 |   Training LGBM...
+2026-03-24 22:18:39 |   ✓ LGBM: R²=0.9899, MSE=8530.3470, MAE=66.1719, RMSE=92.3599
+2026-03-24 22:18:39 |   Training NN...
+2026-03-24 22:18:58 |   ✓ NN: R²=0.9991, MSE=782.4766, MAE=22.1879, RMSE=27.9728
+2026-03-24 22:18:58 | 
+[Dataset 2/6] Training models for linear_conf_f50_s1000_p50
+2026-03-24 22:18:58 |   Training LGBM...
+2026-03-24 22:19:15 |   ✓ LGBM: R²=0.9983, MSE=133135.1325, MAE=233.8646, RMSE=364.8769
+2026-03-24 22:19:15 |   Training NN...
+2026-03-24 22:19:31 |   ✓ NN: R²=0.9998, MSE=17584.0101, MAE=105.2869, RMSE=132.6047
+2026-03-24 22:19:31 | 
+[Dataset 3/6] Training models for nonlinear_no_conf_f50_s1000_p50
+2026-03-24 22:19:31 |   Training LGBM...
+2026-03-24 22:19:31 | 
+================================================================================
+2026-03-24 22:19:31 | ERROR: Pipeline failed!
+2026-03-24 22:19:31 | ================================================================================
+2026-03-24 22:19:31 | Error message: Input X contains NaN.
+SelectKBest does not accept missing values encoded as NaN natively. For supervised learning, you might want to consider sklearn.ensemble.HistGradientBoostingClassifier and Regressor which accept missing values encoded as NaNs natively. Alternatively, it is possible to preprocess the data, for instance by using an imputer transformer in a pipeline or drop samples with missing values. See https://scikit-learn.org/stable/modules/impute.html You can find a list of all estimators that handle NaN values at the following page: https://scikit-learn.org/stable/modules/impute.html#estimators-that-handle-nan-values
+2026-03-24 22:19:31 | Traceback (most recent call last):
+  File "/Users/juanrios/Documents/master_thesis/experimental_pipeline/experimental_pipeline.py", line 898, in main
+    train_all_models(dataset_configs)
+  File "/Users/juanrios/Documents/master_thesis/experimental_pipeline/experimental_pipeline.py", line 433, in train_all_models
+    lgbm_model.fit(X_train, y_train)
+  File "/Users/juanrios/Documents/master_thesis/predictive_models/predictive_models.py", line 149, in fit
+    X = self.select_features(X,y, n_features=n_features)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/juanrios/Documents/master_thesis/predictive_models/predictive_models.py", line 64, in select_features
+    X_selected = selector.fit_transform(X,y)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/juanrios/Documents/master_thesis/.venv/lib/python3.11/site-packages/sklearn/utils/_set_output.py", line 316, in wrapped
+    data_to_wrap = f(self, X, *args, **kwargs)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/juanrios/Documents/master_thesis/.venv/lib/python3.11/site-packages/sklearn/base.py", line 910, in fit_transform
+    return self.fit(X, y, **fit_params).transform(X)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/juanrios/Documents/master_thesis/.venv/lib/python3.11/site-packages/sklearn/base.py", line 1336, in wrapper
+    return fit_method(estimator, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/juanrios/Documents/master_thesis/.venv/lib/python3.11/site-packages/sklearn/feature_selection/_univariate_selection.py", line 563, in fit
+    X, y = validate_data(
+           ^^^^^^^^^^^^^^
+  File "/Users/juanrios/Documents/master_thesis/.venv/lib/python3.11/site-packages/sklearn/utils/validation.py", line 2919, in validate_data
+    X, y = check_X_y(X, y, **check_params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/juanrios/Documents/master_thesis/.venv/lib/python3.11/site-packages/sklearn/utils/validation.py", line 1314, in check_X_y
+    X = check_array(
+        ^^^^^^^^^^^^
+  File "/Users/juanrios/Documents/master_thesis/.venv/lib/python3.11/site-packages/sklearn/utils/validation.py", line 1074, in check_array
+    _assert_all_finite(
+  File "/Users/juanrios/Documents/master_thesis/.venv/lib/python3.11/site-packages/sklearn/utils/validation.py", line 133, in _assert_all_finite
+    _assert_all_finite_element_wise(
+  File "/Users/juanrios/Documents/master_thesis/.venv/lib/python3.11/site-packages/sklearn/utils/validation.py", line 182, in _assert_all_finite_element_wise
+    raise ValueError(msg_err)
+ValueError: Input X contains NaN.
+SelectKBest does not accept missing values encoded as NaN natively. For supervised learning, you might want to consider sklearn.ensemble.HistGradientBoostingClassifier and Regressor which accept missing values encoded as NaNs natively. Alternatively, it is possible to preprocess the data, for instance by using an imputer transformer in a pipeline or drop samples with missing values. See https://scikit-learn.org/stable/modules/impute.html You can find a list of all estimators that handle NaN values at the following page: https://scikit-learn.org/stable/modules/impute.html#estimators-that-handle-nan-values
+

@@ -61,7 +61,7 @@ from utils.utils import visualize_comparison, visualize_causal_graph, plot_shapl
 # ============================================================================
 
 # Experimental parameters
-N_FEATURES = 50
+N_FEATURES = 10
 N_SAMPLES = 1000
 Y_PARENTS_RATIO = 0.5
 NOISE_STD = 0.5
@@ -74,6 +74,7 @@ TEST_SIZE = 0.2
 BACKGROUND_RATIO = 0.3
 TEST_INSTANCES_RATIO = 0.5
 N_SHAPLEY_SAMPLES = 100
+M_INNER_SAMPLES_CAUSAL = 10  # Reduced for CausalShapley performance (was 50 default)
 
 # Discovery parameters
 LINGAM_ALPHA = 0.05
@@ -562,7 +563,7 @@ def calculate_all_shapley_values(dataset_configs: List[Dict]):
             logging.info(f"  [Progress: {progress_counter}/{total_combinations}] {model_name.upper()} - ShapleyFromScratch")
             progress_counter += 1
             scratch_explainer = ShapleyFromScratch(
-                model.model,
+                model,  # Pass wrapper object, not model.model
                 background_data,
                 n_samples=N_SHAPLEY_SAMPLES,
                 random_state=RANDOM_STATE
@@ -597,7 +598,7 @@ def calculate_all_shapley_values(dataset_configs: List[Dict]):
                 logging.info(f"  [Progress: {progress_counter}/{total_combinations}] {model_name.upper()} + {discovery_method.upper()} - AsymmetricShapley")
                 progress_counter += 1
                 asymmetric_explainer = AsymmetricShapley(
-                    model.model,
+                    model,  # Pass wrapper object, not model.model
                     background_data,
                     causal_graph=discovered_adj,
                     n_samples=N_SHAPLEY_SAMPLES,
@@ -615,15 +616,16 @@ def calculate_all_shapley_values(dataset_configs: List[Dict]):
                 asymmetric_importance.to_csv(asym_dir / 'feature_importance.csv', index=False)
                 
                 # Calculate CausalShapley
-                logging.info(f"  [Progress: {progress_counter}/{total_combinations}] {model_name.upper()} + {discovery_method.upper()} - CausalShapley")
+                logging.info(f"  [Progress: {progress_counter}/{total_combinations}] {model_name.upper()} + {discovery_method.upper()} - CausalShapley (SLOW - uses {M_INNER_SAMPLES_CAUSAL} inner samples)")
                 progress_counter += 1
                 causal_explainer = CausalShapley(
-                    model=model.model,
+                    model,  # Pass wrapper object, not model.model,
                     background_data=background_data,
                     discovered_adj=discovered_adj,
                     discovered_conf=confounders,
                     feature_names=[f for f in feature_names if f != 'Y'],
                     n_samples=N_SHAPLEY_SAMPLES,
+                    M_inner_samples=M_INNER_SAMPLES_CAUSAL,  # Use reduced value
                     random_state=RANDOM_STATE
                 )
                 causal_values = causal_explainer.explain(test_instances)
@@ -647,7 +649,7 @@ def calculate_all_shapley_values(dataset_configs: List[Dict]):
                 test_instances_flow['Y'] = y_test.loc[test_instances.index]
                 
                 flow_explainer = ShapleyFlowWrapper(
-                    model=model.model,
+                    model=model,  # Pass wrapper object, not model.model
                     background_data=background_data_flow,
                     causal_graph=causal_graph,
                     y_index=len(feature_names) - 1,  # Y is last column

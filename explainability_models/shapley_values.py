@@ -97,6 +97,7 @@ class ShapleyFromScratch:
         
         self.model = model
         self.background_data = background_data.values
+        self.background_data_df = background_data  # Keep DataFrame for feature alignment
         self.feature_names = background_data.columns.tolist()
         self.n_features  = len(self.feature_names)
         self.n_samples = n_samples
@@ -105,7 +106,36 @@ class ShapleyFromScratch:
 
         self.rng = np.random.RandomState(random_state)
 
-        self.baseline_value = self.model.predict(self.background_data).mean()
+        self.baseline_value = self._predict_with_feature_alignment(self.background_data_df).mean()
+    
+    def _predict_with_feature_alignment(self, X):
+        """
+        Predict with proper feature alignment.
+        
+        If X is numpy array, convert to DataFrame with correct column names.
+        The model's predict() method will then handle feature selection.
+        
+        Parameters:
+        -----------
+        X : np.ndarray or pd.DataFrame
+            Input samples
+            
+        Returns:
+        --------
+        predictions : np.ndarray
+            Model predictions
+        """
+        if isinstance(X, np.ndarray):
+            # Convert numpy array to DataFrame with correct column names
+            if X.ndim == 1:
+                X_df = pd.DataFrame([X], columns=self.feature_names)
+            else:
+                X_df = pd.DataFrame(X, columns=self.feature_names)
+        else:
+            X_df = X
+        
+        # Model's predict() will handle feature selection if needed
+        return self.model.predict(X_df)
 
     def _predict_coalition(self, instance: np.ndarray, coalition: List[int]) -> float:
 
@@ -130,8 +160,8 @@ class ShapleyFromScratch:
         for feature_idx in coalition:
             samples[:, feature_idx] = instance[feature_idx]
 
-        # Average predictions 
-        predictions = self.model.predict(samples)
+        # Average predictions with proper feature alignment
+        predictions = self._predict_with_feature_alignment(samples)
         return predictions.mean()
     
     def _compute_exact_shapley(self, instance: np.ndarray) -> np.ndarray:
@@ -1055,8 +1085,8 @@ class CausalShapley(ShapleyFromScratch):
         # Sample from post-interventional distribution
         samples = self._sample_post_interventional(S,x_instance)
 
-        # Predict on all samples
-        predictions = self.model.predict(samples)
+        # Predict on all samples with proper feature alignment
+        predictions = self._predict_with_feature_alignment(samples)
 
         return predictions.mean()
     
@@ -1110,6 +1140,10 @@ class CausalShapley(ShapleyFromScratch):
                 shapley_values[feature] +=marginal_contribution
 
                 prev_value = curr_value
+            
+            # Progress indicator every 2% of permutations
+            if (perm_idx + 1) % max(1, self.n_samples // 50) == 0:
+                print(f"     Permutations: {perm_idx + 1}/{self.n_samples}")
         
         # Average over all permutation
         shapley_values /= self.n_samples
@@ -1131,20 +1165,16 @@ class CausalShapley(ShapleyFromScratch):
             Causal Shapley values (shape: n_samples x n_features)
         """
         print(f"Computing Causal Shapley values (post-interventional sampling)...")
-        # Detailed configuration info removed for cleaner output
-        # print(f"    Permutations: {self.n_samples}")
-        # print(f"    Samples per coalition {self.M_inner_samples}")
+        print(f"  Instances: {len(X)}, Permutations: {self.n_samples}, Inner samples: {self.M_inner_samples}")
+        print(f"  Estimated predictions: {len(X) * self.n_samples * self.n_features * self.M_inner_samples:,}")
 
         X_values = X.values
         n_instances = len(X_values)
 
         self.shap_values = np.zeros((n_instances, self.n_features))
         for i, instance in enumerate(X_values):
+            print(f"  Instance {i+1}/{n_instances}...")
             self.shap_values[i] = self._compute_monte_carlo_causal_shapley(instance)
-
-            # Progress indicator removed for cleaner output
-            # if ( i + 1) % max(1, n_instances // 10) == 0:
-            #     print(f" Progress: {i + 1}/{n_instances} instances")
 
         return self.shap_values
 
@@ -1169,7 +1199,8 @@ class ShapleyFlow:
                  source_nodes: Optional[List[int]] = None,
                  sink_node: Optional[int] = None,
                  n_samples: int = 100,
-                 random_state: Optional[int] = None):
+                 random_state: Optional[int] = None,
+                 feature_names: Optional[List[str]] = None):
         """
         Initiliaze Shapley Flow Calculator
 
@@ -1189,6 +1220,8 @@ class ShapleyFlow:
             Number of Monte Carlo samples (random permutations)
         random_state: int, optional
             Randome seed for reproducibility
+        feature_names: List[str], optional
+            Feature names for proper alignment with model (needed for wrapper models)
         """
 
         self.graph = graph_structure
@@ -1197,6 +1230,7 @@ class ShapleyFlow:
         self.source_nodes = source_nodes
         self.sink_node = sink_node
         self.n_samples = n_samples
+        self.feature_names = feature_names
 
         self.rng = np.random.RandomState(random_state)
 
@@ -1220,6 +1254,42 @@ class ShapleyFlow:
         for parent, children in graph_structure.items():
             for child in children:
                 self.edge_attributions[(parent,child)]= 0.0
+    
+    def _predict_with_feature_alignment(self, X):
+        """
+        Predict with proper feature alignment.
+        
+        Converts numpy arrays to model's expected input format.
+        For wrapper models, need to provide feature names.
+        
+        Parameters:
+        -----------
+        X : np.ndarray
+            Input samples (excluding sink/Y node)
+            
+        Returns:
+        --------
+        predictions : np.ndarray
+            Model predictions
+        """
+        if isinstance(X, np.ndarray):
+            # If we have feature names, convert to DataFrame
+            if self.feature_names is not None:
+                # X contains features excluding Y (sink node)
+                # Get feature names excluding Y
+                feature_names_no_y = [name for i, name in enumerate(self.feature_names) 
+                                     if i != self.sink_node]
+                
+                if X.ndim == 1:
+                    X_df = pd.DataFrame([X], columns=feature_names_no_y)
+                else:
+                    X_df = pd.DataFrame(X, columns=feature_names_no_y)
+                return self.model.predict(X_df)
+            else:
+                # No feature names, hope model can handle raw arrays
+                return self.model.predict(X)
+        else:
+            return self.model.predict(X)
 
     def _sample_conditional(self, node: int, observed_nodes: Dict[int, float]) -> float:
 
@@ -1299,12 +1369,12 @@ class ShapleyFlow:
                 if node not in node_values:
                     node_values[node] = x_background.get(node, 0.0)
 
-        # Predict using the model
+        # Predict using the model with proper feature alignment
         n_features = self.background_data.shape[1]
         feature_indices = [ i for i in range(n_features) if i!= self.sink_node]
         x_features = np.array([node_values.get(idx,0.0) for idx in feature_indices])
 
-        result = self.model.predict(x_features.reshape(1,-1))[0]
+        result = self._predict_with_feature_alignment(x_features.reshape(1,-1))[0]
 
         return result
     
@@ -1589,7 +1659,8 @@ class ShapleyFlowWrapper:
                 source_nodes=self.source_nodes,
                 sink_node=self.y_index,
                 n_samples=self.n_samples,
-                random_state=self.rng.randint(0,100000)
+                random_state=self.rng.randint(0,100000),
+                feature_names=self.features_names  # Pass feature names for alignment
             )
             # Prepare forground and background
             x_foreground = {j: instance[j] for j in range(self.n_features)}
