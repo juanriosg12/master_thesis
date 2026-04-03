@@ -19,11 +19,11 @@ Author: Juan Rios
 # ============================================================================
 # Limit threads to avoid contention (set BEFORE importing numpy/sklearn/etc.)
 import os
-os.environ['OMP_NUM_THREADS'] = '4'
-os.environ['MKL_NUM_THREADS'] = '4'
-os.environ['OPENBLAS_NUM_THREADS'] = '4'
-os.environ['NUMEXPR_NUM_THREADS'] = '4'
-os.environ['VECLIB_MAXIMUM_THREADS'] = '4'
+os.environ['OMP_NUM_THREADS'] = '8'
+os.environ['MKL_NUM_THREADS'] = '8'
+os.environ['OPENBLAS_NUM_THREADS'] = '8'
+os.environ['NUMEXPR_NUM_THREADS'] = '8'
+os.environ['VECLIB_MAXIMUM_THREADS'] = '8'
 
 import sys
 from pathlib import Path
@@ -61,11 +61,11 @@ from utils.utils import visualize_comparison, visualize_causal_graph, plot_shapl
 # ============================================================================
 
 # Experimental parameters
-N_FEATURES = 10
+N_FEATURES = 50
 N_SAMPLES = 1000
 Y_PARENTS_RATIO = 0.5
 NOISE_STD = 0.5
-EDGE_PROBABILITY = 0.5
+EDGE_PROBABILITY = 0.2
 MIN_CONNECTED_EDGES = 2
 RANDOM_STATE = 42
 
@@ -403,7 +403,7 @@ def run_causal_discovery(dataset_configs: List[Dict]):
 
 def train_all_models(dataset_configs: List[Dict]):
     """
-    Train LGBM and NN models on all datasets.
+    Train LGBM model on mixed_no_conf_f50_s1000_p50 dataset only.
     
     Parameters:
     -----------
@@ -411,12 +411,20 @@ def train_all_models(dataset_configs: List[Dict]):
         Dataset configurations from Step 1
     """
     logging.info("=" * 80)
-    logging.info("STEP 4: TRAINING PREDICTIVE MODELS")
+    logging.info("STEP 4: TRAINING PREDICTIVE MODELS (LGBM only, mixed_no_conf dataset)")
     logging.info("=" * 80)
     
-    for idx, config in enumerate(dataset_configs, 1):
+    # Filter to only mixed_no_conf dataset
+    target_dataset = 'mixed_no_conf_f50_s1000_p50'
+    filtered_configs = [c for c in dataset_configs if c['filename'] == target_dataset]
+    
+    if not filtered_configs:
+        logging.warning(f"Target dataset {target_dataset} not found!")
+        return
+    
+    for idx, config in enumerate(filtered_configs, 1):
         filename = config['filename']
-        logging.info(f"\n[Dataset {idx}/6] Training models for {filename}")
+        logging.info(f"\n[Dataset {idx}/1] Training LGBM model for {filename}")
         
         # Load train/test data
         train_path = PROCESSED_DIR / f"{filename}_train.parquet"
@@ -447,22 +455,23 @@ def train_all_models(dataset_configs: List[Dict]):
         lgbm_model.save(str(lgbm_path))
         logging.info(f"  ✓ LGBM: R²={lgbm_score:.4f}, MSE={lgbm_mse:.4f}, MAE={lgbm_mae:.4f}, RMSE={lgbm_rmse:.4f}")
         
-        # Train NN
-        logging.info("  Training NN...")
-        nn_model = NeuralNetRegressor()
-        nn_model.fit(X_train, y_train)
-        
-        # Evaluate NN
-        nn_pred = nn_model.predict(X_test)
-        nn_score = r2_score(y_test, nn_pred)
-        nn_mse = np.mean((y_test - nn_pred) ** 2)
-        nn_mae = np.mean(np.abs(y_test - nn_pred))
-        nn_rmse = np.sqrt(nn_mse)
-        
-        # Save NN model
-        nn_path = MODELS_DIR / f"{filename}_nn"
-        nn_model.save(str(nn_path))
-        logging.info(f"  ✓ NN: R²={nn_score:.4f}, MSE={nn_mse:.4f}, MAE={nn_mae:.4f}, RMSE={nn_rmse:.4f}")
+        # NN training skipped for focused experiment
+        # # Train NN
+        # logging.info("  Training NN...")
+        # nn_model = NeuralNetRegressor()
+        # nn_model.fit(X_train, y_train)
+        # 
+        # # Evaluate NN
+        # nn_pred = nn_model.predict(X_test)
+        # nn_score = r2_score(y_test, nn_pred)
+        # nn_mse = np.mean((y_test - nn_pred) ** 2)
+        # nn_mae = np.mean(np.abs(y_test - nn_pred))
+        # nn_rmse = np.sqrt(nn_mse)
+        # 
+        # # Save NN model
+        # nn_path = MODELS_DIR / f"{filename}_nn"
+        # nn_model.save(str(nn_path))
+        # logging.info(f"  ✓ NN: R²={nn_score:.4f}, MSE={nn_mse:.4f}, MAE={nn_mae:.4f}, RMSE={nn_rmse:.4f}")
         
         # Save evaluation metrics
         metrics = {
@@ -471,13 +480,13 @@ def train_all_models(dataset_configs: List[Dict]):
                 'mse': float(lgbm_mse),
                 'mae': float(lgbm_mae),
                 'rmse': float(lgbm_rmse)
-            },
-            'nn': {
-                'r2': float(nn_score),
-                'mse': float(nn_mse),
-                'mae': float(nn_mae),
-                'rmse': float(nn_rmse)
             }
+            # 'nn': {
+            #     'r2': float(nn_score),
+            #     'mse': float(nn_mse),
+            #     'mae': float(nn_mae),
+            #     'rmse': float(nn_rmse)
+            # }
         }
         
         metrics_path = MODELS_DIR / f"{filename}_metrics.json"
@@ -485,7 +494,7 @@ def train_all_models(dataset_configs: List[Dict]):
             json.dump(metrics, f, indent=2)
     
     logging.info(f"\n{'='*80}")
-    logging.info(f"Step 4 Complete: Models trained for {len(dataset_configs)} datasets")
+    logging.info(f"Step 4 Complete: LGBM model trained for {target_dataset}")
     logging.info(f"{'='*80}\n")
 
 
@@ -495,15 +504,14 @@ def train_all_models(dataset_configs: List[Dict]):
 
 def calculate_all_shapley_values(dataset_configs: List[Dict]):
     """
-    Calculate and save Shapley values using all explainability methods.
+    Calculate and save Shapley values using explainability methods.
     
-    For each dataset:
-      - For each model (LGBM, NN):
-        - ShapleyFromScratch (no causal graph)
-        - For each discovery method (PC, LiNGAM):
-          - AsymmetricShapley
-          - CausalShapley
-          - ShapleyFlowWrapper
+    For mixed_no_conf_f50_s1000_p50 dataset with LGBM model:
+      - ShapleyFromScratch (no causal graph)
+      - For each discovery method (PC, LiNGAM):
+        - AsymmetricShapley
+        - CausalShapley
+        # ShapleyFlowWrapper (commented out - debugging in progress)
     
     Saves:
     ------
@@ -516,13 +524,21 @@ def calculate_all_shapley_values(dataset_configs: List[Dict]):
         Dataset configurations from Step 1
     """
     logging.info("=" * 80)
-    logging.info("STEP 5: CALCULATING SHAPLEY VALUES")
+    logging.info("STEP 5: CALCULATING SHAPLEY VALUES (mixed_no_conf + LGBM only)")
     logging.info("=" * 80)
     
-    for ds_idx, config in enumerate(dataset_configs, 1):
+    # Filter to only mixed_no_conf dataset
+    target_dataset = 'mixed_no_conf_f50_s1000_p50'
+    filtered_configs = [c for c in dataset_configs if c['filename'] == target_dataset]
+    
+    if not filtered_configs:
+        logging.warning(f"Target dataset {target_dataset} not found!")
+        return
+    
+    for ds_idx, config in enumerate(filtered_configs, 1):
         filename = config['filename']
         start_time = time.time()
-        logging.info(f"\n[Dataset {ds_idx}/6] Processing {filename}")
+        logging.info(f"\n[Dataset {ds_idx}/1] Processing {filename}")
         
         # Load data
         train_path = PROCESSED_DIR / f"{filename}_train.parquet"
@@ -546,11 +562,11 @@ def calculate_all_shapley_values(dataset_configs: List[Dict]):
             metadata = json.load(f)
         y_parent_indices = metadata['y_parent_indices']
         
-        # Process each model
-        total_combinations = 2 * (1 + 2 * 3)  # 2 models * (1 scratch + 2 discovery methods * 3 causal methods)
+        # Process LGBM model only
+        total_combinations = 1 + 2 * 3  # 1 scratch + 2 discovery methods * 3 causal methods (Asym, Causal, Flow)
         progress_counter = 1
         
-        for model_name in ['lgbm', 'nn']:
+        for model_name in ['lgbm']:  # Only LGBM
             
             # Load model
             model_path = MODELS_DIR / f"{filename}_{model_name}"
@@ -680,13 +696,11 @@ def calculate_all_shapley_values(dataset_configs: List[Dict]):
 
 def calculate_comparison_metrics(dataset_configs: List[Dict]):
     """
-    Calculate parent identification metrics and create comparison visualizations.
+    Create PC vs LiNGAM comparison visualizations for mixed_no_conf dataset.
     
-    This step loads the saved SHAP values from Step 5 and calculates:
-    - Parent identification metrics (true parents vs non-parents)
-    - Discovered parent metrics
-    - Top-K accuracy metrics
-    - Comparison visualizations
+    This step loads the saved SHAP values from Step 5 and creates:
+    - Visualization comparing PC vs LiNGAM for top 10 features from Scratch
+    - Shows Scratch, Asymmetric, and Causal methods
     
     Parameters:
     -----------
@@ -694,12 +708,20 @@ def calculate_comparison_metrics(dataset_configs: List[Dict]):
         Dataset configurations from Step 1
     """
     logging.info("=" * 80)
-    logging.info("STEP 6: CALCULATING COMPARISON METRICS")
+    logging.info("STEP 6: CREATING PC vs LiNGAM COMPARISON (mixed_no_conf + LGBM)")
     logging.info("=" * 80)
     
-    for ds_idx, config in enumerate(dataset_configs, 1):
+    # Filter to only mixed_no_conf dataset
+    target_dataset = 'mixed_no_conf_f50_s1000_p50'
+    filtered_configs = [c for c in dataset_configs if c['filename'] == target_dataset]
+    
+    if not filtered_configs:
+        logging.warning(f"Target dataset {target_dataset} not found!")
+        return
+    
+    for ds_idx, config in enumerate(filtered_configs, 1):
         filename = config['filename']
-        logging.info(f"\n[Dataset {ds_idx}/6] Processing {filename}")
+        logging.info(f"\n[Dataset {ds_idx}/1] Processing {filename}")
         
         # Load metadata for y_parent_indices
         metadata_path = SYNTHETIC_DIR / f"{filename}_metadata.json"
@@ -714,149 +736,99 @@ def calculate_comparison_metrics(dataset_configs: List[Dict]):
         X_train = train_data.drop(columns=['Y'])
         feature_names = X_train.columns.tolist()
         
-        # Process each model and discovery method combination
-        for model_name in ['lgbm', 'nn']:
-            for discovery_method in ['pc', 'lingam']:
-                logging.info(f"  Processing {model_name.upper()} + {discovery_method.upper()}")
-                
-                # Load discovery results for discovered parents
-                results_path = CAUSAL_DIR / f"{filename}_{discovery_method}_results.json"
-                with open(results_path, 'r') as f:
-                    discovery_results = json.load(f)
-                
-                causal_graph = np.array(discovery_results['adjacency_matrix'])
-                
-                # Get discovered parent indices
-                discovered_parents_full = set()
-                for i in range(causal_graph.shape[0] - 1):  # Exclude Y itself
-                    if causal_graph[i, -1] == 1:  # Edge from Xi to Y
-                        discovered_parents_full.add(i)
-                
-                # Load SHAP values for all methods
-                scratch_dir = EXPLAINABILITY_DIR / filename / model_name / 'scratch'
-                asym_dir = EXPLAINABILITY_DIR / filename / model_name / discovery_method / 'asymmetric'
-                causal_dir = EXPLAINABILITY_DIR / filename / model_name / discovery_method / 'causal'
-                flow_dir = EXPLAINABILITY_DIR / filename / model_name / discovery_method / 'flow'
-                
-                scratch_values = np.load(scratch_dir / 'shapley_values.npy')
-                asymmetric_values = np.load(asym_dir / 'shapley_values.npy')
-                causal_values = np.load(causal_dir / 'shapley_values.npy')
-                flow_values = np.load(flow_dir / 'shapley_values.npy')
-                
-                methods_dict = {
-                    'Scratch': scratch_values,
-                    'Asymmetric': asymmetric_values,
-                    'Causal': causal_values,
-                    'Flow': flow_values
-                }
-                
-                # Calculate metrics for each method
-                comparison_metrics = {}
-                
-                for method_name, shap_vals in methods_dict.items():
-                    # Calculate mean absolute SHAP value for each feature
-                    feature_importance = np.abs(shap_vals).mean(axis=0)
-                    
-                    # Metrics for TRUE parents vs non-parents
-                    true_parent_indices = list(true_parents)
-                    non_parent_indices = [i for i in range(len(feature_importance)) if i not in true_parents]
-                    
-                    if true_parent_indices:
-                        mean_importance_true_parents = feature_importance[true_parent_indices].mean()
-                        median_importance_true_parents = np.median(feature_importance[true_parent_indices])
-                    else:
-                        mean_importance_true_parents = 0.0
-                        median_importance_true_parents = 0.0
-                    
-                    if non_parent_indices:
-                        mean_importance_non_parents = feature_importance[non_parent_indices].mean()
-                        median_importance_non_parents = np.median(feature_importance[non_parent_indices])
-                    else:
-                        mean_importance_non_parents = 0.0
-                        median_importance_non_parents = 0.0
-                    
-                    # Ratio: how much more important are true parents?
-                    if mean_importance_non_parents > 0:
-                        importance_ratio_true = mean_importance_true_parents / mean_importance_non_parents
-                    else:
-                        importance_ratio_true = float('inf') if mean_importance_true_parents > 0 else 1.0
-                    
-                    # Metrics for DISCOVERED parents vs non-discovered parents
-                    discovered_parent_indices = list(discovered_parents_full)
-                    non_discovered_indices = [i for i in range(len(feature_importance)) if i not in discovered_parents_full]
-                    
-                    if discovered_parent_indices:
-                        mean_importance_discovered = feature_importance[discovered_parent_indices].mean()
-                        median_importance_discovered = np.median(feature_importance[discovered_parent_indices])
-                    else:
-                        mean_importance_discovered = 0.0
-                        median_importance_discovered = 0.0
-                    
-                    if non_discovered_indices:
-                        mean_importance_non_discovered = feature_importance[non_discovered_indices].mean()
-                        median_importance_non_discovered = np.median(feature_importance[non_discovered_indices])
-                    else:
-                        mean_importance_non_discovered = 0.0
-                        median_importance_non_discovered = 0.0
-                    
-                    # Ratio: how much more important are discovered parents?
-                    if mean_importance_non_discovered > 0:
-                        importance_ratio_discovered = mean_importance_discovered / mean_importance_non_discovered
-                    else:
-                        importance_ratio_discovered = float('inf') if mean_importance_discovered > 0 else 1.0
-                    
-                    # Top-K accuracy: are true parents in top-K features?
-                    top_k = min(5, len(feature_importance))
-                    top_k_features = set(np.argsort(feature_importance)[-top_k:])
-                    true_parents_in_top_k = len(true_parents.intersection(top_k_features))
-                    discovered_parents_in_top_k = len(discovered_parents_full.intersection(top_k_features))
-                    
-                    comparison_metrics[method_name] = {
-                        # True parent metrics
-                        'mean_shap_true_parents': float(mean_importance_true_parents),
-                        'mean_shap_non_parents': float(mean_importance_non_parents),
-                        'median_shap_true_parents': float(median_importance_true_parents),
-                        'median_shap_non_parents': float(median_importance_non_parents),
-                        'importance_ratio_true_parents': float(importance_ratio_true) if importance_ratio_true != float('inf') else 999.0,
-                        
-                        # Discovered parent metrics
-                        'mean_shap_discovered_parents': float(mean_importance_discovered),
-                        'mean_shap_non_discovered': float(mean_importance_non_discovered),
-                        'median_shap_discovered_parents': float(median_importance_discovered),
-                        'median_shap_non_discovered': float(median_importance_non_discovered),
-                        'importance_ratio_discovered_parents': float(importance_ratio_discovered) if importance_ratio_discovered != float('inf') else 999.0,
-                        
-                        # Top-K metrics
-                        'true_parents_in_top5': int(true_parents_in_top_k),
-                        'discovered_parents_in_top5': int(discovered_parents_in_top_k),
-                        'total_true_parents': len(true_parents),
-                        'total_discovered_parents': len(discovered_parents_full),
-                        
-                        # Parent sets for reference
-                        'true_parent_features': sorted(list(true_parents)),
-                        'discovered_parent_features': sorted(list(discovered_parents_full))
-                    }
-                
-                # Save comparison metrics
-                comparison_dir = EXPLAINABILITY_DIR / filename / model_name / discovery_method
-                metrics_path = comparison_dir / 'method_comparison.json'
-                with open(metrics_path, 'w') as f:
-                    json.dump(comparison_metrics, f, indent=2)
-                
-                # Create visualization comparing methods
-                fig = plot_shapley_feature_comparison(
-                    shapley_dict=methods_dict,
-                    feature_names=feature_names
-                )
-                
-                viz_path = comparison_dir / 'feature_importance_comparison.png'
-                fig.savefig(viz_path, dpi=300, bbox_inches='tight')
-                plt.close(fig)
-                
-                logging.info(f"    ✓ Saved metrics and visualization")
+        # Process LGBM model only
+        model_name = 'lgbm'
+        logging.info(f"  Creating PC vs LiNGAM comparison for {model_name.upper()}...")
+        
+        # Load Scratch importance to get top 10 features
+        scratch_dir = EXPLAINABILITY_DIR / filename / model_name / 'scratch'
+        scratch_values = np.load(scratch_dir / 'shapley_values.npy')
+        scratch_importance = np.abs(scratch_values).mean(axis=0)
+        top_10_indices = np.argsort(scratch_importance)[-10:][::-1]  # Top 10 in descending order
+        top_10_features = [feature_names[i] for i in top_10_indices]
+        
+        logging.info(f"  Top 10 features from Scratch: {top_10_features}")
+        
+        # Load SHAP values for both discovery methods
+        methods_data = {}
+        for discovery_method in ['pc', 'lingam']:
+            # Load SHAP values for this discovery method
+            asym_dir = EXPLAINABILITY_DIR / filename / model_name / discovery_method / 'asymmetric'
+            causal_dir = EXPLAINABILITY_DIR / filename / model_name / discovery_method / 'causal'
+            flow_dir = EXPLAINABILITY_DIR / filename / model_name / discovery_method / 'flow'
+            
+            asymmetric_values = np.load(asym_dir / 'shapley_values.npy')
+            causal_values = np.load(causal_dir / 'shapley_values.npy')
+            flow_values = np.load(flow_dir / 'shapley_values.npy')
+            
+            # Calculate mean importance for top 10 features
+            asym_importance_top10 = np.abs(asymmetric_values)[:, top_10_indices].mean(axis=0)
+            causal_importance_top10 = np.abs(causal_values)[:, top_10_indices].mean(axis=0)
+            flow_importance_top10 = np.abs(flow_values)[:, top_10_indices].mean(axis=0)
+            scratch_importance_top10 = scratch_importance[top_10_indices]
+            
+            methods_data[discovery_method] = {
+                'Scratch': scratch_importance_top10,
+                'Asymmetric': asym_importance_top10,
+                'Causal': causal_importance_top10,
+                'Flow': flow_importance_top10
+            }
+        
+        # Create PC vs LiNGAM comparison visualization
+        fig, axes = plt.subplots(1, 2, figsize=(16, 8), sharey=True)
+        
+        x_pos = np.arange(len(top_10_features))
+        width = 0.2  # Slightly narrower to fit 4 methods
+        
+        for ax_idx, discovery_method in enumerate(['pc', 'lingam']):
+            ax = axes[ax_idx]
+            data = methods_data[discovery_method]
+            
+            # Plot bars for each method (4 methods now)
+            ax.barh(x_pos - 1.5*width, data['Scratch'], width, label='Scratch', alpha=0.8)
+            ax.barh(x_pos - 0.5*width, data['Asymmetric'], width, label='Asymmetric', alpha=0.8)
+            ax.barh(x_pos + 0.5*width, data['Causal'], width, label='Causal', alpha=0.8)
+            ax.barh(x_pos + 1.5*width, data['Flow'], width, label='Flow', alpha=0.8)
+            
+            ax.set_yticks(x_pos)
+            ax.set_yticklabels(top_10_features)
+            ax.set_xlabel('Mean Absolute SHAP Value', fontsize=12)
+            ax.set_title(f'{discovery_method.upper()} Discovery', fontsize=14, fontweight='bold')
+            ax.legend()
+            ax.grid(True, alpha=0.3, axis='x')
+        
+        axes[0].invert_yaxis()  # Highest importance at top
+        fig.suptitle(f'{filename} - LGBM Model\nTop 10 Features: PC vs LiNGAM Comparison',
+                     fontsize=16, fontweight='bold', y=0.98)
+        plt.tight_layout()
+        
+        # Save visualization
+        comparison_dir = EXPLAINABILITY_DIR / filename / model_name
+        comparison_dir.mkdir(parents=True, exist_ok=True)
+        viz_path = comparison_dir / 'pc_vs_lingam_comparison.png'
+        fig.savefig(viz_path, dpi=300, bbox_inches='tight')
+        plt.close(fig)
+        
+        logging.info(f"  ✓ Saved PC vs LiNGAM comparison visualization")
+        
+        # COMMENTED OUT: Parent identification metrics (for future use)
+        # for discovery_method in ['pc', 'lingam']:
+        #     # Load discovery results for discovered parents
+        #     results_path = CAUSAL_DIR / f"{filename}_{discovery_method}_results.json"
+        #     with open(results_path, 'r') as f:
+        #         discovery_results = json.load(f)
+        #     
+        #     causal_graph = np.array(discovery_results['adjacency_matrix'])
+        #     discovered_parents_full = set()
+        #     for i in range(causal_graph.shape[0] - 1):
+        #         if causal_graph[i, -1] == 1:
+        #             discovered_parents_full.add(i)
+        #     
+        #     # Calculate parent identification metrics...
+        #     # (code omitted for brevity)
     
     logging.info(f"\n{'='*80}")
-    logging.info(f"Step 6 Complete: Comparison metrics calculated for all combinations")
+    logging.info(f"Step 6 Complete: PC vs LiNGAM comparison visualization created")
     logging.info(f"{'='*80}\n")
 
 

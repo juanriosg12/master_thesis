@@ -1,0 +1,185 @@
+2026-04-02 19:55:45 | Log file: /Users/juanrios/Documents/master_thesis/logs/pipeline_20260402_195545.log
+2026-04-02 19:55:45 | 
+================================================================================
+2026-04-02 19:55:45 | EXPERIMENTAL PIPELINE: CAUSAL FEATURE IMPORTANCE COMPARISON
+2026-04-02 19:55:45 | ================================================================================
+2026-04-02 19:55:45 | 
+Configuration:
+2026-04-02 19:55:45 |   - Features: 50
+2026-04-02 19:55:45 |   - Samples: 1000
+2026-04-02 19:55:45 |   - Y Parents Ratio: 0.5
+2026-04-02 19:55:45 |   - Random State: 42
+2026-04-02 19:55:45 |   - Shapley Samples: 100
+2026-04-02 19:55:45 | 
+Directories:
+2026-04-02 19:55:45 |   - Synthetic Data: /Users/juanrios/Documents/master_thesis/data/synthetic
+2026-04-02 19:55:45 |   - Processed Data: /Users/juanrios/Documents/master_thesis/data/processed
+2026-04-02 19:55:45 |   - Causal Discovery: /Users/juanrios/Documents/master_thesis/data/causal
+2026-04-02 19:55:45 |   - Explainability: /Users/juanrios/Documents/master_thesis/data/explainability
+2026-04-02 19:55:45 |   - Models: /Users/juanrios/Documents/master_thesis/models
+2026-04-02 19:55:45 |   - Logs: /Users/juanrios/Documents/master_thesis/logs
+2026-04-02 19:55:45 | 
+================================================================================
+
+2026-04-02 19:55:45 | ================================================================================
+2026-04-02 19:55:45 | STEP 1: GENERATING SYNTHETIC DATASETS
+2026-04-02 19:55:45 | ================================================================================
+2026-04-02 19:55:45 | 
+[Dataset 1/6] Generating linear system without confounders
+2026-04-02 19:55:45 |   ✓ Saved: linear_no_conf_f50_s1000_p50 | Features: 50, Samples: 1000, Y parents: 25, Edges: 291, Confounders: 0
+2026-04-02 19:55:45 | 
+[Dataset 2/6] Generating linear system with confounders
+2026-04-02 19:55:45 |   ✓ Saved: linear_conf_f50_s1000_p50 | Features: 50, Samples: 1000, Y parents: 25, Edges: 291, Confounders: 5
+2026-04-02 19:55:45 | 
+[Dataset 3/6] Generating nonlinear system without confounders
+2026-04-02 19:55:45 |   ✓ Saved: nonlinear_no_conf_f50_s1000_p50 | Features: 50, Samples: 1000, Y parents: 25, Edges: 291, Confounders: 0
+2026-04-02 19:55:45 | 
+[Dataset 4/6] Generating nonlinear system with confounders
+2026-04-02 19:55:45 |   ✓ Saved: nonlinear_conf_f50_s1000_p50 | Features: 50, Samples: 1000, Y parents: 25, Edges: 291, Confounders: 5
+2026-04-02 19:55:45 | 
+[Dataset 5/6] Generating mixed system without confounders
+2026-04-02 19:55:45 |   ✓ Saved: mixed_no_conf_f50_s1000_p50 | Features: 50, Samples: 1000, Y parents: 25, Edges: 291, Confounders: 0
+2026-04-02 19:55:45 | 
+[Dataset 6/6] Generating mixed system with confounders
+2026-04-02 19:55:45 |   ✓ Saved: mixed_conf_f50_s1000_p50 | Features: 50, Samples: 1000, Y parents: 25, Edges: 291, Confounders: 5
+2026-04-02 19:55:45 | 
+================================================================================
+2026-04-02 19:55:45 | Step 1 Complete: 6 datasets generated
+2026-04-02 19:55:45 | ================================================================================
+
+2026-04-02 19:55:45 | ================================================================================
+2026-04-02 19:55:45 | STEP 2: CREATING TRAIN/TEST SPLITS
+2026-04-02 19:55:45 | ================================================================================
+2026-04-02 19:55:45 | 
+[Dataset 1/6] Processing linear_no_conf_f50_s1000_p50...
+2026-04-02 19:55:45 |   ✓ Train: (800, 51), Test: (200, 51)
+2026-04-02 19:55:45 | 
+[Dataset 2/6] Processing linear_conf_f50_s1000_p50...
+2026-04-02 19:55:45 |   ✓ Train: (800, 51), Test: (200, 51)
+2026-04-02 19:55:45 | 
+[Dataset 3/6] Processing nonlinear_no_conf_f50_s1000_p50...
+2026-04-02 19:55:45 |   ✓ Train: (800, 51), Test: (200, 51)
+2026-04-02 19:55:45 | 
+[Dataset 4/6] Processing nonlinear_conf_f50_s1000_p50...
+2026-04-02 19:55:45 |   ✓ Train: (800, 51), Test: (200, 51)
+2026-04-02 19:55:45 | 
+[Dataset 5/6] Processing mixed_no_conf_f50_s1000_p50...
+2026-04-02 19:55:45 |   ✓ Train: (800, 51), Test: (200, 51)
+2026-04-02 19:55:45 | 
+[Dataset 6/6] Processing mixed_conf_f50_s1000_p50...
+2026-04-02 19:55:45 |   ✓ Train: (800, 51), Test: (200, 51)
+2026-04-02 19:55:45 | 
+================================================================================
+2026-04-02 19:55:45 | Step 2 Complete: Train/test splits created for 6 datasets
+2026-04-02 19:55:45 | ================================================================================
+
+2026-04-02 19:55:45 | ================================================================================
+2026-04-02 19:55:45 | STEP 3: RUNNING CAUSAL DISCOVERY
+2026-04-02 19:55:45 | ================================================================================
+2026-04-02 19:55:45 | 
+[Dataset 1/6] Processing linear_no_conf_f50_s1000_p50
+2026-04-02 19:55:45 |   Running LiNGAM...
+2026-04-02 19:55:51 |   Running PC...
+2026-04-02 19:55:57 |   Extracting train adjacency matrices for Step 5...
+2026-04-02 19:55:57 |   ✓ LINGAM: F1=0.282, Precision=0.240, Recall=0.340
+2026-04-02 19:55:58 |   ✓ PC: F1=0.313, Precision=0.399, Recall=0.258
+2026-04-02 19:55:59 | 
+[Dataset 2/6] Processing linear_conf_f50_s1000_p50
+2026-04-02 19:55:59 |   Running LiNGAM...
+2026-04-02 19:56:05 |   Running PC...
+2026-04-02 19:56:10 |   Extracting train adjacency matrices for Step 5...
+2026-04-02 19:56:10 |   ✓ LINGAM: F1=0.222, Precision=0.188, Recall=0.271
+2026-04-02 19:56:12 |   ✓ PC: F1=0.313, Precision=0.415, Recall=0.251
+2026-04-02 19:56:12 | 
+[Dataset 3/6] Processing nonlinear_no_conf_f50_s1000_p50
+2026-04-02 19:56:12 |   Running LiNGAM...
+2026-04-02 19:56:18 |   Running PC...
+2026-04-02 19:56:22 |   Extracting train adjacency matrices for Step 5...
+2026-04-02 19:56:22 |   ✓ LINGAM: F1=0.192, Precision=0.212, Recall=0.175
+2026-04-02 19:56:23 |   ✓ PC: F1=0.259, Precision=0.314, Recall=0.220
+2026-04-02 19:56:24 | 
+[Dataset 4/6] Processing nonlinear_conf_f50_s1000_p50
+2026-04-02 19:56:24 |   Running LiNGAM...
+2026-04-02 19:56:50 |   Running PC...
+2026-04-02 19:57:31 |   Extracting train adjacency matrices for Step 5...
+2026-04-02 19:57:31 |   ✓ LINGAM: F1=0.196, Precision=0.236, Recall=0.168
+2026-04-02 19:57:32 |   ✓ PC: F1=0.224, Precision=0.246, Recall=0.206
+2026-04-02 19:57:33 | 
+[Dataset 5/6] Processing mixed_no_conf_f50_s1000_p50
+2026-04-02 19:57:33 |   Running LiNGAM...
+2026-04-02 19:57:38 |   Running PC...
+2026-04-02 19:57:40 |   Extracting train adjacency matrices for Step 5...
+2026-04-02 19:57:40 |   ✓ LINGAM: F1=0.031, Precision=0.152, Recall=0.017
+2026-04-02 19:57:40 |   ✓ PC: F1=0.114, Precision=0.234, Recall=0.076
+2026-04-02 19:57:41 | 
+[Dataset 6/6] Processing mixed_conf_f50_s1000_p50
+2026-04-02 19:57:41 |   Running LiNGAM...
+2026-04-02 19:57:49 |   Running PC...
+2026-04-02 19:57:57 |   Extracting train adjacency matrices for Step 5...
+2026-04-02 19:57:57 |   ✓ LINGAM: F1=0.154, Precision=0.181, Recall=0.134
+2026-04-02 19:57:58 |   ✓ PC: F1=0.199, Precision=0.236, Recall=0.172
+2026-04-02 19:57:58 | 
+================================================================================
+2026-04-02 19:57:58 | Step 3 Complete: Causal discovery completed for 6 datasets
+2026-04-02 19:57:58 | ================================================================================
+
+2026-04-02 19:57:58 | ================================================================================
+2026-04-02 19:57:58 | STEP 4: TRAINING PREDICTIVE MODELS (LGBM only, mixed_no_conf dataset)
+2026-04-02 19:57:58 | ================================================================================
+2026-04-02 19:57:58 | 
+[Dataset 1/1] Training LGBM model for mixed_no_conf_f50_s1000_p50
+2026-04-02 19:57:58 |   Training LGBM...
+2026-04-02 19:58:17 |   ✓ LGBM: R²=0.6498, MSE=0.4701, MAE=0.5571, RMSE=0.6856
+2026-04-02 19:58:17 | 
+================================================================================
+2026-04-02 19:58:17 | Step 4 Complete: LGBM model trained for mixed_no_conf_f50_s1000_p50
+2026-04-02 19:58:17 | ================================================================================
+
+2026-04-02 19:58:17 | ================================================================================
+2026-04-02 19:58:17 | STEP 5: CALCULATING SHAPLEY VALUES (mixed_no_conf + LGBM only)
+2026-04-02 19:58:17 | ================================================================================
+2026-04-02 19:58:17 | 
+[Dataset 1/1] Processing mixed_no_conf_f50_s1000_p50
+2026-04-02 19:58:17 |   [Progress: 1/7] LGBM - ShapleyFromScratch
+2026-04-02 20:04:30 |   [Progress: 2/7] LGBM + PC - AsymmetricShapley
+2026-04-02 20:10:43 |   [Progress: 3/7] LGBM + PC - CausalShapley (SLOW - uses 10 inner samples)
+2026-04-02 20:26:04 |   [Progress: 4/7] LGBM + PC - ShapleyFlow
+2026-04-02 20:31:45 |   [Progress: 5/7] LGBM + LINGAM - AsymmetricShapley
+2026-04-02 20:37:54 |   [Progress: 6/7] LGBM + LINGAM - CausalShapley (SLOW - uses 10 inner samples)
+2026-04-02 21:01:33 |   [Progress: 7/7] LGBM + LINGAM - ShapleyFlow
+2026-04-02 21:06:20 |   ✓ Completed mixed_no_conf_f50_s1000_p50 in 68.1 minutes
+2026-04-02 21:06:20 | 
+================================================================================
+2026-04-02 21:06:20 | Step 5 Complete: Shapley values calculated for all combinations
+2026-04-02 21:06:20 | ================================================================================
+
+2026-04-02 21:06:20 | ================================================================================
+2026-04-02 21:06:20 | STEP 6: CREATING PC vs LiNGAM COMPARISON (mixed_no_conf + LGBM)
+2026-04-02 21:06:20 | ================================================================================
+2026-04-02 21:06:20 | 
+[Dataset 1/1] Processing mixed_no_conf_f50_s1000_p50
+2026-04-02 21:06:20 |   Creating PC vs LiNGAM comparison for LGBM...
+2026-04-02 21:06:20 |   Top 10 features from Scratch: ['X11', 'X46', 'X40', 'X49', 'X45', 'X3', 'X8', 'X22', 'X25', 'X35']
+2026-04-02 21:06:20 |   ✓ Saved PC vs LiNGAM comparison visualization
+2026-04-02 21:06:20 | 
+================================================================================
+2026-04-02 21:06:20 | Step 6 Complete: PC vs LiNGAM comparison visualization created
+2026-04-02 21:06:20 | ================================================================================
+
+2026-04-02 21:06:20 | 
+================================================================================
+2026-04-02 21:06:20 | PIPELINE COMPLETED SUCCESSFULLY!
+2026-04-02 21:06:20 | ================================================================================
+2026-04-02 21:06:20 | 
+Total execution time: 70.6 minutes (1.18 hours)
+2026-04-02 21:06:20 | 
+Results saved in:
+2026-04-02 21:06:20 |   - Synthetic data: /Users/juanrios/Documents/master_thesis/data/synthetic
+2026-04-02 21:06:20 |   - Processed data: /Users/juanrios/Documents/master_thesis/data/processed
+2026-04-02 21:06:20 |   - Causal discovery: /Users/juanrios/Documents/master_thesis/data/causal
+2026-04-02 21:06:20 |   - Models: /Users/juanrios/Documents/master_thesis/models
+2026-04-02 21:06:20 |   - Explainability: /Users/juanrios/Documents/master_thesis/data/explainability
+2026-04-02 21:06:20 |   - Logs: /Users/juanrios/Documents/master_thesis/logs
+2026-04-02 21:06:20 | 
+================================================================================
+

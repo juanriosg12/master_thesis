@@ -227,7 +227,7 @@ class LiNGAMWithFCI(CausalDiscoveryMethod):
 
             adjacency_lingam = model.adjacency_matrix_
             
-            threashold = 0.01
+            threashold = 0.1
             adjacency_lingam[np.abs(adjacency_lingam) < threashold] = 0
 
             adjacency_binary = (np.abs(adjacency_lingam) > 0).astype(int)

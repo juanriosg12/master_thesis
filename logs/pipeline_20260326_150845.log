@@ -1,0 +1,181 @@
+2026-03-26 15:08:45 | Log file: /Users/juanrios/Documents/master_thesis/logs/pipeline_20260326_150845.log
+2026-03-26 15:08:45 | 
+================================================================================
+2026-03-26 15:08:45 | EXPERIMENTAL PIPELINE: CAUSAL FEATURE IMPORTANCE COMPARISON
+2026-03-26 15:08:45 | ================================================================================
+2026-03-26 15:08:45 | 
+Configuration:
+2026-03-26 15:08:45 |   - Features: 45
+2026-03-26 15:08:45 |   - Samples: 1000
+2026-03-26 15:08:45 |   - Y Parents Ratio: 0.5
+2026-03-26 15:08:45 |   - Random State: 42
+2026-03-26 15:08:45 |   - Shapley Samples: 100
+2026-03-26 15:08:45 | 
+Directories:
+2026-03-26 15:08:45 |   - Synthetic Data: /Users/juanrios/Documents/master_thesis/data/synthetic
+2026-03-26 15:08:45 |   - Processed Data: /Users/juanrios/Documents/master_thesis/data/processed
+2026-03-26 15:08:45 |   - Causal Discovery: /Users/juanrios/Documents/master_thesis/data/causal
+2026-03-26 15:08:45 |   - Explainability: /Users/juanrios/Documents/master_thesis/data/explainability
+2026-03-26 15:08:45 |   - Models: /Users/juanrios/Documents/master_thesis/models
+2026-03-26 15:08:45 |   - Logs: /Users/juanrios/Documents/master_thesis/logs
+2026-03-26 15:08:45 | 
+================================================================================
+
+2026-03-26 15:08:45 | ================================================================================
+2026-03-26 15:08:45 | STEP 1: GENERATING SYNTHETIC DATASETS
+2026-03-26 15:08:45 | ================================================================================
+2026-03-26 15:08:45 | 
+[Dataset 1/6] Generating linear system without confounders
+2026-03-26 15:08:45 |   ✓ Saved: linear_no_conf_f45_s1000_p50 | Features: 45, Samples: 1000, Y parents: 22, Edges: 245, Confounders: 0
+2026-03-26 15:08:45 | 
+[Dataset 2/6] Generating linear system with confounders
+2026-03-26 15:08:45 |   ✓ Saved: linear_conf_f45_s1000_p50 | Features: 45, Samples: 1000, Y parents: 22, Edges: 245, Confounders: 5
+2026-03-26 15:08:45 | 
+[Dataset 3/6] Generating nonlinear system without confounders
+2026-03-26 15:08:45 |   ✓ Saved: nonlinear_no_conf_f45_s1000_p50 | Features: 45, Samples: 1000, Y parents: 22, Edges: 245, Confounders: 0
+2026-03-26 15:08:45 | 
+[Dataset 4/6] Generating nonlinear system with confounders
+2026-03-26 15:08:45 |   ✓ Saved: nonlinear_conf_f45_s1000_p50 | Features: 45, Samples: 1000, Y parents: 22, Edges: 245, Confounders: 5
+2026-03-26 15:08:45 | 
+[Dataset 5/6] Generating mixed system without confounders
+2026-03-26 15:08:45 |   ✓ Saved: mixed_no_conf_f45_s1000_p50 | Features: 45, Samples: 1000, Y parents: 22, Edges: 245, Confounders: 0
+2026-03-26 15:08:45 | 
+[Dataset 6/6] Generating mixed system with confounders
+2026-03-26 15:08:45 |   ✓ Saved: mixed_conf_f45_s1000_p50 | Features: 45, Samples: 1000, Y parents: 22, Edges: 245, Confounders: 5
+2026-03-26 15:08:45 | 
+================================================================================
+2026-03-26 15:08:45 | Step 1 Complete: 6 datasets generated
+2026-03-26 15:08:45 | ================================================================================
+
+2026-03-26 15:08:45 | ================================================================================
+2026-03-26 15:08:45 | STEP 2: CREATING TRAIN/TEST SPLITS
+2026-03-26 15:08:45 | ================================================================================
+2026-03-26 15:08:45 | 
+[Dataset 1/6] Processing linear_no_conf_f45_s1000_p50...
+2026-03-26 15:08:45 |   ✓ Train: (800, 46), Test: (200, 46)
+2026-03-26 15:08:45 | 
+[Dataset 2/6] Processing linear_conf_f45_s1000_p50...
+2026-03-26 15:08:45 |   ✓ Train: (800, 46), Test: (200, 46)
+2026-03-26 15:08:45 | 
+[Dataset 3/6] Processing nonlinear_no_conf_f45_s1000_p50...
+2026-03-26 15:08:45 |   ✓ Train: (800, 46), Test: (200, 46)
+2026-03-26 15:08:45 | 
+[Dataset 4/6] Processing nonlinear_conf_f45_s1000_p50...
+2026-03-26 15:08:45 |   ✓ Train: (800, 46), Test: (200, 46)
+2026-03-26 15:08:45 | 
+[Dataset 5/6] Processing mixed_no_conf_f45_s1000_p50...
+2026-03-26 15:08:45 |   ✓ Train: (800, 46), Test: (200, 46)
+2026-03-26 15:08:45 | 
+[Dataset 6/6] Processing mixed_conf_f45_s1000_p50...
+2026-03-26 15:08:45 |   ✓ Train: (800, 46), Test: (200, 46)
+2026-03-26 15:08:45 | 
+================================================================================
+2026-03-26 15:08:45 | Step 2 Complete: Train/test splits created for 6 datasets
+2026-03-26 15:08:45 | ================================================================================
+
+2026-03-26 15:08:45 | ================================================================================
+2026-03-26 15:08:45 | STEP 3: RUNNING CAUSAL DISCOVERY
+2026-03-26 15:08:45 | ================================================================================
+2026-03-26 15:08:45 | 
+[Dataset 1/6] Processing linear_no_conf_f45_s1000_p50
+2026-03-26 15:08:45 |   Running LiNGAM...
+2026-03-26 15:08:49 |   Running PC...
+2026-03-26 15:08:52 |   Extracting train adjacency matrices for Step 5...
+2026-03-26 15:08:52 |   ✓ LINGAM: F1=0.197, Precision=0.157, Recall=0.265
+2026-03-26 15:08:53 |   ✓ PC: F1=0.324, Precision=0.417, Recall=0.265
+2026-03-26 15:08:54 | 
+[Dataset 2/6] Processing linear_conf_f45_s1000_p50
+2026-03-26 15:08:54 |   Running LiNGAM...
+2026-03-26 15:08:59 |   Running PC...
+2026-03-26 15:09:01 |   Extracting train adjacency matrices for Step 5...
+2026-03-26 15:09:01 |   ✓ LINGAM: F1=0.216, Precision=0.175, Recall=0.282
+2026-03-26 15:09:03 |   ✓ PC: F1=0.325, Precision=0.391, Recall=0.278
+2026-03-26 15:09:03 | 
+[Dataset 3/6] Processing nonlinear_no_conf_f45_s1000_p50
+2026-03-26 15:09:03 |   Running LiNGAM...
+2026-03-26 15:09:10 |   Running PC...
+2026-03-26 15:09:15 |   Extracting train adjacency matrices for Step 5...
+2026-03-26 15:09:15 |   ✓ LINGAM: F1=0.148, Precision=0.188, Recall=0.122
+2026-03-26 15:09:16 |   ✓ PC: F1=0.249, Precision=0.294, Recall=0.216
+2026-03-26 15:09:17 | 
+[Dataset 4/6] Processing nonlinear_conf_f45_s1000_p50
+2026-03-26 15:09:17 |   Running LiNGAM...
+2026-03-26 15:09:22 |   Running PC...
+2026-03-26 15:09:25 |   Extracting train adjacency matrices for Step 5...
+2026-03-26 15:09:25 |   ✓ LINGAM: F1=0.149, Precision=0.174, Recall=0.131
+2026-03-26 15:09:26 |   ✓ PC: F1=0.273, Precision=0.309, Recall=0.245
+2026-03-26 15:09:27 | 
+[Dataset 5/6] Processing mixed_no_conf_f45_s1000_p50
+2026-03-26 15:09:27 |   Running LiNGAM...
+2026-03-26 15:09:32 |   Running PC...
+2026-03-26 15:09:35 |   Extracting train adjacency matrices for Step 5...
+2026-03-26 15:09:35 |   ✓ LINGAM: F1=0.052, Precision=0.304, Recall=0.029
+2026-03-26 15:09:35 |   ✓ PC: F1=0.128, Precision=0.220, Recall=0.090
+2026-03-26 15:09:36 | 
+[Dataset 6/6] Processing mixed_conf_f45_s1000_p50
+2026-03-26 15:09:36 |   Running LiNGAM...
+2026-03-26 15:09:42 |   Running PC...
+2026-03-26 15:09:46 |   Extracting train adjacency matrices for Step 5...
+2026-03-26 15:09:46 |   ✓ LINGAM: F1=0.174, Precision=0.177, Recall=0.171
+2026-03-26 15:09:46 |   ✓ PC: F1=0.252, Precision=0.301, Recall=0.216
+2026-03-26 15:09:47 | 
+================================================================================
+2026-03-26 15:09:47 | Step 3 Complete: Causal discovery completed for 6 datasets
+2026-03-26 15:09:47 | ================================================================================
+
+2026-03-26 15:09:47 | ================================================================================
+2026-03-26 15:09:47 | STEP 4: TRAINING PREDICTIVE MODELS
+2026-03-26 15:09:47 | ================================================================================
+2026-03-26 15:09:47 | 
+[Dataset 1/6] Training models for linear_no_conf_f45_s1000_p50
+2026-03-26 15:09:47 |   Training LGBM...
+2026-03-26 15:10:04 |   ✓ LGBM: R²=0.8230, MSE=7.7617, MAE=2.1571, RMSE=2.7860
+2026-03-26 15:10:04 |   Training NN...
+2026-03-26 15:10:12 |   ✓ NN: R²=0.9133, MSE=3.8004, MAE=1.5892, RMSE=1.9495
+2026-03-26 15:10:12 | 
+[Dataset 2/6] Training models for linear_conf_f45_s1000_p50
+2026-03-26 15:10:12 |   Training LGBM...
+2026-03-26 15:10:28 |   ✓ LGBM: R²=0.8320, MSE=3.5897, MAE=1.4939, RMSE=1.8947
+2026-03-26 15:10:28 |   Training NN...
+2026-03-26 15:10:37 |   ✓ NN: R²=0.9124, MSE=1.8728, MAE=1.0915, RMSE=1.3685
+2026-03-26 15:10:37 | 
+[Dataset 3/6] Training models for nonlinear_no_conf_f45_s1000_p50
+2026-03-26 15:10:37 |   Training LGBM...
+2026-03-26 15:10:46 |   ✓ LGBM: R²=0.1626, MSE=0.4494, MAE=0.4607, RMSE=0.6704
+2026-03-26 15:10:46 |   Training NN...
+2026-03-26 15:10:49 |   ✓ NN: R²=0.1062, MSE=0.4797, MAE=0.4745, RMSE=0.6926
+2026-03-26 15:10:49 | 
+[Dataset 4/6] Training models for nonlinear_conf_f45_s1000_p50
+2026-03-26 15:10:49 |   Training LGBM...
+2026-03-26 15:10:56 |   ✓ LGBM: R²=0.5075, MSE=0.8438, MAE=0.5992, RMSE=0.9186
+2026-03-26 15:10:56 |   Training NN...
+2026-03-26 15:10:59 |   ✓ NN: R²=0.4124, MSE=1.0067, MAE=0.6355, RMSE=1.0033
+2026-03-26 15:10:59 | 
+[Dataset 5/6] Training models for mixed_no_conf_f45_s1000_p50
+2026-03-26 15:10:59 |   Training LGBM...
+2026-03-26 15:11:12 |   ✓ LGBM: R²=0.5488, MSE=0.5307, MAE=0.5852, RMSE=0.7285
+2026-03-26 15:11:12 |   Training NN...
+2026-03-26 15:11:16 |   ✓ NN: R²=0.6421, MSE=0.4210, MAE=0.5287, RMSE=0.6488
+2026-03-26 15:11:16 | 
+[Dataset 6/6] Training models for mixed_conf_f45_s1000_p50
+2026-03-26 15:11:16 |   Training LGBM...
+2026-03-26 15:11:27 |   ✓ LGBM: R²=0.6042, MSE=0.5009, MAE=0.5449, RMSE=0.7077
+2026-03-26 15:11:27 |   Training NN...
+2026-03-26 15:11:35 |   ✓ NN: R²=0.6974, MSE=0.3828, MAE=0.4840, RMSE=0.6187
+2026-03-26 15:11:35 | 
+================================================================================
+2026-03-26 15:11:35 | Step 4 Complete: Models trained for 6 datasets
+2026-03-26 15:11:35 | ================================================================================
+
+2026-03-26 15:11:35 | ================================================================================
+2026-03-26 15:11:35 | STEP 5: CALCULATING SHAPLEY VALUES
+2026-03-26 15:11:35 | ================================================================================
+2026-03-26 15:11:35 | 
+[Dataset 1/6] Processing linear_no_conf_f45_s1000_p50
+2026-03-26 15:11:35 |   [Progress: 1/14] LGBM - ShapleyFromScratch
+2026-03-26 15:17:13 |   [Progress: 2/14] LGBM + PC - AsymmetricShapley
+2026-03-26 15:22:49 |   [Progress: 3/14] LGBM + PC - CausalShapley (SLOW - uses 10 inner samples)
+2026-03-26 15:52:35 |   [Progress: 4/14] LGBM + PC - ShapleyFlow
+2026-03-26 16:20:22 |   [Progress: 5/14] LGBM + LINGAM - AsymmetricShapley
+2026-03-26 16:25:58 |   [Progress: 6/14] LGBM + LINGAM - CausalShapley (SLOW - uses 10 inner samples)
+2026-03-26 17:31:31 |   [Progress: 7/14] LGBM + LINGAM - ShapleyFlow

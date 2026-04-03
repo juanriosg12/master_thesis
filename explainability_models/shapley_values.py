@@ -1099,7 +1099,7 @@ class CausalShapley(ShapleyFromScratch):
         - Initialize empty coalition S = 0
         - For each feature J in permutation order:
             * Compute v(S) using inner sampling loop
-            * compute v(S u {j} ) using iiner sampling loop
+            * compute v(S u {j} ) using inner sampling loop
             * Marginal contribution = V(S u {j}) - V(S)
             * Add to features j's Shapley value
             * Add j to coalition: S = S u {j}
@@ -1141,8 +1141,8 @@ class CausalShapley(ShapleyFromScratch):
 
                 prev_value = curr_value
             
-            # Progress indicator every 2% of permutations
-            if (perm_idx + 1) % max(1, self.n_samples // 50) == 0:
+            # Progress indicator every 50% of permutations
+            if (perm_idx + 1) % max(1, self.n_samples // 5) == 0:
                 print(f"     Permutations: {perm_idx + 1}/{self.n_samples}")
         
         # Average over all permutation
