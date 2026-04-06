@@ -1,3 +1,5 @@
+import logging
+
 import numpy as np
 import math
 import pandas as pd
@@ -1200,7 +1202,9 @@ class ShapleyFlow:
                  sink_node: Optional[int] = None,
                  n_samples: int = 100,
                  random_state: Optional[int] = None,
-                 feature_names: Optional[List[str]] = None):
+                 feature_names: Optional[List[str]] = None,
+                 use_path_sampling: bool = True,
+                 paths_per_source: int = 100):
         """
         Initiliaze Shapley Flow Calculator
 
@@ -1222,6 +1226,11 @@ class ShapleyFlow:
             Randome seed for reproducibility
         feature_names: List[str], optional
             Feature names for proper alignment with model (needed for wrapper models)
+        use_path_sampling: bool, default=True
+            If True, use path sampling (faster for dense graphs).
+            If False, use exhaustive DFS (original algorithm)
+        paths_per_source: int, default=100
+            Number of random paths to sample from each source (only if use_path_sampling=True)
         """
 
         self.graph = graph_structure
@@ -1231,6 +1240,8 @@ class ShapleyFlow:
         self.sink_node = sink_node
         self.n_samples = n_samples
         self.feature_names = feature_names
+        self.use_path_sampling = use_path_sampling
+        self.paths_per_source = paths_per_source
 
         self.rng = np.random.RandomState(random_state)
 
@@ -1254,6 +1265,10 @@ class ShapleyFlow:
         for parent, children in graph_structure.items():
             for child in children:
                 self.edge_attributions[(parent,child)]= 0.0
+        
+        # Track evaluation count for debugging
+        self.eval_count = 0
+        self.max_evals_per_trial = 100000  # Safety limit
     
     def _predict_with_feature_alignment(self, X):
         """
@@ -1334,6 +1349,7 @@ class ShapleyFlow:
         output: float
             Value at the sink node (model prediction or computed value)
         """
+        self.eval_count += 1
         history_set = set(history)
         node_values = {}
 
@@ -1375,12 +1391,112 @@ class ShapleyFlow:
         x_features = np.array([node_values.get(idx,0.0) for idx in feature_indices])
 
         result = self._predict_with_feature_alignment(x_features.reshape(1,-1))[0]
+        logging.debug(f"    Result  at evaluate system {result}")
 
         return result
     
+    def _sample_random_path(self, start_node: int, max_depth: int = 100) -> List[Tuple[int, int]]:
+        """
+        Sample ONE random path from start_node to sink (or leaf/max_depth).
+        
+        Uses random walk: at each node, randomly select one child.
+        Avoids cycles by tracking visited nodes.
+        
+        Parameters:
+        -----------
+        start_node: int
+            Starting node for the path
+        max_depth: int
+            Maximum path length to prevent infinite loops
+        
+        Returns:
+        --------
+        path_edges: List[Tuple[int, int]]
+            List of edges [(u1, v1), (u2, v2), ...] forming a path
+        """
+        path_edges = []
+        current_node = start_node
+        depth = 0
+        visited = {start_node}
+        
+        while current_node != self.sink_node and depth < max_depth:
+            children = self.graph.get(current_node, [])
+            
+            # Filter out visited nodes to avoid cycles
+            unvisited_children = [c for c in children if c not in visited]
+            
+            if not unvisited_children:
+                break  # Reached a leaf or dead end
+            
+            # Randomly select ONE child (this is the sampling part)
+            child = self.rng.choice(unvisited_children)
+            edge = (current_node, child)
+            path_edges.append(edge)
+            
+            visited.add(child)
+            current_node = child
+            depth += 1
+        
+        return path_edges
+    
+    def _evaluate_path_contribution(self, path_edges: List[Tuple[int, int]],
+                                    x_foreground: Dict[int, float],
+                                    x_background: Dict[int, float]) -> Dict[Tuple[int, int], float]:
+        """
+        Compute Shapley marginal contributions for edges in a sampled path.
+        
+        Uses random permutation of edges in the path (maintains Shapley property).
+        
+        Strategy:
+        1. Generate random permutation of path edges
+        2. Evaluate incrementally: empty -> +edge1 -> +edge2 -> ... -> complete path
+        3. Marginal of edge_i = value(path[:i+1]) - value(path[:i])
+        
+        Parameters:
+        -----------
+        path_edges: List[Tuple[int, int]]
+            Ordered list of edges forming a path
+        x_foreground: Dict[int, float]
+            Foreground values for all nodes
+        x_background: Dict[int, float]
+            Background values for all nodes
+        
+        Returns:
+        --------
+        edge_marginals: Dict[Tuple[int, int], float]
+            Dictionary mapping edge -> marginal contribution
+        """
+        edge_marginals = {}
+        
+        if not path_edges:
+            return edge_marginals
+        
+        # Random permutation of edges in this path (key for Shapley property!)
+        # Use index permutation to preserve tuples (not convert to lists)
+        indices = self.rng.permutation(len(path_edges))
+        perm_edges = [path_edges[i] for i in indices]
+        
+        # Evaluate baseline (empty path)
+        prev_value = self._evaluate_system([], x_foreground, x_background)
+        
+        # Build up the path incrementally in random order
+        history = []
+        for edge in perm_edges:
+            history.append(edge)
+            current_value = self._evaluate_system(history, x_foreground, x_background)
+            marginal = current_value - prev_value
+            
+            # Store marginal for this edge
+            edge_marginals[edge] = marginal
+            
+            prev_value = current_value
+        
+        return edge_marginals
+    
     def _dfs(self, node: int, history: List[Tuple[int, int]],
              x_foreground: Dict[int, float],
-             x_background: Dict[int, float]) -> None:
+             x_background: Dict[int, float],
+             depth: int = 0) -> None:
         """
         Recursive DFS for one trial (one permutation path)
 
@@ -1396,7 +1512,15 @@ class ShapleyFlow:
             Foreground values for source nodes
         x_background: Dict[int, float]
             Background values for source nodes
+        depth: int
+            Current recursion depth (for limiting)
         """
+        # Safety limits
+        if depth > 50:  # Max depth to prevent infinite recursion
+            return
+        if self.eval_count > self.max_evals_per_trial:
+            return
+            
         # Base case: reached sink
         if node == self.sink_node:
             return
@@ -1432,6 +1556,7 @@ class ShapleyFlow:
             marginal = value_after - current_value
 
             # Accumulate to edge attributio (will average later)
+            logging.debug(f"    Edge {edge} marginal contribution: {marginal}")
             self.edge_attributions[edge] += marginal
 
             # Update current value for next iteration (sequentail reuse)
@@ -1465,21 +1590,67 @@ class ShapleyFlow:
         for edge in self.edge_attributions:
             self.edge_attributions[edge] = 0.0
 
-        # Verbose trial info removed for cleaner output
-        # print(f"Computing Shapley Flow with { self.n_samples} trials...")
+        # Progress logging for debugging
+        import sys
+        import logging
+        n_edges = len(self.edge_attributions)
+        
+        if self.use_path_sampling:
+            logging.info(f"    → ShapleyFlow (Path Sampling): {n_edges} edges, {len(self.source_nodes)} sources")
+            logging.info(f"    → Sampling {self.paths_per_source} paths/source × {self.n_samples} trials")
+        else:
+            logging.info(f"    → ShapleyFlow (Exhaustive DFS): {n_edges} edges, {len(self.source_nodes)} sources, {self.n_samples} trials")
+        sys.stdout.flush()
 
-        #Run n_samples Monte Carlo trials
-        for trial in range(self.n_samples):
-            # Each trial: DFS form each source with random permutations
-            for source in self.source_nodes:
-                self._dfs(source,[], x_foreground, x_background)
-            # # Pick ONE random source per trial
-            # source = self.source_nodes[self.rng.randint(len(self.source_nodes))]
-            # self._dfs(source,[], x_foreground,x_background)
-
-        # Average acrross trials
-        for edge in self.edge_attributions:
-            self.edge_attributions[edge] /= self.n_samples
+        if self.use_path_sampling:
+            # PATH SAMPLING MODE - faster for dense graphs
+            for trial in range(self.n_samples):
+                self.eval_count = 0
+                
+                # Sample K random paths from each source
+                for source in self.source_nodes:
+                    for _ in range(self.paths_per_source):
+                        # Sample one random path
+                        path_edges = self._sample_random_path(source)
+                        
+                        if not path_edges:
+                            continue  # Empty path, skip
+                        
+                        # Compute marginal contributions for edges in this path
+                        edge_marginals = self._evaluate_path_contribution(path_edges, x_foreground, x_background)
+                        
+                        # Accumulate to global edge attributions
+                        for edge, marginal in edge_marginals.items():
+                            self.edge_attributions[edge] += marginal
+                
+                # Progress indicator
+                if (trial + 1) % 10 == 0 or trial == 0:
+                    logging.info(f"    → Trial {trial + 1}/{self.n_samples} completed (~{self.eval_count} evaluations)")
+                    sys.stdout.flush()
+            
+            # Average across all sampled paths
+            total_paths = self.n_samples * len(self.source_nodes) * self.paths_per_source
+            for edge in self.edge_attributions:
+                self.edge_attributions[edge] /= total_paths
+                
+        else:
+            # EXHAUSTIVE DFS MODE - original algorithm
+            for trial in range(self.n_samples):
+                # Reset eval count for this trial
+                self.eval_count = 0
+                
+                # Each trial: DFS form each source with random permutations
+                for source in self.source_nodes:
+                    self._dfs(source,[], x_foreground, x_background)
+                
+                # Progress indicator every 10 trials
+                if (trial + 1) % 10 == 0 or trial == 0:
+                    logging.info(f"    → Trial {trial + 1}/{self.n_samples} completed ({self.eval_count} evaluations)")
+                    sys.stdout.flush()
+            
+            # Average across trials
+            for edge in self.edge_attributions:
+                self.edge_attributions[edge] /= self.n_samples
 
 
         # Sanity check: verify efficiency axiom 
@@ -1534,7 +1705,9 @@ class ShapleyFlowWrapper:
                 causal_graph: np.ndarray,
                 y_index: int,
                 n_samples: int = 100,
-                random_state: Optional[int] = None):
+                random_state: Optional[int] = None,
+                use_path_sampling: bool = True,
+                paths_per_source: int = 100):
         """
         Initialize wrapper.
 
@@ -1552,6 +1725,10 @@ class ShapleyFlowWrapper:
             Number of Monte Carlo samples
         random_state : int , optional
             Random seed
+        use_path_sampling: bool, default=True
+            If True, use path sampling (faster for dense graphs)
+        paths_per_source: int, default=100
+            Number of random paths to sample from each source
         """
         self.model = model
         self.background_data_df = background_data
@@ -1561,6 +1738,8 @@ class ShapleyFlowWrapper:
         self.y_index = y_index
         self.n_samples = n_samples
         self.rng = np.random.RandomState(random_state)
+        self.use_path_sampling = use_path_sampling
+        self.paths_per_source = paths_per_source
 
         # Extract directed graph 
         self.directed_graph = self._extract_directed_graph(causal_graph)
@@ -1581,13 +1760,12 @@ class ShapleyFlowWrapper:
         if not self.source_nodes:
             self.source_nodes = [i for i in range(self.n_features) if i!= y_index]
 
-        # Verbose initialization removed for cleaner output
-        # print(f"ShapleyFlowWrapper initialized:")
-        # print(f" Features: {self.n_features}")
-        # print(f" Y index: {self.y_index}")
-        # print(f" Source nodes: {self.source_nodes}")
-        # print(f" Edges: {sum(len(v) for v in self.graph_structure.values())}")
-        # print(f" Using on-manifold perturbation with condtional expectatiosn")
+        # Log edge count for diagnostics
+        import sys
+        import logging
+        n_edges = sum(len(v) for v in self.graph_structure.values())
+        logging.info(f"    → ShapleyFlowWrapper: {self.n_features} features, {n_edges} edges, {len(self.source_nodes)} sources")
+        sys.stdout.flush()
 
     def _extract_directed_graph(self, causal_graph: np.ndarray) -> np.ndarray:
         """Extract directed edges from causal graph."""
@@ -1646,11 +1824,17 @@ class ShapleyFlowWrapper:
                 self.node_to_shap_idx[node_idx] = shap_idx
                 shap_idx +=1
 
-        # Removed for cleaner output
-        # print(f"Computing Shapley Flow for {n_instances} instances...")
+        # Progress logging
+        import sys
+        import logging
+        logging.info(f"    → Computing Shapley Flow for {n_instances} instances...")
+        sys.stdout.flush()
 
         for i, instance in enumerate(X_values):
-            # Create value functionss for this instance
+            # Progress indicator
+            if n_instances > 1:
+                logging.info(f"    → Instance {i + 1}/{n_instances}")
+                sys.stdout.flush()
 
             flow = ShapleyFlow(
                 graph_structure=self.graph_structure,
@@ -1660,7 +1844,9 @@ class ShapleyFlowWrapper:
                 sink_node=self.y_index,
                 n_samples=self.n_samples,
                 random_state=self.rng.randint(0,100000),
-                feature_names=self.features_names  # Pass feature names for alignment
+                feature_names=self.features_names,  # Pass feature names for alignment
+                use_path_sampling=self.use_path_sampling,  # Use path sampling mode
+                paths_per_source=self.paths_per_source  # Number of paths to sample
             )
             # Prepare forground and background
             x_foreground = {j: instance[j] for j in range(self.n_features)}
@@ -1677,11 +1863,9 @@ class ShapleyFlowWrapper:
             for node_idx, score in node_attrs.items():
                 if node_idx != self.y_index:
                     self.shap_values[i, self.node_to_shap_idx[node_idx]] = score
-
-            # Progress indicator removed for cleaner output
-            # if (i +1) % max(1, n_instances// 10) == 0:
-            #     print(f" Progress: {i + 1}/{n_instances}")
         
+        logging.info(f"    → All instances completed")
+        sys.stdout.flush()
         return self.shap_values
     
     def get_feature_importance(self) -> pd.DataFrame:

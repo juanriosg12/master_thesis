@@ -73,12 +73,12 @@ RANDOM_STATE = 42
 TEST_SIZE = 0.2
 BACKGROUND_RATIO = 0.3
 TEST_INSTANCES_RATIO = 0.5
-N_SHAPLEY_SAMPLES = 100
+N_SHAPLEY_SAMPLES = 50
 M_INNER_SAMPLES_CAUSAL = 10  # Reduced for CausalShapley performance (was 50 default)
 
 # Discovery parameters
-LINGAM_ALPHA = 0.05
-PC_ALPHA = 0.05
+LINGAM_ALPHA = 0.01
+PC_ALPHA = 0.01
 INDEP_TEST = "fisherz"
 
 # Directories
@@ -90,6 +90,7 @@ CAUSAL_DIR = DATA_DIR / 'causal'
 EXPLAINABILITY_DIR = DATA_DIR / 'explainability'
 MODELS_DIR = BASE_DIR / 'models'
 LOGS_DIR = BASE_DIR / 'logs'
+TARGET_DATASET = "mixed_conf_f50_s1000_p50"
 
 # Create directories
 for directory in [SYNTHETIC_DIR, PROCESSED_DIR, CAUSAL_DIR, EXPLAINABILITY_DIR, MODELS_DIR, LOGS_DIR]:
@@ -112,8 +113,13 @@ def setup_logging():
         handlers=[
             logging.FileHandler(log_file),
             logging.StreamHandler(sys.stdout)
-        ]
+        ],
+        force=True  # Override any existing loggers
     )
+    
+    # Force unbuffered output
+    for handler in logging.getLogger().handlers:
+        handler.flush = lambda: sys.stdout.flush()
     
     logging.info(f"Log file: {log_file}")
     return logging.getLogger(__name__)
@@ -403,7 +409,7 @@ def run_causal_discovery(dataset_configs: List[Dict]):
 
 def train_all_models(dataset_configs: List[Dict]):
     """
-    Train LGBM model on mixed_no_conf_f50_s1000_p50 dataset only.
+    Train LGBM model on target dataset only.
     
     Parameters:
     -----------
@@ -411,11 +417,11 @@ def train_all_models(dataset_configs: List[Dict]):
         Dataset configurations from Step 1
     """
     logging.info("=" * 80)
-    logging.info("STEP 4: TRAINING PREDICTIVE MODELS (LGBM only, mixed_no_conf dataset)")
+    logging.info(f"STEP 4: TRAINING PREDICTIVE MODELS (LGBM only, {TARGET_DATASET} dataset)")
     logging.info("=" * 80)
     
-    # Filter to only mixed_no_conf dataset
-    target_dataset = 'mixed_no_conf_f50_s1000_p50'
+    # Filter to only target dataset
+    target_dataset = TARGET_DATASET
     filtered_configs = [c for c in dataset_configs if c['filename'] == target_dataset]
     
     if not filtered_configs:
@@ -528,7 +534,7 @@ def calculate_all_shapley_values(dataset_configs: List[Dict]):
     logging.info("=" * 80)
     
     # Filter to only mixed_no_conf dataset
-    target_dataset = 'mixed_no_conf_f50_s1000_p50'
+    target_dataset = TARGET_DATASET
     filtered_configs = [c for c in dataset_configs if c['filename'] == target_dataset]
     
     if not filtered_configs:
@@ -610,52 +616,53 @@ def calculate_all_shapley_values(dataset_configs: List[Dict]):
                 train_adj_path = CAUSAL_DIR / f"{filename}_{discovery_method}_train_adjacency.npy"
                 discovered_adj = np.load(train_adj_path)
                 
-                # Calculate AsymmetricShapley
-                logging.info(f"  [Progress: {progress_counter}/{total_combinations}] {model_name.upper()} + {discovery_method.upper()} - AsymmetricShapley")
-                progress_counter += 1
-                asymmetric_explainer = AsymmetricShapley(
-                    model,  # Pass wrapper object, not model.model
-                    background_data,
-                    causal_graph=discovered_adj,
-                    n_samples=N_SHAPLEY_SAMPLES,
-                    random_sate=RANDOM_STATE,
-                    asymmetric_method='strict'
-                )
-                asymmetric_values = asymmetric_explainer.explain(test_instances, method='monte_carlo')
-                asymmetric_importance = asymmetric_explainer.get_feature_importance()
+                # # Calculate AsymmetricShapley
+                # logging.info(f"  [Progress: {progress_counter}/{total_combinations}] {model_name.upper()} + {discovery_method.upper()} - AsymmetricShapley")
+                # progress_counter += 1
+                # asymmetric_explainer = AsymmetricShapley(
+                #     model,  # Pass wrapper object, not model.model
+                #     background_data,
+                #     causal_graph=discovered_adj,
+                #     n_samples=N_SHAPLEY_SAMPLES,
+                #     random_sate=RANDOM_STATE,
+                #     asymmetric_method='strict'
+                # )
+                # asymmetric_values = asymmetric_explainer.explain(test_instances, method='monte_carlo')
+                # asymmetric_importance = asymmetric_explainer.get_feature_importance()
                 
-                # Save Asymmetric results
-                asym_dir = EXPLAINABILITY_DIR / filename / model_name / discovery_method / 'asymmetric'
-                asym_dir.mkdir(parents=True, exist_ok=True)
+                # # Save Asymmetric results
+                # asym_dir = EXPLAINABILITY_DIR / filename / model_name / discovery_method / 'asymmetric'
+                # asym_dir.mkdir(parents=True, exist_ok=True)
                 
-                np.save(asym_dir / 'shapley_values.npy', asymmetric_values)
-                asymmetric_importance.to_csv(asym_dir / 'feature_importance.csv', index=False)
+                # np.save(asym_dir / 'shapley_values.npy', asymmetric_values)
+                # asymmetric_importance.to_csv(asym_dir / 'feature_importance.csv', index=False)
                 
-                # Calculate CausalShapley
-                logging.info(f"  [Progress: {progress_counter}/{total_combinations}] {model_name.upper()} + {discovery_method.upper()} - CausalShapley (SLOW - uses {M_INNER_SAMPLES_CAUSAL} inner samples)")
-                progress_counter += 1
-                causal_explainer = CausalShapley(
-                    model,  # Pass wrapper object, not model.model,
-                    background_data=background_data,
-                    discovered_adj=discovered_adj,
-                    discovered_conf=confounders,
-                    feature_names=[f for f in feature_names if f != 'Y'],
-                    n_samples=N_SHAPLEY_SAMPLES,
-                    M_inner_samples=M_INNER_SAMPLES_CAUSAL,  # Use reduced value
-                    random_state=RANDOM_STATE
-                )
-                causal_values = causal_explainer.explain(test_instances)
-                causal_importance = causal_explainer.get_feature_importance()
+                # # Calculate CausalShapley
+                # logging.info(f"  [Progress: {progress_counter}/{total_combinations}] {model_name.upper()} + {discovery_method.upper()} - CausalShapley (SLOW - uses {M_INNER_SAMPLES_CAUSAL} inner samples)")
+                # progress_counter += 1
+                # causal_explainer = CausalShapley(
+                #     model,  # Pass wrapper object, not model.model,
+                #     background_data=background_data,
+                #     discovered_adj=discovered_adj,
+                #     discovered_conf=confounders,
+                #     feature_names=[f for f in feature_names if f != 'Y'],
+                #     n_samples=N_SHAPLEY_SAMPLES,
+                #     M_inner_samples=M_INNER_SAMPLES_CAUSAL,  # Use reduced value
+                #     random_state=RANDOM_STATE
+                # )
+                # causal_values = causal_explainer.explain(test_instances)
+                # causal_importance = causal_explainer.get_feature_importance()
                 
-                # Save Causal results
-                causal_dir = EXPLAINABILITY_DIR / filename / model_name / discovery_method / 'causal'
-                causal_dir.mkdir(parents=True, exist_ok=True)
+                # # Save Causal results
+                # causal_dir = EXPLAINABILITY_DIR / filename / model_name / discovery_method / 'causal'
+                # causal_dir.mkdir(parents=True, exist_ok=True)
                 
-                np.save(causal_dir / 'shapley_values.npy', causal_values)
-                causal_importance.to_csv(causal_dir / 'feature_importance.csv', index=False)
+                # np.save(causal_dir / 'shapley_values.npy', causal_values)
+                # causal_importance.to_csv(causal_dir / 'feature_importance.csv', index=False)
                 
                 # Calculate ShapleyFlow
                 logging.info(f"  [Progress: {progress_counter}/{total_combinations}] {model_name.upper()} + {discovery_method.upper()} - ShapleyFlow")
+                sys.stdout.flush()  # Ensure output is visible
                 progress_counter += 1
                 
                 # Prepare data with Y for ShapleyFlow
@@ -711,9 +718,13 @@ def calculate_comparison_metrics(dataset_configs: List[Dict]):
     logging.info("STEP 6: CREATING PC vs LiNGAM COMPARISON (mixed_no_conf + LGBM)")
     logging.info("=" * 80)
     
-    # Filter to only mixed_no_conf dataset
-    target_dataset = 'mixed_no_conf_f50_s1000_p50'
+    # Filter to only target dataset
+    target_dataset = TARGET_DATASET
     filtered_configs = [c for c in dataset_configs if c['filename'] == target_dataset]
+
+    logging.info("=" * 80)
+    logging.info(f"STEP 6: CREATING PC vs LiNGAM COMPARISON ({TARGET_DATASET} + LGBM)")
+    logging.info("=" * 80)
     
     if not filtered_configs:
         logging.warning(f"Target dataset {target_dataset} not found!")
@@ -843,20 +854,48 @@ def main():
     logging.info("\n" + "="*80)
     logging.info("EXPERIMENTAL PIPELINE: CAUSAL FEATURE IMPORTANCE COMPARISON")
     logging.info("="*80)
-    logging.info(f"\nConfiguration:")
-    logging.info(f"  - Features: {N_FEATURES}")
-    logging.info(f"  - Samples: {N_SAMPLES}")
-    logging.info(f"  - Y Parents Ratio: {Y_PARENTS_RATIO}")
-    logging.info(f"  - Random State: {RANDOM_STATE}")
-    logging.info(f"  - Shapley Samples: {N_SHAPLEY_SAMPLES}")
-    logging.info(f"\nDirectories:")
-    logging.info(f"  - Synthetic Data: {SYNTHETIC_DIR}")
-    logging.info(f"  - Processed Data: {PROCESSED_DIR}")
-    logging.info(f"  - Causal Discovery: {CAUSAL_DIR}")
-    logging.info(f"  - Explainability: {EXPLAINABILITY_DIR}")
-    logging.info(f"  - Models: {MODELS_DIR}")
-    logging.info(f"  - Logs: {LOGS_DIR}")
-    logging.info("\n" + "="*80 + "\n")
+    
+    logging.info(f"\n{'='*80}")
+    logging.info("CONFIGURATION PARAMETERS")
+    logging.info(f"{'='*80}")
+    
+    logging.info("\n1. DATASET PARAMETERS:")
+    logging.info(f"   - N_FEATURES: {N_FEATURES}")
+    logging.info(f"   - N_SAMPLES: {N_SAMPLES}")
+    logging.info(f"   - Y_PARENTS_RATIO: {Y_PARENTS_RATIO}")
+    logging.info(f"   - NOISE_STD: {NOISE_STD}")
+    logging.info(f"   - EDGE_PROBABILITY: {EDGE_PROBABILITY}")
+    logging.info(f"   - MIN_CONNECTED_EDGES: {MIN_CONNECTED_EDGES}")
+    logging.info(f"   - RANDOM_STATE: {RANDOM_STATE}")
+    
+    logging.info("\n2. MODEL TRAINING PARAMETERS:")
+    logging.info(f"   - TEST_SIZE: {TEST_SIZE}")
+    logging.info(f"   - BACKGROUND_RATIO: {BACKGROUND_RATIO}")
+    logging.info(f"   - TEST_INSTANCES_RATIO: {TEST_INSTANCES_RATIO}")
+    
+    logging.info("\n3. EXPLAINABILITY PARAMETERS:")
+    logging.info(f"   - N_SHAPLEY_SAMPLES: {N_SHAPLEY_SAMPLES}")
+    logging.info(f"   - M_INNER_SAMPLES_CAUSAL: {M_INNER_SAMPLES_CAUSAL}")
+    
+    logging.info("\n4. CAUSAL DISCOVERY PARAMETERS:")
+    logging.info(f"   - LINGAM_ALPHA: {LINGAM_ALPHA}")
+    logging.info(f"   - PC_ALPHA: {PC_ALPHA}")
+    logging.info(f"   - INDEP_TEST: {INDEP_TEST}")
+    
+    logging.info("\n5. TARGET CONFIGURATION:")
+    logging.info(f"   - TARGET_DATASET: {TARGET_DATASET}")
+    logging.info(f"   - MODEL: LGBM (only)")
+    
+    logging.info("\n6. DIRECTORIES:")
+    logging.info(f"   - BASE_DIR: {BASE_DIR}")
+    logging.info(f"   - SYNTHETIC_DIR: {SYNTHETIC_DIR}")
+    logging.info(f"   - PROCESSED_DIR: {PROCESSED_DIR}")
+    logging.info(f"   - CAUSAL_DIR: {CAUSAL_DIR}")
+    logging.info(f"   - EXPLAINABILITY_DIR: {EXPLAINABILITY_DIR}")
+    logging.info(f"   - MODELS_DIR: {MODELS_DIR}")
+    logging.info(f"   - LOGS_DIR: {LOGS_DIR}")
+    
+    logging.info(f"\n{'='*80}\n")
     
     pipeline_start = time.time()
     

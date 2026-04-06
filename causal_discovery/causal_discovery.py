@@ -35,12 +35,49 @@ class CausalDiscoveryMethod:
             return fisherz
         
     def _extract_adjacency_from_graph(self, graph, n_features: int) -> np.ndarray:
-
+        """
+        Extract adjacency matrix from PC graph object.
+        
+        PC returns a CPDAG with special encoding:
+        - graph[i,j]=-1 and graph[j,i]=1  → directed edge i->j
+        - graph[i,j]=-1 and graph[j,i]=-1 → undirected edge i-j
+        - graph[i,j]=1 and graph[j,i]=1   → bidirected edge i<->j (confounder)
+        - graph[i,j]=0 and graph[j,i]=0   → no edge
+        
+        We convert this to a standard directed adjacency matrix.
+        """
+        adjacency = np.zeros((n_features, n_features))
+        
         try:
-            adjacency = graph.graph
-            if adjacency.shape[0] != n_features:
-                adjacency = np.zeros((n_features, n_features))
-        except:
+            pc_graph = graph.graph
+            if pc_graph.shape[0] != n_features:
+                return adjacency
+            
+            # Process each potential edge
+            for i in range(n_features):
+                for j in range(i + 1, n_features):  # Only check upper triangle
+                    edge_ij = pc_graph[i, j]
+                    edge_ji = pc_graph[j, i]
+                    
+                    # Directed edge i -> j
+                    if edge_ij == -1 and edge_ji == 1:
+                        adjacency[i, j] = 1
+                    
+                    # Directed edge j -> i
+                    elif edge_ij == 1 and edge_ji == -1:
+                        adjacency[j, i] = 1
+                    
+                    # Undirected edge i - j (orient arbitrarily as i -> j)
+                    elif edge_ij == -1 and edge_ji == -1:
+                        adjacency[i, j] = 1
+                    
+                    # Bidirected edge i <-> j (keep both directions for confounders)
+                    elif edge_ij == 1 and edge_ji == 1:
+                        adjacency[i, j] = 1
+                        adjacency[j, i] = 1
+                        
+        except Exception as e:
+            warnings.warn(f"Error extracting adjacency from graph: {str(e)}")
             adjacency = np.zeros((n_features, n_features))
         
         return adjacency
