@@ -1628,10 +1628,10 @@ class ShapleyFlow:
                     logging.info(f"    → Trial {trial + 1}/{self.n_samples} completed (~{self.eval_count} evaluations)")
                     sys.stdout.flush()
             
-            # Average across all sampled paths
-            total_paths = self.n_samples * len(self.source_nodes) * self.paths_per_source
+            # Average across trials (consistent with exhaustive DFS mode)
+            # Each trial samples multiple paths, but we average over trials not total paths
             for edge in self.edge_attributions:
-                self.edge_attributions[edge] /= total_paths
+                self.edge_attributions[edge] /= self.n_samples
                 
         else:
             # EXHAUSTIVE DFS MODE - original algorithm

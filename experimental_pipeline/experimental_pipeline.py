@@ -517,7 +517,7 @@ def calculate_all_shapley_values(dataset_configs: List[Dict]):
       - For each discovery method (PC, LiNGAM):
         - AsymmetricShapley
         - CausalShapley
-        # ShapleyFlowWrapper (commented out - debugging in progress)
+        - ShapleyFlowWrapper
     
     Saves:
     ------
@@ -616,49 +616,49 @@ def calculate_all_shapley_values(dataset_configs: List[Dict]):
                 train_adj_path = CAUSAL_DIR / f"{filename}_{discovery_method}_train_adjacency.npy"
                 discovered_adj = np.load(train_adj_path)
                 
-                # # Calculate AsymmetricShapley
-                # logging.info(f"  [Progress: {progress_counter}/{total_combinations}] {model_name.upper()} + {discovery_method.upper()} - AsymmetricShapley")
-                # progress_counter += 1
-                # asymmetric_explainer = AsymmetricShapley(
-                #     model,  # Pass wrapper object, not model.model
-                #     background_data,
-                #     causal_graph=discovered_adj,
-                #     n_samples=N_SHAPLEY_SAMPLES,
-                #     random_sate=RANDOM_STATE,
-                #     asymmetric_method='strict'
-                # )
-                # asymmetric_values = asymmetric_explainer.explain(test_instances, method='monte_carlo')
-                # asymmetric_importance = asymmetric_explainer.get_feature_importance()
+                # Calculate AsymmetricShapley
+                logging.info(f"  [Progress: {progress_counter}/{total_combinations}] {model_name.upper()} + {discovery_method.upper()} - AsymmetricShapley")
+                progress_counter += 1
+                asymmetric_explainer = AsymmetricShapley(
+                    model,  # Pass wrapper object, not model.model
+                    background_data,
+                    causal_graph=discovered_adj,
+                    n_samples=N_SHAPLEY_SAMPLES,
+                    random_sate=RANDOM_STATE,
+                    asymmetric_method='strict'
+                )
+                asymmetric_values = asymmetric_explainer.explain(test_instances, method='monte_carlo')
+                asymmetric_importance = asymmetric_explainer.get_feature_importance()
                 
-                # # Save Asymmetric results
-                # asym_dir = EXPLAINABILITY_DIR / filename / model_name / discovery_method / 'asymmetric'
-                # asym_dir.mkdir(parents=True, exist_ok=True)
+                # Save Asymmetric results
+                asym_dir = EXPLAINABILITY_DIR / filename / model_name / discovery_method / 'asymmetric'
+                asym_dir.mkdir(parents=True, exist_ok=True)
                 
-                # np.save(asym_dir / 'shapley_values.npy', asymmetric_values)
-                # asymmetric_importance.to_csv(asym_dir / 'feature_importance.csv', index=False)
+                np.save(asym_dir / 'shapley_values.npy', asymmetric_values)
+                asymmetric_importance.to_csv(asym_dir / 'feature_importance.csv', index=False)
                 
-                # # Calculate CausalShapley
-                # logging.info(f"  [Progress: {progress_counter}/{total_combinations}] {model_name.upper()} + {discovery_method.upper()} - CausalShapley (SLOW - uses {M_INNER_SAMPLES_CAUSAL} inner samples)")
-                # progress_counter += 1
-                # causal_explainer = CausalShapley(
-                #     model,  # Pass wrapper object, not model.model,
-                #     background_data=background_data,
-                #     discovered_adj=discovered_adj,
-                #     discovered_conf=confounders,
-                #     feature_names=[f for f in feature_names if f != 'Y'],
-                #     n_samples=N_SHAPLEY_SAMPLES,
-                #     M_inner_samples=M_INNER_SAMPLES_CAUSAL,  # Use reduced value
-                #     random_state=RANDOM_STATE
-                # )
-                # causal_values = causal_explainer.explain(test_instances)
-                # causal_importance = causal_explainer.get_feature_importance()
+                # Calculate CausalShapley
+                logging.info(f"  [Progress: {progress_counter}/{total_combinations}] {model_name.upper()} + {discovery_method.upper()} - CausalShapley (SLOW - uses {M_INNER_SAMPLES_CAUSAL} inner samples)")
+                progress_counter += 1
+                causal_explainer = CausalShapley(
+                    model,  # Pass wrapper object, not model.model,
+                    background_data=background_data,
+                    discovered_adj=discovered_adj,
+                    discovered_conf=confounders,
+                    feature_names=[f for f in feature_names if f != 'Y'],
+                    n_samples=N_SHAPLEY_SAMPLES,
+                    M_inner_samples=M_INNER_SAMPLES_CAUSAL,  # Use reduced value
+                    random_state=RANDOM_STATE
+                )
+                causal_values = causal_explainer.explain(test_instances)
+                causal_importance = causal_explainer.get_feature_importance()
                 
-                # # Save Causal results
-                # causal_dir = EXPLAINABILITY_DIR / filename / model_name / discovery_method / 'causal'
-                # causal_dir.mkdir(parents=True, exist_ok=True)
+                # Save Causal results
+                causal_dir = EXPLAINABILITY_DIR / filename / model_name / discovery_method / 'causal'
+                causal_dir.mkdir(parents=True, exist_ok=True)
                 
-                # np.save(causal_dir / 'shapley_values.npy', causal_values)
-                # causal_importance.to_csv(causal_dir / 'feature_importance.csv', index=False)
+                np.save(causal_dir / 'shapley_values.npy', causal_values)
+                causal_importance.to_csv(causal_dir / 'feature_importance.csv', index=False)
                 
                 # Calculate ShapleyFlow
                 logging.info(f"  [Progress: {progress_counter}/{total_combinations}] {model_name.upper()} + {discovery_method.upper()} - ShapleyFlow")
