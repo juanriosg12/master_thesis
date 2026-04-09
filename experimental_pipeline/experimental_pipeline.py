@@ -8,7 +8,7 @@ Steps:
 1. Generate synthetic datasets (6 systems: linear/nonlinear/mixed × confounders/no-confounders)
 2. Create standardized train/test splits
 3. Run causal discovery (PC and LiNGAM)
-4. Train predictive models (LGBM and NN)
+4. Train predictive models (LGBM)
 5. Calculate Shapley values using all methods and compare across causal discovery algorithms
 
 Author: Juan Rios
@@ -90,7 +90,7 @@ CAUSAL_DIR = DATA_DIR / 'causal'
 EXPLAINABILITY_DIR = DATA_DIR / 'explainability'
 MODELS_DIR = BASE_DIR / 'models'
 LOGS_DIR = BASE_DIR / 'logs'
-TARGET_DATASET = "mixed_conf_f50_s1000_p50"
+TARGET_DATASETS = ["mixed_conf_f50_s1000_p50", "mixed_no_conf_f50_s1000_p50"]
 
 # Create directories
 for directory in [SYNTHETIC_DIR, PROCESSED_DIR, CAUSAL_DIR, EXPLAINABILITY_DIR, MODELS_DIR, LOGS_DIR]:
@@ -409,7 +409,7 @@ def run_causal_discovery(dataset_configs: List[Dict]):
 
 def train_all_models(dataset_configs: List[Dict]):
     """
-    Train LGBM model on target dataset only.
+    Train LGBM model on target datasets.
     
     Parameters:
     -----------
@@ -417,20 +417,19 @@ def train_all_models(dataset_configs: List[Dict]):
         Dataset configurations from Step 1
     """
     logging.info("=" * 80)
-    logging.info(f"STEP 4: TRAINING PREDICTIVE MODELS (LGBM only, {TARGET_DATASET} dataset)")
+    logging.info(f"STEP 4: TRAINING PREDICTIVE MODELS (LGBM only, {len(TARGET_DATASETS)} datasets)")
     logging.info("=" * 80)
     
-    # Filter to only target dataset
-    target_dataset = TARGET_DATASET
-    filtered_configs = [c for c in dataset_configs if c['filename'] == target_dataset]
+    # Filter to only target datasets
+    filtered_configs = [c for c in dataset_configs if c['filename'] in TARGET_DATASETS]
     
     if not filtered_configs:
-        logging.warning(f"Target dataset {target_dataset} not found!")
+        logging.warning(f"Target datasets {TARGET_DATASETS} not found!")
         return
     
     for idx, config in enumerate(filtered_configs, 1):
         filename = config['filename']
-        logging.info(f"\n[Dataset {idx}/1] Training LGBM model for {filename}")
+        logging.info(f"\n[Dataset {idx}/{len(filtered_configs)}] Training LGBM model for {filename}")
         
         # Load train/test data
         train_path = PROCESSED_DIR / f"{filename}_train.parquet"
@@ -447,7 +446,7 @@ def train_all_models(dataset_configs: List[Dict]):
         # Train LGBM
         logging.info("  Training LGBM...")
         lgbm_model = LGBMRegressor()
-        lgbm_model.fit(X_train, y_train)
+        lgbm_model.fit(X_train, y_train,feature_selection=False)  # Disable feature selection for consistency with explainability step
         
         # Evaluate LGBM
         lgbm_pred = lgbm_model.predict(X_test)
@@ -460,12 +459,12 @@ def train_all_models(dataset_configs: List[Dict]):
         lgbm_path = MODELS_DIR / f"{filename}_lgbm"
         lgbm_model.save(str(lgbm_path))
         logging.info(f"  ✓ LGBM: R²={lgbm_score:.4f}, MSE={lgbm_mse:.4f}, MAE={lgbm_mae:.4f}, RMSE={lgbm_rmse:.4f}")
-        
+        logging.info(f"  ✓ LGBM model saved with the following number of features: {len(lgbm_model.selected_features)}")
         # NN training skipped for focused experiment
         # # Train NN
         # logging.info("  Training NN...")
         # nn_model = NeuralNetRegressor()
-        # nn_model.fit(X_train, y_train)
+        # nn_model.fit(X_train, y_train, feature_selection=False)
         # 
         # # Evaluate NN
         # nn_pred = nn_model.predict(X_test)
@@ -500,7 +499,7 @@ def train_all_models(dataset_configs: List[Dict]):
             json.dump(metrics, f, indent=2)
     
     logging.info(f"\n{'='*80}")
-    logging.info(f"Step 4 Complete: LGBM model trained for {target_dataset}")
+    logging.info(f"Step 4 Complete: LGBM model trained for {len(filtered_configs)} datasets")
     logging.info(f"{'='*80}\n")
 
 
@@ -530,21 +529,20 @@ def calculate_all_shapley_values(dataset_configs: List[Dict]):
         Dataset configurations from Step 1
     """
     logging.info("=" * 80)
-    logging.info("STEP 5: CALCULATING SHAPLEY VALUES (mixed_no_conf + LGBM only)")
+    logging.info(f"STEP 5: CALCULATING SHAPLEY VALUES ({len(TARGET_DATASETS)} datasets + LGBM only)")
     logging.info("=" * 80)
     
-    # Filter to only mixed_no_conf dataset
-    target_dataset = TARGET_DATASET
-    filtered_configs = [c for c in dataset_configs if c['filename'] == target_dataset]
+    # Filter to only target datasets
+    filtered_configs = [c for c in dataset_configs if c['filename'] in TARGET_DATASETS]
     
     if not filtered_configs:
-        logging.warning(f"Target dataset {target_dataset} not found!")
+        logging.warning(f"Target datasets {TARGET_DATASETS} not found!")
         return
     
     for ds_idx, config in enumerate(filtered_configs, 1):
         filename = config['filename']
         start_time = time.time()
-        logging.info(f"\n[Dataset {ds_idx}/1] Processing {filename}")
+        logging.info(f"\n[Dataset {ds_idx}/{len(filtered_configs)}] Processing {filename}")
         
         # Load data
         train_path = PROCESSED_DIR / f"{filename}_train.parquet"
@@ -703,7 +701,7 @@ def calculate_all_shapley_values(dataset_configs: List[Dict]):
 
 def calculate_comparison_metrics(dataset_configs: List[Dict]):
     """
-    Create PC vs LiNGAM comparison visualizations for mixed_no_conf dataset.
+    Create PC vs LiNGAM comparison visualizations for target datasets.
     
     This step loads the saved SHAP values from Step 5 and creates:
     - Visualization comparing PC vs LiNGAM for top 10 features from Scratch
@@ -715,24 +713,19 @@ def calculate_comparison_metrics(dataset_configs: List[Dict]):
         Dataset configurations from Step 1
     """
     logging.info("=" * 80)
-    logging.info("STEP 6: CREATING PC vs LiNGAM COMPARISON (mixed_no_conf + LGBM)")
+    logging.info(f"STEP 6: CREATING PC vs LiNGAM COMPARISON ({len(TARGET_DATASETS)} datasets + LGBM)")
     logging.info("=" * 80)
     
-    # Filter to only target dataset
-    target_dataset = TARGET_DATASET
-    filtered_configs = [c for c in dataset_configs if c['filename'] == target_dataset]
-
-    logging.info("=" * 80)
-    logging.info(f"STEP 6: CREATING PC vs LiNGAM COMPARISON ({TARGET_DATASET} + LGBM)")
-    logging.info("=" * 80)
+    # Filter to only target datasets
+    filtered_configs = [c for c in dataset_configs if c['filename'] in TARGET_DATASETS]
     
     if not filtered_configs:
-        logging.warning(f"Target dataset {target_dataset} not found!")
+        logging.warning(f"Target datasets {TARGET_DATASETS} not found!")
         return
     
     for ds_idx, config in enumerate(filtered_configs, 1):
         filename = config['filename']
-        logging.info(f"\n[Dataset {ds_idx}/1] Processing {filename}")
+        logging.info(f"\n[Dataset {ds_idx}/{len(filtered_configs)}] Processing {filename}")
         
         # Load metadata for y_parent_indices
         metadata_path = SYNTHETIC_DIR / f"{filename}_metadata.json"
@@ -883,7 +876,7 @@ def main():
     logging.info(f"   - INDEP_TEST: {INDEP_TEST}")
     
     logging.info("\n5. TARGET CONFIGURATION:")
-    logging.info(f"   - TARGET_DATASET: {TARGET_DATASET}")
+    logging.info(f"   - TARGET_DATASETS: {TARGET_DATASETS}")
     logging.info(f"   - MODEL: LGBM (only)")
     
     logging.info("\n6. DIRECTORIES:")
