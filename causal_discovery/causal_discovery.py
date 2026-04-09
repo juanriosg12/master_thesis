@@ -33,6 +33,74 @@ class CausalDiscoveryMethod:
             return chisq
         else: 
             return fisherz
+    
+    def _has_cycle(self, adjacency: np.ndarray) -> bool:
+        """
+        Detect if a directed graph has cycles using Kahn's algorithm.
+        
+        Args:
+            adjacency: Adjacency matrix where [i,j]=1 means edge i->j
+            
+        Returns:
+            True if graph contains at least one cycle, False otherwise
+        """
+        n = adjacency.shape[0]
+        in_degree = np.sum(adjacency != 0, axis=0).astype(int)
+        queue = [i for i in range(n) if in_degree[i] == 0]
+        visited = 0
+        
+        while queue:
+            node = queue.pop(0)
+            visited += 1
+            for child in range(n):
+                if adjacency[node, child] != 0:
+                    in_degree[child] -= 1
+                    if in_degree[child] == 0:
+                        queue.append(child)
+        
+        return visited != n
+    
+    def _break_cycles_dfs(self, adjacency: np.ndarray, feature_names: List[str] = None) -> np.ndarray:
+        """
+        Remove edges to break cycles using depth-first search.
+        
+        Args:
+            adjacency: Adjacency matrix where [i,j]=1 means edge i->j
+            feature_names: Optional list of feature names for logging
+            
+        Returns:
+            Adjacency matrix with cycles broken (acyclic)
+        """
+        n = adjacency.shape[0]
+        adj_copy = adjacency.copy()
+        visited = [0] * n  # 0: unvisited, 1: visiting, 2: visited
+        removed_edges = []
+        
+        def dfs(node):
+            visited[node] = 1  # Mark as visiting
+            for child in range(n):
+                if adj_copy[node, child] != 0:
+                    if visited[child] == 1:  # Back edge detected - cycle!
+                        adj_copy[node, child] = 0  # Remove edge
+                        if feature_names:
+                            removed_edges.append((feature_names[node], feature_names[child]))
+                        else:
+                            removed_edges.append((node, child))
+                    elif visited[child] == 0:
+                        dfs(child)
+            visited[node] = 2  # Mark as visited
+        
+        for i in range(n):
+            if visited[i] == 0:
+                dfs(i)
+        
+        # Log removed edges
+        if removed_edges:
+            print(f"   Removed {len(removed_edges)} edge(s) to break cycles:")
+            for source, target in removed_edges:
+                print(f"      {source} -> {target}")
+        
+        return adj_copy
         
     def _extract_adjacency_from_graph(self, graph, n_features: int) -> np.ndarray:
         """
@@ -71,14 +139,20 @@ class CausalDiscoveryMethod:
                     elif edge_ij == -1 and edge_ji == -1:
                         adjacency[i, j] = 1
                     
-                    # Bidirected edge i <-> j (keep both directions for confounders)
+                    # Bidirected edge i <-> j (confounder - only add one direction to avoid cycle)
+                    # The confounders will be tracked separately via FCI
                     elif edge_ij == 1 and edge_ji == 1:
                         adjacency[i, j] = 1
-                        adjacency[j, i] = 1
+                        # Do NOT add adjacency[j, i] = 1 to avoid creating a cycle
                         
         except Exception as e:
             warnings.warn(f"Error extracting adjacency from graph: {str(e)}")
             adjacency = np.zeros((n_features, n_features))
+        
+        # Check for and break cycles
+        if self._has_cycle(adjacency):
+            warnings.warn("Graph contains cycles. Breaking cycles to ensure DAG structure.")
+            adjacency = self._break_cycles_dfs(adjacency, feature_names=None)
         
         return adjacency
     
@@ -191,9 +265,8 @@ class PCWithFCI(CausalDiscoveryMethod):
             # Extract adjacency matrix from PC result
             pc_graph = self.pc_result.G
             adjacency_pc = self._extract_adjacency_from_graph(pc_graph, n_features)
-
-
-            print(f"PC discovered {np.sum(adjacency_pc != 0)} edges")
+            
+            print(f"PC discovered {np.sum(adjacency_pc != 0)} edges (after cycle removal)")
 
         except Exception as e:
             print(f"PC algorithm failed: {str(e)}")
