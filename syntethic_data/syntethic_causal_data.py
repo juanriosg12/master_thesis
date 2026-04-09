@@ -331,35 +331,46 @@ class SyntheticCausalSystem:
                         coef = np.random.uniform(0.3, 0.8) * np.random.choice([-1, 1])
                         data[:, node] += coef * np.tanh(confounder)
         # Generate data following the causal structure
-        # Track which features have been updated
-        features_updated = [False] * self.n_features
-        
+        # Create a dictionary mapping (parent, child) -> (edge_type, func_type, coef)
+        # This allows us to iterate by child (like linear/nonlinear) while preserving edge types
+        edge_params = {}
         for edge_idx, (parent, child) in enumerate(edges):
             edge_type = edge_types[edge_idx]
-
+            
             if edge_type == 'linear':
-                coef = np.random.uniform(0.5,1.5) * np.random.choice([-1, 1])
-                data[:, child] += coef * data[:, parent]
-            else: # non-linear
-                func_type = np.random.choice(["square","cube","tanh","sin"])
+                coef = np.random.uniform(0.5, 1.5) * np.random.choice([-1, 1])
+                edge_params[(parent, child)] = ('linear', None, coef)
+            else:  # non-linear
+                func_type = np.random.choice(["square", "cube", "tanh", "sin"])
                 coef = np.random.uniform(0.3, 0.8) * np.random.choice([-1, 1])
-
-                if func_type == 'square':
-                    data[:, child] += coef * data[:, parent] ** 2
-                elif func_type == 'cube':
-                    data[:, child] += coef * data[:,parent] ** 3
-                elif func_type == 'tanh':
-                    data[:, child] += coef * np.tanh(data[:, parent])
-                else:
-                    data[:, child] += coef * np.sin(data[:, parent])
-            
-            features_updated[child] = True
-            
-            # Normalize after each edge to prevent accumulation of extreme values
-            data[:, child] = self._normalize_variable(data[:, child])
-
-        # Add noise to each variable
+                edge_params[(parent, child)] = ('nonlinear', func_type, coef)
+        
+        # Iterate through features (children) in topological order, like linear/nonlinear systems
         for j in range(self.n_features):
+            # Find all parents of this child
+            parents = np.where(self.adjacency_matrix[:, j] == 1)[0]
+            
+            # Accumulate contributions from all parents BEFORE normalizing
+            for parent in parents:
+                edge_type, func_type, coef = edge_params[(parent, j)]
+                
+                if edge_type == 'linear':
+                    data[:, j] += coef * data[:, parent]
+                else:  # non-linear
+                    if func_type == 'square':
+                        data[:, j] += coef * data[:, parent] ** 2
+                    elif func_type == 'cube':
+                        data[:, j] += coef * data[:, parent] ** 3
+                    elif func_type == 'tanh':
+                        data[:, j] += coef * np.tanh(data[:, parent])
+                    else:  # sin
+                        data[:, j] += coef * np.sin(data[:, parent])
+            
+            # Normalize after accumulating ALL parent contributions (like linear/nonlinear)
+            if len(parents) > 0:
+                data[:, j] = self._normalize_variable(data[:, j])
+            
+            # Add Gaussian noise
             data[:, j] += np.random.normal(0, noise_std, n_samples)
 
         # Generate outcome variable Y with mixed relationship
