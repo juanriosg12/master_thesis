@@ -14,7 +14,49 @@ from sklearn.base import BaseEstimator
 import networkx as nx
 
 
-class ShapleyExplainer: 
+class ShapleyExplainer:
+    """Wrapper around SHAP library for model-specific Shapley value explanations.
+    
+    This class provides an easy-to-use interface to the official SHAP library,
+    automatically selecting the most appropriate explainer (Tree, Linear, or Kernel)
+    based on the model type.
+    
+    BACKGROUND DATA USAGE:
+    - For TreeExplainer: Background data is used to estimate missing features during tree traversal
+    - For LinearExplainer: Background data defines the baseline (reference point) for explanations
+    - For KernelExplainer: Background data is sampled to marginalize over missing features
+    
+    SHAP VALUES CALCULATION:
+    - Uses model-specific optimized algorithms from the SHAP library
+    - TreeExplainer: Polynomial-time algorithm for tree-based models (exact)
+    - LinearExplainer: Closed-form solution for linear models (exact)
+    - KernelExplainer: Model-agnostic weighted linear regression (approximate)
+    
+    Parameters
+    ----------
+    model : BaseEstimator
+        Trained scikit-learn compatible model to explain
+    background_data : pd.DataFrame
+        Reference dataset for computing baseline and marginalizing over missing features.
+        Typically a sample (~100-1000 instances) from the training data
+    method : str, default='auto'
+        Explainer method: 'auto' (auto-detect), 'tree', 'linear', or 'kernel'
+    
+    Attributes
+    ----------
+    explainer : shap.Explainer
+        Initialized SHAP explainer instance
+    shap_values : np.ndarray or None
+        Computed SHAP values after calling explain()
+    feature_names : List[str]
+        Feature names from background data
+    
+    Examples
+    --------
+    >>> explainer = ShapleyExplainer(rf_model, X_train.sample(100))
+    >>> shap_values = explainer.explain(X_test)
+    >>> importance = explainer.get_feature_importance()
+    """
     
     def __init__(self, model: BaseEstimator, background_data: pd.DataFrame,
                  method: str ='auto'):
@@ -29,6 +71,18 @@ class ShapleyExplainer:
         self._initialize_explainer()
 
     def _initialize_explainer(self):
+        """Initialize the appropriate SHAP explainer based on model type.
+        
+        Auto-detection logic:
+        1. Check for tree-based models (LightGBM, RandomForest, GradientBoosting)
+        2. Check for linear models (models with coef_ attribute)
+        3. Fall back to model-agnostic KernelExplainer
+        
+        Returns
+        -------
+        None
+            Sets self.explainer and self.method
+        """
 
         model_type = type(self.model).__name__
 
@@ -61,6 +115,25 @@ class ShapleyExplainer:
             raise ValueError(f"Unknown SHAP method: {self.method}")
         
     def explain(self, X: pd.DataFrame) -> np.ndarray:
+        """Compute SHAP values for given instances.
+        
+        For each feature i and instance x, computes the contribution of feature i
+        to the model's prediction f(x) relative to the baseline prediction.
+        
+        The SHAP value satisfies:
+        f(x) = baseline + sum(shap_values)
+        
+        Parameters
+        ----------
+        X : pd.DataFrame
+            Instances to explain (shape: n_samples x n_features)
+        
+        Returns
+        -------
+        shap_values : np.ndarray
+            SHAP values (shape: n_samples x n_features)
+            shap_values[i, j] = contribution of feature j to prediction for instance i
+        """
         
         print(f"Computing SHAP values using {self.method} explainer...")
 
@@ -72,6 +145,22 @@ class ShapleyExplainer:
         return self.shap_values
         
     def get_feature_importance(self) -> pd.DataFrame:
+        """Compute global feature importance from SHAP values.
+        
+        Aggregates SHAP values across all instances using mean absolute value,
+        which measures the average impact of each feature on predictions.
+        
+        Returns
+        -------
+        importance : pd.DataFrame
+            Feature importance scores sorted in descending order
+            Columns: ['feature', 'importance']
+        
+        Raises
+        ------
+        ValueError
+            If explain() has not been called yet
+        """
 
         if self.shap_values is None:
             raise ValueError("Must call explain() first to compute SHAP values")
@@ -86,6 +175,21 @@ class ShapleyExplainer:
         return importance
     
     def get_shap_values_df(self, X: pd.DataFrame) ->pd.DataFrame:
+        """Get SHAP values as a DataFrame.
+        
+        Converts the numpy array of SHAP values to a pandas DataFrame
+        with proper feature names and indices for easier analysis.
+        
+        Parameters
+        ----------
+        X : pd.DataFrame
+            Instances to explain (if not already computed)
+        
+        Returns
+        -------
+        shap_df : pd.DataFrame
+            SHAP values with feature names as columns and same index as X
+        """
 
         if self.shap_values is None:
             self.explain(X)
@@ -93,6 +197,64 @@ class ShapleyExplainer:
         return pd.DataFrame(self.shap_values,columns= self.feature_names, index=X.index)
     
 class ShapleyFromScratch:
+    """Vanilla Shapley value computation from first principles.
+    
+    Implements Shapley values without using external libraries, following the
+    original game-theoretic definition from Lloyd Shapley (1953).
+    
+    SHAPLEY VALUE DEFINITION:
+    For feature i, the Shapley value is the weighted average of its marginal
+    contributions across all possible coalitions (subsets) of other features:
+    
+    φᵢ(f) = Σ_S⊆N\{i} [|S|!(|N|-|S|-1)! / |N|!] * [f(S∪{i}) - f(S)]
+    
+    where:
+    - N = set of all features
+    - S = coalition (subset) of features not including i
+    - f(S) = expected model output when only features in S are observed
+    - The weight term ensures fair credit distribution
+    
+    BACKGROUND DATA USAGE:
+    Background data is used to marginalize over (fill in) missing features:
+    - Features IN coalition S: Use instance's actual values
+    - Features NOT in coalition S: Sample from background data
+    - Average predictions over all background samples
+    
+    COMPUTATION METHODS:
+    1. Exact: Enumerate all 2^n coalitions (exponential, only feasible for n≤10)
+    2. Monte Carlo: Sample random permutations and compute marginal contributions
+    
+    SAMPLING FOR EACH INSTANCE:
+    For each instance x:
+    1. Sample random permutation π of features: (f_π(1), f_π(2), ..., f_π(n))
+    2. Build coalitions incrementally: ∅ → {f_π(1)} → {f_π(1), f_π(2)} → ...
+    3. For each feature i, compute marginal: v(S∪{i}) - v(S) where S = features before i in π
+    4. Average marginal contributions over many permutations
+    
+    Parameters
+    ----------
+    model : BaseEstimator
+        Trained model to explain
+    background_data : pd.DataFrame
+        Reference dataset for marginalizing over missing features
+        Should be representative of the data distribution (typically training data sample)
+    n_samples : int, default=1000
+        Number of random permutations for Monte Carlo approximation
+    random_state : int or None
+        Random seed for reproducibility
+    
+    Attributes
+    ----------
+    baseline_value : float
+        Expected prediction over background data (serves as reference point)
+    shap_values : np.ndarray or None
+        Computed Shapley values after calling explain()
+    
+    Examples
+    --------
+    >>> explainer = ShapleyFromScratch(model, X_train.sample(100), n_samples=500)
+    >>> shap_values = explainer.explain(X_test, method='monte_carlo')
+    """
 
     def __init__(self, model: BaseEstimator, background_data: pd.DataFrame,
                  n_samples: int = 1000, random_state: Optional[int] = None ):
@@ -140,22 +302,30 @@ class ShapleyFromScratch:
         return self.model.predict(X_df)
 
     def _predict_coalition(self, instance: np.ndarray, coalition: List[int]) -> float:
-
-        """
-        Predict with only features in coalition, marginalizing over others
-
-        Parameters: 
-        -----------
+        """Compute coalition value v(S) by marginalizing over missing features.
+        
+        Core operation for Shapley value computation:
+        - Features IN coalition: Use instance's values (foreground)
+        - Features NOT in coalition: Sample from background data
+        - Return: Average of model predictions over background samples
+        
+        This implements the conditional expectation:
+        v(S) = E[f(x) | X_S = x_S] where X_S are features in coalition S
+        
+        Parameters
+        ----------
         instance : np.ndarray
-            Instance to explain (1D array)
-        coalition: List[int]
+            Instance to explain (1D array of shape n_features)
+        coalition : List[int]
             Indices of features in the coalition
-
-        Returns:
+        
+        Returns
         -------
-        prediction : float
-            Average prediction over background samples
+        value : float
+            Expected prediction when only coalition features are observed
+            v(S) = (1/M) Σ_m f(x_S, X_{-S}^(m)) where X_{-S}^(m) ~ background
         """
+
         # Create samples with coalition features from instance, others from background
         samples = self.background_data.copy()
 
@@ -167,19 +337,36 @@ class ShapleyFromScratch:
         return predictions.mean()
     
     def _compute_exact_shapley(self, instance: np.ndarray) -> np.ndarray:
-        """
-        Compute exact Shapley values using all possible coalitions.
-
-        Warning: Exponential complexity O(2^n). Only use for small n (<=10)
+        """Compute exact Shapley values by enumerating all coalitions.
         
-        Parameters:
-        -----------
+        ALGORITHM:
+        For each feature i:
+            1. Consider all subsets S of other features (there are 2^(n-1) subsets)
+            2. For each subset S:
+                a. Compute v(S∪{i}) - v(S) = marginal contribution of feature i
+                b. Weight by: |S|!(n-|S|-1)! / n!
+                c. Accumulate weighted marginal
+            3. Sum all weighted marginals to get φᵢ
+        
+        COMPLEXITY:
+        - Time: O(n * 2^n * M) where M = background data size
+        - Space: O(2^n)
+        - Only feasible for n ≤ 10 features
+        
+        Parameters
+        ----------
         instance : np.ndarray
             Instance to explain
-        Returns:
-        ----------
+        
+        Returns
+        -------
         shapley_values : np.ndarray
-            Exact Shapley values
+            Exact Shapley values (shape: n_features)
+        
+        Warnings
+        --------
+        - Extremely slow for more than 10 features
+        - Automatically falls back to Monte Carlo if n > 10
         """
         shapley_values = np.zeros(self.n_features)
 
@@ -210,20 +397,39 @@ class ShapleyFromScratch:
         return shapley_values
     
     def _compute_monte_carlo_shapley(self, instance: np.ndarray) -> np.ndarray:
-        """
-        Compute approximate Shapley values using Monte Carlo sampling.
-
-        Uses random permutations to estimate Shapley values efficiently
-
-        Parameters:
-        -----------
-        instance: nd.ndarray
-            Instance to explain
-
-        Returns:
+        """Compute approximate Shapley values using Monte Carlo sampling.
+        
+        PERMUTATION-BASED ALGORITHM:
+        Repeat n_samples times:
+            1. Sample random permutation π of all features
+            2. Initialize: S = ∅, v_prev = baseline
+            3. For each feature f_i in order π:
+                a. Add f_i to coalition: S = S ∪ {f_i}
+                b. Compute: v_curr = v(S)
+                c. Marginal contribution: Δᵢ = v_curr - v_prev
+                d. Accumulate: φᵢ += Δᵢ
+                e. Update: v_prev = v_curr
+        Return: φ / n_samples (average over all permutations)
+        
+        WHY THIS WORKS:
+        The Shapley value can be written as an expectation over random permutations:
+        φᵢ = E_π[f(S_π^i ∪ {i}) - f(S_π^i)]
+        where S_π^i = features appearing before i in permutation π
+        
+        COMPLEXITY:
+        - Time: O(n_samples * n * M) where M = background data size
+        - Much faster than exact method for n > 10
+        - Convergence: error decreases as O(1/√n_samples)
+        
+        Parameters
         ----------
+        instance : np.ndarray
+            Instance to explain
+        
+        Returns
+        -------
         shapley_values : np.ndarray
-            Approximate Shapley values
+            Approximate Shapley values (shape: n_features)
         """
         shapley_values = np.zeros(self.n_features)
 
@@ -255,21 +461,32 @@ class ShapleyFromScratch:
         return shapley_values
     
     def explain(self, X: pd.DataFrame, method: str = 'monte_carlo') -> np.ndarray:
-        """
-        Calculate Shapley values for given instances.
-
-        Parameters:
+        """Calculate Shapley values for given instances.
+        
+        Computes Shapley values that decompose each prediction as:
+        f(x) = baseline + Σᵢ φᵢ(x)
+        
+        where φᵢ(x) represents the contribution of feature i.
+        
+        Parameters
         ----------
         X : pd.DataFrame
-            Instances to explain
-        method : str
-            'exact' for exact calculation (slow, only for n_features <=10)
-            'monte_carlo' for approximation (fast)
-
-        Returns:
-        --------
+            Instances to explain (shape: n_samples x n_features)
+        method : str, default='monte_carlo'
+            Computation method:
+            - 'exact': Enumerate all coalitions (slow, only for n_features ≤ 10)
+            - 'monte_carlo': Random permutation sampling (fast, recommended)
+        
+        Returns
+        -------
         shapley_values : np.ndarray
             Shapley values (shape: n_samples x n_features)
+            Row i contains Shapley values for instance i
+            Column j contains contributions of feature j
+        
+        Notes
+        -----
+        Automatically switches to Monte Carlo if method='exact' but n_features > 10
         """
         print(f"Computing Shapley values from scratch using {method} method...")
 
@@ -297,7 +514,18 @@ class ShapleyFromScratch:
         return self.shap_values
     
     def get_feature_importance(self) -> pd.DataFrame:
-        """Get global feature importance."""
+        """Get global feature importance from Shapley values.
+        
+        Returns
+        -------
+        importance : pd.DataFrame
+            Mean absolute Shapley values per feature, sorted descending
+        
+        Raises
+        ------
+        ValueError
+            If explain() has not been called yet
+        """
         if self.shap_values is None:
             raise ValueError("Must call expalin( first to compute Shapley values")
         
@@ -311,7 +539,18 @@ class ShapleyFromScratch:
         return importance
 
     def get_shap_values_df(self, X: pd.DataFrame) -> pd.DataFrame:
-        """Get Shapley values as DataFrame"""
+        """Get Shapley values as DataFrame.
+        
+        Parameters
+        ----------
+        X : pd.DataFrame
+            Instances (if values not already computed)
+        
+        Returns
+        -------
+        shap_df : pd.DataFrame
+            Shapley values with feature names and indices
+        """
         if self.shap_values is None:
             self.explain(X)
 
@@ -319,14 +558,47 @@ class ShapleyFromScratch:
     
 
 class TrueShapley(ShapleyFromScratch):
-    """
-    Compute Shapley values using the true data generation function instead of a model.
-    This provides ground truth feature importance for validation purposes.
+    """Ground truth Shapley values using the true data generation function.
+    
+    Instead of explaining a trained model, this class computes Shapley values
+    directly from the true data generating process (if known). This provides
+    ground truth feature importance for validation and benchmarking purposes.
+    
+    USE CASE:
+    Primarily used for synthetic data experiments where the true function is known:
+    - Validate that Shapley implementations are correct
+    - Compare model-based explanations against ground truth
+    - Understand theoretical properties of Shapley values
+    
+    DIFFERENCE FROM ShapleyFromScratch:
+    - Uses true_generator(X) instead of model.predict(X)
+    - Provides "oracle" explanations (no model approximation error)
+    - Useful for debugging and validation
+    
+    Parameters
+    ----------
+    true_generator : Callable
+        True data generation function: f(X) → Y
+        Takes array of shape (n_samples, n_features) and returns (n_samples,)
+    background_data : pd.DataFrame
+        Background dataset for marginalizing over missing features
+    n_samples : int, default=1000
+        Number of Monte Carlo samples for approximation
+    random_state : int or None
+        Random seed for reproducibility
+    
+    Examples
+    --------
+    >>> def true_func(X):
+    ...     return X[:, 0] * 2 + X[:, 1] * 3  # Linear function
+    >>> explainer = TrueShapley(true_func, background_data)
+    >>> true_shap = explainer.explain(X_test, method='monte_carlo')
     """
     
     def __init__(self, true_generator: Callable, background_data: pd.DataFrame,
                  n_samples: int = 1000, random_state: Optional[int] = None):
-        """
+        """Initialize TrueShapley explainer.
+        
         Args:
             true_generator: Callable that takes X (n_samples, n_features) and returns Y (n_samples,)
             background_data: Background dataset for Shapley computation
@@ -353,15 +625,22 @@ class TrueShapley(ShapleyFromScratch):
         self.shap_values = None
     
     def _predict_coalition(self, instance: np.ndarray, coalition: list) -> float:
-        """
-        Predict using true generator for a coalition of features.
+        """Predict using true generator for a coalition of features.
+        
+        Overrides parent method to use true data generator instead of a model.
+        
+        SAMPLING STRATEGY:
+        - Features IN coalition: Use instance's values (foreground)
+        - Features NOT in coalition: Sample from background (n_samples times)
+        - Compute Y using true generator for all samples
+        - Return average Y
         
         Args:
             instance: Single instance to explain (n_features,)
             coalition: List of feature indices in the coalition
         
         Returns:
-            Expected Y value for this coalition
+            Expected Y value for this coalition: E[Y | X_coalition = x_coalition]
         """
         # Create samples by combining instance features (in coalition) with random background features (not in coalition)
         samples = np.tile(instance, (self.n_samples, 1))
@@ -382,23 +661,107 @@ class TrueShapley(ShapleyFromScratch):
 
 
 class AsymmetricShapley(ShapleyFromScratch):
+    """Asymmetric Shapley values that respect causal ordering constraints.
+    
+    This class implements Asymmetric Shapley values, which modify the standard
+    Shapley formula by restricting the set of valid coalitions to those that
+    respect causal dependencies in a directed acyclic graph (DAG).
+    
+    KEY INSIGHT:
+    Standard Shapley values treat all features symmetrically, but in causal systems,
+    a feature can only contribute if its causal parents are also present. For example,
+    if X1 → X2 → Y, then X2 cannot contribute to Y without X1 being observed.
+    
+    CAUSAL CONSTRAINT:
+    A coalition S is valid only if: for every feature i ∈ S, all parents of i are in S
+    This ensures we don't "cut" causal paths in the graph.
+    
+    HOW CAUSAL DAG IS USED:
+    1. Extract directed edges from adjacency matrix: dag[i,j]=1 means i → j
+    2. Build parent dictionary: parents[j] = {all i where i → j}
+    3. During sampling, only consider permutations where each feature appears
+       after all its parents (topological ordering)
+    
+    TWO SAMPLING METHODS:
+    - 'frye': True Asymmetric Shapley (Frye et al. 2021)
+        * Only enforces DIRECT parent constraints
+        * Feature i must appear after its parents, but unrelated features can be in any order
+        * Samples uniformly from all valid causal orderings
+        * More permutations → better exploration
+    
+    - 'strict': Strict topological layering
+        * Groups features by depth: depth[j] = max(depth[parent]) + 1
+        * All features at depth k must appear before all features at depth k+1
+        * More restrictive than necessary
+        * Fewer permutations → may underestimate interactions
+    
+    BACKGROUND DATA USAGE:
+    Same as vanilla Shapley - used to marginalize over missing features
+    
+    Parameters
+    ----------
+    model : BaseEstimator
+        Trained model to explain
+    background_data : pd.DataFrame
+        Reference dataset for marginalizing over missing features
+    causal_graph : np.ndarray
+        Adjacency matrix (n_features x n_features) where:
+        - causal_graph[i,j]=1 means i causes j (binary format)
+        - OR causal-learn format: causal_graph[i,j]=-1, causal_graph[j,i]=1 means i → j
+    n_samples : int, default=1000
+        Number of random causal permutations to sample
+    random_state : int or None
+        Random seed for reproducibility
+    asymmetric_method : str, default='frye'
+        Sampling method: 'frye' (recommended) or 'strict'
+    
+    Attributes
+    ----------
+    directed_graph : np.ndarray
+        Extracted directed adjacency matrix (binary)
+    parents : Dict[int, Set[int]]
+        Parent features for each feature
+    topological_order : List[int]
+        Valid topological sort of the DAG
+    
+    References
+    ----------
+    Frye, C., et al. (2021). "Asymmetric Shapley values: incorporating causal 
+    knowledge into model-agnostic explainability." NeurIPS.
+    
+    Examples
+    --------
+    >>> causal_dag = np.array([[0,1,0], [0,0,1], [0,0,0]])  # X0→X1→X2
+    >>> explainer = AsymmetricShapley(model, X_train, causal_dag, 
+    ...                                asymmetric_method='frye')
+    >>> shap_values = explainer.explain(X_test)
+    """
 
     def __init__(self, model: BaseEstimator, background_data: pd.DataFrame,
                  causal_graph: np.ndarray, n_samples: int = 1000,
-                 random_sate: Optional [int] = None,
+                 random_state: Optional [int] = None,
                  asymmetric_method: str = 'frye'):
-        """
-        Initialize Asymmetric Shapley explainer.
+        """Initialize Asymmetric Shapley explainer.
         
-        Parameters:
-        -----------
-        asymmetric_method : str
+        Parameters
+        ----------
+        model : BaseEstimator
+            Trained model to explain
+        background_data : pd.DataFrame
+            Reference dataset for marginalizing over missing features
+        causal_graph : np.ndarray
+            Adjacency matrix encoding causal structure
+        n_samples : int, default=1000
+            Number of random causal permutations
+        random_state : int or None
+            Random seed
+        asymmetric_method : str, default='frye'
             Method for sampling causal permutations:
             - 'frye': True Asymmetric Shapley (Frye et al.) - only enforces direct parent constraints
             - 'strict': Strict topological ordering by depth layers
         """
         
-        super().__init__(model, background_data, n_samples,random_sate)
+        super().__init__(model, background_data, n_samples,random_state)
         
         if asymmetric_method not in ['frye', 'strict']:
             raise ValueError(f"asymmetric_method must be 'frye' or 'strict', got {asymmetric_method}")
@@ -425,18 +788,24 @@ class AsymmetricShapley(ShapleyFromScratch):
         # print(f"Using asymmetric method: {self.asymmetric_method}")
 
     def _extract_directed_graph(self, causal_graph: np.ndarray) -> np.ndarray:
+        """Convert causal graph matrix into binary directed adjacency matrix.
+        
+        Supports two common encodings:
+        1. Binary adjacency: causal_graph[i, j] = 1 means i → j (and [j,i]=0)
+        2. Causal-learn endpoint encoding: 
+           - causal_graph[i,j]=-1, causal_graph[j,i]=1 means i → j (tail at i, arrow at j)
+           - Other combinations (undirected, bidirected) are ignored
+        
+        Parameters
+        ----------
+        causal_graph : np.ndarray
+            Input causal graph matrix
+        
+        Returns
+        -------
+        directed : np.ndarray
+            Binary adjacency matrix where directed[i,j]=1 means i → j
         """
-        Convert a generic causal graph matrix into directed adjacency (0/1)
-
-        Support two common encodings:
-        1) Binary adjacency where causal_graph[i, j] = 1 means i -> j
-        2) causal-learn endpoint encoding in graph.graph where edege direction is
-            encoded by asymmetric endpoint marks (e.g, -1/1 for tail/arrow)
-
-        Ambiguous/non-directed edges (undirected, bidirected,circle endpoints,
-            or summetric 1/1 edges) are ignored for parent constraints
-        """
-
         if causal_graph.shape != (self.n_features, self.n_features):
             raise ValueError(
                 f"causal_graph shape {causal_graph.shape} does not match number"
@@ -614,20 +983,30 @@ class AsymmetricShapley(ShapleyFromScratch):
         return result
     
     def _sample_causal_permutation_frye(self) -> List[int]:
-        """
-        Sample causal permutation using TRUE Asymmetric Shapley (Frye et al.).
+        """Sample causal permutation using TRUE Asymmetric Shapley (Frye et al.).
         
-        Only enforces direct parent constraints: each feature i must appear after
-        its direct parents. Unrelated features can appear in any order, allowing
-        more permutations than strict topological ordering.
+        ALGORITHM (Greedy Valid Extension):
+        1. Start with empty permutation: π = []
+        2. Build available set: candidates = {features whose parents are all in π}
+        3. Randomly select one candidate and append to π
+        4. Repeat until all features are in π
         
-        Algorithm: Greedily build permutation by randomly selecting from features
-        whose parents are already in the permutation.
+        KEY PROPERTY:
+        - Only enforces direct parent constraints
+        - Samples uniformly from all valid causal orderings
+        - More flexible than strict topological ordering
         
-        Returns:
-        --------
+        EXAMPLE:
+        For DAG: X1 → X3, X2 → X3
+        Valid permutations include:
+        - [X1, X2, X3] ✓
+        - [X2, X1, X3] ✓  (X1 and X2 can be in any order)
+        - [X1, X3, X2] ✗  (X3 before its parent X2)
+        
+        Returns
+        -------
         perm : List[int]
-            Valid causal permutation (uniform over all valid permutations)
+            Valid causal permutation (uniform distribution over valid orderings)
         """
         perm = []
         remaining = set(range(self.n_features))
@@ -653,6 +1032,35 @@ class AsymmetricShapley(ShapleyFromScratch):
         return perm
     
     def _compute_monte_carlo_causal_shapley(self, instance: np.ndarray) -> np.ndarray:
+        """Compute Asymmetric Shapley values using Monte Carlo with causal permutations.
+        
+        ALGORITHM:
+        Repeat n_samples times:
+            1. Sample valid causal permutation π (using selected method)
+            2. Initialize: S = ∅, v_prev = baseline
+            3. For each feature f_i in order π:
+                a. Add f_i to coalition: S = S ∪ {f_i}
+                b. Compute: v_curr = v(S)
+                c. Marginal: Δ_i = v_curr - v_prev
+                d. Accumulate: φ_i += Δ_i
+                e. Update: v_prev = v_curr
+        Return: φ / n_samples
+        
+        DIFFERENCE FROM VANILLA SHAPLEY:
+        - Standard Shapley: all n! permutations are valid
+        - Asymmetric Shapley: only causal permutations are valid
+        - This restricts the set of coalitions considered
+        
+        Parameters
+        ----------
+        instance : np.ndarray
+            Instance to explain
+        
+        Returns
+        -------
+        shapley_values : np.ndarray
+            Asymmetric Shapley values respecting causal constraints
+        """
 
         shapley_values = np.zeros(self.n_features)
 
@@ -716,16 +1124,148 @@ class AsymmetricShapley(ShapleyFromScratch):
 
 
 class CausalShapley(ShapleyFromScratch):
-    """
-    Compute Causal Shapley values using post-interventional sampling
-
-    Implements the rigorous alogrithm from Heskes et at. (2020):
-    "Causal Shapley Values: Exploiting Causal Knowledge to Explain
-    Individual Predictions of Complex Models"
-
-    This correctly handeles confounding by distinguishing:
-    - CONFOUNDED components: sample features independently
-    - NON-CONFOUNDED components: sample features jointly (preserve mutual interactions)
+    """Causal Shapley values using post-interventional sampling (Heskes et al. 2020).
+    
+    This is the most rigorous causal Shapley method that correctly handles confounding
+    by using post-interventional distributions P(X | do(X_S = x_S)) instead of
+    conditional distributions P(X | X_S = x_S).
+    
+    ═══════════════════════════════════════════════════════════════════════
+    KEY CONCEPTUAL DIFFERENCE FROM OTHER METHODS:
+    ═══════════════════════════════════════════════════════════════════════
+    
+    Standard Shapley: v(S) = E[f(X) | X_S = x_S]
+        → Conditions on observed features (preserves correlations/confounding)
+    
+    Causal Shapley: v(S) = E[f(X) | do(X_S = x_S)]
+        → Intervenes on features (breaks incoming edges, removes confounding)
+    
+    ═══════════════════════════════════════════════════════════════════════
+    CONFOUNDING EXAMPLE:
+    ═══════════════════════════════════════════════════════════════════════
+    
+    Consider: U → X1, U → X2, X1 → Y, X2 → Y  (U is hidden confounder)
+    
+    Question: What is the contribution of X1 to Y?
+    
+    Standard Shapley (conditioning):
+        - When we condition X1=x1, we also implicitly condition on U
+        - This affects X2's distribution through the confounding path
+        - X1 gets credit for effects that actually come from U
+        - OVERESTIMATES X1's causal effect
+    
+    Causal Shapley (intervention):
+        - When we intervene do(X1=x1), we cut U → X1 edge
+        - X2 is sampled independently of X1 (confounding removed)
+        - X1 only gets credit for direct causal effects
+        - CORRECT causal interpretation
+    
+    ═══════════════════════════════════════════════════════════════════════
+    HOW CAUSAL STRUCTURE IS USED:
+    ═══════════════════════════════════════════════════════════════════════
+    
+    1. ADJACENCY MATRIX (discovered_adj):
+       - Binary DAG: adj[i,j]=1 means i → j (parent-child relationships)
+       - Used to determine topological ordering and parent dependencies
+    
+    2. CONFOUNDERS (discovered_conf):
+       - List of feature pairs: [(X1, X2), (X3, X4), ...]
+       - Means X1 ↔ X2 (bidirected edge = shared hidden confounder U)
+       - Groups confounded features into components
+    
+    3. COMPONENT STRUCTURE:
+       - Features are partitioned into causal components
+       - CONFOUNDED component: Features share a hidden confounder
+       - NON-CONFOUNDED component: Individual features or causally related features
+    
+    ═══════════════════════════════════════════════════════════════════════
+    POST-INTERVENTIONAL SAMPLING ALGORITHM:
+    ═══════════════════════════════════════════════════════════════════════
+    
+    To sample from P(X | do(X_S = x_S)):
+    
+    1. Fix intervened features: X_S = x_S (from instance)
+    
+    2. For each component t in topological order:
+       a. Identify: fixed_features = component ∩ S (intervened)
+                   missing_features = component \\ S (to sample)
+       
+       b. Get parent values (already determined from topological order)
+       
+       c. IF component is CONFOUNDED:
+             → Sample each missing feature INDEPENDENTLY given parents only
+             → Intervention breaks dependencies between confounded features
+             → For each missing feature j:
+                 X_j ~ P(X_j | Parents(X_j))
+       
+       d. ELSE (component is NON-CONFOUNDED):
+             → Sample missing features JOINTLY given parents + fixed siblings
+             → Preserves mutual interactions within component
+             → (X_missing) ~ P(X_missing | Parents, X_fixed)
+    
+    3. Repeat M times to get samples from the do-distribution
+    
+    ═══════════════════════════════════════════════════════════════════════
+    BACKGROUND DATA USAGE:
+    ═══════════════════════════════════════════════════════════════════════
+    
+    Background data is used to estimate conditional distributions:
+    - Fit Gaussian approximation: X ~ N(μ, Σ)
+    - Use conditional Gaussian formulas for sampling:
+      X_A | X_B = b ~ N(μ_A + Σ_AB Σ_BB^{-1}(b - μ_B), Σ_AA - Σ_AB Σ_BB^{-1} Σ_BA)
+    
+    Note: Current implementation assumes Gaussian distributions
+    For non-Gaussian: could use Gibbs sampling or other methods
+    
+    ═══════════════════════════════════════════════════════════════════════
+    PARAMETERS:
+    ═══════════════════════════════════════════════════════════════════════
+    
+    Parameters
+    ----------
+    model : BaseEstimator
+        Trained model to explain
+    background_data : pd.DataFrame
+        Reference dataset for estimating conditional distributions
+    discovered_adj : np.ndarray
+        Adjacency matrix (n_features x n_features) encoding causal DAG
+    discovered_conf : List[Tuple[str,str]]
+        List of confounded feature pairs: [(feature1, feature2), ...]
+    feature_names : List[str]
+        Feature names (must match background_data columns)
+    n_samples : int, default=100
+        Number of outer permutations (Monte Carlo samples)
+    M_inner_samples : int, default=50
+        Number of inner samples from do-distribution per coalition
+    random_state : int or None
+        Random seed
+    
+    Attributes
+    ----------
+    causal_graph_components : List[List[int]]
+        Groups of features (confounded groups + individual features) in topological order
+    confounded_info : Dict[int, bool]
+        Maps component_idx → is_confounded (True if multiple features in component)
+    parents_dict : Dict[int, List[int]]
+        Maps component_idx → list of parent feature indices
+    feature_to_component : Dict[int, int]
+        Maps feature_idx → component_idx
+    
+    ═══════════════════════════════════════════════════════════════════════
+    REFERENCES:
+    ═══════════════════════════════════════════════════════════════════════
+    
+    Heskes, T., Sijben, E., Bucur, I. G., & Claassen, T. (2020).
+    "Causal Shapley Values: Exploiting Causal Knowledge to Explain Individual
+    Predictions of Complex Models." NeurIPS 2020.
+    
+    Examples
+    --------
+    >>> adj = np.array([[0,1,0], [0,0,1], [0,0,0]])  # X0→X1→X2
+    >>> conf = [('X0', 'X1')]  # X0 and X1 confounded
+    >>> explainer = CausalShapley(model, X_train, adj, conf, 
+    ...                           feature_names=['X0','X1','X2'])
+    >>> shap_values = explainer.explain(X_test)
     """
 
     def __init__(self, model: BaseEstimator,
@@ -736,6 +1276,27 @@ class CausalShapley(ShapleyFromScratch):
                  n_samples: int = 100,
                  M_inner_samples: int = 50,
                  random_state: Optional[int] = None):
+        """Initialize CausalShapley with post-interventional sampling.
+        
+        Parameters
+        ----------
+        model : BaseEstimator
+            Trained model
+        background_data : pd.DataFrame
+            Reference data for conditional sampling
+        discovered_adj : np.ndarray
+            Adjacency matrix of causal DAG
+        discovered_conf : List[Tuple[str,str]]
+            Confounded feature pairs
+        feature_names : List[str]
+            Feature names
+        n_samples : int, default=100
+            Outer permutations
+        M_inner_samples : int, default=50
+            Inner samples per coalition
+        random_state : int or None
+            Random seed
+        """
         
         super().__init__(model, background_data, n_samples,random_state)
 
@@ -901,24 +1462,36 @@ class CausalShapley(ShapleyFromScratch):
     def _sample_conditional_gaussian(self, target_features: List[int],
                                      conditioning_features: List[int],
                                      conditioning_values: np.ndarray) -> np.ndarray:
-        """
-        Sample P(X_target | X_conditioning = values) using Gaussian assumption.
-
-        Uses the conditional Gaussian formula for X_A | X_B ~ N
-
-        Parameters:
-        -----------
+        """Sample from conditional Gaussian distribution P(X_target | X_cond = values).
+        
+        Uses the closed-form conditional Gaussian formula:
+        
+        Given X = [X_A, X_B] ~ N(μ, Σ), then:
+        X_A | X_B = b ~ N(μ_A|B, Σ_A|B) where:
+            μ_A|B = μ_A + Σ_AB Σ_BB^{-1} (b - μ_B)
+            Σ_A|B = Σ_AA - Σ_AB Σ_BB^{-1} Σ_BA
+        
+        This is a key subroutine for post-interventional sampling.
+        
+        Parameters
+        ----------
         target_features : List[int]
             Feature indices to sample
-        conditioning_features: List[int]
-            Features indices being conditioned on
-        conditioning_values: np.ndarray
-            Values of conditioning features
+        conditioning_features : List[int]
+            Feature indices being conditioned on
+        conditioning_values : np.ndarray
+            Observed values of conditioning features
         
-        Returns:
-        --------
+        Returns
+        -------
         samples : np.ndarray
-            Sampled values for target features
+            Sampled values for target features (shape: len(target_features))
+        
+        Notes
+        -----
+        - If no conditioning features: samples from marginal P(X_target)
+        - Adds regularization to ensure positive definiteness
+        - Falls back to marginal if conditioning fails (singular covariance)
         """
 
         if len(conditioning_features) == 0:
@@ -1181,19 +1754,152 @@ class CausalShapley(ShapleyFromScratch):
         return self.shap_values
 
 class ShapleyFlow:
-    """
-    Shapley Flow implementatiojn based on Wang et al. (2021)
-    Compute edge attributions in a DAG using recursive DFS with random
-    permutations of children, following Algorithm 1 from the paper
-
-    Use on-manifold perturbation with conditional expectatios:
-    - Features are smpled from conditional distributions P(X-i | non-missing predecessors)
-    - When an edge is active, the feature uses its forground value
-    - When and edge is not active, the feature is treated as missing and sampled conditionally
-
-
-    Reference: Wang & Venkatasubramanian (2021) "Shapley Flow: A Graph-based
-    Approach to Interpreting Model Predictions
+    """Shapley Flow: Graph-based edge attributions using on-manifold perturbations.
+    
+    Implements the Shapley Flow algorithm from Wang & Venkatasubramanian (2021),
+    which extends Shapley values from features to EDGES in a causal DAG.
+    
+    ═══════════════════════════════════════════════════════════════════════
+    KEY IDEA:
+    ═══════════════════════════════════════════════════════════════════════
+    
+    Instead of asking "How important is feature X_i?", Shapley Flow asks:
+    "How important is the causal edge X_i → X_j?"
+    
+    This provides FINE-GRAINED explanations:
+    - Which causal paths contribute most to predictions?
+    - How does information flow through the causal graph?
+    - More interpretable for domain experts who know the causal structure
+    
+    ═══════════════════════════════════════════════════════════════════════
+    ON-MANIFOLD PERTURBATION:
+    ═══════════════════════════════════════════════════════════════════════
+    
+    Unlike standard Shapley (which uses arbitrary feature masking), Shapley Flow
+    uses CONDITIONAL SAMPLING to stay on the data manifold:
+    
+    For each edge (u → v):
+    - Edge ACTIVE: v uses its foreground value from the instance
+    - Edge NOT ACTIVE: v is treated as "missing" and sampled from P(v | active_parents)
+    
+    This ensures all sampled instances are realistic (respect data distribution).
+    
+    ═══════════════════════════════════════════════════════════════════════
+    BACKGROUND vs FOREGROUND DATA:
+    ═══════════════════════════════════════════════════════════════════════
+    
+    - FOREGROUND: The instance x to explain
+        * Used for source nodes when their edges are active
+        * Used for downstream nodes when their incoming edges are active
+    
+    - BACKGROUND: Reference dataset
+        * Used to sample "missing" node values when edges are inactive
+        * Provides conditional distribution for on-manifold sampling
+    
+    ═══════════════════════════════════════════════════════════════════════
+    ALGORITHM (Recursive DFS with Random Permutations):
+    ═══════════════════════════════════════════════════════════════════════
+    
+    For n_samples trials:
+        1. Start DFS from each source node
+        2. At each node u:
+            a. Get children: {v1, v2, ..., vk}
+            b. Random permutation: shuffle children order
+            c. For each child vi in shuffled order:
+                - Compute v_before = value(current_edge_set)
+                - Add edge (u → vi) to edge_set
+                - Compute v_after = value(current_edge_set ∪ {(u,vi)})
+                - Marginal contribution = v_after - v_before
+                - Accumulate to edge attribution
+                - Recurse to child vi
+    
+    Average edge attributions over all trials.
+    
+    ═══════════════════════════════════════════════════════════════════════
+    PATH SAMPLING MODE (FASTER):
+    ═══════════════════════════════════════════════════════════════════════
+    
+    For dense graphs, exhaustive DFS explores too many edge combinations.
+    Path sampling mode is more efficient:
+    
+    1. Sample K random paths from each source to sink
+    2. For each path:
+        a. Extract edges in path: [(u1,v1), (u2,v2), ..., (uk,vk)]
+        b. Random permutation of these edges
+        c. Evaluate incrementally: ∅ → +edge1 → +edge2 → ... → complete_path
+        d. Compute marginal for each edge
+    3. Average over all sampled paths
+    
+    This focuses sampling on relevant causal paths (ignores irrelevant edges).
+    
+    ═══════════════════════════════════════════════════════════════════════
+    HOW CAUSAL DAG IS USED:
+    ═══════════════════════════════════════════════════════════════════════
+    
+    - graph_structure: Dict[node → children]
+        Defines which edges exist in the DAG
+        Only edges in this structure receive attributions
+    
+    - source_nodes: Nodes with no parents (inputs)
+        DFS/path sampling starts from these nodes
+    
+    - sink_node: Final output node (Y)
+        Model prediction is read from this node
+    
+    ═══════════════════════════════════════════════════════════════════════
+    EFFICIENCY AXIOM:
+    ═══════════════════════════════════════════════════════════════════════
+    
+    Shapley Flow satisfies:
+    Σ_{edges} attribution(edge) = f(x_foreground) - f(x_background)
+    
+    Total edge importance = prediction difference between foreground and background
+    
+    ═══════════════════════════════════════════════════════════════════════
+    
+    Parameters
+    ----------
+    graph_structure : Dict[int, List[int]]
+        Adjacency list: graph[u] = [v1, v2, ...] means edges u→v1, u→v2, ...
+    background_data : np.ndarray
+        Reference dataset for conditional sampling (n_samples x n_features)
+    model : BaseEstimator or None
+        Trained model (required if sink_node is specified)
+    source_nodes : List[int] or None
+        Input nodes (auto-detected as nodes with no parents if None)
+    sink_node : int or None
+        Output node for predictions
+    n_samples : int, default=100
+        Number of Monte Carlo trials (permutations)
+    random_state : int or None
+        Random seed
+    feature_names : List[str] or None
+        Feature names for model alignment
+    use_path_sampling : bool, default=True
+        If True, use efficient path sampling (recommended for dense graphs)
+        If False, use exhaustive DFS (original algorithm)
+    paths_per_source : int, default=100
+        Number of random paths to sample per source (only if use_path_sampling=True)
+    
+    Attributes
+    ----------
+    edge_attributions : Dict[Tuple[int,int], float]
+        Importance score for each edge (u,v)
+    parents : Dict[int, List[int]]
+        Reverse graph: parents[v] = [u1, u2, ...] for edges u1→v, u2→v, ...
+    
+    References
+    ----------
+    Wang, J., & Venkatasubramanian, S. (2021). "Shapley Flow: A Graph-based
+    Approach to Interpreting Model Predictions." AISTATS 2021.
+    
+    Examples
+    --------
+    >>> graph = {0: [2], 1: [2], 2: [3], 3: []}  # X0→X2←X1, X2→X3
+    >>> flow = ShapleyFlow(graph, background_data, model, 
+    ...                    source_nodes=[0,1], sink_node=3)
+    >>> edge_attrs = flow.compute(x_foreground, x_background)
+    >>> node_attrs = flow.get_node_attributions()
     """
     def __init__(self, graph_structure: Dict[int, List[int]],
                  background_data: np.ndarray,
@@ -1205,33 +1911,7 @@ class ShapleyFlow:
                  feature_names: Optional[List[str]] = None,
                  use_path_sampling: bool = True,
                  paths_per_source: int = 100):
-        """
-        Initiliaze Shapley Flow Calculator
-
-        Parameters:
-        -----------
-        graph_structure: Dict[int, List[int]]
-            Adjacency list where graph_structure[u] = list of children of u
-        backgourd_data: np.ndarray
-            Background data for conditional sampling (n_samples x n_features)
-        model: BaseEstimator, optional
-            Model for predcition (required if sin_node is specified)
-        source_nodes: List[int]
-            list of source/input node identifiers (auto-detected if None)
-        sink_node: int
-            Identifeier for the final output node (for model prediction)
-        n_samples: int
-            Number of Monte Carlo samples (random permutations)
-        random_state: int, optional
-            Randome seed for reproducibility
-        feature_names: List[str], optional
-            Feature names for proper alignment with model (needed for wrapper models)
-        use_path_sampling: bool, default=True
-            If True, use path sampling (faster for dense graphs).
-            If False, use exhaustive DFS (original algorithm)
-        paths_per_source: int, default=100
-            Number of random paths to sample from each source (only if use_path_sampling=True)
-        """
+        """Initialize Shapley Flow calculator."""
 
         self.graph = graph_structure
         self.background_data = background_data
@@ -1691,12 +2371,86 @@ class ShapleyFlow:
         return node_attr
     
 class ShapleyFlowWrapper:
-    """
-    Wrapper for ShapleyFlow to work with trained ML models
-
-    Converts a trained model + causal DAG into the graph structure 
-    required by the core ShapleyFlow alrgorithm, using on-manifold
-    perturbatiuon with conditional expectations.
+    """Convenience wrapper for applying Shapley Flow to trained ML models.
+    
+    This class bridges trained scikit-learn models with the Shapley Flow algorithm.
+    It handles the conversion from causal DAG to graph structure and provides
+    a familiar interface similar to other Shapley explainers.
+    
+    ═══════════════════════════════════════════════════════════════════════
+    WHAT THIS WRAPPER DOES:
+    ═══════════════════════════════════════════════════════════════════════
+    
+    1. Converts causal adjacency matrix → graph structure (adjacency list)
+    2. Identifies source nodes (features with no parents)
+    3. Sets up sink node (outcome variable Y)
+    4. Creates ShapleyFlow instance with proper configuration
+    5. Computes edge attributions and aggregates to node-level importance
+    6. Returns feature importance scores compatible with other explainers
+    
+    ═══════════════════════════════════════════════════════════════════════
+    KEY PARAMETERS:
+    ═══════════════════════════════════════════════════════════════════════
+    
+    - causal_graph: Adjacency matrix including ALL variables (features + Y)
+        * Shape: (n_features+1, n_features+1) where last index is Y
+        * causal_graph[i,j]=1 means variable i causes variable j
+    
+    - y_index: Position of outcome variable Y in the causal graph
+        * Typically the last index: y_index = n_features
+        * Needed to identify which node is the prediction target
+    
+    ═══════════════════════════════════════════════════════════════════════
+    NODE vs FEATURE IMPORTANCE:
+    ═══════════════════════════════════════════════════════════════════════
+    
+    Shapley Flow produces EDGE attributions: importance(u → v)
+    
+    To get feature-level importance (compatible with other explainers):
+    - Aggregate outgoing edges: importance(X_i) = Σ_{j} importance(X_i → X_j)
+    - Excludes Y node (Y always has 0 importance since it's the outcome)
+    
+    ═══════════════════════════════════════════════════════════════════════
+    
+    Parameters
+    ----------
+    model : BaseEstimator
+        Trained scikit-learn compatible model
+    background_data : pd.DataFrame
+        Reference dataset for conditional sampling
+    causal_graph : np.ndarray
+        Adjacency matrix (n_features+1, n_features+1) including Y
+        Entry [i,j]=1 means variable i causes variable j
+    y_index : int
+        Index of outcome variable Y in the causal graph
+    n_samples : int, default=100
+        Number of Monte Carlo trials
+    random_state : int or None
+        Random seed
+    use_path_sampling : bool, default=True
+        Use fast path sampling (recommended for dense graphs)
+    paths_per_source : int, default=100
+        Paths to sample per source (if use_path_sampling=True)
+    
+    Attributes
+    ----------
+    directed_graph : np.ndarray
+        Binary adjacency matrix extracted from causal_graph
+    graph_structure : Dict[int, List[int]]
+        Adjacency list representation
+    source_nodes : List[int]
+        Nodes with no parents (input features)
+    shap_values : np.ndarray
+        Node-level importance scores (n_samples x n_input_features)
+        Excludes Y since it always has 0 importance
+    
+    Examples
+    --------
+    >>> # Causal graph: X0→X1→Y, X2→Y (Y is last variable)
+    >>> causal_dag = np.array([[0,1,0,0], [0,0,0,1], [0,0,0,1], [0,0,0,0]])
+    >>> wrapper = ShapleyFlowWrapper(model, X_train, causal_dag, y_index=3)
+    >>> shap_values = wrapper.explain(X_test)
+    >>> importance = wrapper.get_feature_importance()
     """
 
     def __init__(self, model: BaseEstimator,
@@ -1707,28 +2461,7 @@ class ShapleyFlowWrapper:
                 random_state: Optional[int] = None,
                 use_path_sampling: bool = True,
                 paths_per_source: int = 100):
-        """
-        Initialize wrapper.
-
-        Parameters:
-        -----------
-        model: BaseEstimator
-            Trained predictive model
-        background_data : pd.DataFrame
-            Reference dataset for conditional sampling
-        causal_graph : np.ndarray
-            Adjancency matrix where causal_graph[i,j]=1 means i causes j
-        y_index : int
-            Index of the outcome variable Y
-        n_samples : int
-            Number of Monte Carlo samples
-        random_state : int , optional
-            Random seed
-        use_path_sampling: bool, default=True
-            If True, use path sampling (faster for dense graphs)
-        paths_per_source: int, default=100
-            Number of random paths to sample from each source
-        """
+        """Initialize Shapley Flow wrapper for ML models."""
         self.model = model
         self.background_data_df = background_data
         self.background_data = background_data.values
