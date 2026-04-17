@@ -1,1 +1,1 @@
-from .shapley_values import ShapleyExplainer, ShapleyFromScratch, TrueShapley, AsymmetricShapley, ShapleyFlowWrapper, ShapleyFlow, CausalShapley
+from .shapley_values import ShapleyExplainer, ShapleyFromScratch, AsymmetricShapley, ShapleyFlowWrapper, ShapleyFlow, CausalShapley

@@ -6,7 +6,7 @@ import pandas as pd
 from typing import Callable, Dict, List, Optional, Tuple, Any
 from itertools import chain, combinations, permutations
 import warnings
-warnings.filterwarnings('ignore')
+# warnings.filterwarnings('ignore')
 
 import shap
 
@@ -434,7 +434,7 @@ class ShapleyFromScratch:
         shapley_values = np.zeros(self.n_features)
 
         # Sample random permutations
-        for _ in range(self.n_samples):
+        for sample_idx in range(self.n_samples):
             # Random permutation of features
             perm = self.rng.permutation(self.n_features)
 
@@ -454,6 +454,10 @@ class ShapleyFromScratch:
                 shapley_values[feature_idx] += marginal
 
                 prev_value = curr_value
+            
+            # Log progress every 100 samples
+            if (sample_idx + 1) % 100 == 0:
+                logging.info(f"    Sample {sample_idx + 1}/{self.n_samples} completed")
         
         # Average over samples 
         shapley_values /= self.n_samples
@@ -489,6 +493,8 @@ class ShapleyFromScratch:
         Automatically switches to Monte Carlo if method='exact' but n_features > 10
         """
         print(f"Computing Shapley values from scratch using {method} method...")
+        logging.info(f"Starting ShapleyFromScratch computation for {len(X)} instances")
+        logging.info(f"Using {self.n_samples} samples per instance")
 
         X_values = X.values
         n_instances = len(X_values)
@@ -507,10 +513,15 @@ class ShapleyFromScratch:
             else: 
                 raise ValueError(f"Unknown method: {method}")
             
+            # Log progress every 20 instances
+            if (i + 1) % 20 == 0:
+                logging.info(f"  Completed {i + 1}/{n_instances} instances")
+            
             # Progress indicator removed for cleaner output
             # if (i + 1) % max(1, n_instances //10) == 0:
             #     print(f" Progress: {i + 1}/{n_instances} instances")
 
+        logging.info(f"Completed all {n_instances} instances")
         return self.shap_values
     
     def get_feature_importance(self) -> pd.DataFrame:
@@ -555,145 +566,46 @@ class ShapleyFromScratch:
             self.explain(X)
 
         return pd.DataFrame(self.shap_values, columns=self.feature_names, index= X.abs)
-    
-
-class TrueShapley(ShapleyFromScratch):
-    """Ground truth Shapley values using the true data generation function.
-    
-    Instead of explaining a trained model, this class computes Shapley values
-    directly from the true data generating process (if known). This provides
-    ground truth feature importance for validation and benchmarking purposes.
-    
-    USE CASE:
-    Primarily used for synthetic data experiments where the true function is known:
-    - Validate that Shapley implementations are correct
-    - Compare model-based explanations against ground truth
-    - Understand theoretical properties of Shapley values
-    
-    DIFFERENCE FROM ShapleyFromScratch:
-    - Uses true_generator(X) instead of model.predict(X)
-    - Provides "oracle" explanations (no model approximation error)
-    - Useful for debugging and validation
-    
-    Parameters
-    ----------
-    true_generator : Callable
-        True data generation function: f(X) → Y
-        Takes array of shape (n_samples, n_features) and returns (n_samples,)
-    background_data : pd.DataFrame
-        Background dataset for marginalizing over missing features
-    n_samples : int, default=1000
-        Number of Monte Carlo samples for approximation
-    random_state : int or None
-        Random seed for reproducibility
-    
-    Examples
-    --------
-    >>> def true_func(X):
-    ...     return X[:, 0] * 2 + X[:, 1] * 3  # Linear function
-    >>> explainer = TrueShapley(true_func, background_data)
-    >>> true_shap = explainer.explain(X_test, method='monte_carlo')
-    """
-    
-    def __init__(self, true_generator: Callable, background_data: pd.DataFrame,
-                 n_samples: int = 1000, random_state: Optional[int] = None):
-        """Initialize TrueShapley explainer.
-        
-        Args:
-            true_generator: Callable that takes X (n_samples, n_features) and returns Y (n_samples,)
-            background_data: Background dataset for Shapley computation
-            n_samples: Number of Monte Carlo samples for Shapley approximation
-            random_state: Random seed for reproducibility
-        """
-        # We don't have a model, so we'll pass None and override _predict_coalition
-        self.true_generator = true_generator
-        self.background_data = background_data
-        self.feature_names = background_data.columns.tolist()
-        self.n_features = len(self.feature_names)
-        self.n_samples = n_samples
-        
-        # Set random state
-        if random_state is not None:
-            np.random.seed(random_state)
-            self.rng = np.random.RandomState(random_state)
-        else:
-            self.rng = np.random.RandomState()
-        
-        # Compute baseline value as expected output over background data
-        self.baseline_value = np.mean(self.true_generator(background_data.values))
-        
-        self.shap_values = None
-    
-    def _predict_coalition(self, instance: np.ndarray, coalition: list) -> float:
-        """Predict using true generator for a coalition of features.
-        
-        Overrides parent method to use true data generator instead of a model.
-        
-        SAMPLING STRATEGY:
-        - Features IN coalition: Use instance's values (foreground)
-        - Features NOT in coalition: Sample from background (n_samples times)
-        - Compute Y using true generator for all samples
-        - Return average Y
-        
-        Args:
-            instance: Single instance to explain (n_features,)
-            coalition: List of feature indices in the coalition
-        
-        Returns:
-            Expected Y value for this coalition: E[Y | X_coalition = x_coalition]
-        """
-        # Create samples by combining instance features (in coalition) with random background features (not in coalition)
-        samples = np.tile(instance, (self.n_samples, 1))
-        
-        # Convert coalition list to set for faster lookup
-        coalition_set = set(coalition)
-        
-        # For features not in coalition, sample from background
-        for j in range(self.n_features):
-            if j not in coalition_set:
-                # Sample random values from background for feature j
-                random_indices = self.rng.choice(len(self.background_data), size=self.n_samples, replace=True)
-                samples[:, j] = self.background_data.values[random_indices, j]
-        
-        # Compute Y using true generator and average
-        predictions = self.true_generator(samples)
-        return np.mean(predictions)
-
 
 class AsymmetricShapley(ShapleyFromScratch):
-    """Asymmetric Shapley values that respect causal ordering constraints.
+    """Path-based Asymmetric Shapley values focusing on causal paths to outcome.
     
-    This class implements Asymmetric Shapley values, which modify the standard
-    Shapley formula by restricting the set of valid coalitions to those that
-    respect causal dependencies in a directed acyclic graph (DAG).
+    This class implements a path-based approach to Asymmetric Shapley values that
+    focuses on complete causal paths from source nodes to the outcome variable Y.
     
     KEY INSIGHT:
     Standard Shapley values treat all features symmetrically, but in causal systems,
-    a feature can only contribute if its causal parents are also present. For example,
-    if X1 → X2 → Y, then X2 cannot contribute to Y without X1 being observed.
+    features contribute to the outcome through complete causal paths. This implementation
+    ensures that when a feature is included in a coalition, ALL its ancestors on paths
+    to the outcome are also included (not just direct parents).
     
-    CAUSAL CONSTRAINT:
-    A coalition S is valid only if: for every feature i ∈ S, all parents of i are in S
-    This ensures we don't "cut" causal paths in the graph.
+    MOTIVATION - DISTAL CAUSALITY:
+    The standard Frye et al. (2021) approach only enforces direct parent constraints,
+    which allows "incomplete" causal chains. For example, if X0→X1→X2→Y, the Frye method
+    allows coalition {X0, X2} even though X1 is missing from the chain. This violates
+    the distal causality interpretation where features should contribute through complete
+    causal mechanisms.
+    
+    PATH-BASED APPROACH:
+    1. Identifies source nodes (features with no incoming edges)
+    2. Finds all causal paths from each source to outcome Y
+    3. Samples orderings where:
+       - Nodes ON a path to Y maintain strict causal order (complete chains)
+       - Nodes NOT on any path to Y can appear anywhere (no constraint)
+       - Outcome Y is always positioned last
     
     HOW CAUSAL DAG IS USED:
     1. Extract directed edges from adjacency matrix: dag[i,j]=1 means i → j
-    2. Build parent dictionary: parents[j] = {all i where i → j}
-    3. During sampling, only consider permutations where each feature appears
-       after all its parents (topological ordering)
+    2. Build parent dictionary: parents[j] = {all i where i → j}  
+    3. Find all paths from sources to outcome using DFS
+    4. Sample from path-respecting orderings (not just parent-respecting)
     
-    TWO SAMPLING METHODS:
-    - 'frye': True Asymmetric Shapley (Frye et al. 2021)
-        * Only enforces DIRECT parent constraints
-        * Feature i must appear after its parents, but unrelated features can be in any order
-        * Samples uniformly from all valid causal orderings
-        * More permutations → better exploration
-    
-    - 'strict': Strict topological layering
-        * Groups features by depth: depth[j] = max(depth[parent]) + 1
-        * All features at depth k must appear before all features at depth k+1
-        * More restrictive than necessary
-        * Fewer permutations → may underestimate interactions
+    DIFFERENCE FROM STANDARD APPROACHES:
+    - Frye et al. (2021): Only direct parent constraints
+      → Can have incomplete chains: {X0, X2} valid even if X0→X1→X2→Y
+    - This implementation: Complete path constraints  
+      → Requires full chains: {X0, X2} invalid, must include X1
+    - More restrictive for path nodes, more flexible for non-path nodes
     
     BACKGROUND DATA USAGE:
     Same as vanilla Shapley - used to marginalize over missing features
@@ -705,20 +617,19 @@ class AsymmetricShapley(ShapleyFromScratch):
     background_data : pd.DataFrame
         Reference dataset for marginalizing over missing features
     causal_graph : np.ndarray
-        Adjacency matrix (n_features x n_features) where:
+        Adjacency matrix INCLUDING outcome node Y
+        Shape: (n_features+1, n_features+1) where last row/col is outcome Y
         - causal_graph[i,j]=1 means i causes j (binary format)
         - OR causal-learn format: causal_graph[i,j]=-1, causal_graph[j,i]=1 means i → j
     n_samples : int, default=1000
-        Number of random causal permutations to sample
+        Number of random path-based orderings to sample
     random_state : int or None
         Random seed for reproducibility
-    asymmetric_method : str, default='frye'
-        Sampling method: 'frye' (recommended) or 'strict'
     
     Attributes
     ----------
     directed_graph : np.ndarray
-        Extracted directed adjacency matrix (binary)
+        Extracted directed adjacency matrix (binary) including outcome
     parents : Dict[int, Set[int]]
         Parent features for each feature
     topological_order : List[int]
@@ -731,16 +642,19 @@ class AsymmetricShapley(ShapleyFromScratch):
     
     Examples
     --------
-    >>> causal_dag = np.array([[0,1,0], [0,0,1], [0,0,0]])  # X0→X1→X2
-    >>> explainer = AsymmetricShapley(model, X_train, causal_dag, 
-    ...                                asymmetric_method='frye')
+    >>> # Create causal DAG with outcome: X0→X1→X2→Y
+    >>> # Shape is (4, 4) including outcome Y at index 3
+    >>> causal_dag = np.array([[0,1,0,0], 
+    ...                         [0,0,1,0], 
+    ...                         [0,0,0,1],
+    ...                         [0,0,0,0]])
+    >>> explainer = AsymmetricShapley(model, X_train, causal_dag)
     >>> shap_values = explainer.explain(X_test)
     """
 
     def __init__(self, model: BaseEstimator, background_data: pd.DataFrame,
                  causal_graph: np.ndarray, n_samples: int = 1000,
-                 random_state: Optional [int] = None,
-                 asymmetric_method: str = 'frye'):
+                 random_state: Optional [int] = None):
         """Initialize Asymmetric Shapley explainer.
         
         Parameters
@@ -750,22 +664,15 @@ class AsymmetricShapley(ShapleyFromScratch):
         background_data : pd.DataFrame
             Reference dataset for marginalizing over missing features
         causal_graph : np.ndarray
-            Adjacency matrix encoding causal structure
+            Adjacency matrix encoding causal structure INCLUDING outcome node
+            Shape should be (n_features+1, n_features+1) where last row/col is outcome Y
         n_samples : int, default=1000
-            Number of random causal permutations
+            Number of random causal path orderings to sample
         random_state : int or None
             Random seed
-        asymmetric_method : str, default='frye'
-            Method for sampling causal permutations:
-            - 'frye': True Asymmetric Shapley (Frye et al.) - only enforces direct parent constraints
-            - 'strict': Strict topological ordering by depth layers
         """
         
-        super().__init__(model, background_data, n_samples,random_state)
-        
-        if asymmetric_method not in ['frye', 'strict']:
-            raise ValueError(f"asymmetric_method must be 'frye' or 'strict', got {asymmetric_method}")
-        self.asymmetric_method = asymmetric_method
+        super().__init__(model, background_data, n_samples, random_state)
 
         self.causal_graph = causal_graph
         self.directed_graph = self._extract_directed_graph(causal_graph)
@@ -776,16 +683,14 @@ class AsymmetricShapley(ShapleyFromScratch):
             )
             self.directed_graph = np.zeros_like(self.directed_graph)
 
+        # Build parents dictionary after extracting directed graph
         self.parents = {}
-        for j in range(self.n_features):
+        n_nodes_total = self.directed_graph.shape[0]
+        for j in range(n_nodes_total):
             self.parents[j] = set(np.where(self.directed_graph[:, j] != 0)[0])
-            # Detailed parent info removed for cleaner output
-            # print(f"Feature {self.feature_names[j]} has parents: {[self.feature_names[p] for p in self.parents[j]]}")
 
         self.topological_order = self._topological_sort()
-        # Detailed structure info removed for cleaner output
-        # print(f"Topological order of features: {self.topological_order}")
-        # print(f"Using asymmetric method: {self.asymmetric_method}")
+
 
     def _extract_directed_graph(self, causal_graph: np.ndarray) -> np.ndarray:
         """Convert causal graph matrix into binary directed adjacency matrix.
@@ -799,33 +704,37 @@ class AsymmetricShapley(ShapleyFromScratch):
         Parameters
         ----------
         causal_graph : np.ndarray
-            Input causal graph matrix
+            Input causal graph matrix INCLUDING outcome node
+            Expected shape: (n_features+1, n_features+1)
         
         Returns
         -------
         directed : np.ndarray
             Binary adjacency matrix where directed[i,j]=1 means i → j
+            Shape: (n_features+1, n_features+1)
         """
-        if causal_graph.shape != (self.n_features, self.n_features):
+        expected_shape = (self.n_features + 1, self.n_features + 1)
+        if causal_graph.shape != expected_shape:
             raise ValueError(
-                f"causal_graph shape {causal_graph.shape} does not match number"
-                f"of features ({self.n_features}, {self.n_features})"
+                f"causal_graph shape {causal_graph.shape} does not match expected shape "
+                f"{expected_shape} (n_features+1 to include outcome node)"
             )
         
-        directed = np.zeros((self.n_features, self.n_features), dtype=int)
+        n_nodes_total = self.n_features + 1
+        directed = np.zeros((n_nodes_total, n_nodes_total), dtype=int)
 
         # Case 1: likely plain binary adjacency matrix
         unique_vals = set(np.unique(causal_graph).tolist())
         if unique_vals.issubset({0,1}):
-            for i in range(self.n_features):
-                for j in range(self.n_features):
+            for i in range(n_nodes_total):
+                for j in range(n_nodes_total):
                     if i!=j and causal_graph[i, j]!=0 and causal_graph[j, i] ==0:
                         directed[i, j] =1
             return directed
         
         # Case 2: causal-learn endpoint encoding matrix
-        for i in range(self.n_features):
-            for j in range(i + 1, self.n_features):
+        for i in range(n_nodes_total):
+            for j in range(i + 1, n_nodes_total):
                 a = causal_graph[i, j] 
                 b = causal_graph[j, i]
 
@@ -846,25 +755,27 @@ class AsymmetricShapley(ShapleyFromScratch):
         
     def _has_cycle(self, directed_graph: np.ndarray) -> bool: 
         """ Return True if the directed graph contains at least one cycle."""
+        n_nodes_total = directed_graph.shape[0]
         in_degree = np.sum(directed_graph != 0, axis = 0).astype(int)
-        queue = [i for i in range(self.n_features) if in_degree[i] == 0]
+        queue = [i for i in range(n_nodes_total) if in_degree[i] == 0]
         visited = 0
 
         while queue :
             node = queue.pop(0)
             visited+=1
-            for child in range(self.n_features):
+            for child in range(n_nodes_total):
                 if directed_graph[node, child] !=0:
                     in_degree[child] -=1
                     if in_degree[child] ==0:
                         queue.append(child)
-        return visited != self.n_features
+        return visited != n_nodes_total
 
     def _topological_sort(self) -> List[int]:
         
         # Kahn's algorithm for topological sort
+        n_nodes_total = self.directed_graph.shape[0]
         in_degree = np.sum(self.directed_graph != 0 , axis= 0) # Count incoming edges
-        queue = [i for i in range(self.n_features) if in_degree[i] == 0]
+        queue = [i for i in range(n_nodes_total) if in_degree[i] == 0]
         order = []
 
         while queue:
@@ -873,172 +784,183 @@ class AsymmetricShapley(ShapleyFromScratch):
             node = queue.pop(0)
             order.append(node)
 
-            for child in range(self.n_features):
+            for child in range(n_nodes_total):
                 if self.directed_graph[node,child]!=0:
                     in_degree[child] -=1
                     if in_degree[child] == 0:
                         queue.append(child)
 
-        if len(order) != self.n_features:
+        if len(order) != n_nodes_total:
             warnings.warn("Causal graph contains cycles. Using arbitrary ordering.")
-            order = list(range(self.n_features))
+            order = list(range(n_nodes_total))
 
         return order
     
-    def _is_valid_coalition(self, coalition: List[int]) -> bool:
+    def _find_all_paths_to_outcome(self, source: int, outcome: int, max_paths: int = 20) -> List[List[int]]:
+        """Find all paths from source to outcome in DAG using DFS.
         
-        coalition_set = set(coalition)
-
-        for feature in coalition:
-
-            if not self.parents[feature].issubset(coalition_set):
-                return False
-        return True
-    
-    def _get_valid_coalitions(self, features: List[int]) -> List[List[int]]:
-
-        all_subsets = chain.from_iterable(
-            combinations(features,r) for r in range(len(features) + 1)
-        )
-
-        valid_coalitions = [
-            list(subset) for subset in all_subsets
-            if self._is_valid_coalition(list(subset))
-        ]
-
-        return valid_coalitions
-    
-    def _compute_exact_causal_shapley( self, instance: np.ndarray) -> np.ndarray:
-
-
-        shapley_values = np.zeros(self.n_features)
-
-        for i in range(self.n_features):
-            other_features = [j for j in range(self.n_features) if j !=i ]
-
-            valid_coalitions = self._get_valid_coalitions(other_features)
-
-            marginal_contributions = []
-
-            for coalition in valid_coalitions:
-
-                coalition_with_i = coalition + [i]
-                
-                if not self._is_valid_coalition(coalition_with_i):
-
-                    continue
-
-                v_with = self._predict_coalition(instance, coalition_with_i)
-                v_without = self._predict_coalition(instance, coalition)
-
-                marginal = v_with - v_without
-
-                coalition_size = len(coalition)
-                weight = 1.0 / (self.n_features * math.comb(self.n_features -1, coalition_size))
-
-                marginal_contributions.append(weight * marginal)
-
-            shapley_values[i] = sum(marginal_contributions) if marginal_contributions else 0.0
-
-        return shapley_values
-    
-    def _sample_causal_permutation_strict(self) -> List[int]:
-        """
-        Sample causal permutation using STRICT topological ordering by depth layers.
-        
-        This enforces full topological ordering: all features at depth k come before
-        all features at depth k+1. More restrictive than necessary for causal validity.
-        
-        Returns:
-        --------
-        perm : List[int]
-            Valid causal permutation
-        """
-        # start with topological order
-        perm = self.topological_order.copy()
-
-        # Shuffle within layers (features with same topological depth )
-        # This maintains causal validity while adding randomness
-        
-        depths = np.zeros(self.n_features, dtype = int)
-        for node in self.topological_order:
-            if self.parents[node]:
-                depths[node] = max(depths[p] for p in self.parents[node]) + 1
-
-        # Group by depth and shuffle within groups
-        by_depth = {}
-        for node in perm:
-            depth = depths[node]
-            if depth not in by_depth:
-                by_depth[depth] = []
-            by_depth[depth].append(node)
-
-
-        result = []
-        for depth in sorted(by_depth.keys()):
-            level = by_depth[depth]
-            self.rng.shuffle(level)
-            result.extend(level)
-
-        return result
-    
-    def _sample_causal_permutation_frye(self) -> List[int]:
-        """Sample causal permutation using TRUE Asymmetric Shapley (Frye et al.).
-        
-        ALGORITHM (Greedy Valid Extension):
-        1. Start with empty permutation: π = []
-        2. Build available set: candidates = {features whose parents are all in π}
-        3. Randomly select one candidate and append to π
-        4. Repeat until all features are in π
-        
-        KEY PROPERTY:
-        - Only enforces direct parent constraints
-        - Samples uniformly from all valid causal orderings
-        - More flexible than strict topological ordering
-        
-        EXAMPLE:
-        For DAG: X1 → X3, X2 → X3
-        Valid permutations include:
-        - [X1, X2, X3] ✓
-        - [X2, X1, X3] ✓  (X1 and X2 can be in any order)
-        - [X1, X3, X2] ✗  (X3 before its parent X2)
+        Parameters
+        ----------
+        source : int
+            Starting node index
+        outcome : int
+            Target/outcome node index (Y)
+        max_paths : int, default=20
+            Maximum number of paths to return
         
         Returns
         -------
-        perm : List[int]
-            Valid causal permutation (uniform distribution over valid orderings)
+        paths : List[List[int]]
+            List of paths, where each path is [source, ..., outcome]
         """
-        perm = []
-        remaining = set(range(self.n_features))
+        n_features_total = self.directed_graph.shape[0]
         
-        while remaining:
-            # Find all features whose parents are already in the permutation
-            candidates = []
-            for feature in remaining:
-                # Check if all parents of this feature are already in perm
-                if self.parents[feature].issubset(set(perm)):
-                    candidates.append(feature)
+        def dfs(current, target, path, visited, all_paths):
+            if current == target:
+                all_paths.append(path[:])
+                return
             
-            # If no candidates, we have a cycle (shouldn't happen with valid DAG)
-            if not candidates:
-                warnings.warn("No valid candidates found - possible cycle in graph. Using arbitrary order.")
-                candidates = list(remaining)
+            if len(all_paths) >= max_paths:
+                return
             
-            # Randomly select one candidate (uniform sampling)
-            selected = candidates[self.rng.randint(len(candidates))]
-            perm.append(selected)
-            remaining.remove(selected)
+            # Get children of current node
+            children = [j for j in range(n_features_total) 
+                       if self.directed_graph[current, j] != 0]
+            
+            for child in children:
+                if child not in visited:
+                    visited.add(child)
+                    path.append(child)
+                    dfs(child, target, path, visited, all_paths)
+                    path.pop()
+                    visited.remove(child)
         
-        return perm
+        paths = []
+        visited = {source}
+        dfs(source, outcome, [source], visited, paths)
+        return paths
+    
+    def _insert_non_path_nodes(self, path: List[int], non_path_nodes: List[int]) -> List[int]:
+        """Insert non-path nodes randomly while preserving path order.
+        
+        Parameters
+        ----------
+        path : List[int]
+            Ordered causal path (e.g., [X0, X2, Y])
+        non_path_nodes : List[int]
+            Nodes not on this path
+        
+        Returns
+        -------
+        ordering : List[int]
+            Complete ordering with all nodes
+        """
+        # Start with the path nodes in order
+        ordering = path[:]
+        
+        # Shuffle non-path nodes for variety
+        shuffled_non_path = non_path_nodes[:]
+        self.rng.shuffle(shuffled_non_path)
+        
+
+        ordering = ordering + shuffled_non_path
+        
+        return ordering
+    
+    def _sample_causal_paths_to_outcome(self, outcome_node: int) -> List[int]:
+        """Sample causal path-based permutation focusing on paths to outcome Y.
+        
+        KEY CONCEPT:
+        - Focus on causal **paths** from source nodes to outcome Y
+        - Nodes **ON the path** must maintain causal order
+        - Nodes **NOT on the path** can appear anywhere (no constraint)
+        - Outcome node is always last
+        
+        ALGORITHM:
+        1. Identify source nodes (no incoming edges, excluding outcome)
+        2. For each source, find all paths to outcome
+        3. Get union of ALL nodes across all paths from that source
+        4. Remove outcome from paths (will be added at end)
+        5. Randomly select a path and insert non-path nodes randomly
+        6. Return ordering with outcome at the end
+        
+        DIFFERENCE FROM FRYE METHOD:
+        - Frye: Only enforces DIRECT parent constraints
+        - Path-based: Enforces ALL ancestors on path to Y must be included
+        - Example: If 0→1→2→Y, Frye allows {0, 2} but path-based requires {0, 1, 2}
+        
+        Parameters
+        ----------
+        outcome_node : int
+            Index of outcome node Y (typically n_features)
+        
+        Returns
+        -------
+        ordering : List[int]
+            Valid path-based permutation with outcome last
+        """
+        n_features_total = self.directed_graph.shape[0]
+        
+        # Identify source nodes (no incoming edges, excluding outcome)
+        all_source_nodes = []
+        for i in range(n_features_total):
+            if i == outcome_node:
+                continue
+            has_incoming = any(self.directed_graph[j, i] != 0 for j in range(n_features_total))
+            if not has_incoming:
+                all_source_nodes.append(i)
+        
+        # Filter source nodes to only those with at least one path to outcome
+        source_nodes_with_paths = []
+        for source in all_source_nodes:
+            paths_from_source = self._find_all_paths_to_outcome(source, outcome_node, max_paths=1)
+            if paths_from_source:
+                source_nodes_with_paths.append(source)
+        
+        if not source_nodes_with_paths:
+            # No source nodes with paths to outcome - return random permutation of features (excluding outcome)
+            warnings.warn("No source nodes with paths to outcome found. Using random permutation of features.")
+            features_only = list(range(outcome_node))  # Exclude outcome node
+            self.rng.shuffle(features_only)
+            return features_only
+        
+        # Randomly select a source node (from those with paths to outcome)
+        source = source_nodes_with_paths[self.rng.randint(len(source_nodes_with_paths))]
+        
+        # Find paths from this source to outcome
+        paths = self._find_all_paths_to_outcome(source, outcome_node, max_paths=10)
+        
+        if not paths:
+            # This should not happen since we filtered, but safety fallback
+            warnings.warn(f"No paths found from source {source} to outcome {outcome_node}. Using random permutation.")
+            features_only = list(range(outcome_node))  # Exclude outcome node
+            self.rng.shuffle(features_only)
+            return features_only
+        
+        # Get union of ALL nodes across all paths from this source
+        all_path_nodes_from_source = set().union(*paths) if paths else set()
+        non_path_nodes_all = [i for i in range(n_features_total) 
+                              if i not in all_path_nodes_from_source]
+        
+        # Remove the outcome node from all paths so it can be appended at the end
+        paths = [path[:-1] for path in paths]
+        
+        # Randomly select a path (without outcome)
+        path = paths[self.rng.randint(len(paths))] if len(paths) > 1 else paths[0]
+        
+        # Generate ordering by inserting nodes NOT on ANY path from this source
+        ordering = self._insert_non_path_nodes(path, non_path_nodes_all)
+        
+        return ordering
     
     def _compute_monte_carlo_causal_shapley(self, instance: np.ndarray) -> np.ndarray:
-        """Compute Asymmetric Shapley values using Monte Carlo with causal permutations.
+        """Compute Asymmetric Shapley values using Monte Carlo with path-based permutations.
         
         ALGORITHM:
         Repeat n_samples times:
-            1. Sample valid causal permutation π (using selected method)
+            1. Sample valid path-based permutation π (from sources to outcome Y)
             2. Initialize: S = ∅, v_prev = baseline
-            3. For each feature f_i in order π:
+            3. For each feature f_i in order π (excluding outcome Y):
                 a. Add f_i to coalition: S = S ∪ {f_i}
                 b. Compute: v_curr = v(S)
                 c. Marginal: Δ_i = v_curr - v_prev
@@ -1046,56 +968,62 @@ class AsymmetricShapley(ShapleyFromScratch):
                 e. Update: v_prev = v_curr
         Return: φ / n_samples
         
-        DIFFERENCE FROM VANILLA SHAPLEY:
-        - Standard Shapley: all n! permutations are valid
-        - Asymmetric Shapley: only causal permutations are valid
-        - This restricts the set of coalitions considered
+        PATH-BASED APPROACH:
+        - Focuses on causal paths from sources to outcome Y
+        - Nodes ON the path maintain causal order (full ancestor chains)
+        - Nodes NOT on the path can appear anywhere
+        - More restrictive than Frye for path nodes (ensures complete causal chains)
+        - More flexible than Frye for non-path nodes (no ordering constraint)
         
         Parameters
         ----------
         instance : np.ndarray
-            Instance to explain
+            Instance to explain (shape: n_features,)
         
         Returns
         -------
         shapley_values : np.ndarray
-            Asymmetric Shapley values respecting causal constraints
+            Asymmetric Shapley values respecting causal path constraints
         """
 
         shapley_values = np.zeros(self.n_features)
-
-        for _ in range(self.n_samples):
-            # Sample permutation using selected method
-            if self.asymmetric_method == 'frye':
-                perm = self._sample_causal_permutation_frye()
-            else:  # 'strict'
-                perm = self._sample_causal_permutation_strict()
+        
+        # Outcome node is assumed to be the last node in the causal graph
+        # (causal_graph should be (n_features+1, n_features+1) including outcome)
+        outcome_node = self.directed_graph.shape[0] - 1
+        
+        for sample_idx in range(self.n_samples):
+            # Sample path-based permutation
+            perm = self._sample_causal_paths_to_outcome(outcome_node)
 
             prev_value = self.baseline_value
             coalition = []
-
             for feature_idx in perm:
 
                 coalition.append(feature_idx)
-
                 curr_value = self._predict_coalition(instance, coalition)
 
                 marginal = curr_value - prev_value
 
-                shapley_values[feature_idx]+= marginal
+                shapley_values[feature_idx] += marginal
 
                 prev_value = curr_value
+            
+            # Log progress every 100 samples
+            if (sample_idx + 1) % 10 == 0:
+                logging.info(f"    Sample {sample_idx + 1}/{self.n_samples} completed")
 
         shapley_values /= self.n_samples
-
 
         return shapley_values
     
     def explain(self, X: pd.DataFrame, method: str = 'monte_carlo') -> np.ndarray:
 
-        print(f"Computing Causal Shapley values using {method} method...")
+        print(f"Computing Path-based Asymmetric Shapley values using {method} method...")
+        logging.info(f"Starting Path-based Asymmetric Shapley computation for {len(X)} instances")
+        logging.info(f"Using {self.n_samples} samples per instance")
         # Detailed configuration info removed for cleaner output
-        # print(f"Asymmetric sampling: {self.asymmetric_method}")
+        # print(f"Sampling approach: Path-based (focuses on causal paths to outcome)")
         # print(f"Respecting causal graph with {np.sum(self.causal_graph != 0)} edges")
 
         X_values = X.values
@@ -1105,23 +1033,20 @@ class AsymmetricShapley(ShapleyFromScratch):
         self.shap_values = np.zeros((n_instances, self.n_features))
 
         for i, instance in enumerate(X_values):
-            if method == 'exact':
-                if self.n_features >10:
-                    warnings.warn("Exact Causal Shapley calculation with >10 features is very slow. Using Monte Carlo instead.")
-                    self.shap_values[i] = self._compute_monte_carlo_causal_shapley(instance)
-                else: 
-                    self.shap_values[i] = self._compute_exact_causal_shapley(instance)
-            elif method == 'monte_carlo':
-                self.shap_values[i] = self._compute_monte_carlo_causal_shapley(instance)
-            else:
-                raise ValueError(f"Unkown method: {method}. Use 'exact' or 'monte_carlo' ")
+    
+            self.shap_values[i] = self._compute_monte_carlo_causal_shapley(instance)
+
+            # # Log progress every 20 instances
+            # if (i + 1) % 20 == 0:
+            #     logging.info(f"  Completed {i + 1}/{n_instances} instances")
             
             # Progress indicator removed for cleaner output
-            # if (i + 1) % max(1, n_instances//10) == 0:
-            #     print(f" Progress: {i + 1}/{n_instances} instances")
+            if (i + 1) % max(1, n_instances//10) == 0:
+                print(f" Progress: {i + 1}/{n_instances} instances")
+        
+        logging.info(f"Completed all {n_instances} instances")
 
         return self.shap_values
-
 
 class CausalShapley(ShapleyFromScratch):
     """Causal Shapley values using post-interventional sampling (Heskes et al. 2020).
@@ -1986,27 +1911,27 @@ class ShapleyFlow:
         else:
             return self.model.predict(X)
 
-    def _sample_conditional(self, node: int, observed_nodes: Dict[int, float]) -> float:
+    # def _sample_conditional(self, node: int, observed_nodes: Dict[int, float]) -> float:
 
-        if len(observed_nodes) == 0:
-            # No conditioning information : sample from marginal
-            return self.background_data[self.rng.randint(len(self.background_data)), node]
+    #     if len(observed_nodes) == 0:
+    #         # No conditioning information : sample from marginal
+    #         return self.background_data[self.rng.randint(len(self.background_data)), node]
         
-        # Extract conditioning features and values
-        cond_indices = list(observed_nodes.keys())
-        cond_values = np.array([observed_nodes[i] for i in cond_indices])
+    #     # Extract conditioning features and values
+    #     cond_indices = list(observed_nodes.keys())
+    #     cond_values = np.array([observed_nodes[i] for i in cond_indices])
 
-        bg_cond = self.background_data[:, cond_indices]
-        distances = np.sum((bg_cond-cond_values) ** 2, axis =1)
+    #     bg_cond = self.background_data[:, cond_indices]
+    #     distances = np.sum((bg_cond-cond_values) ** 2, axis =1)
 
-        # Use K nearest neighbors (k=10 or 10% of data, whichever is smaller)
-        k = min(10, max(1, len(self.background_data) // 10 ))
-        nearest_indices = np.argpartition(distances,k)[:k]
+    #     # Use K nearest neighbors (k=10 or 10% of data, whichever is smaller)
+    #     k = min(10, max(1, len(self.background_data) // 10 ))
+    #     nearest_indices = np.argpartition(distances,k)[:k]
 
-        candidate_values = self.background_data[nearest_indices,node]
-        sampled_values = candidate_values[self.rng.randint(len(candidate_values))]
+    #     candidate_values = self.background_data[nearest_indices,node]
+    #     sampled_values = candidate_values[self.rng.randint(len(candidate_values))]
 
-        return sampled_values
+    #     return sampled_values
 
     def _evaluate_system(self, history: List[Tuple[int,int]],
                          x_foreground: Dict[int,float],
