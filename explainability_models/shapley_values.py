@@ -1858,12 +1858,13 @@ class ShapleyFlow:
                     self.parents[child] = []
                 self.parents[child].append(parent)
 
-        # Auto-detect source nodes if not provided
-        if source_nodes is None: 
-            self.source_nodes = [node for node in graph_structure.keys()
-                                if len(self.parents.get(node,[])) == 0]
-        else:
-            self.source_nodes = source_nodes
+        # Source nodes must be provided (computed by wrapper with proper filtering)
+        if source_nodes is None:
+            raise ValueError(
+                "source_nodes must be provided. Use ShapleyFlowWrapper for automatic "
+                "source node detection with proper filtering to sink-reachable nodes."
+            )
+        self.source_nodes = source_nodes
 
         # Edge attributions (will be computed)
         self.edge_attributions = {}
@@ -2000,47 +2001,79 @@ class ShapleyFlow:
 
         return result
     
-    def _sample_random_path(self, start_node: int, max_depth: int = 100) -> List[Tuple[int, int]]:
+    def _sample_random_path_backward(self, max_depth: int = 100) -> List[Tuple[int, int]]:
         """
-        Sample ONE random path from start_node to sink (or leaf/max_depth).
+        Sample ONE random path by walking backward from sink to a source node.
         
-        Uses random walk: at each node, randomly select one child.
-        Avoids cycles by tracking visited nodes.
+        BACKWARD SAMPLING STRATEGY (more efficient than forward):
+        Instead of: Source → random walk → (hope to reach Sink with retries)
+        We do:      Sink → walk backward via parents → (guaranteed to reach a Source)
+        
+        WHY THIS IS BETTER:
+        1. self.source_nodes is pre-filtered (wrapper's backward BFS) to only
+           sources that CAN reach the sink
+        2. Starting from sink and following parents backward MUST eventually
+           hit one of these pre-validated sources
+        3. NO RETRIES NEEDED - every attempt succeeds!
+        4. NO WASTED SAMPLES - every path is valid
+        
+        Algorithm:
+        - Start at sink node (outcome Y)
+        - Randomly select one parent
+        - Move to that parent, repeat
+        - Stop when we reach any node in self.source_nodes
+        - Reverse path to get source → sink direction
         
         Parameters:
         -----------
-        start_node: int
-            Starting node for the path
         max_depth: int
-            Maximum path length to prevent infinite loops
+            Maximum path length to prevent infinite loops in cyclic graphs
         
         Returns:
         --------
         path_edges: List[Tuple[int, int]]
-            List of edges [(u1, v1), (u2, v2), ...] forming a path
+            List of edges [(u1, v1), (u2, v2), ...] forming complete path source → sink
+            Empty list only if sink is None or max_depth exceeded (rare)
         """
-        path_edges = []
-        current_node = start_node
-        depth = 0
-        visited = {start_node}
+        if self.sink_node is None:
+            return []
         
-        while current_node != self.sink_node and depth < max_depth:
-            children = self.graph.get(current_node, [])
+        # Walk backward from sink to source
+        backward_path = []  # Will store edges in reverse: [(parent, child), ...]
+        current_node = self.sink_node
+        depth = 0
+        visited = {self.sink_node}
+        
+        # Keep walking backward until we hit a source node
+        while current_node not in self.source_nodes and depth < max_depth:
+            # Get parents of current node
+            node_parents = self.parents.get(current_node, [])
             
             # Filter out visited nodes to avoid cycles
-            unvisited_children = [c for c in children if c not in visited]
+            unvisited_parents = [p for p in node_parents if p not in visited]
             
-            if not unvisited_children:
-                break  # Reached a leaf or dead end
+            if not unvisited_parents:
+                # Dead end - shouldn't happen with proper source filtering
+                # but we handle it gracefully
+                return []
             
-            # Randomly select ONE child (this is the sampling part)
-            child = self.rng.choice(unvisited_children)
-            edge = (current_node, child)
-            path_edges.append(edge)
+            # Randomly select ONE parent (this is the sampling part)
+            parent = self.rng.choice(unvisited_parents)
             
-            visited.add(child)
-            current_node = child
+            # Store edge in forward direction: parent → current_node
+            backward_path.append((parent, current_node))
+            
+            visited.add(parent)
+            current_node = parent
             depth += 1
+        
+        # Check if we successfully reached a source
+        if current_node not in self.source_nodes:
+            # Max depth exceeded - should be very rare
+            return []
+        
+        # Reverse the path to get source → sink direction
+        path_edges = list(reversed(backward_path))
         
         return path_edges
     
@@ -2201,41 +2234,44 @@ class ShapleyFlow:
         n_edges = len(self.edge_attributions)
         
         if self.use_path_sampling:
-            logging.info(f"    → ShapleyFlow (Path Sampling): {n_edges} edges, {len(self.source_nodes)} sources")
-            logging.info(f"    → Sampling {self.paths_per_source} paths/source × {self.n_samples} trials")
+            logging.info(f"    → ShapleyFlow (Backward Path Sampling): {n_edges} edges, {len(self.source_nodes)} sources")
+            logging.info(f"    → Sampling {self.paths_per_source} paths/source × {self.n_samples} trials (backward: sink → source)")
         else:
             logging.info(f"    → ShapleyFlow (Exhaustive DFS): {n_edges} edges, {len(self.source_nodes)} sources, {self.n_samples} trials")
         sys.stdout.flush()
 
         if self.use_path_sampling:
             # PATH SAMPLING MODE - faster for dense graphs
+            # Using BACKWARD sampling: sink → random parents → source
+            # More efficient: no retries, every attempt succeeds!
+            total_paths_per_trial = len(self.source_nodes) * self.paths_per_source
+            
             for trial in range(self.n_samples):
                 self.eval_count = 0
                 
-                # Sample K random paths from each source
-                for source in self.source_nodes:
-                    for _ in range(self.paths_per_source):
-                        # Sample one random path
-                        path_edges = self._sample_random_path(source)
-                        
-                        if not path_edges:
-                            continue  # Empty path, skip
-                        
-                        # Compute marginal contributions for edges in this path
-                        edge_marginals = self._evaluate_path_contribution(path_edges, x_foreground, x_background)
-                        
-                        # Accumulate to global edge attributions
-                        for edge, marginal in edge_marginals.items():
-                            self.edge_attributions[edge] += marginal
+                # Sample paths using backward walk from sink
+                for _ in range(total_paths_per_trial):
+                    # Sample one random path (backward from sink to random source)
+                    path_edges = self._sample_random_path_backward()
+                    
+                    if not path_edges:
+                        continue  # Empty path, skip (should be rare)
+                    
+                    # Compute marginal contributions for edges in this path
+                    edge_marginals = self._evaluate_path_contribution(path_edges, x_foreground, x_background)
+                    
+                    # Accumulate to global edge attributions
+                    for edge, marginal in edge_marginals.items():
+                        self.edge_attributions[edge] += marginal
                 
                 # Progress indicator
                 if (trial + 1) % 10 == 0 or trial == 0:
                     logging.info(f"    → Trial {trial + 1}/{self.n_samples} completed (~{self.eval_count} evaluations)")
                     sys.stdout.flush()
             
-            # Average across trials and sources (not individual paths)
+            # Average across trials (normalized by total paths sampled)
             for edge in self.edge_attributions:
-                self.edge_attributions[edge] /= (self.n_samples * len(self.source_nodes))
+                self.edge_attributions[edge] /= (self.n_samples * total_paths_per_trial)
                 
         else:
             # EXHAUSTIVE DFS MODE - original algorithm
@@ -2394,6 +2430,7 @@ class ShapleyFlowWrapper:
         self.n_features = len(self.features_names)
         self.y_index = y_index
         self.n_samples = n_samples
+        self.random_state = random_state
         self.rng = np.random.RandomState(random_state)
         self.use_path_sampling = use_path_sampling
         self.paths_per_source = paths_per_source
@@ -2407,15 +2444,47 @@ class ShapleyFlowWrapper:
             children = [j for j in range(self.n_features) if self.directed_graph[i,j] !=0]
             self.graph_structure[i] = children
 
-        self.source_nodes = []
+        # Build reverse graph (parents for each node) for backward BFS
+        parents = {}
         for i in range(self.n_features):
-            has_parent = any(self.directed_graph[j, i] != 0 for j in range(self.n_features))
-            if not has_parent:
-                self.source_nodes.append(i)
+            parents[i] = [j for j in range(self.n_features) if self.directed_graph[j, i] != 0]
 
-        # if no sources found (e.g., cycles), use all non-Y nodes as sources
-        if not self.source_nodes:
-            self.source_nodes = [i for i in range(self.n_features) if i!= y_index]
+        # Find all potential source nodes (no parents)
+        potential_sources = []
+        for i in range(self.n_features):
+            if len(parents[i]) == 0:
+                potential_sources.append(i)
+
+        # Filter sources to only those that can reach the sink (y_index)
+        # Use backward BFS from sink (more efficient than forward path finding)
+        if y_index is not None and potential_sources:
+            # Backward BFS from sink to find all nodes that can reach it
+            reachable_from_sink = set()
+            queue = [y_index]
+            visited = {y_index}
+            
+            while queue:
+                current = queue.pop(0)
+                reachable_from_sink.add(current)
+                # Add all parents (nodes that have edges to current)
+                for parent in parents.get(current, []):
+                    if parent not in visited:
+                        visited.add(parent)
+                        queue.append(parent)
+            
+            # Filter sources to only those reachable from sink
+            self.source_nodes = [s for s in potential_sources if s in reachable_from_sink]
+            
+            if not self.source_nodes:
+                warnings.warn(f"No source nodes can reach sink node {y_index}. Using all potential sources.")
+                self.source_nodes = potential_sources
+        elif not potential_sources:
+            # No sources found (e.g., cycles), use all non-Y nodes as sources
+            warnings.warn("No source nodes found (graph may have cycles). Using all non-Y nodes as sources.")
+            self.source_nodes = [i for i in range(self.n_features) if i != y_index]
+        else:
+            # No sink specified, use all potential sources
+            self.source_nodes = potential_sources
 
         # Log edge count for diagnostics
         import sys
@@ -2487,24 +2556,26 @@ class ShapleyFlowWrapper:
         logging.info(f"    → Computing Shapley Flow for {n_instances} instances...")
         sys.stdout.flush()
 
+        # Create ShapleyFlow object once (reused across all instances)
+        flow = ShapleyFlow(
+            graph_structure=self.graph_structure,
+            background_data=self.background_data,
+            model=self.model,
+            source_nodes=self.source_nodes,
+            sink_node=self.y_index,
+            n_samples=self.n_samples,
+            random_state=self.random_state,
+            feature_names=self.features_names,  # Pass feature names for alignment
+            use_path_sampling=self.use_path_sampling,  # Use path sampling mode
+            paths_per_source=self.paths_per_source  # Number of paths to sample
+        )
+
         for i, instance in enumerate(X_values):
             # Progress indicator
             if n_instances > 1:
                 logging.info(f"    → Instance {i + 1}/{n_instances}")
                 sys.stdout.flush()
 
-            flow = ShapleyFlow(
-                graph_structure=self.graph_structure,
-                background_data=self.background_data,
-                model=self.model,
-                source_nodes=self.source_nodes,
-                sink_node=self.y_index,
-                n_samples=self.n_samples,
-                random_state=self.rng.randint(0,100000),
-                feature_names=self.features_names,  # Pass feature names for alignment
-                use_path_sampling=self.use_path_sampling,  # Use path sampling mode
-                paths_per_source=self.paths_per_source  # Number of paths to sample
-            )
             # Prepare forground and background
             x_foreground = {j: instance[j] for j in range(self.n_features)}
 

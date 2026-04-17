@@ -90,8 +90,8 @@ CAUSAL_DIR = DATA_DIR / 'causal'
 EXPLAINABILITY_DIR = DATA_DIR / 'explainability'
 MODELS_DIR = BASE_DIR / 'models'
 LOGS_DIR = BASE_DIR / 'logs'
-TARGET_DATASETS = ["mixed_conf_f50_s1000_p50", "mixed_no_conf_f50_s1000_p50"]
-
+# TARGET_DATASETS = ["mixed_conf_f50_s1000_p50", "mixed_no_conf_f50_s1000_p50"]
+TARGET_DATASETS = ["mixed_no_conf_f50_s1000_p50"]
 # Create directories
 for directory in [SYNTHETIC_DIR, PROCESSED_DIR, CAUSAL_DIR, EXPLAINABILITY_DIR, MODELS_DIR, LOGS_DIR]:
     directory.mkdir(parents=True, exist_ok=True)
@@ -620,11 +620,11 @@ def calculate_all_shapley_values(dataset_configs: List[Dict]):
                 asymmetric_explainer = AsymmetricShapley(
                     model,  # Pass wrapper object, not model.model
                     background_data,
-                    causal_graph=discovered_adj,
+                    causal_graph=causal_graph,
                     n_samples=N_SHAPLEY_SAMPLES,
-                    random_sate=RANDOM_STATE,
-                    asymmetric_method='strict'
+                    random_state=RANDOM_STATE,
                 )
+                logging.info(" Calculating asymmetric SHAP values")
                 asymmetric_values = asymmetric_explainer.explain(test_instances, method='monte_carlo')
                 asymmetric_importance = asymmetric_explainer.get_feature_importance()
                 
@@ -635,28 +635,28 @@ def calculate_all_shapley_values(dataset_configs: List[Dict]):
                 np.save(asym_dir / 'shapley_values.npy', asymmetric_values)
                 asymmetric_importance.to_csv(asym_dir / 'feature_importance.csv', index=False)
                 
-                # Calculate CausalShapley
-                logging.info(f"  [Progress: {progress_counter}/{total_combinations}] {model_name.upper()} + {discovery_method.upper()} - CausalShapley (SLOW - uses {M_INNER_SAMPLES_CAUSAL} inner samples)")
-                progress_counter += 1
-                causal_explainer = CausalShapley(
-                    model,  # Pass wrapper object, not model.model,
-                    background_data=background_data,
-                    discovered_adj=discovered_adj,
-                    discovered_conf=confounders,
-                    feature_names=[f for f in feature_names if f != 'Y'],
-                    n_samples=N_SHAPLEY_SAMPLES,
-                    M_inner_samples=M_INNER_SAMPLES_CAUSAL,  # Use reduced value
-                    random_state=RANDOM_STATE
-                )
-                causal_values = causal_explainer.explain(test_instances)
-                causal_importance = causal_explainer.get_feature_importance()
+                # # Calculate CausalShapley
+                # logging.info(f"  [Progress: {progress_counter}/{total_combinations}] {model_name.upper()} + {discovery_method.upper()} - CausalShapley (SLOW - uses {M_INNER_SAMPLES_CAUSAL} inner samples)")
+                # progress_counter += 1
+                # causal_explainer = CausalShapley(
+                #     model,  # Pass wrapper object, not model.model,
+                #     background_data=background_data,
+                #     discovered_adj=discovered_adj,
+                #     discovered_conf=confounders,
+                #     feature_names=[f for f in feature_names if f != 'Y'],
+                #     n_samples=N_SHAPLEY_SAMPLES,
+                #     M_inner_samples=M_INNER_SAMPLES_CAUSAL,  # Use reduced value
+                #     random_state=RANDOM_STATE
+                # )
+                # causal_values = causal_explainer.explain(test_instances)
+                # causal_importance = causal_explainer.get_feature_importance()
                 
-                # Save Causal results
-                causal_dir = EXPLAINABILITY_DIR / filename / model_name / discovery_method / 'causal'
-                causal_dir.mkdir(parents=True, exist_ok=True)
+                # # Save Causal results
+                # causal_dir = EXPLAINABILITY_DIR / filename / model_name / discovery_method / 'causal'
+                # causal_dir.mkdir(parents=True, exist_ok=True)
                 
-                np.save(causal_dir / 'shapley_values.npy', causal_values)
-                causal_importance.to_csv(causal_dir / 'feature_importance.csv', index=False)
+                # np.save(causal_dir / 'shapley_values.npy', causal_values)
+                # causal_importance.to_csv(causal_dir / 'feature_importance.csv', index=False)
                 
                 # Calculate ShapleyFlow
                 logging.info(f"  [Progress: {progress_counter}/{total_combinations}] {model_name.upper()} + {discovery_method.upper()} - ShapleyFlow")
@@ -896,14 +896,14 @@ def main():
         # Step 1: Generate datasets
         dataset_configs = generate_all_datasets()
         
-        # Step 2: Create train/test splits
-        create_train_test_splits(dataset_configs)
+        # # Step 2: Create train/test splits
+        # create_train_test_splits(dataset_configs)
         
-        # Step 3: Run causal discovery
-        run_causal_discovery(dataset_configs)
+        # # Step 3: Run causal discovery
+        # run_causal_discovery(dataset_configs)
         
-        # Step 4: Train models
-        train_all_models(dataset_configs)
+        # # Step 4: Train models
+        # train_all_models(dataset_configs)
         
         # Step 5: Calculate Shapley values
         calculate_all_shapley_values(dataset_configs)
