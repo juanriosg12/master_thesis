@@ -135,15 +135,15 @@ class CausalDiscoveryMethod:
                     elif edge_ij == 1 and edge_ji == -1:
                         adjacency[j, i] = 1
                     
-                    # Undirected edge i - j (orient arbitrarily as i -> j)
-                    elif edge_ij == -1 and edge_ji == -1:
-                        adjacency[i, j] = 1
+                    # # Undirected edge i - j (orient arbitrarily as i -> j)
+                    # elif edge_ij == -1 and edge_ji == -1:
+                    #     adjacency[i, j] = 1
                     
-                    # Bidirected edge i <-> j (confounder - only add one direction to avoid cycle)
-                    # The confounders will be tracked separately via FCI
-                    elif edge_ij == 1 and edge_ji == 1:
-                        adjacency[i, j] = 1
-                        # Do NOT add adjacency[j, i] = 1 to avoid creating a cycle
+                    # # Bidirected edge i <-> j (confounder - only add one direction to avoid cycle)
+                    # # The confounders will be tracked separately via FCI
+                    # elif edge_ij == 1 and edge_ji == 1:
+                    #     adjacency[i, j] = 1
+                    #     # Do NOT add adjacency[j, i] = 1 to avoid creating a cycle
                         
         except Exception as e:
             warnings.warn(f"Error extracting adjacency from graph: {str(e)}")

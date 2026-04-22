@@ -14,187 +14,187 @@ from sklearn.base import BaseEstimator
 import networkx as nx
 
 
-class ShapleyExplainer:
-    """Wrapper around SHAP library for model-specific Shapley value explanations.
+# class ShapleyExplainer:
+#     """Wrapper around SHAP library for model-specific Shapley value explanations.
     
-    This class provides an easy-to-use interface to the official SHAP library,
-    automatically selecting the most appropriate explainer (Tree, Linear, or Kernel)
-    based on the model type.
+#     This class provides an easy-to-use interface to the official SHAP library,
+#     automatically selecting the most appropriate explainer (Tree, Linear, or Kernel)
+#     based on the model type.
     
-    BACKGROUND DATA USAGE:
-    - For TreeExplainer: Background data is used to estimate missing features during tree traversal
-    - For LinearExplainer: Background data defines the baseline (reference point) for explanations
-    - For KernelExplainer: Background data is sampled to marginalize over missing features
+#     BACKGROUND DATA USAGE:
+#     - For TreeExplainer: Background data is used to estimate missing features during tree traversal
+#     - For LinearExplainer: Background data defines the baseline (reference point) for explanations
+#     - For KernelExplainer: Background data is sampled to marginalize over missing features
     
-    SHAP VALUES CALCULATION:
-    - Uses model-specific optimized algorithms from the SHAP library
-    - TreeExplainer: Polynomial-time algorithm for tree-based models (exact)
-    - LinearExplainer: Closed-form solution for linear models (exact)
-    - KernelExplainer: Model-agnostic weighted linear regression (approximate)
+#     SHAP VALUES CALCULATION:
+#     - Uses model-specific optimized algorithms from the SHAP library
+#     - TreeExplainer: Polynomial-time algorithm for tree-based models (exact)
+#     - LinearExplainer: Closed-form solution for linear models (exact)
+#     - KernelExplainer: Model-agnostic weighted linear regression (approximate)
     
-    Parameters
-    ----------
-    model : BaseEstimator
-        Trained scikit-learn compatible model to explain
-    background_data : pd.DataFrame
-        Reference dataset for computing baseline and marginalizing over missing features.
-        Typically a sample (~100-1000 instances) from the training data
-    method : str, default='auto'
-        Explainer method: 'auto' (auto-detect), 'tree', 'linear', or 'kernel'
+#     Parameters
+#     ----------
+#     model : BaseEstimator
+#         Trained scikit-learn compatible model to explain
+#     background_data : pd.DataFrame
+#         Reference dataset for computing baseline and marginalizing over missing features.
+#         Typically a sample (~100-1000 instances) from the training data
+#     method : str, default='auto'
+#         Explainer method: 'auto' (auto-detect), 'tree', 'linear', or 'kernel'
     
-    Attributes
-    ----------
-    explainer : shap.Explainer
-        Initialized SHAP explainer instance
-    shap_values : np.ndarray or None
-        Computed SHAP values after calling explain()
-    feature_names : List[str]
-        Feature names from background data
+#     Attributes
+#     ----------
+#     explainer : shap.Explainer
+#         Initialized SHAP explainer instance
+#     shap_values : np.ndarray or None
+#         Computed SHAP values after calling explain()
+#     feature_names : List[str]
+#         Feature names from background data
     
-    Examples
-    --------
-    >>> explainer = ShapleyExplainer(rf_model, X_train.sample(100))
-    >>> shap_values = explainer.explain(X_test)
-    >>> importance = explainer.get_feature_importance()
-    """
+#     Examples
+#     --------
+#     >>> explainer = ShapleyExplainer(rf_model, X_train.sample(100))
+#     >>> shap_values = explainer.explain(X_test)
+#     >>> importance = explainer.get_feature_importance()
+#     """
     
-    def __init__(self, model: BaseEstimator, background_data: pd.DataFrame,
-                 method: str ='auto'):
+#     def __init__(self, model: BaseEstimator, background_data: pd.DataFrame,
+#                  method: str ='auto'):
         
-        self.model = model 
-        self.background_data = background_data
-        self.feature_names = background_data.columns.tolist()
-        self.method = method
-        self.explainer = None
-        self.shap_values = None
+#         self.model = model 
+#         self.background_data = background_data
+#         self.feature_names = background_data.columns.tolist()
+#         self.method = method
+#         self.explainer = None
+#         self.shap_values = None
 
-        self._initialize_explainer()
+#         self._initialize_explainer()
 
-    def _initialize_explainer(self):
-        """Initialize the appropriate SHAP explainer based on model type.
+#     def _initialize_explainer(self):
+#         """Initialize the appropriate SHAP explainer based on model type.
         
-        Auto-detection logic:
-        1. Check for tree-based models (LightGBM, RandomForest, GradientBoosting)
-        2. Check for linear models (models with coef_ attribute)
-        3. Fall back to model-agnostic KernelExplainer
+#         Auto-detection logic:
+#         1. Check for tree-based models (LightGBM, RandomForest, GradientBoosting)
+#         2. Check for linear models (models with coef_ attribute)
+#         3. Fall back to model-agnostic KernelExplainer
         
-        Returns
-        -------
-        None
-            Sets self.explainer and self.method
-        """
+#         Returns
+#         -------
+#         None
+#             Sets self.explainer and self.method
+#         """
 
-        model_type = type(self.model).__name__
+#         model_type = type(self.model).__name__
 
-        if self.method == 'auto':
+#         if self.method == 'auto':
 
-            if 'LGBM' in model_type or 'LightGBM' in model_type:
+#             if 'LGBM' in model_type or 'LightGBM' in model_type:
 
-                self.explainer = shap.TreeExplainer(self.model)
-                self.method = 'tree'
-            elif hasattr(self.model, 'tree_') or 'RandomForest' in model_type or 'GradientBoosting' in model_type:
+#                 self.explainer = shap.TreeExplainer(self.model)
+#                 self.method = 'tree'
+#             elif hasattr(self.model, 'tree_') or 'RandomForest' in model_type or 'GradientBoosting' in model_type:
                 
-                self.explainer = shap.TreeExplainer(self.model)
-                self.method = 'tree'
-            elif hasattr(self.model, 'coef_'):
-                # linear model
-                self.explainer = shap.LinearExplainer(self.model, self.background_data)
-                self.method = 'linear'
-            else:
-                background_sample = shap.sample(self.background_data, min(100, len(self.background_data)))
-                self.explainer = shap.KernelExplainer(self.model.predct, background_sample)
-                self.method = 'kernel'
-        elif self.method == 'tree':
-            self.explainer = shap.TreeExplainer(self.model)
-        elif self.method == 'kernel':
-            background_sample = shap.sample(self.background_data, min(100, len(self.background_data)))
-            self.explainer = shap.KernelExplainer(self.model.predct, background_sample)
-        elif self.method == 'linear':
-            self.explainer= shap.LinearExplainer(self.model, self.background_data)
-        else:
-            raise ValueError(f"Unknown SHAP method: {self.method}")
+#                 self.explainer = shap.TreeExplainer(self.model)
+#                 self.method = 'tree'
+#             elif hasattr(self.model, 'coef_'):
+#                 # linear model
+#                 self.explainer = shap.LinearExplainer(self.model, self.background_data)
+#                 self.method = 'linear'
+#             else:
+#                 background_sample = shap.sample(self.background_data, min(100, len(self.background_data)))
+#                 self.explainer = shap.KernelExplainer(self.model.predct, background_sample)
+#                 self.method = 'kernel'
+#         elif self.method == 'tree':
+#             self.explainer = shap.TreeExplainer(self.model)
+#         elif self.method == 'kernel':
+#             background_sample = shap.sample(self.background_data, min(100, len(self.background_data)))
+#             self.explainer = shap.KernelExplainer(self.model.predct, background_sample)
+#         elif self.method == 'linear':
+#             self.explainer= shap.LinearExplainer(self.model, self.background_data)
+#         else:
+#             raise ValueError(f"Unknown SHAP method: {self.method}")
         
-    def explain(self, X: pd.DataFrame) -> np.ndarray:
-        """Compute SHAP values for given instances.
+#     def explain(self, X: pd.DataFrame) -> np.ndarray:
+#         """Compute SHAP values for given instances.
         
-        For each feature i and instance x, computes the contribution of feature i
-        to the model's prediction f(x) relative to the baseline prediction.
+#         For each feature i and instance x, computes the contribution of feature i
+#         to the model's prediction f(x) relative to the baseline prediction.
         
-        The SHAP value satisfies:
-        f(x) = baseline + sum(shap_values)
+#         The SHAP value satisfies:
+#         f(x) = baseline + sum(shap_values)
         
-        Parameters
-        ----------
-        X : pd.DataFrame
-            Instances to explain (shape: n_samples x n_features)
+#         Parameters
+#         ----------
+#         X : pd.DataFrame
+#             Instances to explain (shape: n_samples x n_features)
         
-        Returns
-        -------
-        shap_values : np.ndarray
-            SHAP values (shape: n_samples x n_features)
-            shap_values[i, j] = contribution of feature j to prediction for instance i
-        """
+#         Returns
+#         -------
+#         shap_values : np.ndarray
+#             SHAP values (shape: n_samples x n_features)
+#             shap_values[i, j] = contribution of feature j to prediction for instance i
+#         """
         
-        print(f"Computing SHAP values using {self.method} explainer...")
+#         print(f"Computing SHAP values using {self.method} explainer...")
 
-        self.shap_values = self.explainer.shap_values(X)
+#         self.shap_values = self.explainer.shap_values(X)
 
-        if isinstance(self.shap_values, list):
-            self.shap_values = self.shap_values[0]
+#         if isinstance(self.shap_values, list):
+#             self.shap_values = self.shap_values[0]
 
-        return self.shap_values
+#         return self.shap_values
         
-    def get_feature_importance(self) -> pd.DataFrame:
-        """Compute global feature importance from SHAP values.
+#     def get_feature_importance(self) -> pd.DataFrame:
+#         """Compute global feature importance from SHAP values.
         
-        Aggregates SHAP values across all instances using mean absolute value,
-        which measures the average impact of each feature on predictions.
+#         Aggregates SHAP values across all instances using mean absolute value,
+#         which measures the average impact of each feature on predictions.
         
-        Returns
-        -------
-        importance : pd.DataFrame
-            Feature importance scores sorted in descending order
-            Columns: ['feature', 'importance']
+#         Returns
+#         -------
+#         importance : pd.DataFrame
+#             Feature importance scores sorted in descending order
+#             Columns: ['feature', 'importance']
         
-        Raises
-        ------
-        ValueError
-            If explain() has not been called yet
-        """
+#         Raises
+#         ------
+#         ValueError
+#             If explain() has not been called yet
+#         """
 
-        if self.shap_values is None:
-            raise ValueError("Must call explain() first to compute SHAP values")
+#         if self.shap_values is None:
+#             raise ValueError("Must call explain() first to compute SHAP values")
         
-        importance_scores = np.abs(self.shap_values).mean(axis=0)
+#         importance_scores = np.abs(self.shap_values).mean(axis=0)
 
-        importance = pd.DataFrame({
-            'feature': self.feature_names,
-            'importance': importance_scores
-        }).sort_values('importance',ascending=False)
+#         importance = pd.DataFrame({
+#             'feature': self.feature_names,
+#             'importance': importance_scores
+#         }).sort_values('importance',ascending=False)
 
-        return importance
+#         return importance
     
-    def get_shap_values_df(self, X: pd.DataFrame) ->pd.DataFrame:
-        """Get SHAP values as a DataFrame.
+#     def get_shap_values_df(self, X: pd.DataFrame) ->pd.DataFrame:
+#         """Get SHAP values as a DataFrame.
         
-        Converts the numpy array of SHAP values to a pandas DataFrame
-        with proper feature names and indices for easier analysis.
+#         Converts the numpy array of SHAP values to a pandas DataFrame
+#         with proper feature names and indices for easier analysis.
         
-        Parameters
-        ----------
-        X : pd.DataFrame
-            Instances to explain (if not already computed)
+#         Parameters
+#         ----------
+#         X : pd.DataFrame
+#             Instances to explain (if not already computed)
         
-        Returns
-        -------
-        shap_df : pd.DataFrame
-            SHAP values with feature names as columns and same index as X
-        """
+#         Returns
+#         -------
+#         shap_df : pd.DataFrame
+#             SHAP values with feature names as columns and same index as X
+#         """
 
-        if self.shap_values is None:
-            self.explain(X)
+#         if self.shap_values is None:
+#             self.explain(X)
 
-        return pd.DataFrame(self.shap_values,columns= self.feature_names, index=X.index)
+#         return pd.DataFrame(self.shap_values,columns= self.feature_names, index=X.index)
     
 class ShapleyFromScratch:
     """Vanilla Shapley value computation from first principles.
@@ -1261,28 +1261,24 @@ class CausalShapley(ShapleyFromScratch):
                                                confounders: List[Tuple[str,str]],
                                                feature_names: List[str]
                                ) -> Tuple[List[List[int]],Dict[int,bool],Dict[int,List[int]]]:
-        """Extract directed edges from causal graph."""
+        """Extract causal structure components from binary adjacency matrix.
+        
+        Note: Assumes causal_graph is already a binary adjacency matrix (0s and 1s)
+        as guaranteed by the causal discovery step.
+        """
         if causal_graph.shape != (self.n_features, self.n_features):
             raise ValueError(
                 f"causal_graph shape {causal_graph.shape} does not match features"
             )
-        directed = np.zeros((self.n_features, self.n_features), dtype=int)
-
-        # Check if binary adjacency matrix
+        
+        # Validate binary adjacency matrix
         unique_vals = set(np.unique(causal_graph).tolist())
-        if unique_vals.issubset({0,1}):
-            directed = causal_graph.astype(int)
-        else:
-            for i in range(self.n_features):
-                for j in range(i+1, self.n_features):
-                    a = causal_graph[i, j]
-                    b = causal_graph[j, i]
-
-                    if a == -1 and b == 1:
-                        directed[i, j] = 1
-                    elif a == 1 and b == -1:
-                        directed[j, i] = 1
-
+        if not unique_vals.issubset({0, 1}):
+            raise ValueError(
+                f"causal_graph must be binary (0s and 1s), got values: {unique_vals}"
+            )
+        
+        directed = causal_graph.astype(int)
         n_features = len(feature_names)
 
         confounded_pairs = set()
@@ -2494,29 +2490,24 @@ class ShapleyFlowWrapper:
         sys.stdout.flush()
 
     def _extract_directed_graph(self, causal_graph: np.ndarray) -> np.ndarray:
-        """Extract directed edges from causal graph."""
+        """Validate and return binary adjacency matrix.
+        
+        Note: Assumes causal_graph is already a binary adjacency matrix (0s and 1s)
+        as guaranteed by the causal discovery step.
+        """
         if causal_graph.shape != (self.n_features, self.n_features):
             raise ValueError(
                 f"causal_graph shape {causal_graph.shape} does not match features"
             )
-        directed = np.zeros((self.n_features, self.n_features), dtype=int)
-
-        # Check if binary adjacency matrix
+        
+        # Validate binary adjacency matrix
         unique_vals = set(np.unique(causal_graph).tolist())
-        if unique_vals.issubset({0,1}):
-            return causal_graph.astype(int)
-
-        for i in range(self.n_features):
-            for j in range(i+1, self.n_features):
-                a = causal_graph[i, j]
-                b = causal_graph[j, i]
-
-                if a == -1 and b == 1:
-                    directed[i, j] = 1
-                elif a == 1 and b == -1:
-                    directed[j, i] = 1
-
-        return directed
+        if not unique_vals.issubset({0, 1}):
+            raise ValueError(
+                f"causal_graph must be binary (0s and 1s), got values: {unique_vals}"
+            )
+        
+        return causal_graph.astype(int)
 
 
     def explain(self, X: pd.DataFrame) -> np.ndarray:
@@ -2699,7 +2690,7 @@ class GraphExplainerWrapper:
         sink_name: str = 'Y',
         nruns: int = 100,
         silent: bool = False,
-        method: str = 'divide_and_conquer',
+        method: str = 'bruteforce_sampling',
         fit_method: str = 'xgboost'
     ):
         """Initialize GraphExplainerWrapper with filtered adjacency and learned causal graph."""
