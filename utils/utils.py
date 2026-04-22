@@ -526,6 +526,267 @@ def plot_shapley_dependence_comparison(X, shapley_dict, feature_names,
     plt.tight_layout()
     
     return fig
+
+
+def visualize_causal_graph_filtered_to_sink(adjacency_matrix: np.ndarray,
+                                           feature_names: List[str],
+                                           sink_name: str = 'Y',
+                                           title: str = "Causal Graph (Filtered to Sink-Connected Nodes)",
+                                           figsize=(14, 10),
+                                           highlight_sources: bool = True,
+                                           show_node_layers: bool = True):
+    """
+    Visualize only the nodes and edges that are connected to the sink node (Y).
     
+    Uses backward BFS from the sink to identify all nodes that can reach it,
+    then displays only the filtered subgraph.
+    
+    Parameters:
+    -----------
+    adjacency_matrix : np.ndarray
+        Adjacency matrix (n_features x n_features) including sink node Y
+        Entry [i,j]=1 means feature i causes feature j
+    feature_names : List[str]
+        Names of all features INCLUDING the sink node (e.g., ['X0', 'X1', ..., 'Y'])
+        The sink node should be the last element
+    sink_name : str, default='Y'
+        Name of the sink/target node to filter connections to
+    title : str
+        Title for the plot
+    figsize : tuple
+        Figure size (width, height)
+    highlight_sources : bool, default=True
+        If True, highlight source nodes (no incoming edges) in a different color
+    show_node_layers : bool, default=True
+        If True, use hierarchical layout showing distance from sources
+    
+    Returns:
+    --------
+    fig : matplotlib.figure.Figure
+        The figure object
+    G_filtered : nx.DiGraph
+        The filtered NetworkX graph (for further analysis if needed)
+    reachable_nodes : set
+        Set of node names that are connected to sink
+    real_source_indices : list
+        Indices of real source nodes (can reach sink) for further analysis
+    
+    Examples:
+    --------
+    >>> # Create adjacency matrix (4x4 including Y at index 3)
+    >>> adj = np.array([[0,1,0,0], [0,0,1,1], [0,0,0,1], [0,0,0,0]])
+    >>> features = ['X0', 'X1', 'X2', 'Y']
+    >>> fig, G, nodes = visualize_causal_graph_filtered_to_sink(adj, features)
+    >>> plt.show()
+    """
+    
+    # Validate inputs
+    n_features = adjacency_matrix.shape[0]
+    if len(feature_names) != n_features:
+        raise ValueError(f"feature_names length ({len(feature_names)}) must match "
+                        f"adjacency_matrix size ({n_features})")
+    
+    if sink_name not in feature_names:
+        raise ValueError(f"sink_name '{sink_name}' not found in feature_names")
+    
+    sink_idx = feature_names.index(sink_name)
+    
+    # Build parent dictionary from adjacency matrix
+    parents = {}
+    for j in range(n_features):
+        parents[j] = [i for i in range(n_features) if adjacency_matrix[i, j] != 0]
+    
+    # Find all potential source nodes (no parents) - BEFORE filtering
+    potential_sources = []
+    for i in range(n_features):
+        if len(parents[i]) == 0:
+            potential_sources.append(i)
+    
+    # BACKWARD BFS FROM SINK - find all nodes that can reach the sink
+    # This uses the SAME logic as ShapleyFlowWrapper for consistency
+    reachable_indices = set()
+    queue = [sink_idx]
+    visited = {sink_idx}
+    
+    while queue:
+        current_idx = queue.pop(0)
+        reachable_indices.add(current_idx)
+        
+        # Add all parents (predecessors) of current node
+        for parent_idx in parents.get(current_idx, []):
+            if parent_idx not in visited:
+                visited.add(parent_idx)
+                queue.append(parent_idx)
+    
+    # Filter sources to only those that can reach the sink (REAL source nodes)
+    # These are the actual starting points for causal paths to Y
+    real_source_nodes = [s for s in potential_sources if s in reachable_indices]
+    
+    # Convert indices to feature names
+    reachable_nodes = {feature_names[idx] for idx in reachable_indices}
+    
+    # Count filtered vs total
+    n_total_nodes = n_features
+    n_filtered_nodes = len(reachable_nodes)
+    n_total_edges = int(np.sum(adjacency_matrix != 0))
+    
+    # Build NetworkX graph with ONLY reachable nodes and their edges
+    G_filtered = nx.DiGraph()
+    G_filtered.add_nodes_from(reachable_nodes)
+    
+    # Add edges between reachable nodes
+    n_filtered_edges = 0
+    for i in reachable_indices:
+        for j in reachable_indices:
+            if adjacency_matrix[i, j] != 0:
+                G_filtered.add_edge(feature_names[i], feature_names[j])
+                n_filtered_edges += 1
+    
+    # Identify node types for coloring
+    source_nodes = []
+    intermediate_nodes = []
+    sink_nodes = []
+    
+    for node in reachable_nodes:
+        node_idx = feature_names.index(node)
+        
+        if node == sink_name:
+            sink_nodes.append(node)
+        elif node_idx in real_source_nodes:
+            # Real source nodes: no parents AND can reach sink
+            source_nodes.append(node)
+        else:
+            # Intermediate nodes: have parents and/or children
+            intermediate_nodes.append(node)
+    
+    # Create layout
+    if show_node_layers and len(G_filtered.nodes()) > 0:
+        # Try hierarchical layout (works best for DAGs)
+        try:
+            # Compute longest path from each node to sink for layering
+            layers = {}
+            for node in G_filtered.nodes():
+                if node == sink_name:
+                    layers[node] = 0
+                else:
+                    # BFS to find shortest path to sink
+                    try:
+                        path_length = nx.shortest_path_length(G_filtered, node, sink_name)
+                        layers[node] = -path_length  # Negative for top-to-bottom layout
+                    except nx.NetworkXNoPath:
+                        layers[node] = -999  # Shouldn't happen with our filtering
+            
+            # Create hierarchical layout with more spacing
+            # Increased k parameter for more distance between nodes
+            pos = nx.spring_layout(G_filtered, k=3.0, iterations=100, seed=42)
+            
+            # Adjust y-coordinates based on layers
+            for node, (x, y) in pos.items():
+                layer = layers.get(node, 0)
+                pos[node] = (x, layer)
+                
+        except:
+            # Fallback to spring layout with more spacing
+            pos = nx.spring_layout(G_filtered, k=3.0, iterations=100, seed=42)
+    else:
+        # More spread out spring layout
+        pos = nx.spring_layout(G_filtered, k=3.0, iterations=100, seed=42)
+    
+    # Create figure
+    fig, ax = plt.subplots(figsize=figsize)
+    
+    # Draw nodes by type
+    if source_nodes:
+        nx.draw_networkx_nodes(G_filtered, pos, nodelist=source_nodes,
+                              node_color='lightgreen', node_size=1200,
+                              alpha=0.9, ax=ax, label='Source Nodes')
+    
+    if intermediate_nodes:
+        nx.draw_networkx_nodes(G_filtered, pos, nodelist=intermediate_nodes,
+                              node_color='lightblue', node_size=1000,
+                              alpha=0.9, ax=ax, label='Intermediate Nodes')
+    
+    if sink_nodes:
+        nx.draw_networkx_nodes(G_filtered, pos, nodelist=sink_nodes,
+                              node_color='gold', node_size=1500,
+                              alpha=0.9, ax=ax, label='Sink Node (Y)')
+    
+    # Draw edges
+    # Separate edges by type for better visualization
+    edges_to_sink = [(u, v) for u, v in G_filtered.edges() if v == sink_name]
+    edges_other = [(u, v) for u, v in G_filtered.edges() if v != sink_name]
+    
+    if edges_other:
+        nx.draw_networkx_edges(G_filtered, pos, edgelist=edges_other,
+                              edge_color='gray', arrows=True,
+                              arrowsize=20, arrowstyle='->', width=2,
+                              ax=ax, alpha=0.6)
+    
+    if edges_to_sink:
+        nx.draw_networkx_edges(G_filtered, pos, edgelist=edges_to_sink,
+                              edge_color='green', arrows=True,
+                              arrowsize=25, arrowstyle='->', width=3,
+                              ax=ax, alpha=0.8, label='Edges to Sink')
+    
+    # Draw labels
+    nx.draw_networkx_labels(G_filtered, pos, font_size=11, 
+                           font_weight='bold', ax=ax)
+    
+    # Add statistics text box
+    stats_text = (f"Filtered Graph Statistics:\n"
+                 f"Nodes: {n_filtered_nodes}/{n_total_nodes} "
+                 f"({100*n_filtered_nodes/n_total_nodes:.1f}%)\n"
+                 f"Edges: {n_filtered_edges}/{n_total_edges} "
+                 f"({100*n_filtered_edges/max(1,n_total_edges):.1f}%)\n"
+                 f"Real Sources: {len(real_source_nodes)}/{len(potential_sources)}")
+    
+    ax.text(0.02, 0.98, stats_text,
+           transform=ax.transAxes, fontsize=10,
+           verticalalignment='top',
+           bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.8))
+    
+    # Title and legend
+    ax.set_title(f"{title}\n(Only nodes connected to '{sink_name}')",
+                fontsize=14, fontweight='bold', pad=20)
+    ax.legend(loc='upper right', fontsize=10, framealpha=0.9)
+    ax.axis('off')
+    
+    plt.tight_layout()
+    
+    # Print summary
+    print(f"\n{'='*60}")
+    print(f"Causal Graph Filtering Summary")
+    print(f"{'='*60}")
+    print(f"Sink node: {sink_name}")
+    print(f"Total nodes in graph: {n_total_nodes}")
+    print(f"Nodes connected to sink: {n_filtered_nodes} ({100*n_filtered_nodes/n_total_nodes:.1f}%)")
+    print(f"Total edges in graph: {n_total_edges}")
+    print(f"Edges in filtered graph: {n_filtered_edges} ({100*n_filtered_edges/max(1,n_total_edges):.1f}%)")
+    print(f"\nPotential source nodes (no incoming edges): {len(potential_sources)}")
+    if potential_sources:
+        potential_source_names = [feature_names[i] for i in potential_sources]
+        print(f"  {', '.join(sorted(potential_source_names))}")
+    print(f"\nReal source nodes (can reach sink): {len(real_source_nodes)}")
+    if real_source_nodes:
+        real_source_names = [feature_names[i] for i in real_source_nodes]
+        print(f"  {', '.join(sorted(real_source_names))}")
+    
+    # Show filtered-out sources (disconnected from sink)
+    filtered_out_sources = [s for s in potential_sources if s not in real_source_nodes]
+    if filtered_out_sources:
+        print(f"\nFiltered source nodes (disconnected from sink): {len(filtered_out_sources)}")
+        filtered_source_names = [feature_names[i] for i in filtered_out_sources]
+        print(f"  {', '.join(sorted(filtered_source_names))}")
+    
+    print(f"\nIntermediate nodes: {len(intermediate_nodes)}")
+    if intermediate_nodes:
+        print(f"  {', '.join(sorted(intermediate_nodes))}")
+    print(f"\nNodes filtered out (not connected to {sink_name}): {n_total_nodes - n_filtered_nodes}")
+    if n_total_nodes - n_filtered_nodes > 0:
+        filtered_out = [feature_names[i] for i in range(n_features) if i not in reachable_indices]
+        print(f"  {', '.join(sorted(filtered_out))}")
+    print(f"{'='*60}\n")
+    
+    return fig, G_filtered, reachable_nodes, real_source_nodes
         
     

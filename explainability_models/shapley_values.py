@@ -2614,3 +2614,423 @@ class ShapleyFlowWrapper:
         return importance_df.sort_values('importance', ascending=False).reset_index(drop=True)
 
 
+class GraphExplainerWrapper:
+    """Wrapper for shapflow's GraphExplainer with automatic adjacency filtering.
+    
+    This class integrates the complete pipeline for causal Shapley value computation:
+    1. Filters adjacency matrix to only Y-reachable edges (backward BFS)
+    2. Constructs causal graph from filtered adjacency
+    3. Learns causal functions from training data
+    4. Computes Shapley values using GraphExplainer
+    5. Returns values in standard array format compatible with other methods
+    
+    The filtering step zeros out edges that don't contribute to the target variable,
+    significantly reducing computational cost while maintaining data compatibility.
+    
+    IMPORTANT: Requires shapflow library with Node, Graph, and GraphExplainer classes.
+    
+    Parameters
+    ----------
+    adjacency_matrix : np.ndarray
+        Adjacency matrix (n × n) where adj[i,j] != 0 means feature i causes feature j.
+        Must include the target variable Y as the last row/column.
+    feature_names : list of str
+        List of all feature names INCLUDING the target (e.g., ['X0', 'X1', ..., 'Y']).
+        Must match the order in adjacency_matrix.
+    train_data : pd.DataFrame
+        Training data for learning causal functions. Must contain all features in feature_names.
+    background_data : pd.DataFrame
+        Background data for GraphExplainer baseline. Typically 100-1000 samples from train data.
+    sink_name : str, default='Y'
+        Name of the target/sink node to explain.
+    nruns : int, default=100
+        Number of Monte Carlo samples for GraphExplainer.
+    silent : bool, default=False
+        If True, suppress GraphExplainer output.
+    method : str, default='divide_and_conquer'
+        GraphExplainer method: 'divide_and_conquer', 'bruteforce_sampling', etc.
+    fit_method : str, default='xgboost'
+        Method for learning causal functions: 'xgboost', 'linear', etc.
+    
+    Attributes
+    ----------
+    adjacency_matrix : np.ndarray
+        Original adjacency matrix (unfiltered)
+    filtered_adjacency : np.ndarray
+        Filtered adjacency with irrelevant edges zeroed
+    feature_names : list
+        List of all feature names (including target)
+    features_names_without_y : list
+        List of feature names excluding target (for SHAP array output)
+    graph : shapflow.flow.Graph
+        Constructed causal graph with learned functions
+    explainer : shapflow.flow.GraphExplainer
+        Initialized GraphExplainer instance
+    filter_stats : dict
+        Statistics about adjacency filtering
+    shap_values : np.ndarray or None
+        Computed SHAP values after calling explain()
+    
+    Examples
+    --------
+    >>> # Initialize with adjacency matrix and data
+    >>> wrapper = GraphExplainerWrapper(
+    ...     adjacency_matrix=adj_matrix,
+    ...     feature_names=['X0', 'X1', 'X2', 'Y'],
+    ...     train_data=train_df,
+    ...     background_data=background_df,
+    ...     nruns=100
+    ... )
+    >>> 
+    >>> # Compute SHAP values for test instances
+    >>> shap_values = wrapper.explain(test_df)
+    >>> # Returns array of shape (n_test_instances, n_features)
+    >>> 
+    >>> # Get feature importance
+    >>> importance = wrapper.get_feature_importance()
+    """
+    
+    def __init__(
+        self,
+        adjacency_matrix: np.ndarray,
+        feature_names: List[str],
+        train_data: pd.DataFrame,
+        background_data: pd.DataFrame,
+        sink_name: str = 'Y',
+        nruns: int = 100,
+        silent: bool = False,
+        method: str = 'divide_and_conquer',
+        fit_method: str = 'xgboost'
+    ):
+        """Initialize GraphExplainerWrapper with filtered adjacency and learned causal graph."""
+        
+        # Import shapflow here to avoid hard dependency
+        try:
+            from shapflow.flow import Node, Graph, GraphExplainer
+            self.Node = Node
+            self.Graph = Graph
+            self.GraphExplainer = GraphExplainer
+        except ImportError:
+            raise ImportError(
+                "shapflow library is required for GraphExplainerWrapper. "
+                "Please install it or add it to your Python path."
+            )
+        
+        # Store original inputs
+        self.adjacency_matrix = adjacency_matrix.copy()
+        self.feature_names = feature_names.copy()
+        self.sink_name = sink_name
+        self.nruns = nruns
+        self.silent = silent
+        self.method = method
+        self.fit_method = fit_method
+        self.shap_values = None
+        
+        # Validate inputs
+        if adjacency_matrix.shape[0] != adjacency_matrix.shape[1]:
+            raise ValueError(f"adjacency_matrix must be square, got {adjacency_matrix.shape}")
+        
+        if len(feature_names) != adjacency_matrix.shape[0]:
+            raise ValueError(
+                f"feature_names length ({len(feature_names)}) must match "
+                f"adjacency_matrix size ({adjacency_matrix.shape[0]})"
+            )
+        
+        if sink_name not in feature_names:
+            raise ValueError(f"sink_name '{sink_name}' not found in feature_names")
+        
+        # Get feature names without target (for SHAP array output)
+        self.features_names_without_y = [f for f in feature_names if f != sink_name]
+        
+        # Step 1: Filter adjacency matrix to only Y-reachable edges
+        logging.info("Filtering adjacency matrix using backward BFS...")
+        self.filtered_adjacency, _, self.reachable_indices, self.filter_stats = \
+            self._filter_adjacency_to_sink_reachable(adjacency_matrix, feature_names, sink_name)
+        
+        # Step 2: Convert filtered adjacency to causal graph
+        logging.info("Building causal graph from filtered adjacency...")
+        self.graph = self._adjacency_to_graph(
+            self.filtered_adjacency, 
+            feature_names, 
+            train_data,
+            fit_method
+        )
+        
+        # Step 3: Initialize GraphExplainer
+        logging.info("Initializing GraphExplainer...")
+        self.explainer = self.GraphExplainer(
+            graph=self.graph,
+            bg=background_data,
+            nruns=nruns,
+            silent=silent
+        )
+        
+        logging.info("GraphExplainerWrapper initialized successfully!")
+        logging.info(f"  - Total edges: {self.filter_stats['total_edges']}")
+        logging.info(f"  - Edges kept: {self.filter_stats['edges_kept']} "
+                    f"({self.filter_stats['percentage_edges_kept']:.1f}%)")
+        logging.info(f"  - Computational savings: ~{100 - self.filter_stats['percentage_edges_kept']:.1f}%")
+    
+    def _filter_adjacency_to_sink_reachable(
+        self,
+        adjacency_matrix: np.ndarray,
+        feature_names: List[str],
+        sink_name: str
+    ) -> Tuple[np.ndarray, List[str], List[int], Dict]:
+        """Filter adjacency matrix by zeroing out edges not reachable from sink.
+        
+        Uses backward BFS from sink node to identify all reachable nodes,
+        then zeros out edges that are NOT between reachable nodes.
+        Maintains same matrix size and feature order for data compatibility.
+        
+        Returns
+        -------
+        filtered_adjacency : np.ndarray
+            Adjacency matrix with irrelevant edges zeroed (same size as input)
+        feature_names : list
+            Same feature names as input (unchanged)
+        reachable_indices : list
+            Indices of nodes reachable from sink
+        stats : dict
+            Filtering statistics
+        """
+        n_features = adjacency_matrix.shape[0]
+        sink_idx = feature_names.index(sink_name)
+        
+        # Build parent dictionary from adjacency matrix
+        parents = {}
+        for j in range(n_features):
+            parents[j] = [i for i in range(n_features) if adjacency_matrix[i, j] != 0]
+        
+        # Backward BFS from sink - find all nodes that can reach the sink
+        reachable_indices = set()
+        queue = [sink_idx]
+        visited = {sink_idx}
+        
+        while queue:
+            current_idx = queue.pop(0)
+            reachable_indices.add(current_idx)
+            
+            # Add all parents (predecessors) of current node
+            for parent_idx in parents.get(current_idx, []):
+                if parent_idx not in visited:
+                    visited.add(parent_idx)
+                    queue.append(parent_idx)
+        
+        # Create filtered adjacency matrix (same size as original)
+        # Copy the original, then zero out edges NOT between reachable nodes
+        filtered_adjacency = adjacency_matrix.copy()
+        reachable_set = set(reachable_indices)
+        
+        for i in range(n_features):
+            for j in range(n_features):
+                # If either node is not reachable from Y, zero out the edge
+                if i not in reachable_set or j not in reachable_set:
+                    filtered_adjacency[i, j] = 0
+        
+        # Calculate statistics
+        n_total_edges = int(np.sum(adjacency_matrix != 0))
+        n_filtered_edges = int(np.sum(filtered_adjacency != 0))
+        n_reachable = len(reachable_indices)
+        
+        stats = {
+            'total_nodes': n_features,
+            'nodes_kept': n_reachable,
+            'nodes_filtered': n_features - n_reachable,
+            'total_edges': n_total_edges,
+            'edges_kept': n_filtered_edges,
+            'edges_filtered': n_total_edges - n_filtered_edges,
+            'percentage_nodes_kept': 100 * n_reachable / n_features,
+            'percentage_edges_kept': 100 * n_filtered_edges / max(1, n_total_edges)
+        }
+        
+        return filtered_adjacency, feature_names, sorted(list(reachable_indices)), stats
+    
+    def _adjacency_to_graph(
+        self,
+        adjacency_matrix: np.ndarray,
+        feature_names: List[str],
+        train_data: pd.DataFrame,
+        fit_method: str = 'xgboost'
+    ):
+        """Convert adjacency matrix to shapflow Graph object with learned causal functions.
+        
+        Parameters
+        ----------
+        adjacency_matrix : np.ndarray
+            Adjacency matrix where adj[i, j] != 0 means feature i is parent of feature j
+        feature_names : list
+            List of feature names
+        train_data : pd.DataFrame
+            Training data to fit causal functions
+        fit_method : str
+            Method for learning causal functions ('xgboost', 'linear', etc.)
+        
+        Returns
+        -------
+        graph : shapflow.flow.Graph
+            Graph object with learned causal functions
+        """
+        n_features = len(feature_names)
+        
+        # Step 1: Create all nodes first (without parent relationships)
+        nodes_dict = {}
+        for i, name in enumerate(feature_names):
+            # Determine if this is the target node
+            is_target = (name == self.sink_name)
+            
+            # Create node
+            node = self.Node(
+                name=name,
+                f=None,
+                args=[],
+                is_target_node=is_target,
+                is_noise_node=False,
+                is_dummy_node=False,
+                is_categorical=False
+            )
+            nodes_dict[name] = node
+        
+        # Step 2: Add parent relationships based on adjacency matrix
+        for j, child_name in enumerate(feature_names):
+            child_node = nodes_dict[child_name]
+            
+            # Find parents: where adjacency[i, j] != 0 means i is parent of j
+            parent_indices = np.where(adjacency_matrix[:, j] != 0)[0]
+            
+            # Add each parent to the child's args
+            for parent_idx in parent_indices:
+                parent_name = feature_names[parent_idx]
+                parent_node = nodes_dict[parent_name]
+                child_node.args.append(parent_node)
+                # Also add child to parent's children list
+                if child_node not in parent_node.children:
+                    parent_node.children.append(child_node)
+        
+        # Step 3: Create Graph object
+        graph = self.Graph(nodes=list(nodes_dict.values()))
+        
+        # Step 4: Fit missing links (learn causal functions from data)
+        if not self.silent:
+            logging.info(f"Learning causal functions using {fit_method}...")
+        graph.fit_missing_links(train_data, method=fit_method)
+        
+        return graph
+    
+    def _get_node_attributions(self, edge_credit: Dict) -> Dict[str, np.ndarray]:
+        """Aggregate edge attributions to get node-level importance.
+        
+        Parameters
+        ----------
+        edge_credit : dict
+            Dictionary of edge credits from GraphExplainer
+        
+        Returns
+        -------
+        node_attr : dict
+            Dictionary mapping feature names to arrays of SHAP values
+        """
+        node_attr = {}
+        for node1, d in edge_credit.items():
+            if "noise" not in node1.name:
+                for node2, val in d.items():
+                    node_attr[node1.name] = node_attr.get(node1.name, 0.0) + val
+        return node_attr
+    
+    def _convert_node_attributions_to_array(
+        self,
+        node_attributions: Dict[str, np.ndarray],
+        feature_names: List[str]
+    ) -> np.ndarray:
+        """Convert node attributions dictionary to standard SHAP format array.
+        
+        Parameters
+        ----------
+        node_attributions : dict
+            Dictionary {feature_name: array_of_shap_values}
+        feature_names : list
+            List of all feature names in correct order (excluding target)
+        
+        Returns
+        -------
+        shap_array : np.ndarray
+            Array of shape (n_instances, n_features) with SHAP values
+        """
+        # Get number of instances from any feature in the dictionary
+        if len(node_attributions) > 0:
+            first_feature = list(node_attributions.keys())[0]
+            n_instances = len(node_attributions[first_feature])
+        else:
+            raise ValueError("node_attributions is empty")
+        
+        n_features = len(feature_names)
+        
+        # Initialize array with zeros
+        shap_array = np.zeros((n_instances, n_features))
+        
+        # Fill in SHAP values for features that have them
+        for i, feature_name in enumerate(feature_names):
+            if feature_name in node_attributions:
+                shap_array[:, i] = node_attributions[feature_name]
+            # else: remains 0
+        
+        return shap_array
+    
+    def explain(self, foreground_data: pd.DataFrame) -> np.ndarray:
+        """Compute Shapley values for foreground instances.
+        
+        Parameters
+        ----------
+        foreground_data : pd.DataFrame
+            Instances to explain. Must contain all features in feature_names.
+        
+        Returns
+        -------
+        shap_values : np.ndarray
+            Array of shape (n_instances, n_features) with SHAP values.
+            Features are in the same order as the original data (excluding target).
+        """
+        logging.info(f"Computing Shapley values for {len(foreground_data)} instances...")
+        
+        # Compute SHAP values using GraphExplainer
+        cf = self.explainer.shap_values(
+            X=foreground_data,
+            method=self.method
+        )
+        
+        # Aggregate edge credits to node-level attributions
+        node_attributions = self._get_node_attributions(cf.edge_credit)
+        
+        # Convert to standard array format (n_instances × n_features)
+        self.shap_values = self._convert_node_attributions_to_array(
+            node_attributions,
+            self.features_names_without_y
+        )
+        
+        logging.info(f"✅ SHAP values computed: {self.shap_values.shape}")
+        logging.info(f"   Features with non-zero values: "
+                    f"{np.sum(np.any(self.shap_values != 0, axis=0))}/{self.shap_values.shape[1]}")
+        
+        return self.shap_values
+    
+    def get_feature_importance(self) -> pd.DataFrame:
+        """Get mean absolute importance per feature (excluding target).
+        
+        Returns
+        -------
+        importance_df : pd.DataFrame
+            DataFrame with 'feature' and 'importance' columns, sorted by importance
+        """
+        if self.shap_values is None:
+            raise ValueError("Must call explain() first")
+        
+        mean_abs_values = np.abs(self.shap_values).mean(axis=0)
+        
+        importance_df = pd.DataFrame({
+            'feature': self.features_names_without_y,
+            'importance': mean_abs_values
+        })
+        
+        return importance_df.sort_values('importance', ascending=False).reset_index(drop=True)
+
+
