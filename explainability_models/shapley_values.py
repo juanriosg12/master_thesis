@@ -689,8 +689,6 @@ class AsymmetricShapley(ShapleyFromScratch):
         for j in range(n_nodes_total):
             self.parents[j] = set(np.where(self.directed_graph[:, j] != 0)[0])
 
-        self.topological_order = self._topological_sort()
-
 
     def _extract_directed_graph(self, causal_graph: np.ndarray) -> np.ndarray:
         """Convert causal graph matrix into binary directed adjacency matrix.
@@ -721,28 +719,7 @@ class AsymmetricShapley(ShapleyFromScratch):
             )
         
         n_nodes_total = self.n_features + 1
-        directed = np.zeros((n_nodes_total, n_nodes_total), dtype=int)
-
-        # Case 1: likely plain binary adjacency matrix
-        unique_vals = set(np.unique(causal_graph).tolist())
-        if unique_vals.issubset({0,1}):
-            for i in range(n_nodes_total):
-                for j in range(n_nodes_total):
-                    if i!=j and causal_graph[i, j]!=0 and causal_graph[j, i] ==0:
-                        directed[i, j] =1
-            return directed
-        
-        # Case 2: causal-learn endpoint encoding matrix
-        for i in range(n_nodes_total):
-            for j in range(i + 1, n_nodes_total):
-                a = causal_graph[i, j] 
-                b = causal_graph[j, i]
-
-                #Directed edges: i -> j or j -> i
-                if a == -1 and b == 1:
-                    directed[i, j] = 1
-                elif a == 1 and b == -1:
-                    directed[j, i] = 1
+        directed = causal_graph.astype(int)
 
         n_raw_edged = int(np.sum(causal_graph != 0))
         n_directed_edges = int(np.sum(directed != 0))
@@ -770,31 +747,6 @@ class AsymmetricShapley(ShapleyFromScratch):
                         queue.append(child)
         return visited != n_nodes_total
 
-    def _topological_sort(self) -> List[int]:
-        
-        # Kahn's algorithm for topological sort
-        n_nodes_total = self.directed_graph.shape[0]
-        in_degree = np.sum(self.directed_graph != 0 , axis= 0) # Count incoming edges
-        queue = [i for i in range(n_nodes_total) if in_degree[i] == 0]
-        order = []
-
-        while queue:
-            # sort for determinism
-            queue.sort()
-            node = queue.pop(0)
-            order.append(node)
-
-            for child in range(n_nodes_total):
-                if self.directed_graph[node,child]!=0:
-                    in_degree[child] -=1
-                    if in_degree[child] == 0:
-                        queue.append(child)
-
-        if len(order) != n_nodes_total:
-            warnings.warn("Causal graph contains cycles. Using arbitrary ordering.")
-            order = list(range(n_nodes_total))
-
-        return order
     
     def _find_all_paths_to_outcome(self, source: int, outcome: int, max_paths: int = 20) -> List[List[int]]:
         """Find all paths from source to outcome in DAG using DFS.
@@ -901,6 +853,8 @@ class AsymmetricShapley(ShapleyFromScratch):
         """
         n_features_total = self.directed_graph.shape[0]
         
+
+        ##  TODO: I think could be optimized by precomputing all paths from sources to outcome once during initialization, but for now we compute on the fly for each sample for simplicity and variety.
         # Identify source nodes (no incoming edges, excluding outcome)
         all_source_nodes = []
         for i in range(n_features_total):
@@ -949,7 +903,9 @@ class AsymmetricShapley(ShapleyFromScratch):
         path = paths[self.rng.randint(len(paths))] if len(paths) > 1 else paths[0]
         
         # Generate ordering by inserting nodes NOT on ANY path from this source
-        ordering = self._insert_non_path_nodes(path, non_path_nodes_all)
+        ## Trying to remove the nodes that are not part of the path to see the real effect of ASV on the causal nodes. This is a more restrictive approach that focuses on the causal order itself, which is the core idea of this method.
+        ##ordering = self._insert_non_path_nodes(path, non_path_nodes_all)
+        ordering = path  # Only include path nodes for strict causal order focus
         
         return ordering
     
@@ -1465,12 +1421,12 @@ class CausalShapley(ShapleyFromScratch):
 
         Algorithm:
         1. Fix X_S = X_S (interventional values from instance)
-        2. For each compontent t in topological roder:
-            - Identify missing geatures (not in S) withing component
-            - Get parents vales ( already determined from topoloical ordering)
+        2. For each component t in topological order:
+            - Identify missing features (not in S) within component
+            - Get parents values (already determined from topological ordering)
             - IF component is CONFOUNDED:
-                Sample missing features IDEPENDENLTY conditional on parents only 
-                (Intervention breaks dependencies between features in componen)
+                Sample missing features INDEPENDENTLY conditional on parents only 
+                (Intervention breaks dependencies between features in component)
             - ELSE (component is NON-CONFOUNDED):
                 Sample missing features JOINTLY conditional on parents + sibligs in S
                 (Features have mutual intereactions, not confounding)
@@ -1615,7 +1571,6 @@ class CausalShapley(ShapleyFromScratch):
 
         for perm_idx in range(self.n_samples):
             # Sample random permutation of all features
-            # TODO: For Asymmetric Causal Shaply, enforce topological ordering
             perm = self.rng.permutation(self.n_features).tolist()
 
             # Initialize empty coaliton
