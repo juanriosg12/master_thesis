@@ -676,6 +676,7 @@ class AsymmetricShapley(ShapleyFromScratch):
 
         self.causal_graph = causal_graph
         self.directed_graph = self._extract_directed_graph(causal_graph)
+        self.outcome_node = self.directed_graph.shape[0] - 1
         if self._has_cycle(self.directed_graph):
             warnings.warn(
                 "Directed causal constrains contain cycles."
@@ -688,6 +689,24 @@ class AsymmetricShapley(ShapleyFromScratch):
         n_nodes_total = self.directed_graph.shape[0]
         for j in range(n_nodes_total):
             self.parents[j] = set(np.where(self.directed_graph[:, j] != 0)[0])
+
+        # Identify source nodes (no incoming edges, excluding outcome)
+        n_features_total = self.directed_graph.shape[0]
+        all_source_nodes = []
+        for i in range(n_features_total):
+            if i == self.outcome_node:
+                continue
+            has_incoming = any(self.directed_graph[j, i] != 0 for j in range(n_features_total))
+            if not has_incoming:
+                all_source_nodes.append(i)
+        
+        # Filter source nodes to only those with at least one path to outcome
+        source_nodes_with_paths = []
+        for source in all_source_nodes:
+            paths_from_source = self._find_all_paths_to_outcome(source, self.outcome_node, max_paths=1)
+            if paths_from_source:
+                source_nodes_with_paths.append(source)
+        self.source_nodes = source_nodes_with_paths
 
 
     def _extract_directed_graph(self, causal_graph: np.ndarray) -> np.ndarray:
@@ -853,25 +872,8 @@ class AsymmetricShapley(ShapleyFromScratch):
         """
         n_features_total = self.directed_graph.shape[0]
         
-
-        ##  TODO: I think could be optimized by precomputing all paths from sources to outcome once during initialization, but for now we compute on the fly for each sample for simplicity and variety.
-        # Identify source nodes (no incoming edges, excluding outcome)
-        all_source_nodes = []
-        for i in range(n_features_total):
-            if i == outcome_node:
-                continue
-            has_incoming = any(self.directed_graph[j, i] != 0 for j in range(n_features_total))
-            if not has_incoming:
-                all_source_nodes.append(i)
         
-        # Filter source nodes to only those with at least one path to outcome
-        source_nodes_with_paths = []
-        for source in all_source_nodes:
-            paths_from_source = self._find_all_paths_to_outcome(source, outcome_node, max_paths=1)
-            if paths_from_source:
-                source_nodes_with_paths.append(source)
-        
-        if not source_nodes_with_paths:
+        if not self.source_nodes:
             # No source nodes with paths to outcome - return random permutation of features (excluding outcome)
             warnings.warn("No source nodes with paths to outcome found. Using random permutation of features.")
             features_only = list(range(outcome_node))  # Exclude outcome node
@@ -879,7 +881,7 @@ class AsymmetricShapley(ShapleyFromScratch):
             return features_only
         
         # Randomly select a source node (from those with paths to outcome)
-        source = source_nodes_with_paths[self.rng.randint(len(source_nodes_with_paths))]
+        source = self.source_nodes[self.rng.randint(len(self.source_nodes))]
         
         # Find paths from this source to outcome
         paths = self._find_all_paths_to_outcome(source, outcome_node, max_paths=10)
@@ -946,7 +948,7 @@ class AsymmetricShapley(ShapleyFromScratch):
         
         # Outcome node is assumed to be the last node in the causal graph
         # (causal_graph should be (n_features+1, n_features+1) including outcome)
-        outcome_node = self.directed_graph.shape[0] - 1
+        outcome_node = self.outcome_node
         
         for sample_idx in range(self.n_samples):
             # Sample path-based permutation
