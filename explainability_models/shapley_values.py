@@ -13,188 +13,6 @@ import shap
 from sklearn.base import BaseEstimator
 import networkx as nx
 
-
-# class ShapleyExplainer:
-#     """Wrapper around SHAP library for model-specific Shapley value explanations.
-    
-#     This class provides an easy-to-use interface to the official SHAP library,
-#     automatically selecting the most appropriate explainer (Tree, Linear, or Kernel)
-#     based on the model type.
-    
-#     BACKGROUND DATA USAGE:
-#     - For TreeExplainer: Background data is used to estimate missing features during tree traversal
-#     - For LinearExplainer: Background data defines the baseline (reference point) for explanations
-#     - For KernelExplainer: Background data is sampled to marginalize over missing features
-    
-#     SHAP VALUES CALCULATION:
-#     - Uses model-specific optimized algorithms from the SHAP library
-#     - TreeExplainer: Polynomial-time algorithm for tree-based models (exact)
-#     - LinearExplainer: Closed-form solution for linear models (exact)
-#     - KernelExplainer: Model-agnostic weighted linear regression (approximate)
-    
-#     Parameters
-#     ----------
-#     model : BaseEstimator
-#         Trained scikit-learn compatible model to explain
-#     background_data : pd.DataFrame
-#         Reference dataset for computing baseline and marginalizing over missing features.
-#         Typically a sample (~100-1000 instances) from the training data
-#     method : str, default='auto'
-#         Explainer method: 'auto' (auto-detect), 'tree', 'linear', or 'kernel'
-    
-#     Attributes
-#     ----------
-#     explainer : shap.Explainer
-#         Initialized SHAP explainer instance
-#     shap_values : np.ndarray or None
-#         Computed SHAP values after calling explain()
-#     feature_names : List[str]
-#         Feature names from background data
-    
-#     Examples
-#     --------
-#     >>> explainer = ShapleyExplainer(rf_model, X_train.sample(100))
-#     >>> shap_values = explainer.explain(X_test)
-#     >>> importance = explainer.get_feature_importance()
-#     """
-    
-#     def __init__(self, model: BaseEstimator, background_data: pd.DataFrame,
-#                  method: str ='auto'):
-        
-#         self.model = model 
-#         self.background_data = background_data
-#         self.feature_names = background_data.columns.tolist()
-#         self.method = method
-#         self.explainer = None
-#         self.shap_values = None
-
-#         self._initialize_explainer()
-
-#     def _initialize_explainer(self):
-#         """Initialize the appropriate SHAP explainer based on model type.
-        
-#         Auto-detection logic:
-#         1. Check for tree-based models (LightGBM, RandomForest, GradientBoosting)
-#         2. Check for linear models (models with coef_ attribute)
-#         3. Fall back to model-agnostic KernelExplainer
-        
-#         Returns
-#         -------
-#         None
-#             Sets self.explainer and self.method
-#         """
-
-#         model_type = type(self.model).__name__
-
-#         if self.method == 'auto':
-
-#             if 'LGBM' in model_type or 'LightGBM' in model_type:
-
-#                 self.explainer = shap.TreeExplainer(self.model)
-#                 self.method = 'tree'
-#             elif hasattr(self.model, 'tree_') or 'RandomForest' in model_type or 'GradientBoosting' in model_type:
-                
-#                 self.explainer = shap.TreeExplainer(self.model)
-#                 self.method = 'tree'
-#             elif hasattr(self.model, 'coef_'):
-#                 # linear model
-#                 self.explainer = shap.LinearExplainer(self.model, self.background_data)
-#                 self.method = 'linear'
-#             else:
-#                 background_sample = shap.sample(self.background_data, min(100, len(self.background_data)))
-#                 self.explainer = shap.KernelExplainer(self.model.predct, background_sample)
-#                 self.method = 'kernel'
-#         elif self.method == 'tree':
-#             self.explainer = shap.TreeExplainer(self.model)
-#         elif self.method == 'kernel':
-#             background_sample = shap.sample(self.background_data, min(100, len(self.background_data)))
-#             self.explainer = shap.KernelExplainer(self.model.predct, background_sample)
-#         elif self.method == 'linear':
-#             self.explainer= shap.LinearExplainer(self.model, self.background_data)
-#         else:
-#             raise ValueError(f"Unknown SHAP method: {self.method}")
-        
-#     def explain(self, X: pd.DataFrame) -> np.ndarray:
-#         """Compute SHAP values for given instances.
-        
-#         For each feature i and instance x, computes the contribution of feature i
-#         to the model's prediction f(x) relative to the baseline prediction.
-        
-#         The SHAP value satisfies:
-#         f(x) = baseline + sum(shap_values)
-        
-#         Parameters
-#         ----------
-#         X : pd.DataFrame
-#             Instances to explain (shape: n_samples x n_features)
-        
-#         Returns
-#         -------
-#         shap_values : np.ndarray
-#             SHAP values (shape: n_samples x n_features)
-#             shap_values[i, j] = contribution of feature j to prediction for instance i
-#         """
-        
-#         print(f"Computing SHAP values using {self.method} explainer...")
-
-#         self.shap_values = self.explainer.shap_values(X)
-
-#         if isinstance(self.shap_values, list):
-#             self.shap_values = self.shap_values[0]
-
-#         return self.shap_values
-        
-#     def get_feature_importance(self) -> pd.DataFrame:
-#         """Compute global feature importance from SHAP values.
-        
-#         Aggregates SHAP values across all instances using mean absolute value,
-#         which measures the average impact of each feature on predictions.
-        
-#         Returns
-#         -------
-#         importance : pd.DataFrame
-#             Feature importance scores sorted in descending order
-#             Columns: ['feature', 'importance']
-        
-#         Raises
-#         ------
-#         ValueError
-#             If explain() has not been called yet
-#         """
-
-#         if self.shap_values is None:
-#             raise ValueError("Must call explain() first to compute SHAP values")
-        
-#         importance_scores = np.abs(self.shap_values).mean(axis=0)
-
-#         importance = pd.DataFrame({
-#             'feature': self.feature_names,
-#             'importance': importance_scores
-#         }).sort_values('importance',ascending=False)
-
-#         return importance
-    
-#     def get_shap_values_df(self, X: pd.DataFrame) ->pd.DataFrame:
-#         """Get SHAP values as a DataFrame.
-        
-#         Converts the numpy array of SHAP values to a pandas DataFrame
-#         with proper feature names and indices for easier analysis.
-        
-#         Parameters
-#         ----------
-#         X : pd.DataFrame
-#             Instances to explain (if not already computed)
-        
-#         Returns
-#         -------
-#         shap_df : pd.DataFrame
-#             SHAP values with feature names as columns and same index as X
-#         """
-
-#         if self.shap_values is None:
-#             self.explain(X)
-
-#         return pd.DataFrame(self.shap_values,columns= self.feature_names, index=X.index)
     
 class ShapleyFromScratch:
     """Vanilla Shapley value computation from first principles.
@@ -568,47 +386,126 @@ class ShapleyFromScratch:
         return pd.DataFrame(self.shap_values, columns=self.feature_names, index= X.abs)
 
 class AsymmetricShapley(ShapleyFromScratch):
-    """Path-based Asymmetric Shapley values focusing on causal paths to outcome.
+    """Path-based Shapley values with causal ordering constraints.
     
-    This class implements a path-based approach to Asymmetric Shapley values that
-    focuses on complete causal paths from source nodes to the outcome variable Y.
+    ═══════════════════════════════════════════════════════════════════════════════
+    WHAT THIS METHOD ACTUALLY DOES (based on code implementation):
+    ═══════════════════════════════════════════════════════════════════════════════
     
-    KEY INSIGHT:
-    Standard Shapley values treat all features symmetrically, but in causal systems,
-    features contribute to the outcome through complete causal paths. This implementation
-    ensures that when a feature is included in a coalition, ALL its ancestors on paths
-    to the outcome are also included (not just direct parents).
+    Computes Shapley values using ONLY causal paths from source nodes to outcome Y.
     
-    MOTIVATION - DISTAL CAUSALITY:
-    The standard Frye et al. (2021) approach only enforces direct parent constraints,
-    which allows "incomplete" causal chains. For example, if X0→X1→X2→Y, the Frye method
-    allows coalition {X0, X2} even though X1 is missing from the chain. This violates
-    the distal causality interpretation where features should contribute through complete
-    causal mechanisms.
+    KEY BEHAVIORS:
+    1. Samples random paths from sources to Y (not all permutations)
+    2. Only features ON the sampled path receive attributions
+    3. Features NOT on any path to Y get ZERO attribution (completely excluded)
+    4. Each sample uses ONE random path (current implementation: line 908)
     
-    PATH-BASED APPROACH:
-    1. Identifies source nodes (features with no incoming edges)
-    2. Finds all causal paths from each source to outcome Y
-    3. Samples orderings where:
-       - Nodes ON a path to Y maintain strict causal order (complete chains)
-       - Nodes NOT on any path to Y can appear anywhere (no constraint)
-       - Outcome Y is always positioned last
+    ═══════════════════════════════════════════════════════════════════════════════
+    ALGORITHM (Monte Carlo Path Sampling):
+    ═══════════════════════════════════════════════════════════════════════════════
     
-    HOW CAUSAL DAG IS USED:
-    1. Extract directed edges from adjacency matrix: dag[i,j]=1 means i → j
-    2. Build parent dictionary: parents[j] = {all i where i → j}  
-    3. Find all paths from sources to outcome using DFS
-    4. Sample from path-respecting orderings (not just parent-respecting)
+    PREPROCESSING:
+        1. Extract directed graph from causal_graph adjacency matrix
+        2. Find source nodes (no incoming edges, excluding outcome Y)
+        3. Filter sources: Keep only those with paths to outcome Y (backward BFS)
+        4. Build parent/child dictionaries for path finding
     
-    DIFFERENCE FROM STANDARD APPROACHES:
-    - Frye et al. (2021): Only direct parent constraints
-      → Can have incomplete chains: {X0, X2} valid even if X0→X1→X2→Y
-    - This implementation: Complete path constraints  
-      → Requires full chains: {X0, X2} invalid, must include X1
-    - More restrictive for path nodes, more flexible for non-path nodes
+    FOR trial = 1 to n_samples:
+        1. Randomly select ONE source from filtered sources
+        2. Find all paths from that source to outcome Y (DFS, max 20 paths)
+        3. Randomly select ONE path from available paths
+        4. Remove outcome Y from path (conceptually last)
+        5. Use path as permutation: π = [node₁, node₂, ..., nodeₖ]
+        
+        6. Compute marginal contributions:
+           S ← ∅, v_prev ← baseline
+           FOR each feature i in path order:
+               S ← S ∪ {i}
+               v_curr ← v(S)  # Coalition value via background marginalization
+               Δᵢ ← v_curr - v_prev
+               φᵢ += Δᵢ
+               v_prev ← v_curr
+        
+    RETURN φ / n_samples
     
+    ═══════════════════════════════════════════════════════════════════════════════
+    CAUSAL GRAPH USAGE:
+    ═══════════════════════════════════════════════════════════════════════════════
+    
+    1. **Source Filtering (Backward BFS from Y)**:
+       - Build parents[j] = [i where causal_graph[i,j] ≠ 0]
+       - Find potential sources: nodes with no parents
+       - Backward BFS from Y to identify reachable nodes
+       - source_nodes = potential_sources ∩ reachable_from_Y
+    
+    2. **Path Finding (DFS)**:
+       - For each source, DFS to find all paths to Y
+       - Paths automatically maintain topological order
+       - Limits to max 20 paths per source (performance)
+    
+    3. **Topological Ordering**:
+       - Paths inherently respect causal order (parents before children)
+       - No explicit topological sort needed (implicit in DFS)
+    
+    4. **NO ADJACENCY FILTERING**:
+       - Uses full causal graph for path finding
+       - Only filters which nodes are sources (not edges)
+    
+    ═══════════════════════════════════════════════════════════════════════════════
+    COALITION & PERMUTATION MECHANICS:
+    ═══════════════════════════════════════════════════════════════════════════════
+    
+    **Coalition Formation:**
+    - Only contains features from the sampled path
+    - Non-path features are EXCLUDED (not even in background)
+    - Coalition value v(S): Same as vanilla Shapley (condition on S, marginalize rest)
+    
+    **Permutation Space:**
+    - NOT all n! permutations
+    - ONLY valid causal paths from sources to Y
+    - Much smaller space than vanilla Shapley
+    - Biases attributions toward path-connected features
+    
+    **Key Implementation Detail (line 908):**
+    ```python
+    ordering = path  # Only include path nodes for strict causal order focus
+    ```
+    This means non-path nodes receive ZERO contribution (not sampled at all).
+    
+    ═══════════════════════════════════════════════════════════════════════════════
+    DIFFERENCE FROM OTHER METHODS:
+    ═══════════════════════════════════════════════════════════════════════════════
+    
+    vs Vanilla Shapley:
+    - Vanilla: All features in every permutation
+    - Asymmetric: Only path features in each permutation
+    - Result: Asymmetric focuses credit on causal paths to Y
+    
+    vs Frye et al. (2021) Asymmetric Shapley:
+    - Frye: Enforces direct parent constraints only
+    - This: Enforces complete path constraints
+    - Example: X0→X1→X2→Y
+      * Frye allows: {X0, X2} without X1
+      * This implementation: Requires complete paths
+    
+    vs Causal Shapley (Heskes et al.):
+    - Causal: Uses do-calculus, all features, interventional semantics
+    - Asymmetric: Uses paths, only path features, observational semantics
+    
+    ═══════════════════════════════════════════════════════════════════════════════
     BACKGROUND DATA USAGE:
-    Same as vanilla Shapley - used to marginalize over missing features
+    ═══════════════════════════════════════════════════════════════════════════════
+    
+    Same as vanilla Shapley:
+    - Features IN coalition S: Use instance's actual values (foreground)
+    - Features NOT in coalition S: Sample from background data
+    - Average predictions over background samples
+    
+    No interventional sampling (unlike CausalShapley).
+    
+    ═══════════════════════════════════════════════════════════════════════════════
+    PARAMETERS:
+    ═══════════════════════════════════════════════════════════════════════════════
     
     Parameters
     ----------
@@ -619,31 +516,28 @@ class AsymmetricShapley(ShapleyFromScratch):
     causal_graph : np.ndarray
         Adjacency matrix INCLUDING outcome node Y
         Shape: (n_features+1, n_features+1) where last row/col is outcome Y
-        - causal_graph[i,j]=1 means i causes j (binary format)
-        - OR causal-learn format: causal_graph[i,j]=-1, causal_graph[j,i]=1 means i → j
+        Entry [i,j]=1 means i causes j (binary directed graph)
     n_samples : int, default=1000
-        Number of random path-based orderings to sample
+        Number of random path samples to evaluate
     random_state : int or None
         Random seed for reproducibility
     
     Attributes
     ----------
     directed_graph : np.ndarray
-        Extracted directed adjacency matrix (binary) including outcome
+        Binary directed adjacency matrix (n_features+1 × n_features+1)
+    source_nodes : List[int]
+        Indices of source nodes that can reach outcome Y
     parents : Dict[int, Set[int]]
-        Parent features for each feature
-    topological_order : List[int]
-        Valid topological sort of the DAG
-    
-    References
-    ----------
-    Frye, C., et al. (2021). "Asymmetric Shapley values: incorporating causal 
-    knowledge into model-agnostic explainability." NeurIPS.
+        Parent features for each node
+    outcome_node : int
+        Index of outcome variable Y (typically n_features)
+    shap_values : np.ndarray or None
+        Computed Shapley values after calling explain()
     
     Examples
     --------
-    >>> # Create causal DAG with outcome: X0→X1→X2→Y
-    >>> # Shape is (4, 4) including outcome Y at index 3
+    >>> # Create causal DAG: X0→X1→X2→Y (Y at index 3)
     >>> causal_dag = np.array([[0,1,0,0], 
     ...                         [0,0,1,0], 
     ...                         [0,0,0,1],
@@ -1009,9 +903,18 @@ class AsymmetricShapley(ShapleyFromScratch):
 class CausalShapley(ShapleyFromScratch):
     """Causal Shapley values using post-interventional sampling (Heskes et al. 2020).
     
-    This is the most rigorous causal Shapley method that correctly handles confounding
-    by using post-interventional distributions P(X | do(X_S = x_S)) instead of
-    conditional distributions P(X | X_S = x_S).
+    ═══════════════════════════════════════════════════════════════════════════════
+    WHAT THIS METHOD ACTUALLY DOES (based on code implementation):
+    ═══════════════════════════════════════════════════════════════════════════════
+    
+    Computes Shapley values using INTERVENTIONAL semantics: replaces conditional
+    distributions P(X | X_S = x_S) with do-calculus P(X | do(X_S = x_S)).
+    
+    KEY BEHAVIORS:
+    1. Uses ALL features in random permutations (like vanilla Shapley)
+    2. For each coalition, samples from do-distribution (not observational)
+    3. Handles confounding via component-based sampling
+    4. Much more computationally expensive than vanilla (nested sampling loops)
     
     ═══════════════════════════════════════════════════════════════════════
     KEY CONCEPTUAL DIFFERENCE FROM OTHER METHODS:
@@ -1632,35 +1535,109 @@ class CausalShapley(ShapleyFromScratch):
         return self.shap_values
 
 class ShapleyFlow:
-    """Shapley Flow: Graph-based edge attributions using on-manifold perturbations.
+    """Shapley Flow: Edge-level Shapley attributions on causal graphs.
     
-    Implements the Shapley Flow algorithm from Wang & Venkatasubramanian (2021),
-    which extends Shapley values from features to EDGES in a causal DAG.
+    ═══════════════════════════════════════════════════════════════════════════════
+    WHAT THIS METHOD ACTUALLY DOES (based on code implementation):
+    ═══════════════════════════════════════════════════════════════════════════════
     
-    ═══════════════════════════════════════════════════════════════════════
-    KEY IDEA:
-    ═══════════════════════════════════════════════════════════════════════
+    Computes Shapley values for EDGES (not features) in a causal DAG.
     
-    Instead of asking "How important is feature X_i?", Shapley Flow asks:
-    "How important is the causal edge X_i → X_j?"
+    KEY BEHAVIORS:
+    1. Game players are EDGES (i→j) rather than features
+    2. Two modes: Exhaustive DFS or Path Sampling (path sampling is default)
+    3. Path sampling uses BACKWARD walks from sink to sources
+    4. Edge attributions are aggregated to get node (feature) importance
+    5. Core class does NOT filter - wrapper handles source/adjacency filtering
     
-    This provides FINE-GRAINED explanations:
-    - Which causal paths contribute most to predictions?
-    - How does information flow through the causal graph?
-    - More interpretable for domain experts who know the causal structure
+    ═══════════════════════════════════════════════════════════════════════════════
+    ALGORITHM (Path Sampling Mode - DEFAULT, use_path_sampling=True):
+    ═══════════════════════════════════════════════════════════════════════════════
     
-    ═══════════════════════════════════════════════════════════════════════
-    ON-MANIFOLD PERTURBATION:
-    ═══════════════════════════════════════════════════════════════════════
+    FOR trial = 1 to n_samples:
+        FOR path_idx = 1 to (n_sources × paths_per_source):
+            # ===== BACKWARD PATH SAMPLING (key innovation) =====
+            path_edges ← []
+            current ← sink_node
+            visited ← {sink_node}
+            
+            WHILE current not in source_nodes:
+                parents ← [p for p in parents[current] if p not visited]
+                IF parents is empty: BREAK
+                
+                parent ← random_choice(parents)  # Random parent
+                path_edges.append((parent, current))
+                visited.add(parent)
+                current ← parent
+            
+            path_edges ← reverse(path_edges)  # Source→Sink direction
+            
+            # ===== MARGINAL CONTRIBUTIONS =====
+            perm_edges ← random_permutation(path_edges)
+            v_prev ← evaluate_system([], x_foreground, x_background)
+            history ← []
+            
+            FOR each edge in perm_edges:
+                history.append(edge)
+                v_curr ← evaluate_system(history, x_fg, x_bg)
+                marginal ← v_curr - v_prev
+                edge_attributions[edge] += marginal
+                v_prev ← v_curr
     
-    Unlike standard Shapley (which uses arbitrary feature masking), Shapley Flow
-    uses CONDITIONAL SAMPLING to stay on the data manifold:
+    RETURN edge_attributions / (n_samples × total_paths)
     
-    For each edge (u → v):
-    - Edge ACTIVE: v uses its foreground value from the instance
-    - Edge NOT ACTIVE: v is treated as "missing" and sampled from P(v | active_parents)
+    ═══════════════════════════════════════════════════════════════════════════════
+    WHY BACKWARD SAMPLING? (Critical Design Choice)
+    ═══════════════════════════════════════════════════════════════════════════════
     
-    This ensures all sampled instances are realistic (respect data distribution).
+    Forward (source→sink) random walk problems:
+    - Many sources, uncertain if random walk reaches sink
+    - Need retries, wasted samples
+    - Inefficient for large graphs
+    
+    Backward (sink→source) walk advantages:
+    - source_nodes are PRE-FILTERED (wrapper's backward BFS guarantees reachability)
+    - Walking backward from sink ALWAYS hits a valid source
+    - NO RETRIES needed, every attempt succeeds
+    - Much more efficient sampling
+    
+    Backward (sink→source) walk advantages:
+    - source_nodes are PRE-FILTERED (wrapper's backward BFS guarantees reachability)
+    - Walking backward from sink ALWAYS hits a valid source
+    - NO RETRIES needed, every attempt succeeds
+    - Much more efficient sampling
+    
+    ═══════════════════════════════════════════════════════════════════════════════
+    EDGE COALITION SEMANTICS:
+    ═══════════════════════════════════════════════════════════════════════════════
+    
+    For each edge (i→j):
+    - Edge ACTIVE: Node j uses foreground value from instance
+    - Edge INACTIVE: Node j treated as "missing", uses background value
+    
+    evaluate_system(active_edges, x_foreground, x_background):
+        FOR each node:
+            IF node is source AND has active outgoing edges:
+                node_value ← x_foreground[node]
+            ELSE IF node has active incoming edges:
+                node_value ← x_foreground[node]
+            ELSE:
+                node_value ← x_background[node]
+        RETURN predict(node_values)
+    
+    ═══════════════════════════════════════════════════════════════════════════════
+    CAUSAL GRAPH USAGE (IMPORTANT - NO FILTERING IN CORE CLASS):
+    ═══════════════════════════════════════════════════════════════════════════════
+    
+    ShapleyFlow class itself does NOT filter:
+    - Takes graph_structure as input (adjacency list)
+    - Takes source_nodes as input (must be pre-filtered)
+    - Uses ALL edges in graph_structure
+    
+    FILTERING HAPPENS IN WRAPPER (ShapleyFlowWrapper):
+    - Wrapper filters sources via backward BFS
+    - Wrapper does NOT filter adjacency matrix (uses all edges)
+    - See ShapleyFlowWrapper docstring for details
     
     ═══════════════════════════════════════════════════════════════════════
     BACKGROUND vs FOREGROUND DATA:
@@ -2285,22 +2262,60 @@ class ShapleyFlow:
         return node_attr
     
 class ShapleyFlowWrapper:
-    """Convenience wrapper for applying Shapley Flow to trained ML models.
+    """Wrapper for ShapleyFlow with source filtering (but NOT edge filtering).
     
-    This class bridges trained scikit-learn models with the Shapley Flow algorithm.
-    It handles the conversion from causal DAG to graph structure and provides
-    a familiar interface similar to other Shapley explainers.
-    
-    ═══════════════════════════════════════════════════════════════════════
-    WHAT THIS WRAPPER DOES:
-    ═══════════════════════════════════════════════════════════════════════
+    ═══════════════════════════════════════════════════════════════════════════════
+    WHAT THIS WRAPPER ACTUALLY DOES (based on code implementation):
+    ═══════════════════════════════════════════════════════════════════════════════
     
     1. Converts causal adjacency matrix → graph structure (adjacency list)
-    2. Identifies source nodes (features with no parents)
-    3. Sets up sink node (outcome variable Y)
-    4. Creates ShapleyFlow instance with proper configuration
-    5. Computes edge attributions and aggregates to node-level importance
-    6. Returns feature importance scores compatible with other explainers
+    2. **FILTERS SOURCES** using backward BFS from sink (Y-reachable sources only)
+    3. **DOES NOT FILTER EDGES** - uses full adjacency matrix
+    4. Creates ShapleyFlow instance with filtered sources
+    5. Aggregates edge attributions to node-level importance
+    
+    ═══════════════════════════════════════════════════════════════════════════════
+    FILTERING STRATEGY (Source Filtering Only):
+    ═══════════════════════════════════════════════════════════════════════════════
+    
+    WHAT IS FILTERED:
+    - Source nodes: Only keeps sources that can reach sink Y (backward BFS)
+    
+    WHAT IS NOT FILTERED:
+    - Adjacency matrix: Uses ALL edges from original causal graph
+    - Intermediate nodes: All nodes in graph are kept
+    
+    ALGORITHM (lines 2408-2437):
+    ```
+    # Build parent dict
+    parents[i] ← [j where causal_graph[j,i] ≠ 0]
+    
+    # Find potential sources (no parents)
+    potential_sources ← [i where len(parents[i]) == 0]
+    
+    # Backward BFS from sink Y
+    reachable_from_Y ← backward_BFS(Y, parents)
+    
+    # Filter sources
+    source_nodes ← potential_sources ∩ reachable_from_Y
+    
+    # Build FULL graph structure (NO edge filtering!)
+    graph_structure[i] ← [j where causal_graph[i,j] ≠ 0]  # All edges kept
+    ```
+    
+    ═══════════════════════════════════════════════════════════════════════════════
+    COMPARISON WITH GraphExplainerWrapper:
+    ═══════════════════════════════════════════════════════════════════════════════
+    
+    ShapleyFlowWrapper:
+    - Filters: SOURCES only
+    - Adjacency: Full original matrix
+    - Graph size: Same as input
+    
+    GraphExplainerWrapper:
+    - Filters: ADJACENCY MATRIX (zeros out non-reachable edges)
+    - Graph size: Potentially much smaller
+    - More aggressive filtering → faster computation
     
     ═══════════════════════════════════════════════════════════════════════
     KEY PARAMETERS:
@@ -2727,20 +2742,51 @@ class GraphExplainerWrapper:
     ) -> Tuple[np.ndarray, List[str], List[int], Dict]:
         """Filter adjacency matrix by zeroing out edges not reachable from sink.
         
-        Uses backward BFS from sink node to identify all reachable nodes,
-        then zeros out edges that are NOT between reachable nodes.
-        Maintains same matrix size and feature order for data compatibility.
+        ═══════════════════════════════════════════════════════════════════════════
+        CRITICAL: This is ADJACENCY MATRIX filtering (not just source filtering)
+        ═══════════════════════════════════════════════════════════════════════════
+        
+        ALGORITHM:
+        1. Backward BFS from sink to find all Y-reachable nodes
+        2. Zero out edges where EITHER endpoint is not Y-reachable
+        3. Return filtered matrix (same size, but with zeroed edges)
+        
+        PSEUDOCODE:
+        ```
+        # Build parent dict
+        parents[j] ← [i where adjacency[i,j] ≠ 0]
+        
+        # Backward BFS from sink
+        reachable ← {sink}
+        queue ← [sink]
+        WHILE queue not empty:
+            current ← queue.pop()
+            FOR each parent in parents[current]:
+                IF parent not in reachable:
+                    reachable.add(parent)
+                    queue.append(parent)
+        
+        # Zero out edges NOT between reachable nodes
+        filtered ← adjacency.copy()
+        FOR i, j in all_edges:
+            IF i not in reachable OR j not in reachable:
+                filtered[i,j] ← 0
+        ```
+        
+        USED BY:
+        - GraphExplainerWrapper: Filters adjacency before building graph
+        - NOT used by ShapleyFlowWrapper (which only filters sources)
         
         Returns
         -------
         filtered_adjacency : np.ndarray
-            Adjacency matrix with irrelevant edges zeroed (same size as input)
+            Adjacency matrix with non-reachable edges zeroed (same size as input)
         feature_names : list
-            Same feature names as input (unchanged)
+            Same feature names as input (unchanged for data compatibility)
         reachable_indices : list
-            Indices of nodes reachable from sink
+            Indices of nodes reachable from sink via backward traversal
         stats : dict
-            Filtering statistics
+            Filtering statistics (edges removed, nodes kept, etc.)
         """
         n_features = adjacency_matrix.shape[0]
         sink_idx = feature_names.index(sink_name)
