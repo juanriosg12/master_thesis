@@ -694,7 +694,32 @@ node_attributions[i] ← Σ_{j: (i,j) is edge} edge_attributions[(i,j)]
 
 ### What It Does
 
-Wrapper for the external **shapflow library's GraphExplainer**. Key difference: **Filters the adjacency matrix** before constructing the graph, removing edges that cannot reach the target Y.
+Wrapper for the external **shapflow library's GraphExplainer**. 
+
+**Two key differences from ShapleyFlow:**
+
+1. **Filters the adjacency matrix** (not just sources) - removes edges that cannot reach target Y
+2. **Learns causal functions** from training data before computing attributions
+
+### How It Works (Two-Phase Process)
+
+**PHASE 1: Graph Construction with Learned Causal Functions**
+
+Unlike ShapleyFlow (which samples background/foreground data), GraphExplainer:
+1. Learns causal mechanisms: `f_j = g_j(Parents(X_j))` from training data
+2. Uses learned functions (XGBoost/linear) to model relationships
+3. Builds explicit causal graph with these functions
+
+**PHASE 2: Edge Attribution Using Learned Functions**
+
+Edge attributions are computed using:
+- The learned causal functions (not data sampling)
+- Interventional semantics on the graph structure
+- GraphExplainer's algorithm from shapflow library
+
+**Key Difference:**
+- **ShapleyFlow**: Edge (i→j) active/inactive → use foreground/background data
+- **GraphExplainer**: Edge (i→j) active/inactive → use learned function f_j or not
 
 ### Filtering Approach
 
@@ -726,23 +751,70 @@ PROCEDURE:
     reachable_indices ← set()
     queue ← [sink_idx]
     visited ← {sink_idx}
+     (`_adjacency_to_graph`)
+
+**CRITICAL PREPARATION STEP:** After filtering, converts adjacency to shapflow Graph with learned causal functions:
+
+```python
+ALGORITHM: Build Graph with Learned Functions
+
+INPUT:
+    - filtered_adjacency (already filtered to Y-reachable edges)
+    - feature_names
+    - train_data (for learning functions)
+    - fit_method ('xgboost', 'linear', etc.)
+
+STEP 1: Create Node objects
+    FOR each feature in feature_names:
+        Create Node(name, f=None, args=[], is_target=?)
+        Store in nodes_dict[name]
+
+STEP 2: Add parent relationships from filtered adjacency
+    FOR each child_node:
+        parent_indices ← [i where filtered_adjacency[i, child] ≠ 0]
+        FOR each parent_idx:
+            child_node.args.append(parent_node)
+            parent_node.children.append(child_node)
+
+STEP 3: Create Graph object
+    graph ← Graph(nodes=list(nodes_dict.values()))
+
+STEP 4: Learn causal functions from training data
+    graph.fit_missing_links(train_data, method=fit_method)
+    # This learns: f_j = g_j(Parents(X_j)) for each node j
+    # Using XGBoost/linear regression on train_data
     
-    WHILE queue not empty:
-        current ← queue.pop(0)
-        reachable_indices.add(current)
-        
-        FOR each parent in parents[current]:
-            IF parent not visited:
-                visited.add(parent)
-                queue.append(parent)
-    
-    # Zero out edges NOT between reachable nodes
-    filtered_adjacency ← adjacency_matrix.copy()
-    FOR i = 0 to n-1:
-        FOR j = 0 to n-1:
-            IF i not in reachable_indices OR j not in reachable_indices:
-                filtered_adjacency[i,j] ← 0
-    
+RETURN graph (with learned functions embedded)
+```
+
+**What `fit_missing_links` does:**
+- For each node j: Fit `X_j = f_j(Parents(X_j), noise)` using training data
+- XGBoost: Learns non-linear functions
+- Linear: Learns linear coefficients
+- Stores learned function in each Node object
+
+### Causal Diagram Usage
+
+**USED FOR: Full Graph Structure with Edge Filtering + Learned Mechanisms**
+
+1. **Filter adjacency matrix** (backward BFS to zero out non-Y-reachable edges)
+2. **Build Node objects** with parent relationships from filtered adjacency
+3. **Learn causal functions**: `f_j = g_j(Parents(X_j))` from training data
+   - Uses actual data to fit relationships
+   - Each node stores its learned function
+4. **GraphExplainer** uses learned graph for SHAP computation
+   - Edge attributions use learned functions (not data sampling)
+   - Can evaluate counterfactuals using learned mechanisms
+
+### Key Algorithmic Difference: GraphExplainer vs ShapleyFlow
+
+| Aspect | ShapleyFlow | GraphExplainer |
+|--------|-------------|----------------|
+| **Edge Semantics** | Active: use foreground data<br>Inactive: use background data | Active: use learned function f_j<br>Inactive: marginalize out |
+| **Data Usage** | Samples from background data at runtime | Learns functions from train data beforehand |
+| **Graph Representation** | Adjacency list only | Full causal graph with learned f_j |
+| **Prediction** | Direct model evaluation | Can simulate via learned mechanisms |
+| **Computational** | Needs background data each time | Upfront cost to learn functions |
     RETURN filtered_adjacency, feature_names, reachable_indices, stats
 ```
 
@@ -754,16 +826,28 @@ PROCEDURE:
 ### Graph Construction
 
 After filtering, converts adjacency matrix to shapflow Graph object:
-
-1. Create Node objects for each feature
+, data sampling
+- **GraphExplainer**: Random paths of EDGES, learned function evaluation
 2. Add parent relationships from filtered adjacency
 3. Fit causal functions from training data (using XGBoost/linear regression)
 4. Return Graph with learned mechanisms
 
 ### Causal Diagram Usage
 
-**USED FOR: Full Graph Structure with Edge Filtering**
+**USED FOR: Full Graph Structure with Edge F (data sampling)
+- **GraphExplainer**: Edges define game players (learned mechanisms)
 
+**Data vs Function-Based:**
+
+- **ShapleyFlow**: Runtime data sampling
+  - Edge active: child uses foreground value
+  - Edge inactive: child uses background value
+  - No learned functions
+
+- **GraphExplainer**: Learned causal functions
+  - Edge active: evaluate learned f_j(parents)
+  - Edge inactive: marginalize using learned distribution
+  - Functions fit beforehand from training data
 1. **Filter adjacency matrix** (as shown above)
 2. **Build Node objects** with parent relationships
 3. **Learn causal functions**: `f_j = g_j(Parents(X_j))` from data

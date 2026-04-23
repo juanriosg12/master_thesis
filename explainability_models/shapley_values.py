@@ -386,7 +386,7 @@ class ShapleyFromScratch:
         return pd.DataFrame(self.shap_values, columns=self.feature_names, index= X.abs)
 
 class AsymmetricShapley(ShapleyFromScratch):
-    """Path-based Shapley values with causal ordering constraints.
+    """Asymmetric Shapley values with causal ordering constraints.
     
     ═══════════════════════════════════════════════════════════════════════════════
     WHAT THIS METHOD ACTUALLY DOES (based on code implementation):
