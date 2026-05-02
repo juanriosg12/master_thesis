@@ -10,3 +10,4 @@ __pycache__/
 *.parquet
 *.pkl
 *.json
+visualizations/check_causal_discovery.ipynb
