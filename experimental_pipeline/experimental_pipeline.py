@@ -301,26 +301,36 @@ def create_train_test_splits(dataset_configs: List[Dict]):
 def run_causal_discovery(dataset_configs: List[Dict]):
     """
     Run PC and LiNGAM causal discovery on all datasets.
-    
+
+    The discovery algorithms run on X features only (Y is excluded from the
+    input).  After discovery, edges to Y are added for:
+      - Features used by the trained LGBM model (available for TARGET_DATASETS
+        since Step 4 / train_all_models runs first)
+      - Sink nodes in the X-only causal graph (ensures Y is the ultimate sink)
+
+    For datasets that have no trained model (non-target datasets) only the
+    sink-node rule applies.
+
     Parameters:
     -----------
     dataset_configs : List[Dict]
         Dataset configurations from Step 1
     """
     logging.info("=" * 80)
-    logging.info("STEP 3: RUNNING CAUSAL DISCOVERY")
+    logging.info("STEP 4 (was 3): RUNNING CAUSAL DISCOVERY")
     logging.info("=" * 80)
     
     for idx, config in enumerate(dataset_configs, 1):
         filename = config['filename']
-        logging.info(f"\n[Dataset {idx}/6] Processing {filename}")
+        logging.info(f"\n[Dataset {idx}/{len(dataset_configs)}] Processing {filename}")
         
-        # Load data and ground truth
+        # Load train data and drop Y (discovery runs on X only)
         data_path = PROCESSED_DIR / f"{filename}_train.parquet"
         data = pd.read_parquet(data_path)
+        X_train = data.drop(columns=['Y'])
 
-        subsample_size = min(500, len(data))  # Limit to 500 samples for discovery to speed up
-        subsample_data = data.sample(n=subsample_size, random_state=RANDOM_STATE)
+        subsample_size = min(500, len(X_train))
+        subsample_data = X_train.sample(n=subsample_size, random_state=RANDOM_STATE)
         
         adj_path = SYNTHETIC_DIR / f"{filename}_adjacency.npy"
         true_adj = np.load(adj_path)
@@ -329,20 +339,28 @@ def run_causal_discovery(dataset_configs: List[Dict]):
         with open(conf_path, 'r') as f:
             true_conf = json.load(f)
         
+        # Load trained LGBM model if available (TARGET_DATASETS only)
+        trained_model = None
+        if filename in TARGET_DATASETS:
+            model_path = MODELS_DIR / f"{filename}_lgbm.pkl"
+            if model_path.exists():
+                trained_model = LGBMRegressor.load(str(MODELS_DIR / f"{filename}_lgbm"))
+                logging.info(f"  Loaded LGBM model ({len(trained_model.selected_features)} features used for Y edges)")
+            else:
+                logging.warning(f"  No trained model found for {filename}; Y edges determined by sink nodes only")
+
         # Initialize discovery methods
         lingam_fci = LiNGAMWithFCI(alpha=LINGAM_ALPHA, indep_test=INDEP_TEST)
         pc_fci = PCWithFCI(alpha=PC_ALPHA, indep_test=INDEP_TEST)
         
-        # Run discovery
+        # Run discovery (X only; model determines Y edges inside the method)
         logging.info("  Running LiNGAM...")
-        results_lingam = lingam_fci.get_causal_relationships(subsample_data)
+        results_lingam = lingam_fci.get_causal_relationships(subsample_data, model=trained_model)
         
         logging.info("  Running PC...")
-        results_pc = pc_fci.get_causal_relationships(subsample_data)
+        results_pc = pc_fci.get_causal_relationships(subsample_data, model=trained_model)
         
-        # Also run discovery on X_train for use in Step 5
-        
-        logging.info("  Extracting train adjacency matrices for Step 5...")
+        logging.info("  Extracting X-only train adjacency matrices for Step 5...")
         lingam_train_adj = results_lingam['adjacency_matrix'][:-1, :-1]  # Exclude Y
         pc_train_adj = results_pc['adjacency_matrix'][:-1, :-1]  # Exclude Y
         
@@ -359,7 +377,7 @@ def run_causal_discovery(dataset_configs: List[Dict]):
             with open(results_path, 'w') as f:
                 json.dump(results_json, f, indent=2)
             
-            # Save train adjacency matrix for Step 5
+            # Save X-only train adjacency matrix for Step 5 (CausalShapley)
             if method_name == 'lingam':
                 train_adj_path = CAUSAL_DIR / f"{filename}_{method_name}_train_adjacency.npy"
                 np.save(train_adj_path, lingam_train_adj)
@@ -367,7 +385,8 @@ def run_causal_discovery(dataset_configs: List[Dict]):
                 train_adj_path = CAUSAL_DIR / f"{filename}_{method_name}_train_adjacency.npy"
                 np.save(train_adj_path, pc_train_adj)
             
-            # Compare with ground truth
+            # Compare with ground truth (note: Y column now reflects model/sink
+            # edges rather than algorithm-discovered Y parents — intentional)
             comparison = compare_with_ground_truth(
                 discovered_adj=results['adjacency_matrix'],
                 true_adj=true_adj,
@@ -382,24 +401,39 @@ def run_causal_discovery(dataset_configs: List[Dict]):
             
             logging.info(f"  ✓ {method_name.upper()}: F1={comparison.get('f1_score', 0):.3f}, Precision={comparison.get('precision', 0):.3f}, Recall={comparison.get('recall', 0):.3f}")
             
-            # Create visualization
+            # Visualizations — feature_names from results already includes 'Y'
+            all_feature_names = results['feature_names']
             fig = visualize_comparison(
                 true_adj=true_adj,
                 discovered_adj=results['adjacency_matrix'],
-                features_names=data.columns.tolist(),
+                features_names=all_feature_names,
                 y_parent_indices=config['y_parent_indices'],
                 true_confounders=true_conf,
                 discovered_confounders=results['confounders'],
                 title_preix=f"{method_name.upper()} Algorithm"
             )
+
+            fig_filtered = visualize_comparison(
+                true_adj=true_adj,
+                discovered_adj=results['adjacency_matrix'],
+                features_names=all_feature_names,
+                y_parent_indices=config['y_parent_indices'],
+                true_confounders=true_conf,
+                discovered_confounders=results['confounders'],
+                title_preix=f"{method_name.upper()} Algorithm",
+                filter_to_sink=True
+            )
             
             # Save visualization
             fig_path = CAUSAL_DIR / f"{filename}_{method_name}_visualization.png"
+            fig_filtered_path = CAUSAL_DIR / f"{filename}_{method_name}_visualization_filtered.png"
             fig.savefig(fig_path, dpi=300, bbox_inches='tight')
+            fig_filtered.savefig(fig_filtered_path, dpi=300, bbox_inches='tight')
             plt.close(fig)
+            plt.close(fig_filtered)
     
     logging.info(f"\n{'='*80}")
-    logging.info(f"Step 3 Complete: Causal discovery completed for {len(dataset_configs)} datasets")
+    logging.info(f"Step 4 Complete: Causal discovery completed for {len(dataset_configs)} datasets")
     logging.info(f"{'='*80}\n")
 
 
@@ -784,11 +818,44 @@ def calculate_comparison_metrics(dataset_configs: List[Dict]):
         scratch_dir = EXPLAINABILITY_DIR / filename / model_name / 'scratch'
         scratch_values = np.load(scratch_dir / 'shapley_values.npy')
         scratch_importance = np.abs(scratch_values).mean(axis=0)
-        ## TODO: ensure the top10 features are part of the causal graph (i.e. discovered by PC and LiNGAM) - if not, we may need to adjust the top10 selection to include more features until we have 10 that are in the causal graph
-        top_10_indices = np.argsort(scratch_importance)[-10:][::-1]  # Top 10 in descending order
+        
+        # Load adjacency matrices for both discovery methods to get features in causal graph
+        features_in_causal_graph = set()
+        
+        for discovery_method in ['pc', 'lingam']:
+            results_path = CAUSAL_DIR / f"{filename}_{discovery_method}_results.json"
+            with open(results_path, 'r') as f:
+                discovery_results = json.load(f)
+            
+            causal_graph_adj = np.array(discovery_results['adjacency_matrix'])
+            
+            # Features that have at least one edge (either as parent or child, including edges to/from Y)
+            has_edge = (causal_graph_adj.sum(axis=0) > 0) | (causal_graph_adj.sum(axis=1) > 0)
+            
+            # Remove Y (last element) from has_edge to only keep feature indices
+            has_edge = has_edge[:-1]
+            
+            # Add feature indices to the set
+            features_in_causal_graph.update(np.where(has_edge)[0])
+        
+        # Convert to sorted list for consistent ordering
+        features_in_causal_graph = sorted(list(features_in_causal_graph))
+        
+        logging.info(f"  Features in causal graph (PC or LiNGAM): {len(features_in_causal_graph)} out of {len(feature_names)} features")
+        
+        # Filter scratch_importance to only features in causal graph
+        if len(features_in_causal_graph) == 0:
+            logging.warning(f"  No features found in causal graph! Using all features instead.")
+            features_in_causal_graph = list(range(len(feature_names)))
+        
+        scratch_importance_filtered = scratch_importance[features_in_causal_graph]
+        
+        # Get top 10 from filtered features
+        top_10_filtered_indices = np.argsort(scratch_importance_filtered)[-10:][::-1]
+        top_10_indices = [features_in_causal_graph[i] for i in top_10_filtered_indices]
         top_10_features = [feature_names[i] for i in top_10_indices]
         
-        logging.info(f"  Top 10 features from Scratch: {top_10_features}")
+        logging.info(f"  Top 10 features from Scratch (filtered to causal graph): {top_10_features}")
         
         # Load SHAP values for both discovery methods
         methods_data = {}
@@ -943,20 +1010,21 @@ def main():
         # Step 1: Generate datasets
         dataset_configs = generate_all_datasets()
         
-        # # Step 2: Create train/test splits
-        # create_train_test_splits(dataset_configs)
+        # Step 2: Create train/test splits
+        create_train_test_splits(dataset_configs)
         
-        # # Step 3: Run causal discovery
-        # run_causal_discovery(dataset_configs)
+        # Step 3: Train models (must run before causal discovery so the model
+        #          can guide which features connect to Y in the causal graph)
+        train_all_models(dataset_configs)
+
+        # Step 4: Run causal discovery (uses trained models for Y-edge assignment)
+        run_causal_discovery(dataset_configs)
         
-        # # Step 4: Train models
-        # train_all_models(dataset_configs)
+        # # Step 5: Calculate Shapley values
+        # calculate_all_shapley_values(dataset_configs)
         
-        # Step 5: Calculate Shapley values
-        calculate_all_shapley_values(dataset_configs)
-        
-        # Step 6: Calculate comparison metrics
-        calculate_comparison_metrics(dataset_configs)
+        # # Step 6: Calculate comparison metrics
+        # calculate_comparison_metrics(dataset_configs)
         
         total_time = time.time() - pipeline_start
         

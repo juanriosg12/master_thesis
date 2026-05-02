@@ -178,7 +178,61 @@ class CausalDiscoveryMethod:
             warnings.warn(f"Could not detect confounders: {str(e)}")
 
         return confounders
-    
+
+    def _determine_y_parents(self, x_adjacency: np.ndarray,
+                              x_feature_names: List[str],
+                              model=None) -> List[int]:
+        """Determine which X features should have edges to Y.
+
+        Y edges are set for the union of:
+        1. Features used by the ML model (model.selected_features) — "model world"
+        2. Sink nodes in the X-only graph (no outgoing edges) — ensures Y is
+           reachable from every causal path
+
+        If model is None, only rule 2 applies.  If neither rule produces any
+        parents (e.g. dense graph with no sinks and no model), all features are
+        used as a safe fallback.
+        """
+        n_features = len(x_feature_names)
+        y_parents: set = set()
+
+        # Rule 1: features that the ML model actually uses
+        if (model is not None
+                and hasattr(model, 'selected_features')
+                and model.selected_features is not None):
+            feat_index = {name: idx for idx, name in enumerate(x_feature_names)}
+            for feat_name in model.selected_features:
+                if feat_name in feat_index:
+                    y_parents.add(feat_index[feat_name])
+
+        # Rule 2: sink nodes (no outgoing edges to other X features)
+        for i in range(n_features):
+            if x_adjacency[i, :].sum() == 0:
+                y_parents.add(i)
+
+        # Fallback: connect everything so the graph is not disconnected
+        if len(y_parents) == 0:
+            y_parents = set(range(n_features))
+
+        return sorted(y_parents)
+
+    def _build_full_adjacency(self, x_adjacency: np.ndarray,
+                               x_feature_names: List[str],
+                               model=None) -> np.ndarray:
+        """Build an (n_x+1) × (n_x+1) adjacency matrix that includes Y.
+
+        The X-to-X block comes from the discovery algorithm; X-to-Y edges are
+        determined by :meth:`_determine_y_parents`.
+        """
+        n_features = len(x_feature_names)
+        full_adj = np.zeros((n_features + 1, n_features + 1))
+        full_adj[:n_features, :n_features] = x_adjacency
+
+        for parent_idx in self._determine_y_parents(x_adjacency, x_feature_names, model):
+            full_adj[parent_idx, n_features] = 1
+
+        return full_adj
+
     def visualize_discovered_graph(self, adjacency: np.ndarray,
                                    feature_names: List[str],
                                    confounders: List = None,
@@ -243,17 +297,35 @@ class PCWithFCI(CausalDiscoveryMethod):
         self.pc_result= None
         self.fci_result = None
 
-    def discover_structure(self, data: pd.DataFrame) -> Tuple[np.ndarray, List]:
-        
+    def discover_structure(self, data: pd.DataFrame, model=None) -> Tuple[np.ndarray, List]:
+        """Discover causal structure from X-only data.
+
+        Parameters
+        ----------
+        data : pd.DataFrame
+            Feature matrix **without** the target column Y.  The discovery
+            algorithm runs purely on X features; edges to Y are added
+            afterwards via :meth:`_build_full_adjacency`.
+        model : optional
+            Fitted predictive model (must expose ``selected_features``).  When
+            provided its feature set determines which X nodes connect to Y.
+            Sink nodes in the X-only graph are always connected to Y as well.
+
+        Returns
+        -------
+        full_adjacency : np.ndarray  shape (n_x+1, n_x+1)
+            Adjacency matrix covering X features **and** Y (last row/column).
+        confounders : List[Tuple[str, str]]
+        """
         print(" Running PC algorithm for causal structure discovery...")
         data_array = data.values
-        feature_names = data.columns.tolist()
+        feature_names = data.columns.tolist()  # X features only
         n_features = len(feature_names)
 
         indep_test_func = self._get_independence_test()
 
         try:
-            # PC algorithm for causal discovery
+            # PC algorithm for causal discovery (X features only)
             self.pc_result = pc(
                 data_array,
                 alpha=self.alpha,
@@ -262,7 +334,7 @@ class PCWithFCI(CausalDiscoveryMethod):
                 uc_rule=0,
                 uc_priority=2
             )
-            # Extract adjacency matrix from PC result
+            # Extract X-only adjacency matrix from PC result
             pc_graph = self.pc_result.G
             adjacency_pc = self._extract_adjacency_from_graph(pc_graph, n_features)
             
@@ -285,7 +357,7 @@ class PCWithFCI(CausalDiscoveryMethod):
 
             # Extract confounders from FCI result
             fci_graph = self.fci_result
-            confounders= self._detect_confounders_from_graph(fci_graph, feature_names)
+            confounders = self._detect_confounders_from_graph(fci_graph, feature_names)
 
             print(f"FCI detected {len(confounders)} potential confounders pairs")
         
@@ -293,22 +365,34 @@ class PCWithFCI(CausalDiscoveryMethod):
             print(f"FCI algorithm failed: {str(e)}")
             confounders = []
 
-        self.discovered_graph = adjacency_pc
+        # Build full adjacency (X + Y), adding Y edges based on model + sinks
+        full_adjacency = self._build_full_adjacency(adjacency_pc, feature_names, model)
+        n_y_edges = int(full_adjacency[:n_features, n_features].sum())
+        print(f"Y edges added: {n_y_edges} (model features ∪ sink nodes)")
+
+        self.discovered_graph = full_adjacency
         self.confounders = confounders
 
-
-        return adjacency_pc, confounders
+        return full_adjacency, confounders
         
-    def get_causal_relationships(self, data: pd.DataFrame) -> Dict:
+    def get_causal_relationships(self, data: pd.DataFrame, model=None) -> Dict:
+        """Run discovery and return a results dict.
 
-        adjacency, confounders = self.discover_structure(data)
+        Parameters
+        ----------
+        data : pd.DataFrame
+            X-only feature matrix (no Y column).
+        model : optional
+            Fitted predictive model used to determine Y edges.
+        """
+        adjacency, confounders = self.discover_structure(data, model)
 
         results = {
             'method': 'PC + FCI',
             'adjacency_matrix': adjacency,
             'confounders': confounders,
-            'feature_names': data.columns.tolist(),
-            'n_edges': np.sum(adjacency!=0),
+            'feature_names': data.columns.tolist() + ['Y'],
+            'n_edges': np.sum(adjacency != 0),
             'n_confounders_pairs': len(confounders)
         }
 
@@ -322,20 +406,38 @@ class LiNGAMWithFCI(CausalDiscoveryMethod):
         self.lingam_result= None
         self.fci_result = None
     
-    def discover_structure(self, data: pd.DataFrame) -> Tuple[np.ndarray, List]:
+    def discover_structure(self, data: pd.DataFrame, model=None) -> Tuple[np.ndarray, List]:
+        """Discover causal structure from X-only data.
 
+        Parameters
+        ----------
+        data : pd.DataFrame
+            Feature matrix **without** the target column Y.  The discovery
+            algorithm runs purely on X features; edges to Y are added
+            afterwards via :meth:`_build_full_adjacency`.
+        model : optional
+            Fitted predictive model (must expose ``selected_features``).  When
+            provided its feature set determines which X nodes connect to Y.
+            Sink nodes in the X-only graph are always connected to Y as well.
+
+        Returns
+        -------
+        full_adjacency : np.ndarray  shape (n_x+1, n_x+1)
+            Adjacency matrix covering X features **and** Y (last row/column).
+        confounders : List[Tuple[str, str]]
+        """
         print("Running LiNGAM algorithm for causal structure discovery...")
 
         data_array = data.values
-        feature_names = data.columns.tolist()
+        feature_names = data.columns.tolist()  # X features only
         n_features = len(feature_names)
 
         # Run LiNGAM algorithm
         try:
-            model = DirectLiNGAM()
-            model.fit(data_array)
+            lingam_model = DirectLiNGAM()
+            lingam_model.fit(data_array)
 
-            adjacency_lingam = model.adjacency_matrix_
+            adjacency_lingam = lingam_model.adjacency_matrix_
             
             threashold = 0.1
             adjacency_lingam[np.abs(adjacency_lingam) < threashold] = 0
@@ -344,7 +446,7 @@ class LiNGAMWithFCI(CausalDiscoveryMethod):
 
             print(f"LiNGAM discovered {np.sum(adjacency_binary != 0)} edges")
 
-            self.lingam_result = model
+            self.lingam_result = lingam_model
         except Exception as e:
             print(f"LiNGAM algorithm failed: {str(e)}")
             print(f"Trying ICA-based LiNGAm as fallback...")
@@ -352,16 +454,16 @@ class LiNGAMWithFCI(CausalDiscoveryMethod):
                 # Fallback to ICA-based LiNGAM
                 from causallearn.search.FCMBased.lingam import ICALiNGAM
                 
-                model = ICALiNGAM()
-                model.fit(data_array)
-                adjacency_lingam = model.adjacency_matrix_
+                ica_model = ICALiNGAM()
+                ica_model.fit(data_array)
+                adjacency_lingam = ica_model.adjacency_matrix_
                 
                 threashold = 0.01
                 adjacency_lingam[np.abs(adjacency_lingam) < threashold] = 0
                 adjacency_binary = (np.abs(adjacency_lingam) > 0).astype(int)
 
                 print(f"ICA-LiNGAM discovered {np.sum(adjacency_binary !=0 )} edges")
-                self.lingam_result = model
+                self.lingam_result = ica_model
 
             except Exception as e2:
                 print(f"ICA-LiNGAM also failed: {str(e2)}")
@@ -369,7 +471,6 @@ class LiNGAMWithFCI(CausalDiscoveryMethod):
         
         # Run FCI algorithm for confounder detection
         print("Running FCI algorithm for confounder detection...")
-
 
         indep_test_func = self._get_independence_test()
 
@@ -383,7 +484,7 @@ class LiNGAMWithFCI(CausalDiscoveryMethod):
 
             # Extract confounders from FCI result
             fci_graph = self.fci_result
-            confounders= self._detect_confounders_from_graph(fci_graph, feature_names)
+            confounders = self._detect_confounders_from_graph(fci_graph, feature_names)
 
             print(f"FCI detected {len(confounders)} potential confounders pairs")
         
@@ -391,22 +492,34 @@ class LiNGAMWithFCI(CausalDiscoveryMethod):
             print(f"FCI algorithm failed: {str(e)}")
             confounders = []
 
-        self.discovered_graph = adjacency_binary
+        # Build full adjacency (X + Y), adding Y edges based on model + sinks
+        full_adjacency = self._build_full_adjacency(adjacency_binary, feature_names, model)
+        n_y_edges = int(full_adjacency[:n_features, n_features].sum())
+        print(f"Y edges added: {n_y_edges} (model features ∪ sink nodes)")
+
+        self.discovered_graph = full_adjacency
         self.confounders = confounders
 
-        return adjacency_binary, confounders
+        return full_adjacency, confounders
     
-    def get_causal_relationships(self, data: pd.DataFrame) -> Dict:
+    def get_causal_relationships(self, data: pd.DataFrame, model=None) -> Dict:
+        """Run discovery and return a results dict.
 
-
-        adjacency, confounders = self.discover_structure(data)
+        Parameters
+        ----------
+        data : pd.DataFrame
+            X-only feature matrix (no Y column).
+        model : optional
+            Fitted predictive model used to determine Y edges.
+        """
+        adjacency, confounders = self.discover_structure(data, model)
 
         results = {
             'method': 'LiNGAM + FCI',
             'adjacency_matrix': adjacency,
             'confounders': confounders,
-            'feature_names': data.columns.tolist(),
-            'n_edges': np.sum(adjacency!=0),
+            'feature_names': data.columns.tolist() + ['Y'],
+            'n_edges': np.sum(adjacency != 0),
             'n_confounders_pairs': len(confounders)
         }
 
