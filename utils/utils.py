@@ -8,8 +8,24 @@ import matplotlib.pyplot as plt
 def visualize_causal_graph( adjacency_matrix: np.ndarray,
                                confounder_info: List = None,
                                title: str = "Causal Graph",
-                               y_parent_indices: List[int]= None):
+                               y_parent_indices: List[int]= None,
+                               filter_to_sink: bool = False):
+        """
+        Visualize causal graph.
         
+        Parameters:
+        -----------
+        adjacency_matrix : np.ndarray
+            Adjacency matrix between X features
+        confounder_info : List, optional
+            List of confounders
+        title : str
+            Graph title
+        y_parent_indices : List[int], optional
+            Indices of features that are parents of Y
+        filter_to_sink : bool, default=False
+            If True, only show edges that are part of paths to Y (keeps all nodes)
+        """
 
         G = nx.DiGraph()
         n = adjacency_matrix.shape[0]
@@ -20,15 +36,66 @@ def visualize_causal_graph( adjacency_matrix: np.ndarray,
 
         # Add Y node
         G.add_node("Y")
+        
+        # Build initial graph structure to determine reachability
+        if filter_to_sink:
+            # Create temporary feature list including Y
+            all_features = nodes + ['Y']
+            n_total = n + 1
+            sink_idx = n  # Y is at the end
+            
+            # Build extended adjacency matrix including Y
+            extended_adj = np.zeros((n_total, n_total))
+            extended_adj[:n, :n] = adjacency_matrix
+            
+            # Add Y parent edges
+            if y_parent_indices is not None:
+                for parent_idx in y_parent_indices:
+                    extended_adj[parent_idx, sink_idx] = 1
+            
+            # Build parent dictionary for BFS
+            parents = {}
+            for j in range(n_total):
+                parents[j] = [i for i in range(n_total) if extended_adj[i, j] != 0]
+            
+            # Backward BFS from Y - find all nodes that can reach Y
+            reachable_indices = set()
+            queue = [sink_idx]
+            visited = {sink_idx}
+            
+            while queue:
+                current_idx = queue.pop(0)
+                reachable_indices.add(current_idx)
+                
+                # Add all parents (predecessors) of current node
+                for parent_idx in parents.get(current_idx, []):
+                    if parent_idx not in visited:
+                        visited.add(parent_idx)
+                        queue.append(parent_idx)
+            
+            # Only add edges between reachable nodes
+            for i in range(n):
+                for j in range(n):
+                    if adjacency_matrix[i, j] == 1:
+                        if i in reachable_indices and j in reachable_indices:
+                            G.add_edge(nodes[i], nodes[j])
+            
+            if y_parent_indices is not None:
+                for parent_idx in y_parent_indices:
+                    if parent_idx in reachable_indices:
+                        G.add_edge(f"X{parent_idx}", 'Y')
+        else:
+            # Original behavior: add all edges
+            for i in range(n):
+                for j in range(n):
+                    if adjacency_matrix[i, j]==1:
+                        G.add_edge(nodes[i],nodes[j])
 
-        for i in range(n):
-            for j in range(n):
-                if adjacency_matrix[i, j]==1:
-                    G.add_edge(nodes[i],nodes[j])
-
-        if y_parent_indices is not None:
-            for parent_idx in y_parent_indices:
-                G.add_edge(f"X{parent_idx}",'Y')
+            if y_parent_indices is not None:
+                for parent_idx in y_parent_indices:
+                    G.add_edge(f"X{parent_idx}",'Y')
+            
+            reachable_indices = set(range(n + 1))  # All nodes reachable if not filtering
 
         # Add confounder nodes if present 
         if confounder_info:
@@ -36,7 +103,9 @@ def visualize_causal_graph( adjacency_matrix: np.ndarray,
                 conf_node = f'U{conf_id}'
                 G.add_node(conf_node)
                 for node_idx in affected_nodes:
-                    G.add_edge(conf_node, nodes[node_idx])
+                    # Only add edge if target node is reachable (when filtering)
+                    if not filter_to_sink or node_idx in reachable_indices:
+                        G.add_edge(conf_node, nodes[node_idx])
 
         # Create layout
 
@@ -82,7 +151,32 @@ def visualize_causal_graph( adjacency_matrix: np.ndarray,
 def visualize_comparison(true_adj, discovered_adj, features_names,
                          y_parent_indices=None, discovered_y_parents=None,
                          true_confounders=None, discovered_confounders=None,
-                         title_preix="Causal Grap Comparison"):
+                         title_preix="Causal Grap Comparison",
+                         filter_to_sink: bool = False):
+    """
+    Visualize comparison between true and discovered causal graphs.
+    
+    Parameters:
+    -----------
+    true_adj : np.ndarray
+        True adjacency matrix
+    discovered_adj : np.ndarray
+        Discovered adjacency matrix
+    features_names : list
+        List of feature names (should include 'Y')
+    y_parent_indices : list, optional
+        True parent indices of Y
+    discovered_y_parents : list, optional
+        Discovered parent indices of Y
+    true_confounders : list, optional
+        True confounders
+    discovered_confounders : list, optional
+        Discovered confounders
+    title_preix : str
+        Title prefix
+    filter_to_sink : bool, default=False
+        If True, only show edges that are part of paths to Y (keeps all nodes)
+    """
     
     n_features = len(features_names)
 
@@ -91,11 +185,38 @@ def visualize_comparison(true_adj, discovered_adj, features_names,
     # True graph
     G_true = nx.DiGraph()
     G_true.add_nodes_from(features_names)
+    
+    # Calculate reachable nodes for true graph if filtering
+    if filter_to_sink and 'Y' in features_names:
+        sink_idx = features_names.index('Y')
+        
+        # Build parent dictionary for BFS
+        parents_true = {}
+        for j in range(n_features):
+            parents_true[j] = [i for i in range(n_features) if true_adj[i, j] != 0]
+        
+        # Backward BFS from Y
+        reachable_true = set()
+        queue = [sink_idx]
+        visited = {sink_idx}
+        
+        while queue:
+            current_idx = queue.pop(0)
+            reachable_true.add(current_idx)
+            
+            for parent_idx in parents_true.get(current_idx, []):
+                if parent_idx not in visited:
+                    visited.add(parent_idx)
+                    queue.append(parent_idx)
+    else:
+        reachable_true = set(range(n_features))
 
+    # Add edges - filter if requested
     for i in range(n_features):
         for j in range(n_features):
             if true_adj[i, j] == 1:
-                G_true.add_edge(features_names[i], features_names[j])
+                if not filter_to_sink or (i in reachable_true and j in reachable_true):
+                    G_true.add_edge(features_names[i], features_names[j])
 
     if true_confounders:
         for conf_id, affected_nodes in true_confounders:
@@ -103,7 +224,9 @@ def visualize_comparison(true_adj, discovered_adj, features_names,
             G_true.add_node(conf_node)
             for node_idx in affected_nodes:
                 if node_idx < len(features_names):
-                    G_true.add_edge(conf_node,features_names[node_idx])
+                    # Only add edge if target node is reachable (when filtering)
+                    if not filter_to_sink or node_idx in reachable_true:
+                        G_true.add_edge(conf_node,features_names[node_idx])
 
     pos_true = nx.spring_layout(G_true, seed=42, k=2, iterations=50)
 
@@ -169,11 +292,38 @@ def visualize_comparison(true_adj, discovered_adj, features_names,
 
     G_disc = nx.DiGraph()
     G_disc.add_nodes_from(features_names)
+    
+    # Calculate reachable nodes for discovered graph if filtering
+    if filter_to_sink and 'Y' in features_names:
+        sink_idx = features_names.index('Y')
+        
+        # Build parent dictionary for BFS
+        parents_disc = {}
+        for j in range(n_features):
+            parents_disc[j] = [i for i in range(n_features) if discovered_adj[i, j] != 0]
+        
+        # Backward BFS from Y
+        reachable_disc = set()
+        queue = [sink_idx]
+        visited = {sink_idx}
+        
+        while queue:
+            current_idx = queue.pop(0)
+            reachable_disc.add(current_idx)
+            
+            for parent_idx in parents_disc.get(current_idx, []):
+                if parent_idx not in visited:
+                    visited.add(parent_idx)
+                    queue.append(parent_idx)
+    else:
+        reachable_disc = set(range(n_features))
 
+    # Add edges - filter if requested
     for i in range(n_features):
         for j in range(n_features):
             if discovered_adj[i, j] != 0:
-                G_disc.add_edge(features_names[i], features_names[j])
+                if not filter_to_sink or (i in reachable_disc and j in reachable_disc):
+                    G_disc.add_edge(features_names[i], features_names[j])
 
     if discovered_confounders:
         conf_count=0
@@ -183,8 +333,16 @@ def visualize_comparison(true_adj, discovered_adj, features_names,
 
                 conf_node = f'U{conf_count}'
                 G_disc.add_node(conf_node)
-                G_disc.add_edge(conf_node,var1)
-                G_disc.add_edge(conf_node,var2)
+                
+                # Only add edges if targets are reachable (when filtering)
+                var1_idx = features_names.index(var1) if var1 in features_names else -1
+                var2_idx = features_names.index(var2) if var2 in features_names else -1
+                
+                if not filter_to_sink or var1_idx in reachable_disc:
+                    G_disc.add_edge(conf_node,var1)
+                if not filter_to_sink or var2_idx in reachable_disc:
+                    G_disc.add_edge(conf_node,var2)
+                    
                 conf_count += 1
 
     pos_disc = nx.spring_layout(G_disc, seed=42, k=2, iterations=50)

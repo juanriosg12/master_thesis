@@ -126,149 +126,127 @@ RETURN φ / n_samples
 
 ### What It Does
 
-Computes **path-based Shapley values** that respect causal ordering. Instead of sampling from all permutations, it samples only from **causal paths** connecting source nodes to the outcome Y. Only features **on the sampled path** receive credit.
+Computes **Shapley values with causal ordering constraints** (Frye et al. 2021). Permutations are sampled uniformly from the set of all valid topological orderings of the X-feature DAG (its linear extensions). All features appear in every permutation; no feature receives structural zero attribution.
 
 ### Game Theory Foundation
 
-**Modified Shapley for Causal Paths:**
+**Modified Shapley for Causal Orderings (Frye et al. 2021):**
 ```
-φᵢ = E_π∈Π_causal [v(S_π^i ∪ {i}) - v(S_π^i)]
+φᵢ = E_π∈Π_topo [v(S_π^i ∪ {i}) - v(S_π^i)]
 ```
 
-Where `Π_causal` is the restricted set of permutations that:
-1. Only include nodes on a path from sources to outcome Y
-2. Maintain topological order (ancestors before descendants)
-3. Exclude nodes not on any path to Y
+Where `Π_topo` is the set of all valid topological orderings of the X-feature DAG:
+- Every permutation respects the causal partial order: if i → j in the DAG then i precedes j in π
+- All n_features features appear in every permutation
+- Coalition value v(S) uses observational background marginalization (same as vanilla)
 
 **Key Difference from Vanilla:**
-- Vanilla: All features in every permutation
-- Asymmetric: Only path features in each permutation
-- Non-path features receive **zero attribution**
+- Vanilla: uniform over all n! permutations (ignores causal structure)
+- Asymmetric: uniform over valid topological orderings only (set of linear extensions)
 
 ### Coalition & Permutation Mechanics
 
-**Path Sampling Process:**
-1. Identify source nodes (no incoming edges, can reach Y)
-2. Randomly select ONE source node
-3. Find all paths from that source to outcome Y
-4. Randomly select ONE path from that source
-5. Remove outcome Y from path (added conceptually at end)
-6. Use path as the permutation order
+**Topological Ordering (Kahn-style uniform sampling):**
+1. Initialise a pool of *ready* X-features — those whose in-degree among X-only edges is zero
+2. At each step pick **uniformly at random** from the pool (swap-remove, O(1))
+3. Decrement in-degrees of the selected node's X-children; add newly-ready children to pool
+4. Repeat until all n_features are placed
+5. Safety fallback: if the graph has unexpected cycles, unplaced nodes are appended in random order
 
 **Coalition Formation:**
-Same as vanilla Shapley, but:
-- Coalitions only contain features from the sampled path
-- Non-path features are always treated as "missing" (sampled from background)
-
-**Current Implementation Detail:**
-The code uses: `ordering = path` (line 908), meaning ONLY path nodes are included. Non-path nodes are completely excluded from the game.
+Same as vanilla Shapley:
+- All features are included; coalitions grow incrementally along the sampled ordering
+- Features IN coalition S: use instance's actual values (foreground)
+- Features NOT in coalition S: sample from background data
 
 ### Causal Diagram Usage
 
-**USED FOR: Path Identification & Ordering**
+**USED FOR: X-Only Topological Ordering**
 
 1. **Adjacency Matrix → Directed Graph:**
    - Extract binary directed graph from adjacency matrix
    - `directed_graph[i,j] = 1` means i → j
 
-2. **Source Detection:**
-   - Find nodes with no incoming edges
-   - Filter to sources that have paths to outcome Y
-   - `self.source_nodes = [filtered sources]`
+2. **X-Only Ordering Structures (precomputed in `__init__`):**
+   - `_x_children[i]`: children of node i among X features (Y excluded)
+   - `_x_in_degree[i]`: number of X-feature parents of node i
+   - Used by `_sample_topological_ordering()` at every trial; O(n) per call
 
-3. **Path Finding (DFS):**
-   ```python
-   def _find_all_paths_to_outcome(source, outcome):
-       # Depth-first search from source to outcome
-       # Returns list of paths: [[node1, node2, ..., outcome], ...]
-   ```
+3. **Cycle Detection:**
+   - If DAG has cycles, `directed_graph` is zeroed out (falls back to unconstrained)
 
-4. **Topological Constraint:**
-   - Paths inherently respect topological order
-   - Parents always appear before children on the path
-
-**NO FILTERING OF ADJACENCY MATRIX** - Uses full causal graph to find paths.
+**NO FILTERING OF ADJACENCY MATRIX** — uses the full X-feature subgraph.
 
 ### Pseudocode
 
 ```python
-ALGORITHM: Asymmetric Shapley (Path-Based)
+ALGORITHM: Asymmetric Shapley (Random Topological Ordering, Frye et al. 2021)
 
 INPUT:
     - instance x (features to explain)
     - model f (trained predictor)
     - background_data D
-    - causal_graph G (adjacency matrix including Y)
-    - n_samples (number of path samples)
+    - causal_graph G (adjacency matrix including Y, shape n+1 × n+1)
+    - n_samples (number of random topological orderings)
 
 OUTPUT:
-    - φ ∈ R^n (Shapley values for n features, excluding Y)
+    - φ ∈ R^n (Shapley values for n X-features)
 
 PREPROCESSING:
-    # Extract directed graph
+    # Extract directed graph; detect and disable cycles
     directed_graph ← extract_directed_edges(causal_graph)
     
-    # Build parent/child relationships
-    parents ← {node: [p where directed_graph[p, node] = 1]}
-    children ← {node: [c where directed_graph[node, c] = 1]}
-    
-    # Find source nodes (no parents, can reach Y)
-    all_sources ← {node: len(parents[node]) == 0}
-    
-    # Filter sources via backward BFS from Y
-    reachable_from_Y ← backward_BFS(Y, parents)
-    source_nodes ← all_sources ∩ reachable_from_Y
+    # Build X-only adjacency structures (Y = last node, excluded)
+    FOR i = 0 to n-1:
+        FOR j = 0 to n-1:
+            IF directed_graph[i, j] ≠ 0:
+                _x_children[i].append(j)
+                _x_in_degree[j] += 1
 
 INITIALIZE:
     φ ← zeros(n)
     baseline ← mean(f(D))
-    outcome_idx ← n  # Y is last variable
 
 FOR trial = 1 to n_samples:
-    # Sample random source
-    source ← random_choice(source_nodes)
+    # ===== SAMPLE RANDOM VALID TOPOLOGICAL ORDERING =====
+    remaining_in_degree ← copy(_x_in_degree)
+    ready ← [i for i in 0..n-1 if remaining_in_degree[i] == 0]
+    π ← []
     
-    # Find all paths from source to Y
-    paths ← DFS_find_paths(source, outcome_idx, directed_graph)
+    WHILE ready is not empty:
+        # Uniform random pick via swap-remove (O(1))
+        idx ← randint(len(ready))
+        node ← ready[idx]; ready[idx] ← ready[-1]; ready.pop()
+        π.append(node)
+        FOR child in _x_children[node]:
+            remaining_in_degree[child] -= 1
+            IF remaining_in_degree[child] == 0:
+                ready.append(child)
     
-    IF paths is empty:
-        CONTINUE  # Skip this trial
-    
-    # Sample random path
-    path ← random_choice(paths)
-    
-    # Remove outcome from path (Y is always last conceptually)
-    path ← path[:-1]  # Remove Y
-    
-    # Use path as permutation order
-    π ← path
-    
-    # Compute marginal contributions
+    # ===== COMPUTE MARGINAL CONTRIBUTIONS =====
     S ← ∅
     v_prev ← baseline
     
     FOR each feature_i in π:
         S ← S ∪ {feature_i}
         
-        # Coalition value
+        # Coalition value: marginalize non-S features from background
         samples ← D.copy()
         FOR each feature_j in S:
             samples[:, feature_j] ← x[feature_j]
         v_curr ← mean(f(samples))
         
-        # Marginal contribution
-        Δ ← v_curr - v_prev
-        φ[feature_i] += Δ
-        
+        φ[feature_i] += v_curr - v_prev
         v_prev ← v_curr
 
 RETURN φ / n_samples
 ```
 
-**Key Observations:**
-- Only path nodes accumulate contributions
-- Non-path nodes remain at φ = 0
-- Each trial focuses on ONE random path
+**Key Properties:**
+- All features appear in every permutation — no structural zeros
+- Causal partial order is respected for every ancestor-descendant pair
+- O(n) sampling cost per permutation
+- Reference: Frye, Rowat & Feige (2021), NeurIPS
 
 ---
 
@@ -301,14 +279,27 @@ v_do(S) = E[f(X) | do(X_S = x_S)]  (interventional distribution)
 
 ### Coalition & Permutation Mechanics
 
-**Outer Loop (Permutations):**
-Same as vanilla Shapley - sample random permutations of all features
+**Outer Loop (Permutations) — Component Topological Ordering:**
+
+Instead of a fully random permutation, the outer loop draws from the uniform distribution over valid topological orderings of the **component DAG** in two stages:
+
+*Stage 1 — Kahn-style random sort of components:*
+- Maintain a pool of ready components (in-degree 0 in the component DAG)
+- At each step pick uniformly at random from the pool (swap-remove, O(1))
+- Decrement child in-degrees; add newly-ready children to pool
+
+*Stage 2 — Expand to features:*
+- For each component in the sampled order, expand to its features
+- Within a confounded component the features are shuffled randomly
+- Single-feature (non-confounded) components are trivially ordered
+
+The result is a flat feature list where every ancestor always precedes every descendant.
 
 **Inner Loop (Coalition Evaluation):**
 For each coalition S, compute `v_do(S)` via **post-interventional sampling**:
 
 1. Fix intervened variables: X_S = x_S (from instance)
-2. Sample non-intervened variables from causal mechanism
+2. Sample non-intervened variables from causal mechanism, traversing components in the **fixed** deterministic topological order (not randomised — do-calculus requires consistent structural propagation)
 3. Repeat M times, average predictions
 
 ### Post-Interventional Sampling Algorithm
@@ -413,8 +404,26 @@ INITIALIZE:
     baseline ← mean(f(D))
 
 FOR trial = 1 to n_samples:
-    # Sample random permutation
-    π ← random_permutation([1, ..., n])
+    # ===== SAMPLE RANDOM COMPONENT TOPOLOGICAL ORDERING =====
+    remaining_in_degree ← copy(_comp_in_degree)
+    ready ← [c for c in 0..n_comps-1 if remaining_in_degree[c] == 0]
+    comp_order ← []
+    
+    WHILE ready is not empty:
+        idx ← randint(len(ready))
+        comp ← ready[idx]; ready[idx] ← ready[-1]; ready.pop()
+        comp_order.append(comp)
+        FOR child_comp in _comp_children[comp]:
+            remaining_in_degree[child_comp] -= 1
+            IF remaining_in_degree[child_comp] == 0:
+                ready.append(child_comp)
+    
+    # Expand component order to flat feature list
+    π ← []
+    FOR comp_idx in comp_order:
+        features ← causal_graph_components[comp_idx]
+        IF len(features) > 1: shuffle(features)  # confounded component
+        π.extend(features)
     
     S ← ∅
     v_prev ← baseline
@@ -422,7 +431,7 @@ FOR trial = 1 to n_samples:
     FOR each feature_i in π:
         S ← S ∪ {feature_i}
         
-        # ===== POST-INTERVENTIONAL SAMPLING =====
+        # ===== POST-INTERVENTIONAL SAMPLING (fixed topological order inside) =====
         v_curr ← 0
         FOR m = 1 to M_inner:
             sample ← zeros(n)
@@ -656,7 +665,9 @@ RETURN edge_attributions
 
 
 HELPER: evaluate_system(active_edges, x_fg, x_bg)
-    """Evaluate system state given active edges"""
+    """Evaluate system state given active edges.
+    Y (sink_node) is always stripped from the feature vector before predict(),
+    so observed Y values never reach the model."""
     
     node_values ← {}
     
@@ -664,23 +675,38 @@ HELPER: evaluate_system(active_edges, x_fg, x_bg)
         # Baseline: all features at background
         RETURN predict(x_bg)
     
-    # Determine which nodes have active incoming edges
+    history_set ← set(active_edges)
+    
+    # Determine value for each node
     FOR each node:
-        has_active_incoming ← any((p, node) in active_edges)
+        has_active_incoming ← any((p, node) in history_set
+                                   for p in parents[node])
         
         IF node is source:
-            has_active_outgoing ← any((node, c) in active_edges)
+            has_active_outgoing ← any((node, c) in history_set
+                                       for c in graph[node])
             IF has_active_outgoing:
-                node_values[node] ← x_fg[node]
+                node_values[node] ← x_fg[node]   # source activated
             ELSE:
-                node_values[node] ← x_bg[node]
+                node_values[node] ← x_bg[node]   # source at background
         
         ELSE IF has_active_incoming:
+            node_values[node] ← x_fg[node]        # downstream node activated
+        
+        ELSE IF (node, sink_node) in history_set:
+            # Direct X_k → Y edge is active: bring X_k to foreground so the
+            # model sees its actual feature value. Y itself is excluded from
+            # the prediction input (see feature_indices below), so no Y data
+            # leakage occurs.
             node_values[node] ← x_fg[node]
+        
         ELSE:
-            node_values[node] ← x_bg[node]
+            node_values[node] ← x_bg[node]        # node at background
     
-    RETURN predict(node_values)
+    # Exclude Y (sink_node) from model input — Y is never fed to the predictor
+    feature_indices ← [i for i in range(n_features) if i != sink_node]
+    x_features ← [node_values[i] for i in feature_indices]
+    RETURN predict(x_features)
 ```
 
 **Node Attribution (Post-Processing):**
@@ -859,17 +885,17 @@ After filtering, converts adjacency matrix to shapflow Graph object:
 
 | Method | Causal Structure | Filtering | Coalition Type | Computational Cost |
 |--------|------------------|-----------|----------------|-------------------|
-| **Vanilla Shapley** | None | None | All features, random order | O(n_samples × n × M_bg) |
-| **Asymmetric Shapley** | Paths to Y | Sources (backward BFS) | Only path features | O(n_samples × path_length × M_bg) |
-| **Causal Shapley** | Components + Confounders | None | All features, interventional | O(n_samples × n × M_inner × n) |
+| **Vanilla Shapley** | None | None | All features, uniform random order | O(n_samples × n × M_bg) |
+| **Asymmetric Shapley** | X-feature DAG | None | All features, uniform over topological orderings | O(n_samples × n × M_bg) |
+| **Causal Shapley** | Components + Confounders | None | All features, component topo. ordering, interventional values | O(n_samples × n × M_inner × n) |
 | **Shapley Flow** | Full DAG | Sources (backward BFS) | Edges, path sampling | O(n_samples × n_paths × path_length × M_bg) |
 | **GraphExplainer** | Full DAG | Edges (backward BFS) | Edges (library-dependent) | Depends on shapflow implementation |
 
 **Filtering Locations:**
 
 1. **AsymmetricShapley**: 
-   - `__init__`: Backward BFS to find Y-reachable sources
-   - `_sample_causal_paths_to_outcome`: Samples paths from filtered sources
+   - No source or adjacency filtering — uses the full X-feature subgraph
+   - Cycle detection in `__init__`: zeros out directed_graph if cycles found
 
 2. **ShapleyFlowWrapper**:
    - `__init__`: Backward BFS to filter sources
@@ -882,17 +908,17 @@ After filtering, converts adjacency matrix to shapflow Graph object:
 
 **Coalition Formation:**
 
-- **Vanilla**: Random permutations of ALL features
-- **Asymmetric**: Random paths, only path features
-- **Causal**: Random permutations, post-interventional sampling
+- **Vanilla**: Random permutations of ALL features (uniform over n!)
+- **Asymmetric**: ALL features in every permutation; orderings drawn uniformly from topological orderings of the X-DAG
+- **Causal**: ALL features; outer permutation drawn from topological orderings of component DAG; inner sampling is post-interventional
 - **ShapleyFlow**: Random paths of EDGES (not features)
 - **GraphExplainer**: Library-dependent (likely similar to ShapleyFlow)
 
 **Causal Graph Interpretation:**
 
 - **Vanilla**: Ignored
-- **Asymmetric**: Paths define valid orderings
-- **Causal**: Components define intervention semantics
+- **Asymmetric**: Defines valid topological orderings (linear extensions of the DAG)
+- **Causal**: Components define intervention semantics; component DAG constrains outer permutation
 - **ShapleyFlow**: Edges define game players
 - **GraphExplainer**: Full graph with learned mechanisms
 

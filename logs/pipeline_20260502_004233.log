@@ -1,0 +1,3023 @@
+2026-05-02 00:42:33 | Log file: /Users/juanrios/Documents/master_thesis/logs/pipeline_20260502_004233.log
+2026-05-02 00:42:33 | 
+================================================================================
+2026-05-02 00:42:33 | EXPERIMENTAL PIPELINE: CAUSAL FEATURE IMPORTANCE COMPARISON
+2026-05-02 00:42:33 | ================================================================================
+2026-05-02 00:42:33 | 
+================================================================================
+2026-05-02 00:42:33 | CONFIGURATION PARAMETERS
+2026-05-02 00:42:33 | ================================================================================
+2026-05-02 00:42:33 | 
+1. DATASET PARAMETERS:
+2026-05-02 00:42:33 |    - N_FEATURES: 50
+2026-05-02 00:42:33 |    - N_SAMPLES: 1000
+2026-05-02 00:42:33 |    - Y_PARENTS_RATIO: 0.5
+2026-05-02 00:42:33 |    - NOISE_STD: 0.5
+2026-05-02 00:42:33 |    - EDGE_PROBABILITY: 0.2
+2026-05-02 00:42:33 |    - MIN_CONNECTED_EDGES: 2
+2026-05-02 00:42:33 |    - RANDOM_STATE: 42
+2026-05-02 00:42:33 | 
+2. MODEL TRAINING PARAMETERS:
+2026-05-02 00:42:33 |    - TEST_SIZE: 0.2
+2026-05-02 00:42:33 |    - BACKGROUND_RATIO: 0.3
+2026-05-02 00:42:33 |    - TEST_INSTANCES_RATIO: 0.5
+2026-05-02 00:42:33 | 
+3. EXPLAINABILITY PARAMETERS:
+2026-05-02 00:42:33 |    - N_SHAPLEY_SAMPLES: 50
+2026-05-02 00:42:33 |    - M_INNER_SAMPLES_CAUSAL: 10
+2026-05-02 00:42:33 | 
+4. CAUSAL DISCOVERY PARAMETERS:
+2026-05-02 00:42:33 |    - LINGAM_ALPHA: 0.05
+2026-05-02 00:42:33 |    - PC_ALPHA: 0.05
+2026-05-02 00:42:33 |    - INDEP_TEST: fisherz
+2026-05-02 00:42:33 | 
+5. TARGET CONFIGURATION:
+2026-05-02 00:42:33 |    - TARGET_DATASETS: ['mixed_no_conf_f50_s1000_p50']
+2026-05-02 00:42:33 |    - MODEL: LGBM (only)
+2026-05-02 00:42:33 | 
+6. DIRECTORIES:
+2026-05-02 00:42:33 |    - BASE_DIR: /Users/juanrios/Documents/master_thesis
+2026-05-02 00:42:33 |    - SYNTHETIC_DIR: /Users/juanrios/Documents/master_thesis/data/synthetic
+2026-05-02 00:42:33 |    - PROCESSED_DIR: /Users/juanrios/Documents/master_thesis/data/processed
+2026-05-02 00:42:33 |    - CAUSAL_DIR: /Users/juanrios/Documents/master_thesis/data/causal
+2026-05-02 00:42:33 |    - EXPLAINABILITY_DIR: /Users/juanrios/Documents/master_thesis/data/explainability
+2026-05-02 00:42:33 |    - MODELS_DIR: /Users/juanrios/Documents/master_thesis/models
+2026-05-02 00:42:33 |    - LOGS_DIR: /Users/juanrios/Documents/master_thesis/logs
+2026-05-02 00:42:33 | 
+================================================================================
+
+2026-05-02 00:42:33 | ================================================================================
+2026-05-02 00:42:33 | STEP 1: GENERATING SYNTHETIC DATASETS
+2026-05-02 00:42:33 | ================================================================================
+2026-05-02 00:42:33 | 
+[Dataset 1/6] Generating linear system without confounders
+2026-05-02 00:42:33 |   ✓ Saved: linear_no_conf_f50_s1000_p50 | Features: 50, Samples: 1000, Y parents: 25, Edges: 291, Confounders: 0
+2026-05-02 00:42:33 | 
+[Dataset 2/6] Generating linear system with confounders
+2026-05-02 00:42:33 |   ✓ Saved: linear_conf_f50_s1000_p50 | Features: 50, Samples: 1000, Y parents: 25, Edges: 291, Confounders: 5
+2026-05-02 00:42:33 | 
+[Dataset 3/6] Generating nonlinear system without confounders
+2026-05-02 00:42:33 |   ✓ Saved: nonlinear_no_conf_f50_s1000_p50 | Features: 50, Samples: 1000, Y parents: 25, Edges: 291, Confounders: 0
+2026-05-02 00:42:33 | 
+[Dataset 4/6] Generating nonlinear system with confounders
+2026-05-02 00:42:33 |   ✓ Saved: nonlinear_conf_f50_s1000_p50 | Features: 50, Samples: 1000, Y parents: 25, Edges: 291, Confounders: 5
+2026-05-02 00:42:33 | 
+[Dataset 5/6] Generating mixed system without confounders
+2026-05-02 00:42:33 |   ✓ Saved: mixed_no_conf_f50_s1000_p50 | Features: 50, Samples: 1000, Y parents: 25, Edges: 291, Confounders: 0
+2026-05-02 00:42:33 | 
+[Dataset 6/6] Generating mixed system with confounders
+2026-05-02 00:42:33 |   ✓ Saved: mixed_conf_f50_s1000_p50 | Features: 50, Samples: 1000, Y parents: 25, Edges: 291, Confounders: 5
+2026-05-02 00:42:33 | 
+================================================================================
+2026-05-02 00:42:33 | Step 1 Complete: 6 datasets generated
+2026-05-02 00:42:33 | ================================================================================
+
+2026-05-02 00:42:33 | ================================================================================
+2026-05-02 00:42:33 | STEP 2: CREATING TRAIN/TEST SPLITS
+2026-05-02 00:42:33 | ================================================================================
+2026-05-02 00:42:33 | 
+[Dataset 1/6] Processing linear_no_conf_f50_s1000_p50...
+2026-05-02 00:42:33 |   ✓ Train: (800, 51), Test: (200, 51)
+2026-05-02 00:42:33 | 
+[Dataset 2/6] Processing linear_conf_f50_s1000_p50...
+2026-05-02 00:42:33 |   ✓ Train: (800, 51), Test: (200, 51)
+2026-05-02 00:42:33 | 
+[Dataset 3/6] Processing nonlinear_no_conf_f50_s1000_p50...
+2026-05-02 00:42:33 |   ✓ Train: (800, 51), Test: (200, 51)
+2026-05-02 00:42:33 | 
+[Dataset 4/6] Processing nonlinear_conf_f50_s1000_p50...
+2026-05-02 00:42:33 |   ✓ Train: (800, 51), Test: (200, 51)
+2026-05-02 00:42:33 | 
+[Dataset 5/6] Processing mixed_no_conf_f50_s1000_p50...
+2026-05-02 00:42:33 |   ✓ Train: (800, 51), Test: (200, 51)
+2026-05-02 00:42:33 | 
+[Dataset 6/6] Processing mixed_conf_f50_s1000_p50...
+2026-05-02 00:42:33 |   ✓ Train: (800, 51), Test: (200, 51)
+2026-05-02 00:42:33 | 
+================================================================================
+2026-05-02 00:42:33 | Step 2 Complete: Train/test splits created for 6 datasets
+2026-05-02 00:42:33 | ================================================================================
+
+2026-05-02 00:42:33 | ================================================================================
+2026-05-02 00:42:33 | STEP 4: TRAINING PREDICTIVE MODELS (LGBM only, 1 datasets)
+2026-05-02 00:42:33 | ================================================================================
+2026-05-02 00:42:33 | 
+[Dataset 1/1] Training LGBM model for mixed_no_conf_f50_s1000_p50
+2026-05-02 00:42:33 |   Training LGBM...
+2026-05-02 00:42:41 |   ✓ LGBM: R²=0.7617, MSE=0.3109, MAE=0.4372, RMSE=0.5576
+2026-05-02 00:42:41 |   ✓ LGBM model saved with the following number of features: 50
+2026-05-02 00:42:41 | 
+================================================================================
+2026-05-02 00:42:41 | Step 4 Complete: LGBM model trained for 1 datasets
+2026-05-02 00:42:41 | ================================================================================
+
+2026-05-02 00:42:41 | ================================================================================
+2026-05-02 00:42:41 | STEP 4 (was 3): RUNNING CAUSAL DISCOVERY
+2026-05-02 00:42:41 | ================================================================================
+2026-05-02 00:42:41 | 
+[Dataset 1/6] Processing linear_no_conf_f50_s1000_p50
+2026-05-02 00:42:41 |   Running LiNGAM...
+2026-05-02 00:42:47 |   Running PC...
+2026-05-02 00:42:53 |   Extracting X-only train adjacency matrices for Step 5...
+2026-05-02 00:42:53 |   ✓ LINGAM: F1=0.271, Precision=0.243, Recall=0.306
+2026-05-02 00:42:55 |   ✓ PC: F1=0.128, Precision=0.286, Recall=0.082
+2026-05-02 00:42:57 | 
+[Dataset 2/6] Processing linear_conf_f50_s1000_p50
+2026-05-02 00:42:57 |   Running LiNGAM...
+2026-05-02 00:43:03 |   Running PC...
+2026-05-02 00:43:08 |   Extracting X-only train adjacency matrices for Step 5...
+2026-05-02 00:43:08 |   ✓ LINGAM: F1=0.239, Precision=0.213, Recall=0.271
+2026-05-02 00:43:10 |   ✓ PC: F1=0.129, Precision=0.293, Recall=0.082
+2026-05-02 00:43:12 | 
+[Dataset 3/6] Processing nonlinear_no_conf_f50_s1000_p50
+2026-05-02 00:43:12 |   Running LiNGAM...
+2026-05-02 00:43:18 |   Running PC...
+2026-05-02 00:43:22 |   Extracting X-only train adjacency matrices for Step 5...
+2026-05-02 00:43:22 |   ✓ LINGAM: F1=0.194, Precision=0.217, Recall=0.175
+2026-05-02 00:43:23 |   ✓ PC: F1=0.122, Precision=0.238, Recall=0.082
+2026-05-02 00:43:25 | 
+[Dataset 4/6] Processing nonlinear_conf_f50_s1000_p50
+2026-05-02 00:43:25 |   Running LiNGAM...
+2026-05-02 00:43:49 |   Running PC...
+2026-05-02 00:44:26 |   Extracting X-only train adjacency matrices for Step 5...
+2026-05-02 00:44:26 |   ✓ LINGAM: F1=0.170, Precision=0.195, Recall=0.151
+2026-05-02 00:44:28 |   ✓ PC: F1=0.126, Precision=0.238, Recall=0.086
+2026-05-02 00:44:29 | 
+[Dataset 5/6] Processing mixed_no_conf_f50_s1000_p50
+2026-05-02 00:44:29 |   Loaded LGBM model (50 features used for Y edges)
+2026-05-02 00:44:29 |   Running LiNGAM...
+2026-05-02 00:44:35 |   Running PC...
+2026-05-02 00:44:39 |   Extracting X-only train adjacency matrices for Step 5...
+2026-05-02 00:44:39 |   ✓ LINGAM: F1=0.246, Precision=0.247, Recall=0.244
+2026-05-02 00:44:41 |   ✓ PC: F1=0.256, Precision=0.399, Recall=0.189
+2026-05-02 00:44:42 | 
+[Dataset 6/6] Processing mixed_conf_f50_s1000_p50
+2026-05-02 00:44:42 |   Running LiNGAM...
+2026-05-02 00:44:48 |   Running PC...
+2026-05-02 00:44:52 |   Extracting X-only train adjacency matrices for Step 5...
+2026-05-02 00:44:52 |   ✓ LINGAM: F1=0.155, Precision=0.160, Recall=0.151
+2026-05-02 00:44:54 |   ✓ PC: F1=0.157, Precision=0.301, Recall=0.107
+2026-05-02 00:44:56 | 
+================================================================================
+2026-05-02 00:44:56 | Step 4 Complete: Causal discovery completed for 6 datasets
+2026-05-02 00:44:56 | ================================================================================
+
+2026-05-02 00:44:56 | ================================================================================
+2026-05-02 00:44:56 | STEP 5: CALCULATING SHAPLEY VALUES (1 datasets + LGBM only)
+2026-05-02 00:44:56 | ================================================================================
+2026-05-02 00:44:56 | 
+[Dataset 1/1] Processing mixed_no_conf_f50_s1000_p50
+2026-05-02 00:44:56 |   [Progress: 1/9] LGBM - ShapleyFromScratch
+2026-05-02 00:44:56 | Starting ShapleyFromScratch computation for 100 instances
+2026-05-02 00:44:56 | Using 50 samples per instance
+2026-05-02 00:45:21 |   Completed 20/100 instances
+2026-05-02 00:45:46 |   Completed 40/100 instances
+2026-05-02 00:46:11 |   Completed 60/100 instances
+2026-05-02 00:46:37 |   Completed 80/100 instances
+2026-05-02 00:47:02 |   Completed 100/100 instances
+2026-05-02 00:47:02 | Completed all 100 instances
+2026-05-02 00:47:02 |   [Progress: 2/9] LGBM + PC - AsymmetricShapley
+2026-05-02 00:47:02 |  Calculating asymmetric SHAP values
+2026-05-02 00:47:02 | Starting Asymmetric Shapley (topo-ordering) computation for 100 instances
+2026-05-02 00:47:02 | Using 50 samples per instance
+2026-05-02 00:47:02 |     Sample 10/50 completed
+2026-05-02 00:47:03 |     Sample 20/50 completed
+2026-05-02 00:47:03 |     Sample 30/50 completed
+2026-05-02 00:47:03 |     Sample 40/50 completed
+2026-05-02 00:47:03 |     Sample 50/50 completed
+2026-05-02 00:47:04 |     Sample 10/50 completed
+2026-05-02 00:47:04 |     Sample 20/50 completed
+2026-05-02 00:47:04 |     Sample 30/50 completed
+2026-05-02 00:47:04 |     Sample 40/50 completed
+2026-05-02 00:47:05 |     Sample 50/50 completed
+2026-05-02 00:47:05 |     Sample 10/50 completed
+2026-05-02 00:47:05 |     Sample 20/50 completed
+2026-05-02 00:47:05 |     Sample 30/50 completed
+2026-05-02 00:47:06 |     Sample 40/50 completed
+2026-05-02 00:47:06 |     Sample 50/50 completed
+2026-05-02 00:47:06 |     Sample 10/50 completed
+2026-05-02 00:47:06 |     Sample 20/50 completed
+2026-05-02 00:47:07 |     Sample 30/50 completed
+2026-05-02 00:47:07 |     Sample 40/50 completed
+2026-05-02 00:47:07 |     Sample 50/50 completed
+2026-05-02 00:47:07 |     Sample 10/50 completed
+2026-05-02 00:47:08 |     Sample 20/50 completed
+2026-05-02 00:47:08 |     Sample 30/50 completed
+2026-05-02 00:47:08 |     Sample 40/50 completed
+2026-05-02 00:47:08 |     Sample 50/50 completed
+2026-05-02 00:47:09 |     Sample 10/50 completed
+2026-05-02 00:47:09 |     Sample 20/50 completed
+2026-05-02 00:47:09 |     Sample 30/50 completed
+2026-05-02 00:47:09 |     Sample 40/50 completed
+2026-05-02 00:47:10 |     Sample 50/50 completed
+2026-05-02 00:47:10 |     Sample 10/50 completed
+2026-05-02 00:47:10 |     Sample 20/50 completed
+2026-05-02 00:47:10 |     Sample 30/50 completed
+2026-05-02 00:47:11 |     Sample 40/50 completed
+2026-05-02 00:47:11 |     Sample 50/50 completed
+2026-05-02 00:47:11 |     Sample 10/50 completed
+2026-05-02 00:47:11 |     Sample 20/50 completed
+2026-05-02 00:47:12 |     Sample 30/50 completed
+2026-05-02 00:47:12 |     Sample 40/50 completed
+2026-05-02 00:47:12 |     Sample 50/50 completed
+2026-05-02 00:47:12 |     Sample 10/50 completed
+2026-05-02 00:47:13 |     Sample 20/50 completed
+2026-05-02 00:47:13 |     Sample 30/50 completed
+2026-05-02 00:47:13 |     Sample 40/50 completed
+2026-05-02 00:47:13 |     Sample 50/50 completed
+2026-05-02 00:47:14 |     Sample 10/50 completed
+2026-05-02 00:47:14 |     Sample 20/50 completed
+2026-05-02 00:47:14 |     Sample 30/50 completed
+2026-05-02 00:47:15 |     Sample 40/50 completed
+2026-05-02 00:47:15 |     Sample 50/50 completed
+2026-05-02 00:47:15 |     Sample 10/50 completed
+2026-05-02 00:47:15 |     Sample 20/50 completed
+2026-05-02 00:47:16 |     Sample 30/50 completed
+2026-05-02 00:47:16 |     Sample 40/50 completed
+2026-05-02 00:47:16 |     Sample 50/50 completed
+2026-05-02 00:47:16 |     Sample 10/50 completed
+2026-05-02 00:47:17 |     Sample 20/50 completed
+2026-05-02 00:47:17 |     Sample 30/50 completed
+2026-05-02 00:47:17 |     Sample 40/50 completed
+2026-05-02 00:47:17 |     Sample 50/50 completed
+2026-05-02 00:47:18 |     Sample 10/50 completed
+2026-05-02 00:47:18 |     Sample 20/50 completed
+2026-05-02 00:47:18 |     Sample 30/50 completed
+2026-05-02 00:47:18 |     Sample 40/50 completed
+2026-05-02 00:47:19 |     Sample 50/50 completed
+2026-05-02 00:47:19 |     Sample 10/50 completed
+2026-05-02 00:47:19 |     Sample 20/50 completed
+2026-05-02 00:47:19 |     Sample 30/50 completed
+2026-05-02 00:47:20 |     Sample 40/50 completed
+2026-05-02 00:47:20 |     Sample 50/50 completed
+2026-05-02 00:47:20 |     Sample 10/50 completed
+2026-05-02 00:47:20 |     Sample 20/50 completed
+2026-05-02 00:47:21 |     Sample 30/50 completed
+2026-05-02 00:47:21 |     Sample 40/50 completed
+2026-05-02 00:47:21 |     Sample 50/50 completed
+2026-05-02 00:47:21 |     Sample 10/50 completed
+2026-05-02 00:47:22 |     Sample 20/50 completed
+2026-05-02 00:47:22 |     Sample 30/50 completed
+2026-05-02 00:47:22 |     Sample 40/50 completed
+2026-05-02 00:47:22 |     Sample 50/50 completed
+2026-05-02 00:47:23 |     Sample 10/50 completed
+2026-05-02 00:47:23 |     Sample 20/50 completed
+2026-05-02 00:47:23 |     Sample 30/50 completed
+2026-05-02 00:47:23 |     Sample 40/50 completed
+2026-05-02 00:47:24 |     Sample 50/50 completed
+2026-05-02 00:47:24 |     Sample 10/50 completed
+2026-05-02 00:47:24 |     Sample 20/50 completed
+2026-05-02 00:47:24 |     Sample 30/50 completed
+2026-05-02 00:47:25 |     Sample 40/50 completed
+2026-05-02 00:47:25 |     Sample 50/50 completed
+2026-05-02 00:47:25 |     Sample 10/50 completed
+2026-05-02 00:47:25 |     Sample 20/50 completed
+2026-05-02 00:47:26 |     Sample 30/50 completed
+2026-05-02 00:47:26 |     Sample 40/50 completed
+2026-05-02 00:47:26 |     Sample 50/50 completed
+2026-05-02 00:47:27 |     Sample 10/50 completed
+2026-05-02 00:47:27 |     Sample 20/50 completed
+2026-05-02 00:47:27 |     Sample 30/50 completed
+2026-05-02 00:47:27 |     Sample 40/50 completed
+2026-05-02 00:47:28 |     Sample 50/50 completed
+2026-05-02 00:47:28 |     Sample 10/50 completed
+2026-05-02 00:47:28 |     Sample 20/50 completed
+2026-05-02 00:47:28 |     Sample 30/50 completed
+2026-05-02 00:47:29 |     Sample 40/50 completed
+2026-05-02 00:47:29 |     Sample 50/50 completed
+2026-05-02 00:47:29 |     Sample 10/50 completed
+2026-05-02 00:47:29 |     Sample 20/50 completed
+2026-05-02 00:47:30 |     Sample 30/50 completed
+2026-05-02 00:47:30 |     Sample 40/50 completed
+2026-05-02 00:47:30 |     Sample 50/50 completed
+2026-05-02 00:47:30 |     Sample 10/50 completed
+2026-05-02 00:47:31 |     Sample 20/50 completed
+2026-05-02 00:47:31 |     Sample 30/50 completed
+2026-05-02 00:47:31 |     Sample 40/50 completed
+2026-05-02 00:47:31 |     Sample 50/50 completed
+2026-05-02 00:47:32 |     Sample 10/50 completed
+2026-05-02 00:47:32 |     Sample 20/50 completed
+2026-05-02 00:47:32 |     Sample 30/50 completed
+2026-05-02 00:47:32 |     Sample 40/50 completed
+2026-05-02 00:47:33 |     Sample 50/50 completed
+2026-05-02 00:47:33 |     Sample 10/50 completed
+2026-05-02 00:47:33 |     Sample 20/50 completed
+2026-05-02 00:47:33 |     Sample 30/50 completed
+2026-05-02 00:47:34 |     Sample 40/50 completed
+2026-05-02 00:47:34 |     Sample 50/50 completed
+2026-05-02 00:47:34 |     Sample 10/50 completed
+2026-05-02 00:47:34 |     Sample 20/50 completed
+2026-05-02 00:47:35 |     Sample 30/50 completed
+2026-05-02 00:47:35 |     Sample 40/50 completed
+2026-05-02 00:47:35 |     Sample 50/50 completed
+2026-05-02 00:47:35 |     Sample 10/50 completed
+2026-05-02 00:47:36 |     Sample 20/50 completed
+2026-05-02 00:47:36 |     Sample 30/50 completed
+2026-05-02 00:47:36 |     Sample 40/50 completed
+2026-05-02 00:47:37 |     Sample 50/50 completed
+2026-05-02 00:47:37 |     Sample 10/50 completed
+2026-05-02 00:47:37 |     Sample 20/50 completed
+2026-05-02 00:47:37 |     Sample 30/50 completed
+2026-05-02 00:47:38 |     Sample 40/50 completed
+2026-05-02 00:47:38 |     Sample 50/50 completed
+2026-05-02 00:47:38 |     Sample 10/50 completed
+2026-05-02 00:47:38 |     Sample 20/50 completed
+2026-05-02 00:47:39 |     Sample 30/50 completed
+2026-05-02 00:47:39 |     Sample 40/50 completed
+2026-05-02 00:47:39 |     Sample 50/50 completed
+2026-05-02 00:47:39 |     Sample 10/50 completed
+2026-05-02 00:47:40 |     Sample 20/50 completed
+2026-05-02 00:47:40 |     Sample 30/50 completed
+2026-05-02 00:47:40 |     Sample 40/50 completed
+2026-05-02 00:47:40 |     Sample 50/50 completed
+2026-05-02 00:47:41 |     Sample 10/50 completed
+2026-05-02 00:47:41 |     Sample 20/50 completed
+2026-05-02 00:47:41 |     Sample 30/50 completed
+2026-05-02 00:47:41 |     Sample 40/50 completed
+2026-05-02 00:47:42 |     Sample 50/50 completed
+2026-05-02 00:47:42 |     Sample 10/50 completed
+2026-05-02 00:47:42 |     Sample 20/50 completed
+2026-05-02 00:47:42 |     Sample 30/50 completed
+2026-05-02 00:47:43 |     Sample 40/50 completed
+2026-05-02 00:47:43 |     Sample 50/50 completed
+2026-05-02 00:47:43 |     Sample 10/50 completed
+2026-05-02 00:47:43 |     Sample 20/50 completed
+2026-05-02 00:47:44 |     Sample 30/50 completed
+2026-05-02 00:47:44 |     Sample 40/50 completed
+2026-05-02 00:47:44 |     Sample 50/50 completed
+2026-05-02 00:47:44 |     Sample 10/50 completed
+2026-05-02 00:47:45 |     Sample 20/50 completed
+2026-05-02 00:47:45 |     Sample 30/50 completed
+2026-05-02 00:47:45 |     Sample 40/50 completed
+2026-05-02 00:47:45 |     Sample 50/50 completed
+2026-05-02 00:47:46 |     Sample 10/50 completed
+2026-05-02 00:47:46 |     Sample 20/50 completed
+2026-05-02 00:47:46 |     Sample 30/50 completed
+2026-05-02 00:47:46 |     Sample 40/50 completed
+2026-05-02 00:47:47 |     Sample 50/50 completed
+2026-05-02 00:47:47 |     Sample 10/50 completed
+2026-05-02 00:47:47 |     Sample 20/50 completed
+2026-05-02 00:47:48 |     Sample 30/50 completed
+2026-05-02 00:47:48 |     Sample 40/50 completed
+2026-05-02 00:47:48 |     Sample 50/50 completed
+2026-05-02 00:47:48 |     Sample 10/50 completed
+2026-05-02 00:47:49 |     Sample 20/50 completed
+2026-05-02 00:47:49 |     Sample 30/50 completed
+2026-05-02 00:47:49 |     Sample 40/50 completed
+2026-05-02 00:47:49 |     Sample 50/50 completed
+2026-05-02 00:47:50 |     Sample 10/50 completed
+2026-05-02 00:47:50 |     Sample 20/50 completed
+2026-05-02 00:47:50 |     Sample 30/50 completed
+2026-05-02 00:47:50 |     Sample 40/50 completed
+2026-05-02 00:47:51 |     Sample 50/50 completed
+2026-05-02 00:47:51 |     Sample 10/50 completed
+2026-05-02 00:47:51 |     Sample 20/50 completed
+2026-05-02 00:47:51 |     Sample 30/50 completed
+2026-05-02 00:47:52 |     Sample 40/50 completed
+2026-05-02 00:47:52 |     Sample 50/50 completed
+2026-05-02 00:47:52 |     Sample 10/50 completed
+2026-05-02 00:47:52 |     Sample 20/50 completed
+2026-05-02 00:47:53 |     Sample 30/50 completed
+2026-05-02 00:47:53 |     Sample 40/50 completed
+2026-05-02 00:47:53 |     Sample 50/50 completed
+2026-05-02 00:47:53 |     Sample 10/50 completed
+2026-05-02 00:47:54 |     Sample 20/50 completed
+2026-05-02 00:47:54 |     Sample 30/50 completed
+2026-05-02 00:47:54 |     Sample 40/50 completed
+2026-05-02 00:47:54 |     Sample 50/50 completed
+2026-05-02 00:47:55 |     Sample 10/50 completed
+2026-05-02 00:47:55 |     Sample 20/50 completed
+2026-05-02 00:47:55 |     Sample 30/50 completed
+2026-05-02 00:47:55 |     Sample 40/50 completed
+2026-05-02 00:47:56 |     Sample 50/50 completed
+2026-05-02 00:47:56 |     Sample 10/50 completed
+2026-05-02 00:47:56 |     Sample 20/50 completed
+2026-05-02 00:47:56 |     Sample 30/50 completed
+2026-05-02 00:47:57 |     Sample 40/50 completed
+2026-05-02 00:47:57 |     Sample 50/50 completed
+2026-05-02 00:47:57 |     Sample 10/50 completed
+2026-05-02 00:47:57 |     Sample 20/50 completed
+2026-05-02 00:47:58 |     Sample 30/50 completed
+2026-05-02 00:47:58 |     Sample 40/50 completed
+2026-05-02 00:47:58 |     Sample 50/50 completed
+2026-05-02 00:47:59 |     Sample 10/50 completed
+2026-05-02 00:47:59 |     Sample 20/50 completed
+2026-05-02 00:47:59 |     Sample 30/50 completed
+2026-05-02 00:47:59 |     Sample 40/50 completed
+2026-05-02 00:48:00 |     Sample 50/50 completed
+2026-05-02 00:48:00 |     Sample 10/50 completed
+2026-05-02 00:48:00 |     Sample 20/50 completed
+2026-05-02 00:48:00 |     Sample 30/50 completed
+2026-05-02 00:48:01 |     Sample 40/50 completed
+2026-05-02 00:48:01 |     Sample 50/50 completed
+2026-05-02 00:48:01 |     Sample 10/50 completed
+2026-05-02 00:48:01 |     Sample 20/50 completed
+2026-05-02 00:48:02 |     Sample 30/50 completed
+2026-05-02 00:48:02 |     Sample 40/50 completed
+2026-05-02 00:48:02 |     Sample 50/50 completed
+2026-05-02 00:48:02 |     Sample 10/50 completed
+2026-05-02 00:48:03 |     Sample 20/50 completed
+2026-05-02 00:48:03 |     Sample 30/50 completed
+2026-05-02 00:48:03 |     Sample 40/50 completed
+2026-05-02 00:48:03 |     Sample 50/50 completed
+2026-05-02 00:48:04 |     Sample 10/50 completed
+2026-05-02 00:48:04 |     Sample 20/50 completed
+2026-05-02 00:48:04 |     Sample 30/50 completed
+2026-05-02 00:48:04 |     Sample 40/50 completed
+2026-05-02 00:48:05 |     Sample 50/50 completed
+2026-05-02 00:48:05 |     Sample 10/50 completed
+2026-05-02 00:48:05 |     Sample 20/50 completed
+2026-05-02 00:48:05 |     Sample 30/50 completed
+2026-05-02 00:48:06 |     Sample 40/50 completed
+2026-05-02 00:48:06 |     Sample 50/50 completed
+2026-05-02 00:48:06 |     Sample 10/50 completed
+2026-05-02 00:48:06 |     Sample 20/50 completed
+2026-05-02 00:48:07 |     Sample 30/50 completed
+2026-05-02 00:48:07 |     Sample 40/50 completed
+2026-05-02 00:48:07 |     Sample 50/50 completed
+2026-05-02 00:48:07 |     Sample 10/50 completed
+2026-05-02 00:48:08 |     Sample 20/50 completed
+2026-05-02 00:48:08 |     Sample 30/50 completed
+2026-05-02 00:48:08 |     Sample 40/50 completed
+2026-05-02 00:48:08 |     Sample 50/50 completed
+2026-05-02 00:48:09 |     Sample 10/50 completed
+2026-05-02 00:48:09 |     Sample 20/50 completed
+2026-05-02 00:48:09 |     Sample 30/50 completed
+2026-05-02 00:48:10 |     Sample 40/50 completed
+2026-05-02 00:48:10 |     Sample 50/50 completed
+2026-05-02 00:48:10 |     Sample 10/50 completed
+2026-05-02 00:48:10 |     Sample 20/50 completed
+2026-05-02 00:48:11 |     Sample 30/50 completed
+2026-05-02 00:48:11 |     Sample 40/50 completed
+2026-05-02 00:48:11 |     Sample 50/50 completed
+2026-05-02 00:48:11 |     Sample 10/50 completed
+2026-05-02 00:48:12 |     Sample 20/50 completed
+2026-05-02 00:48:12 |     Sample 30/50 completed
+2026-05-02 00:48:12 |     Sample 40/50 completed
+2026-05-02 00:48:12 |     Sample 50/50 completed
+2026-05-02 00:48:13 |     Sample 10/50 completed
+2026-05-02 00:48:13 |     Sample 20/50 completed
+2026-05-02 00:48:13 |     Sample 30/50 completed
+2026-05-02 00:48:13 |     Sample 40/50 completed
+2026-05-02 00:48:14 |     Sample 50/50 completed
+2026-05-02 00:48:14 |     Sample 10/50 completed
+2026-05-02 00:48:14 |     Sample 20/50 completed
+2026-05-02 00:48:14 |     Sample 30/50 completed
+2026-05-02 00:48:15 |     Sample 40/50 completed
+2026-05-02 00:48:15 |     Sample 50/50 completed
+2026-05-02 00:48:15 |     Sample 10/50 completed
+2026-05-02 00:48:15 |     Sample 20/50 completed
+2026-05-02 00:48:16 |     Sample 30/50 completed
+2026-05-02 00:48:16 |     Sample 40/50 completed
+2026-05-02 00:48:16 |     Sample 50/50 completed
+2026-05-02 00:48:16 |     Sample 10/50 completed
+2026-05-02 00:48:17 |     Sample 20/50 completed
+2026-05-02 00:48:17 |     Sample 30/50 completed
+2026-05-02 00:48:17 |     Sample 40/50 completed
+2026-05-02 00:48:17 |     Sample 50/50 completed
+2026-05-02 00:48:18 |     Sample 10/50 completed
+2026-05-02 00:48:18 |     Sample 20/50 completed
+2026-05-02 00:48:18 |     Sample 30/50 completed
+2026-05-02 00:48:19 |     Sample 40/50 completed
+2026-05-02 00:48:19 |     Sample 50/50 completed
+2026-05-02 00:48:19 |     Sample 10/50 completed
+2026-05-02 00:48:19 |     Sample 20/50 completed
+2026-05-02 00:48:20 |     Sample 30/50 completed
+2026-05-02 00:48:20 |     Sample 40/50 completed
+2026-05-02 00:48:20 |     Sample 50/50 completed
+2026-05-02 00:48:20 |     Sample 10/50 completed
+2026-05-02 00:48:21 |     Sample 20/50 completed
+2026-05-02 00:48:21 |     Sample 30/50 completed
+2026-05-02 00:48:21 |     Sample 40/50 completed
+2026-05-02 00:48:21 |     Sample 50/50 completed
+2026-05-02 00:48:22 |     Sample 10/50 completed
+2026-05-02 00:48:22 |     Sample 20/50 completed
+2026-05-02 00:48:22 |     Sample 30/50 completed
+2026-05-02 00:48:22 |     Sample 40/50 completed
+2026-05-02 00:48:23 |     Sample 50/50 completed
+2026-05-02 00:48:23 |     Sample 10/50 completed
+2026-05-02 00:48:23 |     Sample 20/50 completed
+2026-05-02 00:48:23 |     Sample 30/50 completed
+2026-05-02 00:48:24 |     Sample 40/50 completed
+2026-05-02 00:48:24 |     Sample 50/50 completed
+2026-05-02 00:48:24 |     Sample 10/50 completed
+2026-05-02 00:48:24 |     Sample 20/50 completed
+2026-05-02 00:48:25 |     Sample 30/50 completed
+2026-05-02 00:48:25 |     Sample 40/50 completed
+2026-05-02 00:48:25 |     Sample 50/50 completed
+2026-05-02 00:48:25 |     Sample 10/50 completed
+2026-05-02 00:48:26 |     Sample 20/50 completed
+2026-05-02 00:48:26 |     Sample 30/50 completed
+2026-05-02 00:48:26 |     Sample 40/50 completed
+2026-05-02 00:48:26 |     Sample 50/50 completed
+2026-05-02 00:48:27 |     Sample 10/50 completed
+2026-05-02 00:48:27 |     Sample 20/50 completed
+2026-05-02 00:48:27 |     Sample 30/50 completed
+2026-05-02 00:48:27 |     Sample 40/50 completed
+2026-05-02 00:48:28 |     Sample 50/50 completed
+2026-05-02 00:48:28 |     Sample 10/50 completed
+2026-05-02 00:48:28 |     Sample 20/50 completed
+2026-05-02 00:48:29 |     Sample 30/50 completed
+2026-05-02 00:48:29 |     Sample 40/50 completed
+2026-05-02 00:48:29 |     Sample 50/50 completed
+2026-05-02 00:48:29 |     Sample 10/50 completed
+2026-05-02 00:48:30 |     Sample 20/50 completed
+2026-05-02 00:48:30 |     Sample 30/50 completed
+2026-05-02 00:48:30 |     Sample 40/50 completed
+2026-05-02 00:48:30 |     Sample 50/50 completed
+2026-05-02 00:48:31 |     Sample 10/50 completed
+2026-05-02 00:48:31 |     Sample 20/50 completed
+2026-05-02 00:48:31 |     Sample 30/50 completed
+2026-05-02 00:48:31 |     Sample 40/50 completed
+2026-05-02 00:48:32 |     Sample 50/50 completed
+2026-05-02 00:48:32 |     Sample 10/50 completed
+2026-05-02 00:48:32 |     Sample 20/50 completed
+2026-05-02 00:48:32 |     Sample 30/50 completed
+2026-05-02 00:48:33 |     Sample 40/50 completed
+2026-05-02 00:48:33 |     Sample 50/50 completed
+2026-05-02 00:48:33 |     Sample 10/50 completed
+2026-05-02 00:48:33 |     Sample 20/50 completed
+2026-05-02 00:48:34 |     Sample 30/50 completed
+2026-05-02 00:48:34 |     Sample 40/50 completed
+2026-05-02 00:48:34 |     Sample 50/50 completed
+2026-05-02 00:48:34 |     Sample 10/50 completed
+2026-05-02 00:48:35 |     Sample 20/50 completed
+2026-05-02 00:48:35 |     Sample 30/50 completed
+2026-05-02 00:48:35 |     Sample 40/50 completed
+2026-05-02 00:48:35 |     Sample 50/50 completed
+2026-05-02 00:48:36 |     Sample 10/50 completed
+2026-05-02 00:48:36 |     Sample 20/50 completed
+2026-05-02 00:48:36 |     Sample 30/50 completed
+2026-05-02 00:48:36 |     Sample 40/50 completed
+2026-05-02 00:48:37 |     Sample 50/50 completed
+2026-05-02 00:48:37 |     Sample 10/50 completed
+2026-05-02 00:48:37 |     Sample 20/50 completed
+2026-05-02 00:48:38 |     Sample 30/50 completed
+2026-05-02 00:48:38 |     Sample 40/50 completed
+2026-05-02 00:48:38 |     Sample 50/50 completed
+2026-05-02 00:48:38 |     Sample 10/50 completed
+2026-05-02 00:48:39 |     Sample 20/50 completed
+2026-05-02 00:48:39 |     Sample 30/50 completed
+2026-05-02 00:48:39 |     Sample 40/50 completed
+2026-05-02 00:48:39 |     Sample 50/50 completed
+2026-05-02 00:48:40 |     Sample 10/50 completed
+2026-05-02 00:48:40 |     Sample 20/50 completed
+2026-05-02 00:48:40 |     Sample 30/50 completed
+2026-05-02 00:48:40 |     Sample 40/50 completed
+2026-05-02 00:48:41 |     Sample 50/50 completed
+2026-05-02 00:48:41 |     Sample 10/50 completed
+2026-05-02 00:48:41 |     Sample 20/50 completed
+2026-05-02 00:48:41 |     Sample 30/50 completed
+2026-05-02 00:48:42 |     Sample 40/50 completed
+2026-05-02 00:48:42 |     Sample 50/50 completed
+2026-05-02 00:48:42 |     Sample 10/50 completed
+2026-05-02 00:48:42 |     Sample 20/50 completed
+2026-05-02 00:48:43 |     Sample 30/50 completed
+2026-05-02 00:48:43 |     Sample 40/50 completed
+2026-05-02 00:48:43 |     Sample 50/50 completed
+2026-05-02 00:48:43 |     Sample 10/50 completed
+2026-05-02 00:48:44 |     Sample 20/50 completed
+2026-05-02 00:48:44 |     Sample 30/50 completed
+2026-05-02 00:48:44 |     Sample 40/50 completed
+2026-05-02 00:48:44 |     Sample 50/50 completed
+2026-05-02 00:48:45 |     Sample 10/50 completed
+2026-05-02 00:48:45 |     Sample 20/50 completed
+2026-05-02 00:48:45 |     Sample 30/50 completed
+2026-05-02 00:48:45 |     Sample 40/50 completed
+2026-05-02 00:48:46 |     Sample 50/50 completed
+2026-05-02 00:48:46 |     Sample 10/50 completed
+2026-05-02 00:48:46 |     Sample 20/50 completed
+2026-05-02 00:48:46 |     Sample 30/50 completed
+2026-05-02 00:48:47 |     Sample 40/50 completed
+2026-05-02 00:48:47 |     Sample 50/50 completed
+2026-05-02 00:48:47 |     Sample 10/50 completed
+2026-05-02 00:48:47 |     Sample 20/50 completed
+2026-05-02 00:48:48 |     Sample 30/50 completed
+2026-05-02 00:48:48 |     Sample 40/50 completed
+2026-05-02 00:48:48 |     Sample 50/50 completed
+2026-05-02 00:48:48 |     Sample 10/50 completed
+2026-05-02 00:48:49 |     Sample 20/50 completed
+2026-05-02 00:48:49 |     Sample 30/50 completed
+2026-05-02 00:48:49 |     Sample 40/50 completed
+2026-05-02 00:48:50 |     Sample 50/50 completed
+2026-05-02 00:48:50 |     Sample 10/50 completed
+2026-05-02 00:48:50 |     Sample 20/50 completed
+2026-05-02 00:48:50 |     Sample 30/50 completed
+2026-05-02 00:48:51 |     Sample 40/50 completed
+2026-05-02 00:48:51 |     Sample 50/50 completed
+2026-05-02 00:48:51 |     Sample 10/50 completed
+2026-05-02 00:48:51 |     Sample 20/50 completed
+2026-05-02 00:48:52 |     Sample 30/50 completed
+2026-05-02 00:48:52 |     Sample 40/50 completed
+2026-05-02 00:48:52 |     Sample 50/50 completed
+2026-05-02 00:48:52 |     Sample 10/50 completed
+2026-05-02 00:48:53 |     Sample 20/50 completed
+2026-05-02 00:48:53 |     Sample 30/50 completed
+2026-05-02 00:48:53 |     Sample 40/50 completed
+2026-05-02 00:48:53 |     Sample 50/50 completed
+2026-05-02 00:48:54 |     Sample 10/50 completed
+2026-05-02 00:48:54 |     Sample 20/50 completed
+2026-05-02 00:48:54 |     Sample 30/50 completed
+2026-05-02 00:48:54 |     Sample 40/50 completed
+2026-05-02 00:48:55 |     Sample 50/50 completed
+2026-05-02 00:48:55 |     Sample 10/50 completed
+2026-05-02 00:48:55 |     Sample 20/50 completed
+2026-05-02 00:48:55 |     Sample 30/50 completed
+2026-05-02 00:48:56 |     Sample 40/50 completed
+2026-05-02 00:48:56 |     Sample 50/50 completed
+2026-05-02 00:48:56 |     Sample 10/50 completed
+2026-05-02 00:48:56 |     Sample 20/50 completed
+2026-05-02 00:48:57 |     Sample 30/50 completed
+2026-05-02 00:48:57 |     Sample 40/50 completed
+2026-05-02 00:48:57 |     Sample 50/50 completed
+2026-05-02 00:48:57 |     Sample 10/50 completed
+2026-05-02 00:48:58 |     Sample 20/50 completed
+2026-05-02 00:48:58 |     Sample 30/50 completed
+2026-05-02 00:48:58 |     Sample 40/50 completed
+2026-05-02 00:48:58 |     Sample 50/50 completed
+2026-05-02 00:48:59 |     Sample 10/50 completed
+2026-05-02 00:48:59 |     Sample 20/50 completed
+2026-05-02 00:48:59 |     Sample 30/50 completed
+2026-05-02 00:49:00 |     Sample 40/50 completed
+2026-05-02 00:49:00 |     Sample 50/50 completed
+2026-05-02 00:49:00 |     Sample 10/50 completed
+2026-05-02 00:49:00 |     Sample 20/50 completed
+2026-05-02 00:49:01 |     Sample 30/50 completed
+2026-05-02 00:49:01 |     Sample 40/50 completed
+2026-05-02 00:49:01 |     Sample 50/50 completed
+2026-05-02 00:49:01 |     Sample 10/50 completed
+2026-05-02 00:49:02 |     Sample 20/50 completed
+2026-05-02 00:49:02 |     Sample 30/50 completed
+2026-05-02 00:49:02 |     Sample 40/50 completed
+2026-05-02 00:49:02 |     Sample 50/50 completed
+2026-05-02 00:49:03 |     Sample 10/50 completed
+2026-05-02 00:49:03 |     Sample 20/50 completed
+2026-05-02 00:49:03 |     Sample 30/50 completed
+2026-05-02 00:49:03 |     Sample 40/50 completed
+2026-05-02 00:49:04 |     Sample 50/50 completed
+2026-05-02 00:49:04 |     Sample 10/50 completed
+2026-05-02 00:49:04 |     Sample 20/50 completed
+2026-05-02 00:49:04 |     Sample 30/50 completed
+2026-05-02 00:49:05 |     Sample 40/50 completed
+2026-05-02 00:49:05 |     Sample 50/50 completed
+2026-05-02 00:49:05 |     Sample 10/50 completed
+2026-05-02 00:49:05 |     Sample 20/50 completed
+2026-05-02 00:49:06 |     Sample 30/50 completed
+2026-05-02 00:49:06 |     Sample 40/50 completed
+2026-05-02 00:49:06 |     Sample 50/50 completed
+2026-05-02 00:49:06 |     Sample 10/50 completed
+2026-05-02 00:49:07 |     Sample 20/50 completed
+2026-05-02 00:49:07 |     Sample 30/50 completed
+2026-05-02 00:49:07 |     Sample 40/50 completed
+2026-05-02 00:49:07 |     Sample 50/50 completed
+2026-05-02 00:49:08 |     Sample 10/50 completed
+2026-05-02 00:49:08 |     Sample 20/50 completed
+2026-05-02 00:49:08 |     Sample 30/50 completed
+2026-05-02 00:49:08 |     Sample 40/50 completed
+2026-05-02 00:49:09 |     Sample 50/50 completed
+2026-05-02 00:49:09 |     Sample 10/50 completed
+2026-05-02 00:49:09 |     Sample 20/50 completed
+2026-05-02 00:49:09 |     Sample 30/50 completed
+2026-05-02 00:49:10 |     Sample 40/50 completed
+2026-05-02 00:49:10 |     Sample 50/50 completed
+2026-05-02 00:49:10 | Completed all 100 instances
+2026-05-02 00:49:10 |   [Progress: 3/9] LGBM + PC - CausalShapley (SLOW - uses 10 inner samples)
+2026-05-02 01:14:07 |   [Progress: 4/9] LGBM + PC - ShapleyFlow
+2026-05-02 01:14:07 |     → ShapleyFlowWrapper: 51 features, 138 edges, 9 sources
+2026-05-02 01:14:07 |     → Computing Shapley Flow for 100 instances...
+2026-05-02 01:14:07 |     → Instance 1/100
+2026-05-02 01:14:07 |     → ShapleyFlow (Backward Path Sampling): 138 edges, 9 sources
+2026-05-02 01:14:07 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 01:14:10 |     → Trial 1/50 completed (~4790 evaluations)
+2026-05-02 01:14:31 |     → Trial 10/50 completed (~5046 evaluations)
+2026-05-02 01:14:56 |     → Trial 20/50 completed (~4842 evaluations)
+2026-05-02 01:15:20 |     → Trial 30/50 completed (~4930 evaluations)
+2026-05-02 01:15:44 |     → Trial 40/50 completed (~4814 evaluations)
+2026-05-02 01:16:09 |     → Trial 50/50 completed (~4938 evaluations)
+2026-05-02 01:16:09 |     → Instance 2/100
+2026-05-02 01:16:09 |     → ShapleyFlow (Backward Path Sampling): 138 edges, 9 sources
+2026-05-02 01:16:09 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 01:16:11 |     → Trial 1/50 completed (~4882 evaluations)
+2026-05-02 01:16:33 |     → Trial 10/50 completed (~4788 evaluations)
+2026-05-02 01:16:57 |     → Trial 20/50 completed (~4871 evaluations)
+2026-05-02 01:17:22 |     → Trial 30/50 completed (~4883 evaluations)
+2026-05-02 01:17:46 |     → Trial 40/50 completed (~4879 evaluations)
+2026-05-02 01:18:11 |     → Trial 50/50 completed (~4887 evaluations)
+2026-05-02 01:18:11 |     → Instance 3/100
+2026-05-02 01:18:11 |     → ShapleyFlow (Backward Path Sampling): 138 edges, 9 sources
+2026-05-02 01:18:11 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 01:18:13 |     → Trial 1/50 completed (~4884 evaluations)
+2026-05-02 01:18:35 |     → Trial 10/50 completed (~4884 evaluations)
+2026-05-02 01:19:00 |     → Trial 20/50 completed (~4921 evaluations)
+2026-05-02 01:19:25 |     → Trial 30/50 completed (~5023 evaluations)
+2026-05-02 01:19:49 |     → Trial 40/50 completed (~5031 evaluations)
+2026-05-02 01:20:14 |     → Trial 50/50 completed (~4927 evaluations)
+2026-05-02 01:20:14 |     → Instance 4/100
+2026-05-02 01:20:14 |     → ShapleyFlow (Backward Path Sampling): 138 edges, 9 sources
+2026-05-02 01:20:14 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 01:20:16 |     → Trial 1/50 completed (~4968 evaluations)
+2026-05-02 01:20:38 |     → Trial 10/50 completed (~5050 evaluations)
+2026-05-02 01:21:03 |     → Trial 20/50 completed (~4873 evaluations)
+2026-05-02 01:21:27 |     → Trial 30/50 completed (~4888 evaluations)
+2026-05-02 01:21:52 |     → Trial 40/50 completed (~4823 evaluations)
+2026-05-02 01:22:16 |     → Trial 50/50 completed (~4984 evaluations)
+2026-05-02 01:22:17 |     → Instance 5/100
+2026-05-02 01:22:17 |     → ShapleyFlow (Backward Path Sampling): 138 edges, 9 sources
+2026-05-02 01:22:17 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 01:22:19 |     → Trial 1/50 completed (~4827 evaluations)
+2026-05-02 01:22:41 |     → Trial 10/50 completed (~4937 evaluations)
+2026-05-02 01:23:06 |     → Trial 20/50 completed (~4874 evaluations)
+2026-05-02 01:23:31 |     → Trial 30/50 completed (~4996 evaluations)
+2026-05-02 01:23:56 |     → Trial 40/50 completed (~4977 evaluations)
+2026-05-02 01:24:20 |     → Trial 50/50 completed (~4997 evaluations)
+2026-05-02 01:24:20 |     → Instance 6/100
+2026-05-02 01:24:20 |     → ShapleyFlow (Backward Path Sampling): 138 edges, 9 sources
+2026-05-02 01:24:20 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 01:24:23 |     → Trial 1/50 completed (~4876 evaluations)
+2026-05-02 01:24:45 |     → Trial 10/50 completed (~4821 evaluations)
+2026-05-02 01:25:09 |     → Trial 20/50 completed (~4846 evaluations)
+2026-05-02 01:25:34 |     → Trial 30/50 completed (~4942 evaluations)
+2026-05-02 01:25:59 |     → Trial 40/50 completed (~4827 evaluations)
+2026-05-02 01:26:23 |     → Trial 50/50 completed (~5010 evaluations)
+2026-05-02 01:26:23 |     → Instance 7/100
+2026-05-02 01:26:23 |     → ShapleyFlow (Backward Path Sampling): 138 edges, 9 sources
+2026-05-02 01:26:23 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 01:26:26 |     → Trial 1/50 completed (~5019 evaluations)
+2026-05-02 01:26:48 |     → Trial 10/50 completed (~4810 evaluations)
+2026-05-02 01:27:13 |     → Trial 20/50 completed (~4754 evaluations)
+2026-05-02 01:27:37 |     → Trial 30/50 completed (~5001 evaluations)
+2026-05-02 01:28:02 |     → Trial 40/50 completed (~4961 evaluations)
+2026-05-02 01:28:27 |     → Trial 50/50 completed (~4888 evaluations)
+2026-05-02 01:28:27 |     → Instance 8/100
+2026-05-02 01:28:27 |     → ShapleyFlow (Backward Path Sampling): 138 edges, 9 sources
+2026-05-02 01:28:27 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 01:28:29 |     → Trial 1/50 completed (~5033 evaluations)
+2026-05-02 01:28:52 |     → Trial 10/50 completed (~4863 evaluations)
+2026-05-02 01:29:16 |     → Trial 20/50 completed (~5007 evaluations)
+2026-05-02 01:29:41 |     → Trial 30/50 completed (~4897 evaluations)
+2026-05-02 01:30:05 |     → Trial 40/50 completed (~4895 evaluations)
+2026-05-02 01:30:30 |     → Trial 50/50 completed (~4945 evaluations)
+2026-05-02 01:30:30 |     → Instance 9/100
+2026-05-02 01:30:30 |     → ShapleyFlow (Backward Path Sampling): 138 edges, 9 sources
+2026-05-02 01:30:30 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 01:30:33 |     → Trial 1/50 completed (~4928 evaluations)
+2026-05-02 01:30:55 |     → Trial 10/50 completed (~4785 evaluations)
+2026-05-02 01:31:19 |     → Trial 20/50 completed (~4852 evaluations)
+2026-05-02 01:31:44 |     → Trial 30/50 completed (~4845 evaluations)
+2026-05-02 01:32:09 |     → Trial 40/50 completed (~4954 evaluations)
+2026-05-02 01:32:34 |     → Trial 50/50 completed (~4851 evaluations)
+2026-05-02 01:32:34 |     → Instance 10/100
+2026-05-02 01:32:34 |     → ShapleyFlow (Backward Path Sampling): 138 edges, 9 sources
+2026-05-02 01:32:34 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 01:32:36 |     → Trial 1/50 completed (~4900 evaluations)
+2026-05-02 01:32:58 |     → Trial 10/50 completed (~4911 evaluations)
+2026-05-02 01:33:23 |     → Trial 20/50 completed (~4954 evaluations)
+2026-05-02 01:33:48 |     → Trial 30/50 completed (~4917 evaluations)
+2026-05-02 01:34:12 |     → Trial 40/50 completed (~4883 evaluations)
+2026-05-02 01:34:37 |     → Trial 50/50 completed (~4817 evaluations)
+2026-05-02 01:34:37 |     → Instance 11/100
+2026-05-02 01:34:37 |     → ShapleyFlow (Backward Path Sampling): 138 edges, 9 sources
+2026-05-02 01:34:37 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 01:34:39 |     → Trial 1/50 completed (~4938 evaluations)
+2026-05-02 01:35:01 |     → Trial 10/50 completed (~4658 evaluations)
+2026-05-02 01:35:26 |     → Trial 20/50 completed (~5030 evaluations)
+2026-05-02 01:35:50 |     → Trial 30/50 completed (~4965 evaluations)
+2026-05-02 01:36:15 |     → Trial 40/50 completed (~4973 evaluations)
+2026-05-02 01:36:40 |     → Trial 50/50 completed (~4774 evaluations)
+2026-05-02 01:36:40 |     → Instance 12/100
+2026-05-02 01:36:40 |     → ShapleyFlow (Backward Path Sampling): 138 edges, 9 sources
+2026-05-02 01:36:40 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 01:36:42 |     → Trial 1/50 completed (~4785 evaluations)
+2026-05-02 01:37:05 |     → Trial 10/50 completed (~4881 evaluations)
+2026-05-02 01:37:29 |     → Trial 20/50 completed (~4937 evaluations)
+2026-05-02 01:37:54 |     → Trial 30/50 completed (~4903 evaluations)
+2026-05-02 01:38:18 |     → Trial 40/50 completed (~4873 evaluations)
+2026-05-02 01:38:43 |     → Trial 50/50 completed (~4963 evaluations)
+2026-05-02 01:38:43 |     → Instance 13/100
+2026-05-02 01:38:43 |     → ShapleyFlow (Backward Path Sampling): 138 edges, 9 sources
+2026-05-02 01:38:43 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 01:38:46 |     → Trial 1/50 completed (~4928 evaluations)
+2026-05-02 01:39:08 |     → Trial 10/50 completed (~4889 evaluations)
+2026-05-02 01:39:32 |     → Trial 20/50 completed (~4859 evaluations)
+2026-05-02 01:39:57 |     → Trial 30/50 completed (~4917 evaluations)
+2026-05-02 01:40:22 |     → Trial 40/50 completed (~4857 evaluations)
+2026-05-02 01:40:46 |     → Trial 50/50 completed (~4869 evaluations)
+2026-05-02 01:40:46 |     → Instance 14/100
+2026-05-02 01:40:46 |     → ShapleyFlow (Backward Path Sampling): 138 edges, 9 sources
+2026-05-02 01:40:46 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 01:40:49 |     → Trial 1/50 completed (~4873 evaluations)
+2026-05-02 01:41:11 |     → Trial 10/50 completed (~4938 evaluations)
+2026-05-02 01:41:36 |     → Trial 20/50 completed (~4933 evaluations)
+2026-05-02 01:42:00 |     → Trial 30/50 completed (~5014 evaluations)
+2026-05-02 01:42:25 |     → Trial 40/50 completed (~4976 evaluations)
+2026-05-02 01:42:49 |     → Trial 50/50 completed (~4962 evaluations)
+2026-05-02 01:42:50 |     → Instance 15/100
+2026-05-02 01:42:50 |     → ShapleyFlow (Backward Path Sampling): 138 edges, 9 sources
+2026-05-02 01:42:50 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 01:42:52 |     → Trial 1/50 completed (~4923 evaluations)
+2026-05-02 01:43:14 |     → Trial 10/50 completed (~4880 evaluations)
+2026-05-02 01:43:39 |     → Trial 20/50 completed (~4909 evaluations)
+2026-05-02 01:44:03 |     → Trial 30/50 completed (~4994 evaluations)
+2026-05-02 01:44:28 |     → Trial 40/50 completed (~4920 evaluations)
+2026-05-02 01:44:53 |     → Trial 50/50 completed (~4882 evaluations)
+2026-05-02 01:44:53 |     → Instance 16/100
+2026-05-02 01:44:53 |     → ShapleyFlow (Backward Path Sampling): 138 edges, 9 sources
+2026-05-02 01:44:53 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 01:44:55 |     → Trial 1/50 completed (~5010 evaluations)
+2026-05-02 01:45:18 |     → Trial 10/50 completed (~4920 evaluations)
+2026-05-02 01:45:42 |     → Trial 20/50 completed (~4858 evaluations)
+2026-05-02 01:46:07 |     → Trial 30/50 completed (~4904 evaluations)
+2026-05-02 01:46:32 |     → Trial 40/50 completed (~5133 evaluations)
+2026-05-02 01:46:57 |     → Trial 50/50 completed (~5003 evaluations)
+2026-05-02 01:46:57 |     → Instance 17/100
+2026-05-02 01:46:57 |     → ShapleyFlow (Backward Path Sampling): 138 edges, 9 sources
+2026-05-02 01:46:57 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 01:46:59 |     → Trial 1/50 completed (~4914 evaluations)
+2026-05-02 01:47:22 |     → Trial 10/50 completed (~4810 evaluations)
+2026-05-02 01:47:46 |     → Trial 20/50 completed (~4852 evaluations)
+2026-05-02 01:48:11 |     → Trial 30/50 completed (~5023 evaluations)
+2026-05-02 01:48:36 |     → Trial 40/50 completed (~4878 evaluations)
+2026-05-02 01:49:00 |     → Trial 50/50 completed (~4886 evaluations)
+2026-05-02 01:49:00 |     → Instance 18/100
+2026-05-02 01:49:00 |     → ShapleyFlow (Backward Path Sampling): 138 edges, 9 sources
+2026-05-02 01:49:00 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 01:49:03 |     → Trial 1/50 completed (~4904 evaluations)
+2026-05-02 01:49:25 |     → Trial 10/50 completed (~4888 evaluations)
+2026-05-02 01:49:50 |     → Trial 20/50 completed (~4845 evaluations)
+2026-05-02 01:50:15 |     → Trial 30/50 completed (~4893 evaluations)
+2026-05-02 01:50:39 |     → Trial 40/50 completed (~4812 evaluations)
+2026-05-02 01:51:04 |     → Trial 50/50 completed (~4952 evaluations)
+2026-05-02 01:51:04 |     → Instance 19/100
+2026-05-02 01:51:04 |     → ShapleyFlow (Backward Path Sampling): 138 edges, 9 sources
+2026-05-02 01:51:04 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 01:51:07 |     → Trial 1/50 completed (~4816 evaluations)
+2026-05-02 01:51:29 |     → Trial 10/50 completed (~5031 evaluations)
+2026-05-02 01:51:54 |     → Trial 20/50 completed (~4875 evaluations)
+2026-05-02 01:52:18 |     → Trial 30/50 completed (~4851 evaluations)
+2026-05-02 01:52:43 |     → Trial 40/50 completed (~4715 evaluations)
+2026-05-02 01:53:07 |     → Trial 50/50 completed (~4850 evaluations)
+2026-05-02 01:53:07 |     → Instance 20/100
+2026-05-02 01:53:07 |     → ShapleyFlow (Backward Path Sampling): 138 edges, 9 sources
+2026-05-02 01:53:07 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 01:53:10 |     → Trial 1/50 completed (~4919 evaluations)
+2026-05-02 01:53:32 |     → Trial 10/50 completed (~4770 evaluations)
+2026-05-02 01:53:56 |     → Trial 20/50 completed (~4798 evaluations)
+2026-05-02 01:54:21 |     → Trial 30/50 completed (~5001 evaluations)
+2026-05-02 01:54:46 |     → Trial 40/50 completed (~4860 evaluations)
+2026-05-02 01:55:11 |     → Trial 50/50 completed (~4842 evaluations)
+2026-05-02 01:55:11 |     → Instance 21/100
+2026-05-02 01:55:11 |     → ShapleyFlow (Backward Path Sampling): 138 edges, 9 sources
+2026-05-02 01:55:11 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 01:55:13 |     → Trial 1/50 completed (~4906 evaluations)
+2026-05-02 01:55:36 |     → Trial 10/50 completed (~4974 evaluations)
+2026-05-02 01:56:01 |     → Trial 20/50 completed (~4961 evaluations)
+2026-05-02 01:56:26 |     → Trial 30/50 completed (~4845 evaluations)
+2026-05-02 01:56:50 |     → Trial 40/50 completed (~4799 evaluations)
+2026-05-02 01:57:16 |     → Trial 50/50 completed (~4932 evaluations)
+2026-05-02 01:57:16 |     → Instance 22/100
+2026-05-02 01:57:16 |     → ShapleyFlow (Backward Path Sampling): 138 edges, 9 sources
+2026-05-02 01:57:16 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 01:57:18 |     → Trial 1/50 completed (~4969 evaluations)
+2026-05-02 01:57:41 |     → Trial 10/50 completed (~4834 evaluations)
+2026-05-02 01:58:06 |     → Trial 20/50 completed (~4891 evaluations)
+2026-05-02 01:58:30 |     → Trial 30/50 completed (~4906 evaluations)
+2026-05-02 01:58:55 |     → Trial 40/50 completed (~4921 evaluations)
+2026-05-02 01:59:20 |     → Trial 50/50 completed (~5060 evaluations)
+2026-05-02 01:59:20 |     → Instance 23/100
+2026-05-02 01:59:20 |     → ShapleyFlow (Backward Path Sampling): 138 edges, 9 sources
+2026-05-02 01:59:20 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 01:59:23 |     → Trial 1/50 completed (~4936 evaluations)
+2026-05-02 01:59:46 |     → Trial 10/50 completed (~4899 evaluations)
+2026-05-02 02:00:10 |     → Trial 20/50 completed (~4921 evaluations)
+2026-05-02 02:00:35 |     → Trial 30/50 completed (~4867 evaluations)
+2026-05-02 02:01:00 |     → Trial 40/50 completed (~4752 evaluations)
+2026-05-02 02:01:24 |     → Trial 50/50 completed (~4918 evaluations)
+2026-05-02 02:01:24 |     → Instance 24/100
+2026-05-02 02:01:24 |     → ShapleyFlow (Backward Path Sampling): 138 edges, 9 sources
+2026-05-02 02:01:24 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 02:01:27 |     → Trial 1/50 completed (~4943 evaluations)
+2026-05-02 02:01:49 |     → Trial 10/50 completed (~5059 evaluations)
+2026-05-02 02:02:13 |     → Trial 20/50 completed (~4987 evaluations)
+2026-05-02 02:02:38 |     → Trial 30/50 completed (~4850 evaluations)
+2026-05-02 02:03:03 |     → Trial 40/50 completed (~4834 evaluations)
+2026-05-02 02:03:27 |     → Trial 50/50 completed (~4998 evaluations)
+2026-05-02 02:03:27 |     → Instance 25/100
+2026-05-02 02:03:27 |     → ShapleyFlow (Backward Path Sampling): 138 edges, 9 sources
+2026-05-02 02:03:27 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 02:03:30 |     → Trial 1/50 completed (~5066 evaluations)
+2026-05-02 02:03:52 |     → Trial 10/50 completed (~5010 evaluations)
+2026-05-02 02:04:17 |     → Trial 20/50 completed (~4978 evaluations)
+2026-05-02 02:04:41 |     → Trial 30/50 completed (~4866 evaluations)
+2026-05-02 02:05:05 |     → Trial 40/50 completed (~4931 evaluations)
+2026-05-02 02:05:30 |     → Trial 50/50 completed (~4847 evaluations)
+2026-05-02 02:05:30 |     → Instance 26/100
+2026-05-02 02:05:30 |     → ShapleyFlow (Backward Path Sampling): 138 edges, 9 sources
+2026-05-02 02:05:30 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 02:05:33 |     → Trial 1/50 completed (~4948 evaluations)
+2026-05-02 02:05:55 |     → Trial 10/50 completed (~4933 evaluations)
+2026-05-02 02:06:19 |     → Trial 20/50 completed (~4929 evaluations)
+2026-05-02 02:06:44 |     → Trial 30/50 completed (~4954 evaluations)
+2026-05-02 02:07:08 |     → Trial 40/50 completed (~5053 evaluations)
+2026-05-02 02:07:32 |     → Trial 50/50 completed (~4911 evaluations)
+2026-05-02 02:07:32 |     → Instance 27/100
+2026-05-02 02:07:32 |     → ShapleyFlow (Backward Path Sampling): 138 edges, 9 sources
+2026-05-02 02:07:32 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 02:07:35 |     → Trial 1/50 completed (~4734 evaluations)
+2026-05-02 02:07:57 |     → Trial 10/50 completed (~4948 evaluations)
+2026-05-02 02:08:21 |     → Trial 20/50 completed (~4885 evaluations)
+2026-05-02 02:08:46 |     → Trial 30/50 completed (~4963 evaluations)
+2026-05-02 02:09:10 |     → Trial 40/50 completed (~4894 evaluations)
+2026-05-02 02:09:34 |     → Trial 50/50 completed (~4903 evaluations)
+2026-05-02 02:09:35 |     → Instance 28/100
+2026-05-02 02:09:35 |     → ShapleyFlow (Backward Path Sampling): 138 edges, 9 sources
+2026-05-02 02:09:35 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 02:09:37 |     → Trial 1/50 completed (~4997 evaluations)
+2026-05-02 02:09:59 |     → Trial 10/50 completed (~4999 evaluations)
+2026-05-02 02:10:23 |     → Trial 20/50 completed (~4894 evaluations)
+2026-05-02 02:10:48 |     → Trial 30/50 completed (~5022 evaluations)
+2026-05-02 02:11:12 |     → Trial 40/50 completed (~4991 evaluations)
+2026-05-02 02:11:37 |     → Trial 50/50 completed (~4947 evaluations)
+2026-05-02 02:11:37 |     → Instance 29/100
+2026-05-02 02:11:37 |     → ShapleyFlow (Backward Path Sampling): 138 edges, 9 sources
+2026-05-02 02:11:37 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 02:11:39 |     → Trial 1/50 completed (~4941 evaluations)
+2026-05-02 02:12:01 |     → Trial 10/50 completed (~5002 evaluations)
+2026-05-02 02:12:26 |     → Trial 20/50 completed (~4933 evaluations)
+2026-05-02 02:12:50 |     → Trial 30/50 completed (~4959 evaluations)
+2026-05-02 02:13:15 |     → Trial 40/50 completed (~4780 evaluations)
+2026-05-02 02:13:39 |     → Trial 50/50 completed (~4947 evaluations)
+2026-05-02 02:13:39 |     → Instance 30/100
+2026-05-02 02:13:39 |     → ShapleyFlow (Backward Path Sampling): 138 edges, 9 sources
+2026-05-02 02:13:39 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 02:13:42 |     → Trial 1/50 completed (~4868 evaluations)
+2026-05-02 02:14:03 |     → Trial 10/50 completed (~4873 evaluations)
+2026-05-02 02:14:28 |     → Trial 20/50 completed (~4787 evaluations)
+2026-05-02 02:14:52 |     → Trial 30/50 completed (~4810 evaluations)
+2026-05-02 02:15:17 |     → Trial 40/50 completed (~5013 evaluations)
+2026-05-02 02:15:41 |     → Trial 50/50 completed (~4928 evaluations)
+2026-05-02 02:15:41 |     → Instance 31/100
+2026-05-02 02:15:41 |     → ShapleyFlow (Backward Path Sampling): 138 edges, 9 sources
+2026-05-02 02:15:41 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 02:15:44 |     → Trial 1/50 completed (~4986 evaluations)
+2026-05-02 02:16:06 |     → Trial 10/50 completed (~5020 evaluations)
+2026-05-02 02:16:30 |     → Trial 20/50 completed (~4833 evaluations)
+2026-05-02 02:16:54 |     → Trial 30/50 completed (~4854 evaluations)
+2026-05-02 02:17:19 |     → Trial 40/50 completed (~4848 evaluations)
+2026-05-02 02:17:43 |     → Trial 50/50 completed (~4916 evaluations)
+2026-05-02 02:17:43 |     → Instance 32/100
+2026-05-02 02:17:43 |     → ShapleyFlow (Backward Path Sampling): 138 edges, 9 sources
+2026-05-02 02:17:43 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 02:17:46 |     → Trial 1/50 completed (~5005 evaluations)
+2026-05-02 02:18:08 |     → Trial 10/50 completed (~4822 evaluations)
+2026-05-02 02:18:32 |     → Trial 20/50 completed (~4889 evaluations)
+2026-05-02 02:18:57 |     → Trial 30/50 completed (~4813 evaluations)
+2026-05-02 02:19:21 |     → Trial 40/50 completed (~4875 evaluations)
+2026-05-02 02:19:45 |     → Trial 50/50 completed (~4953 evaluations)
+2026-05-02 02:19:46 |     → Instance 33/100
+2026-05-02 02:19:46 |     → ShapleyFlow (Backward Path Sampling): 138 edges, 9 sources
+2026-05-02 02:19:46 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 02:19:48 |     → Trial 1/50 completed (~4914 evaluations)
+2026-05-02 02:20:10 |     → Trial 10/50 completed (~4926 evaluations)
+2026-05-02 02:20:34 |     → Trial 20/50 completed (~4926 evaluations)
+2026-05-02 02:20:58 |     → Trial 30/50 completed (~4738 evaluations)
+2026-05-02 02:21:23 |     → Trial 40/50 completed (~5054 evaluations)
+2026-05-02 02:21:47 |     → Trial 50/50 completed (~4937 evaluations)
+2026-05-02 02:21:47 |     → Instance 34/100
+2026-05-02 02:21:47 |     → ShapleyFlow (Backward Path Sampling): 138 edges, 9 sources
+2026-05-02 02:21:47 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 02:21:50 |     → Trial 1/50 completed (~4930 evaluations)
+2026-05-02 02:22:12 |     → Trial 10/50 completed (~4866 evaluations)
+2026-05-02 02:22:36 |     → Trial 20/50 completed (~4777 evaluations)
+2026-05-02 02:23:01 |     → Trial 30/50 completed (~4860 evaluations)
+2026-05-02 02:23:25 |     → Trial 40/50 completed (~4804 evaluations)
+2026-05-02 02:23:49 |     → Trial 50/50 completed (~4912 evaluations)
+2026-05-02 02:23:49 |     → Instance 35/100
+2026-05-02 02:23:49 |     → ShapleyFlow (Backward Path Sampling): 138 edges, 9 sources
+2026-05-02 02:23:49 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 02:23:52 |     → Trial 1/50 completed (~4874 evaluations)
+2026-05-02 02:24:14 |     → Trial 10/50 completed (~4899 evaluations)
+2026-05-02 02:24:38 |     → Trial 20/50 completed (~4788 evaluations)
+2026-05-02 02:25:02 |     → Trial 30/50 completed (~5029 evaluations)
+2026-05-02 02:25:27 |     → Trial 40/50 completed (~4973 evaluations)
+2026-05-02 02:25:51 |     → Trial 50/50 completed (~4907 evaluations)
+2026-05-02 02:25:51 |     → Instance 36/100
+2026-05-02 02:25:51 |     → ShapleyFlow (Backward Path Sampling): 138 edges, 9 sources
+2026-05-02 02:25:51 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 02:25:53 |     → Trial 1/50 completed (~4862 evaluations)
+2026-05-02 02:26:15 |     → Trial 10/50 completed (~4879 evaluations)
+2026-05-02 02:26:40 |     → Trial 20/50 completed (~4964 evaluations)
+2026-05-02 02:27:04 |     → Trial 30/50 completed (~5052 evaluations)
+2026-05-02 02:27:28 |     → Trial 40/50 completed (~4936 evaluations)
+2026-05-02 02:27:52 |     → Trial 50/50 completed (~4756 evaluations)
+2026-05-02 02:27:53 |     → Instance 37/100
+2026-05-02 02:27:53 |     → ShapleyFlow (Backward Path Sampling): 138 edges, 9 sources
+2026-05-02 02:27:53 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 02:27:55 |     → Trial 1/50 completed (~4886 evaluations)
+2026-05-02 02:28:17 |     → Trial 10/50 completed (~4938 evaluations)
+2026-05-02 02:28:41 |     → Trial 20/50 completed (~4896 evaluations)
+2026-05-02 02:29:06 |     → Trial 30/50 completed (~4864 evaluations)
+2026-05-02 02:29:30 |     → Trial 40/50 completed (~4894 evaluations)
+2026-05-02 02:29:54 |     → Trial 50/50 completed (~4921 evaluations)
+2026-05-02 02:29:54 |     → Instance 38/100
+2026-05-02 02:29:54 |     → ShapleyFlow (Backward Path Sampling): 138 edges, 9 sources
+2026-05-02 02:29:54 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 02:29:57 |     → Trial 1/50 completed (~5066 evaluations)
+2026-05-02 02:30:19 |     → Trial 10/50 completed (~4862 evaluations)
+2026-05-02 02:30:43 |     → Trial 20/50 completed (~5070 evaluations)
+2026-05-02 02:31:07 |     → Trial 30/50 completed (~4869 evaluations)
+2026-05-02 02:31:31 |     → Trial 40/50 completed (~4710 evaluations)
+2026-05-02 02:31:56 |     → Trial 50/50 completed (~5020 evaluations)
+2026-05-02 02:31:56 |     → Instance 39/100
+2026-05-02 02:31:56 |     → ShapleyFlow (Backward Path Sampling): 138 edges, 9 sources
+2026-05-02 02:31:56 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 02:31:58 |     → Trial 1/50 completed (~4951 evaluations)
+2026-05-02 02:32:20 |     → Trial 10/50 completed (~4901 evaluations)
+2026-05-02 02:32:44 |     → Trial 20/50 completed (~4906 evaluations)
+2026-05-02 02:33:09 |     → Trial 30/50 completed (~4889 evaluations)
+2026-05-02 02:33:33 |     → Trial 40/50 completed (~4977 evaluations)
+2026-05-02 02:33:57 |     → Trial 50/50 completed (~4817 evaluations)
+2026-05-02 02:33:57 |     → Instance 40/100
+2026-05-02 02:33:57 |     → ShapleyFlow (Backward Path Sampling): 138 edges, 9 sources
+2026-05-02 02:33:57 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 02:34:00 |     → Trial 1/50 completed (~4939 evaluations)
+2026-05-02 02:34:22 |     → Trial 10/50 completed (~4900 evaluations)
+2026-05-02 02:34:46 |     → Trial 20/50 completed (~4854 evaluations)
+2026-05-02 02:35:10 |     → Trial 30/50 completed (~5007 evaluations)
+2026-05-02 02:35:35 |     → Trial 40/50 completed (~4946 evaluations)
+2026-05-02 02:35:59 |     → Trial 50/50 completed (~4900 evaluations)
+2026-05-02 02:35:59 |     → Instance 41/100
+2026-05-02 02:35:59 |     → ShapleyFlow (Backward Path Sampling): 138 edges, 9 sources
+2026-05-02 02:35:59 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 02:36:01 |     → Trial 1/50 completed (~4868 evaluations)
+2026-05-02 02:36:23 |     → Trial 10/50 completed (~4923 evaluations)
+2026-05-02 02:36:47 |     → Trial 20/50 completed (~5020 evaluations)
+2026-05-02 02:37:12 |     → Trial 30/50 completed (~4934 evaluations)
+2026-05-02 02:37:36 |     → Trial 40/50 completed (~4962 evaluations)
+2026-05-02 02:38:00 |     → Trial 50/50 completed (~4985 evaluations)
+2026-05-02 02:38:00 |     → Instance 42/100
+2026-05-02 02:38:00 |     → ShapleyFlow (Backward Path Sampling): 138 edges, 9 sources
+2026-05-02 02:38:00 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 02:38:03 |     → Trial 1/50 completed (~4915 evaluations)
+2026-05-02 02:38:25 |     → Trial 10/50 completed (~4770 evaluations)
+2026-05-02 02:38:49 |     → Trial 20/50 completed (~4740 evaluations)
+2026-05-02 02:39:13 |     → Trial 30/50 completed (~4854 evaluations)
+2026-05-02 02:39:37 |     → Trial 40/50 completed (~4844 evaluations)
+2026-05-02 02:40:01 |     → Trial 50/50 completed (~4834 evaluations)
+2026-05-02 02:40:01 |     → Instance 43/100
+2026-05-02 02:40:01 |     → ShapleyFlow (Backward Path Sampling): 138 edges, 9 sources
+2026-05-02 02:40:01 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 02:40:04 |     → Trial 1/50 completed (~4889 evaluations)
+2026-05-02 02:40:26 |     → Trial 10/50 completed (~5015 evaluations)
+2026-05-02 02:40:50 |     → Trial 20/50 completed (~4907 evaluations)
+2026-05-02 02:41:14 |     → Trial 30/50 completed (~4935 evaluations)
+2026-05-02 02:41:39 |     → Trial 40/50 completed (~4968 evaluations)
+2026-05-02 02:42:03 |     → Trial 50/50 completed (~4849 evaluations)
+2026-05-02 02:42:03 |     → Instance 44/100
+2026-05-02 02:42:03 |     → ShapleyFlow (Backward Path Sampling): 138 edges, 9 sources
+2026-05-02 02:42:03 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 02:42:06 |     → Trial 1/50 completed (~4920 evaluations)
+2026-05-02 02:42:27 |     → Trial 10/50 completed (~5056 evaluations)
+2026-05-02 02:42:52 |     → Trial 20/50 completed (~4862 evaluations)
+2026-05-02 02:43:16 |     → Trial 30/50 completed (~4744 evaluations)
+2026-05-02 02:43:40 |     → Trial 40/50 completed (~4869 evaluations)
+2026-05-02 02:44:05 |     → Trial 50/50 completed (~4988 evaluations)
+2026-05-02 02:44:05 |     → Instance 45/100
+2026-05-02 02:44:05 |     → ShapleyFlow (Backward Path Sampling): 138 edges, 9 sources
+2026-05-02 02:44:05 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 02:44:07 |     → Trial 1/50 completed (~4834 evaluations)
+2026-05-02 02:44:29 |     → Trial 10/50 completed (~5001 evaluations)
+2026-05-02 02:44:54 |     → Trial 20/50 completed (~4892 evaluations)
+2026-05-02 02:45:18 |     → Trial 30/50 completed (~4818 evaluations)
+2026-05-02 02:45:42 |     → Trial 40/50 completed (~4842 evaluations)
+2026-05-02 02:46:06 |     → Trial 50/50 completed (~4856 evaluations)
+2026-05-02 02:46:06 |     → Instance 46/100
+2026-05-02 02:46:06 |     → ShapleyFlow (Backward Path Sampling): 138 edges, 9 sources
+2026-05-02 02:46:06 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 02:46:09 |     → Trial 1/50 completed (~5054 evaluations)
+2026-05-02 02:46:31 |     → Trial 10/50 completed (~4977 evaluations)
+2026-05-02 02:46:55 |     → Trial 20/50 completed (~4847 evaluations)
+2026-05-02 02:47:20 |     → Trial 30/50 completed (~5089 evaluations)
+2026-05-02 02:47:44 |     → Trial 40/50 completed (~4862 evaluations)
+2026-05-02 02:48:08 |     → Trial 50/50 completed (~4863 evaluations)
+2026-05-02 02:48:08 |     → Instance 47/100
+2026-05-02 02:48:08 |     → ShapleyFlow (Backward Path Sampling): 138 edges, 9 sources
+2026-05-02 02:48:08 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 02:48:11 |     → Trial 1/50 completed (~4946 evaluations)
+2026-05-02 02:48:33 |     → Trial 10/50 completed (~4911 evaluations)
+2026-05-02 02:48:57 |     → Trial 20/50 completed (~4928 evaluations)
+2026-05-02 02:49:21 |     → Trial 30/50 completed (~4800 evaluations)
+2026-05-02 02:49:45 |     → Trial 40/50 completed (~4811 evaluations)
+2026-05-02 02:50:10 |     → Trial 50/50 completed (~4850 evaluations)
+2026-05-02 02:50:10 |     → Instance 48/100
+2026-05-02 02:50:10 |     → ShapleyFlow (Backward Path Sampling): 138 edges, 9 sources
+2026-05-02 02:50:10 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 02:50:12 |     → Trial 1/50 completed (~4861 evaluations)
+2026-05-02 02:50:34 |     → Trial 10/50 completed (~4837 evaluations)
+2026-05-02 02:50:59 |     → Trial 20/50 completed (~4717 evaluations)
+2026-05-02 02:51:23 |     → Trial 30/50 completed (~4949 evaluations)
+2026-05-02 02:51:47 |     → Trial 40/50 completed (~4982 evaluations)
+2026-05-02 02:52:11 |     → Trial 50/50 completed (~4907 evaluations)
+2026-05-02 02:52:12 |     → Instance 49/100
+2026-05-02 02:52:12 |     → ShapleyFlow (Backward Path Sampling): 138 edges, 9 sources
+2026-05-02 02:52:12 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 02:52:14 |     → Trial 1/50 completed (~4956 evaluations)
+2026-05-02 02:52:36 |     → Trial 10/50 completed (~4931 evaluations)
+2026-05-02 02:53:00 |     → Trial 20/50 completed (~4751 evaluations)
+2026-05-02 02:53:25 |     → Trial 30/50 completed (~5030 evaluations)
+2026-05-02 02:53:49 |     → Trial 40/50 completed (~4989 evaluations)
+2026-05-02 02:54:13 |     → Trial 50/50 completed (~4826 evaluations)
+2026-05-02 02:54:13 |     → Instance 50/100
+2026-05-02 02:54:13 |     → ShapleyFlow (Backward Path Sampling): 138 edges, 9 sources
+2026-05-02 02:54:13 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 02:54:16 |     → Trial 1/50 completed (~4928 evaluations)
+2026-05-02 02:54:38 |     → Trial 10/50 completed (~4957 evaluations)
+2026-05-02 02:55:02 |     → Trial 20/50 completed (~5035 evaluations)
+2026-05-02 02:55:26 |     → Trial 30/50 completed (~4830 evaluations)
+2026-05-02 02:55:50 |     → Trial 40/50 completed (~4978 evaluations)
+2026-05-02 02:56:14 |     → Trial 50/50 completed (~4851 evaluations)
+2026-05-02 02:56:15 |     → Instance 51/100
+2026-05-02 02:56:15 |     → ShapleyFlow (Backward Path Sampling): 138 edges, 9 sources
+2026-05-02 02:56:15 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 02:56:17 |     → Trial 1/50 completed (~5011 evaluations)
+2026-05-02 02:56:39 |     → Trial 10/50 completed (~4901 evaluations)
+2026-05-02 02:57:03 |     → Trial 20/50 completed (~4768 evaluations)
+2026-05-02 02:57:27 |     → Trial 30/50 completed (~4933 evaluations)
+2026-05-02 02:57:52 |     → Trial 40/50 completed (~5043 evaluations)
+2026-05-02 02:58:16 |     → Trial 50/50 completed (~5023 evaluations)
+2026-05-02 02:58:16 |     → Instance 52/100
+2026-05-02 02:58:16 |     → ShapleyFlow (Backward Path Sampling): 138 edges, 9 sources
+2026-05-02 02:58:16 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 02:58:19 |     → Trial 1/50 completed (~4871 evaluations)
+2026-05-02 02:58:40 |     → Trial 10/50 completed (~4921 evaluations)
+2026-05-02 02:59:05 |     → Trial 20/50 completed (~4963 evaluations)
+2026-05-02 02:59:29 |     → Trial 30/50 completed (~4990 evaluations)
+2026-05-02 02:59:53 |     → Trial 40/50 completed (~4797 evaluations)
+2026-05-02 03:00:18 |     → Trial 50/50 completed (~4795 evaluations)
+2026-05-02 03:00:18 |     → Instance 53/100
+2026-05-02 03:00:18 |     → ShapleyFlow (Backward Path Sampling): 138 edges, 9 sources
+2026-05-02 03:00:18 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 03:00:20 |     → Trial 1/50 completed (~4937 evaluations)
+2026-05-02 03:00:42 |     → Trial 10/50 completed (~4935 evaluations)
+2026-05-02 03:01:06 |     → Trial 20/50 completed (~4952 evaluations)
+2026-05-02 03:01:31 |     → Trial 30/50 completed (~4892 evaluations)
+2026-05-02 03:01:55 |     → Trial 40/50 completed (~4896 evaluations)
+2026-05-02 03:02:19 |     → Trial 50/50 completed (~5005 evaluations)
+2026-05-02 03:02:19 |     → Instance 54/100
+2026-05-02 03:02:19 |     → ShapleyFlow (Backward Path Sampling): 138 edges, 9 sources
+2026-05-02 03:02:19 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 03:02:22 |     → Trial 1/50 completed (~4873 evaluations)
+2026-05-02 03:02:44 |     → Trial 10/50 completed (~4842 evaluations)
+2026-05-02 03:03:08 |     → Trial 20/50 completed (~4906 evaluations)
+2026-05-02 03:03:32 |     → Trial 30/50 completed (~4968 evaluations)
+2026-05-02 03:03:56 |     → Trial 40/50 completed (~4924 evaluations)
+2026-05-02 03:04:21 |     → Trial 50/50 completed (~4945 evaluations)
+2026-05-02 03:04:21 |     → Instance 55/100
+2026-05-02 03:04:21 |     → ShapleyFlow (Backward Path Sampling): 138 edges, 9 sources
+2026-05-02 03:04:21 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 03:04:23 |     → Trial 1/50 completed (~4864 evaluations)
+2026-05-02 03:04:45 |     → Trial 10/50 completed (~5052 evaluations)
+2026-05-02 03:05:09 |     → Trial 20/50 completed (~4873 evaluations)
+2026-05-02 03:05:34 |     → Trial 30/50 completed (~4900 evaluations)
+2026-05-02 03:05:58 |     → Trial 40/50 completed (~4923 evaluations)
+2026-05-02 03:06:22 |     → Trial 50/50 completed (~4930 evaluations)
+2026-05-02 03:06:22 |     → Instance 56/100
+2026-05-02 03:06:22 |     → ShapleyFlow (Backward Path Sampling): 138 edges, 9 sources
+2026-05-02 03:06:22 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 03:06:25 |     → Trial 1/50 completed (~4854 evaluations)
+2026-05-02 03:06:47 |     → Trial 10/50 completed (~4937 evaluations)
+2026-05-02 03:07:11 |     → Trial 20/50 completed (~4995 evaluations)
+2026-05-02 03:07:35 |     → Trial 30/50 completed (~4746 evaluations)
+2026-05-02 03:07:59 |     → Trial 40/50 completed (~4955 evaluations)
+2026-05-02 03:08:23 |     → Trial 50/50 completed (~4941 evaluations)
+2026-05-02 03:08:23 |     → Instance 57/100
+2026-05-02 03:08:23 |     → ShapleyFlow (Backward Path Sampling): 138 edges, 9 sources
+2026-05-02 03:08:23 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 03:08:26 |     → Trial 1/50 completed (~4884 evaluations)
+2026-05-02 03:08:48 |     → Trial 10/50 completed (~5013 evaluations)
+2026-05-02 03:09:12 |     → Trial 20/50 completed (~4873 evaluations)
+2026-05-02 03:09:36 |     → Trial 30/50 completed (~4845 evaluations)
+2026-05-02 03:10:01 |     → Trial 40/50 completed (~4972 evaluations)
+2026-05-02 03:10:25 |     → Trial 50/50 completed (~4893 evaluations)
+2026-05-02 03:10:25 |     → Instance 58/100
+2026-05-02 03:10:25 |     → ShapleyFlow (Backward Path Sampling): 138 edges, 9 sources
+2026-05-02 03:10:25 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 03:10:28 |     → Trial 1/50 completed (~4880 evaluations)
+2026-05-02 03:10:49 |     → Trial 10/50 completed (~4902 evaluations)
+2026-05-02 03:11:14 |     → Trial 20/50 completed (~4915 evaluations)
+2026-05-02 03:11:38 |     → Trial 30/50 completed (~4973 evaluations)
+2026-05-02 03:12:02 |     → Trial 40/50 completed (~4897 evaluations)
+2026-05-02 03:12:26 |     → Trial 50/50 completed (~4782 evaluations)
+2026-05-02 03:12:26 |     → Instance 59/100
+2026-05-02 03:12:26 |     → ShapleyFlow (Backward Path Sampling): 138 edges, 9 sources
+2026-05-02 03:12:26 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 03:12:29 |     → Trial 1/50 completed (~4893 evaluations)
+2026-05-02 03:12:51 |     → Trial 10/50 completed (~4796 evaluations)
+2026-05-02 03:13:15 |     → Trial 20/50 completed (~4995 evaluations)
+2026-05-02 03:13:39 |     → Trial 30/50 completed (~4916 evaluations)
+2026-05-02 03:14:04 |     → Trial 40/50 completed (~4879 evaluations)
+2026-05-02 03:14:28 |     → Trial 50/50 completed (~4925 evaluations)
+2026-05-02 03:14:28 |     → Instance 60/100
+2026-05-02 03:14:28 |     → ShapleyFlow (Backward Path Sampling): 138 edges, 9 sources
+2026-05-02 03:14:28 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 03:14:30 |     → Trial 1/50 completed (~4899 evaluations)
+2026-05-02 03:14:52 |     → Trial 10/50 completed (~4978 evaluations)
+2026-05-02 03:15:16 |     → Trial 20/50 completed (~4849 evaluations)
+2026-05-02 03:15:41 |     → Trial 30/50 completed (~4832 evaluations)
+2026-05-02 03:16:05 |     → Trial 40/50 completed (~4783 evaluations)
+2026-05-02 03:16:29 |     → Trial 50/50 completed (~5031 evaluations)
+2026-05-02 03:16:30 |     → Instance 61/100
+2026-05-02 03:16:30 |     → ShapleyFlow (Backward Path Sampling): 138 edges, 9 sources
+2026-05-02 03:16:30 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 03:16:32 |     → Trial 1/50 completed (~4876 evaluations)
+2026-05-02 03:16:54 |     → Trial 10/50 completed (~4856 evaluations)
+2026-05-02 03:17:18 |     → Trial 20/50 completed (~4859 evaluations)
+2026-05-02 03:17:42 |     → Trial 30/50 completed (~4847 evaluations)
+2026-05-02 03:18:06 |     → Trial 40/50 completed (~4896 evaluations)
+2026-05-02 03:18:31 |     → Trial 50/50 completed (~4842 evaluations)
+2026-05-02 03:18:31 |     → Instance 62/100
+2026-05-02 03:18:31 |     → ShapleyFlow (Backward Path Sampling): 138 edges, 9 sources
+2026-05-02 03:18:31 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 03:18:33 |     → Trial 1/50 completed (~4900 evaluations)
+2026-05-02 03:18:55 |     → Trial 10/50 completed (~4769 evaluations)
+2026-05-02 03:19:19 |     → Trial 20/50 completed (~4930 evaluations)
+2026-05-02 03:19:44 |     → Trial 30/50 completed (~4820 evaluations)
+2026-05-02 03:20:08 |     → Trial 40/50 completed (~4827 evaluations)
+2026-05-02 03:20:32 |     → Trial 50/50 completed (~4907 evaluations)
+2026-05-02 03:20:33 |     → Instance 63/100
+2026-05-02 03:20:33 |     → ShapleyFlow (Backward Path Sampling): 138 edges, 9 sources
+2026-05-02 03:20:33 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 03:20:35 |     → Trial 1/50 completed (~4963 evaluations)
+2026-05-02 03:20:57 |     → Trial 10/50 completed (~5066 evaluations)
+2026-05-02 03:21:21 |     → Trial 20/50 completed (~4915 evaluations)
+2026-05-02 03:21:46 |     → Trial 30/50 completed (~4872 evaluations)
+2026-05-02 03:22:10 |     → Trial 40/50 completed (~4922 evaluations)
+2026-05-02 03:22:34 |     → Trial 50/50 completed (~4943 evaluations)
+2026-05-02 03:22:34 |     → Instance 64/100
+2026-05-02 03:22:34 |     → ShapleyFlow (Backward Path Sampling): 138 edges, 9 sources
+2026-05-02 03:22:34 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 03:22:36 |     → Trial 1/50 completed (~4878 evaluations)
+2026-05-02 03:22:59 |     → Trial 10/50 completed (~4834 evaluations)
+2026-05-02 03:23:23 |     → Trial 20/50 completed (~4737 evaluations)
+2026-05-02 03:23:47 |     → Trial 30/50 completed (~4770 evaluations)
+2026-05-02 03:24:12 |     → Trial 40/50 completed (~4801 evaluations)
+2026-05-02 03:24:36 |     → Trial 50/50 completed (~4785 evaluations)
+2026-05-02 03:24:36 |     → Instance 65/100
+2026-05-02 03:24:36 |     → ShapleyFlow (Backward Path Sampling): 138 edges, 9 sources
+2026-05-02 03:24:36 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 03:24:38 |     → Trial 1/50 completed (~4814 evaluations)
+2026-05-02 03:25:00 |     → Trial 10/50 completed (~4894 evaluations)
+2026-05-02 03:25:25 |     → Trial 20/50 completed (~4967 evaluations)
+2026-05-02 03:25:49 |     → Trial 30/50 completed (~5018 evaluations)
+2026-05-02 03:26:13 |     → Trial 40/50 completed (~4807 evaluations)
+2026-05-02 03:26:37 |     → Trial 50/50 completed (~4996 evaluations)
+2026-05-02 03:26:37 |     → Instance 66/100
+2026-05-02 03:26:37 |     → ShapleyFlow (Backward Path Sampling): 138 edges, 9 sources
+2026-05-02 03:26:37 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 03:26:40 |     → Trial 1/50 completed (~4848 evaluations)
+2026-05-02 03:27:02 |     → Trial 10/50 completed (~4907 evaluations)
+2026-05-02 03:27:26 |     → Trial 20/50 completed (~4946 evaluations)
+2026-05-02 03:27:50 |     → Trial 30/50 completed (~4997 evaluations)
+2026-05-02 03:28:15 |     → Trial 40/50 completed (~4861 evaluations)
+2026-05-02 03:28:39 |     → Trial 50/50 completed (~4775 evaluations)
+2026-05-02 03:28:39 |     → Instance 67/100
+2026-05-02 03:28:39 |     → ShapleyFlow (Backward Path Sampling): 138 edges, 9 sources
+2026-05-02 03:28:39 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 03:28:41 |     → Trial 1/50 completed (~4972 evaluations)
+2026-05-02 03:29:03 |     → Trial 10/50 completed (~4911 evaluations)
+2026-05-02 03:29:27 |     → Trial 20/50 completed (~4867 evaluations)
+2026-05-02 03:29:52 |     → Trial 30/50 completed (~4825 evaluations)
+2026-05-02 03:30:16 |     → Trial 40/50 completed (~4972 evaluations)
+2026-05-02 03:30:40 |     → Trial 50/50 completed (~4941 evaluations)
+2026-05-02 03:30:40 |     → Instance 68/100
+2026-05-02 03:30:40 |     → ShapleyFlow (Backward Path Sampling): 138 edges, 9 sources
+2026-05-02 03:30:40 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 03:30:43 |     → Trial 1/50 completed (~4903 evaluations)
+2026-05-02 03:31:05 |     → Trial 10/50 completed (~4855 evaluations)
+2026-05-02 03:31:29 |     → Trial 20/50 completed (~5078 evaluations)
+2026-05-02 03:31:54 |     → Trial 30/50 completed (~4969 evaluations)
+2026-05-02 03:32:18 |     → Trial 40/50 completed (~4888 evaluations)
+2026-05-02 03:32:43 |     → Trial 50/50 completed (~4882 evaluations)
+2026-05-02 03:32:43 |     → Instance 69/100
+2026-05-02 03:32:43 |     → ShapleyFlow (Backward Path Sampling): 138 edges, 9 sources
+2026-05-02 03:32:43 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 03:32:45 |     → Trial 1/50 completed (~4744 evaluations)
+2026-05-02 03:33:07 |     → Trial 10/50 completed (~4976 evaluations)
+2026-05-02 03:33:31 |     → Trial 20/50 completed (~4793 evaluations)
+2026-05-02 03:33:55 |     → Trial 30/50 completed (~4903 evaluations)
+2026-05-02 03:34:19 |     → Trial 40/50 completed (~4952 evaluations)
+2026-05-02 03:34:43 |     → Trial 50/50 completed (~4892 evaluations)
+2026-05-02 03:34:44 |     → Instance 70/100
+2026-05-02 03:34:44 |     → ShapleyFlow (Backward Path Sampling): 138 edges, 9 sources
+2026-05-02 03:34:44 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 03:34:46 |     → Trial 1/50 completed (~4927 evaluations)
+2026-05-02 03:35:08 |     → Trial 10/50 completed (~4990 evaluations)
+2026-05-02 03:35:32 |     → Trial 20/50 completed (~4894 evaluations)
+2026-05-02 03:35:56 |     → Trial 30/50 completed (~4849 evaluations)
+2026-05-02 03:36:20 |     → Trial 40/50 completed (~4929 evaluations)
+2026-05-02 03:36:45 |     → Trial 50/50 completed (~4933 evaluations)
+2026-05-02 03:36:45 |     → Instance 71/100
+2026-05-02 03:36:45 |     → ShapleyFlow (Backward Path Sampling): 138 edges, 9 sources
+2026-05-02 03:36:45 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 03:36:47 |     → Trial 1/50 completed (~4871 evaluations)
+2026-05-02 03:37:09 |     → Trial 10/50 completed (~4963 evaluations)
+2026-05-02 03:37:33 |     → Trial 20/50 completed (~5070 evaluations)
+2026-05-02 03:37:58 |     → Trial 30/50 completed (~4905 evaluations)
+2026-05-02 03:38:22 |     → Trial 40/50 completed (~4794 evaluations)
+2026-05-02 03:38:46 |     → Trial 50/50 completed (~4856 evaluations)
+2026-05-02 03:38:46 |     → Instance 72/100
+2026-05-02 03:38:46 |     → ShapleyFlow (Backward Path Sampling): 138 edges, 9 sources
+2026-05-02 03:38:46 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 03:38:49 |     → Trial 1/50 completed (~4917 evaluations)
+2026-05-02 03:39:11 |     → Trial 10/50 completed (~5004 evaluations)
+2026-05-02 03:39:35 |     → Trial 20/50 completed (~4993 evaluations)
+2026-05-02 03:39:59 |     → Trial 30/50 completed (~4910 evaluations)
+2026-05-02 03:40:23 |     → Trial 40/50 completed (~4761 evaluations)
+2026-05-02 03:40:48 |     → Trial 50/50 completed (~4924 evaluations)
+2026-05-02 03:40:48 |     → Instance 73/100
+2026-05-02 03:40:48 |     → ShapleyFlow (Backward Path Sampling): 138 edges, 9 sources
+2026-05-02 03:40:48 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 03:40:50 |     → Trial 1/50 completed (~5028 evaluations)
+2026-05-02 03:41:12 |     → Trial 10/50 completed (~4843 evaluations)
+2026-05-02 03:41:36 |     → Trial 20/50 completed (~4874 evaluations)
+2026-05-02 03:42:00 |     → Trial 30/50 completed (~4974 evaluations)
+2026-05-02 03:42:24 |     → Trial 40/50 completed (~4874 evaluations)
+2026-05-02 03:42:49 |     → Trial 50/50 completed (~4832 evaluations)
+2026-05-02 03:42:49 |     → Instance 74/100
+2026-05-02 03:42:49 |     → ShapleyFlow (Backward Path Sampling): 138 edges, 9 sources
+2026-05-02 03:42:49 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 03:42:51 |     → Trial 1/50 completed (~4821 evaluations)
+2026-05-02 03:43:13 |     → Trial 10/50 completed (~4859 evaluations)
+2026-05-02 03:43:38 |     → Trial 20/50 completed (~5048 evaluations)
+2026-05-02 03:44:02 |     → Trial 30/50 completed (~4863 evaluations)
+2026-05-02 03:44:26 |     → Trial 40/50 completed (~4820 evaluations)
+2026-05-02 03:44:50 |     → Trial 50/50 completed (~4942 evaluations)
+2026-05-02 03:44:50 |     → Instance 75/100
+2026-05-02 03:44:50 |     → ShapleyFlow (Backward Path Sampling): 138 edges, 9 sources
+2026-05-02 03:44:50 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 03:44:53 |     → Trial 1/50 completed (~4763 evaluations)
+2026-05-02 03:45:14 |     → Trial 10/50 completed (~4803 evaluations)
+2026-05-02 03:45:39 |     → Trial 20/50 completed (~4836 evaluations)
+2026-05-02 03:46:03 |     → Trial 30/50 completed (~4857 evaluations)
+2026-05-02 03:46:27 |     → Trial 40/50 completed (~4851 evaluations)
+2026-05-02 03:46:51 |     → Trial 50/50 completed (~4914 evaluations)
+2026-05-02 03:46:51 |     → Instance 76/100
+2026-05-02 03:46:51 |     → ShapleyFlow (Backward Path Sampling): 138 edges, 9 sources
+2026-05-02 03:46:51 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 03:46:54 |     → Trial 1/50 completed (~5026 evaluations)
+2026-05-02 03:47:16 |     → Trial 10/50 completed (~4959 evaluations)
+2026-05-02 03:47:40 |     → Trial 20/50 completed (~4992 evaluations)
+2026-05-02 03:48:04 |     → Trial 30/50 completed (~5003 evaluations)
+2026-05-02 03:48:28 |     → Trial 40/50 completed (~4915 evaluations)
+2026-05-02 03:48:53 |     → Trial 50/50 completed (~4861 evaluations)
+2026-05-02 03:48:53 |     → Instance 77/100
+2026-05-02 03:48:53 |     → ShapleyFlow (Backward Path Sampling): 138 edges, 9 sources
+2026-05-02 03:48:53 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 03:48:55 |     → Trial 1/50 completed (~4891 evaluations)
+2026-05-02 03:49:17 |     → Trial 10/50 completed (~4836 evaluations)
+2026-05-02 03:49:42 |     → Trial 20/50 completed (~4896 evaluations)
+2026-05-02 03:50:06 |     → Trial 30/50 completed (~4827 evaluations)
+2026-05-02 03:50:30 |     → Trial 40/50 completed (~4926 evaluations)
+2026-05-02 03:50:54 |     → Trial 50/50 completed (~4992 evaluations)
+2026-05-02 03:50:54 |     → Instance 78/100
+2026-05-02 03:50:54 |     → ShapleyFlow (Backward Path Sampling): 138 edges, 9 sources
+2026-05-02 03:50:54 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 03:50:57 |     → Trial 1/50 completed (~5053 evaluations)
+2026-05-02 03:51:19 |     → Trial 10/50 completed (~5006 evaluations)
+2026-05-02 03:51:43 |     → Trial 20/50 completed (~4906 evaluations)
+2026-05-02 03:52:07 |     → Trial 30/50 completed (~4893 evaluations)
+2026-05-02 03:52:31 |     → Trial 40/50 completed (~4724 evaluations)
+2026-05-02 03:52:55 |     → Trial 50/50 completed (~4866 evaluations)
+2026-05-02 03:52:55 |     → Instance 79/100
+2026-05-02 03:52:55 |     → ShapleyFlow (Backward Path Sampling): 138 edges, 9 sources
+2026-05-02 03:52:55 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 03:52:58 |     → Trial 1/50 completed (~5012 evaluations)
+2026-05-02 03:53:20 |     → Trial 10/50 completed (~4964 evaluations)
+2026-05-02 03:53:44 |     → Trial 20/50 completed (~4937 evaluations)
+2026-05-02 03:54:08 |     → Trial 30/50 completed (~4767 evaluations)
+2026-05-02 03:54:33 |     → Trial 40/50 completed (~4745 evaluations)
+2026-05-02 03:54:57 |     → Trial 50/50 completed (~4968 evaluations)
+2026-05-02 03:54:57 |     → Instance 80/100
+2026-05-02 03:54:57 |     → ShapleyFlow (Backward Path Sampling): 138 edges, 9 sources
+2026-05-02 03:54:57 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 03:54:59 |     → Trial 1/50 completed (~5013 evaluations)
+2026-05-02 03:55:21 |     → Trial 10/50 completed (~4912 evaluations)
+2026-05-02 03:55:46 |     → Trial 20/50 completed (~4972 evaluations)
+2026-05-02 03:56:10 |     → Trial 30/50 completed (~4878 evaluations)
+2026-05-02 03:56:34 |     → Trial 40/50 completed (~4809 evaluations)
+2026-05-02 03:56:58 |     → Trial 50/50 completed (~4986 evaluations)
+2026-05-02 03:56:58 |     → Instance 81/100
+2026-05-02 03:56:58 |     → ShapleyFlow (Backward Path Sampling): 138 edges, 9 sources
+2026-05-02 03:56:58 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 03:57:01 |     → Trial 1/50 completed (~4967 evaluations)
+2026-05-02 03:57:23 |     → Trial 10/50 completed (~4877 evaluations)
+2026-05-02 03:57:47 |     → Trial 20/50 completed (~4889 evaluations)
+2026-05-02 03:58:11 |     → Trial 30/50 completed (~4922 evaluations)
+2026-05-02 03:58:35 |     → Trial 40/50 completed (~4887 evaluations)
+2026-05-02 03:58:59 |     → Trial 50/50 completed (~4923 evaluations)
+2026-05-02 03:58:59 |     → Instance 82/100
+2026-05-02 03:58:59 |     → ShapleyFlow (Backward Path Sampling): 138 edges, 9 sources
+2026-05-02 03:58:59 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 03:59:02 |     → Trial 1/50 completed (~4981 evaluations)
+2026-05-02 03:59:24 |     → Trial 10/50 completed (~5021 evaluations)
+2026-05-02 03:59:48 |     → Trial 20/50 completed (~4683 evaluations)
+2026-05-02 04:00:12 |     → Trial 30/50 completed (~4827 evaluations)
+2026-05-02 04:00:36 |     → Trial 40/50 completed (~4970 evaluations)
+2026-05-02 04:01:01 |     → Trial 50/50 completed (~4827 evaluations)
+2026-05-02 04:01:01 |     → Instance 83/100
+2026-05-02 04:01:01 |     → ShapleyFlow (Backward Path Sampling): 138 edges, 9 sources
+2026-05-02 04:01:01 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 04:01:03 |     → Trial 1/50 completed (~4985 evaluations)
+2026-05-02 04:01:25 |     → Trial 10/50 completed (~4963 evaluations)
+2026-05-02 04:01:49 |     → Trial 20/50 completed (~4923 evaluations)
+2026-05-02 04:02:13 |     → Trial 30/50 completed (~4907 evaluations)
+2026-05-02 04:02:38 |     → Trial 40/50 completed (~4856 evaluations)
+2026-05-02 04:03:02 |     → Trial 50/50 completed (~4827 evaluations)
+2026-05-02 04:03:02 |     → Instance 84/100
+2026-05-02 04:03:02 |     → ShapleyFlow (Backward Path Sampling): 138 edges, 9 sources
+2026-05-02 04:03:02 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 04:03:05 |     → Trial 1/50 completed (~4841 evaluations)
+2026-05-02 04:03:26 |     → Trial 10/50 completed (~4944 evaluations)
+2026-05-02 04:03:51 |     → Trial 20/50 completed (~4788 evaluations)
+2026-05-02 04:04:15 |     → Trial 30/50 completed (~4919 evaluations)
+2026-05-02 04:04:39 |     → Trial 40/50 completed (~4970 evaluations)
+2026-05-02 04:05:03 |     → Trial 50/50 completed (~4840 evaluations)
+2026-05-02 04:05:03 |     → Instance 85/100
+2026-05-02 04:05:03 |     → ShapleyFlow (Backward Path Sampling): 138 edges, 9 sources
+2026-05-02 04:05:03 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 04:05:06 |     → Trial 1/50 completed (~4800 evaluations)
+2026-05-02 04:05:28 |     → Trial 10/50 completed (~4945 evaluations)
+2026-05-02 04:05:52 |     → Trial 20/50 completed (~4985 evaluations)
+2026-05-02 04:06:16 |     → Trial 30/50 completed (~4921 evaluations)
+2026-05-02 04:06:40 |     → Trial 40/50 completed (~4870 evaluations)
+2026-05-02 04:07:04 |     → Trial 50/50 completed (~4968 evaluations)
+2026-05-02 04:07:05 |     → Instance 86/100
+2026-05-02 04:07:05 |     → ShapleyFlow (Backward Path Sampling): 138 edges, 9 sources
+2026-05-02 04:07:05 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 04:07:07 |     → Trial 1/50 completed (~4916 evaluations)
+2026-05-02 04:07:29 |     → Trial 10/50 completed (~4818 evaluations)
+2026-05-02 04:07:53 |     → Trial 20/50 completed (~4998 evaluations)
+2026-05-02 04:08:17 |     → Trial 30/50 completed (~4997 evaluations)
+2026-05-02 04:08:41 |     → Trial 40/50 completed (~4839 evaluations)
+2026-05-02 04:09:06 |     → Trial 50/50 completed (~5085 evaluations)
+2026-05-02 04:09:06 |     → Instance 87/100
+2026-05-02 04:09:06 |     → ShapleyFlow (Backward Path Sampling): 138 edges, 9 sources
+2026-05-02 04:09:06 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 04:09:08 |     → Trial 1/50 completed (~4938 evaluations)
+2026-05-02 04:09:30 |     → Trial 10/50 completed (~5018 evaluations)
+2026-05-02 04:09:54 |     → Trial 20/50 completed (~4883 evaluations)
+2026-05-02 04:10:19 |     → Trial 30/50 completed (~4817 evaluations)
+2026-05-02 04:10:43 |     → Trial 40/50 completed (~4754 evaluations)
+2026-05-02 04:11:07 |     → Trial 50/50 completed (~4817 evaluations)
+2026-05-02 04:11:07 |     → Instance 88/100
+2026-05-02 04:11:07 |     → ShapleyFlow (Backward Path Sampling): 138 edges, 9 sources
+2026-05-02 04:11:07 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 04:11:09 |     → Trial 1/50 completed (~4901 evaluations)
+2026-05-02 04:11:31 |     → Trial 10/50 completed (~4933 evaluations)
+2026-05-02 04:11:56 |     → Trial 20/50 completed (~4868 evaluations)
+2026-05-02 04:12:20 |     → Trial 30/50 completed (~4891 evaluations)
+2026-05-02 04:12:44 |     → Trial 40/50 completed (~4873 evaluations)
+2026-05-02 04:13:08 |     → Trial 50/50 completed (~4921 evaluations)
+2026-05-02 04:13:08 |     → Instance 89/100
+2026-05-02 04:13:08 |     → ShapleyFlow (Backward Path Sampling): 138 edges, 9 sources
+2026-05-02 04:13:08 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 04:13:11 |     → Trial 1/50 completed (~4809 evaluations)
+2026-05-02 04:13:32 |     → Trial 10/50 completed (~4959 evaluations)
+2026-05-02 04:13:57 |     → Trial 20/50 completed (~4943 evaluations)
+2026-05-02 04:14:21 |     → Trial 30/50 completed (~4847 evaluations)
+2026-05-02 04:14:45 |     → Trial 40/50 completed (~4907 evaluations)
+2026-05-02 04:15:09 |     → Trial 50/50 completed (~4919 evaluations)
+2026-05-02 04:15:09 |     → Instance 90/100
+2026-05-02 04:15:09 |     → ShapleyFlow (Backward Path Sampling): 138 edges, 9 sources
+2026-05-02 04:15:09 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 04:15:12 |     → Trial 1/50 completed (~5024 evaluations)
+2026-05-02 04:15:34 |     → Trial 10/50 completed (~4961 evaluations)
+2026-05-02 04:15:58 |     → Trial 20/50 completed (~4888 evaluations)
+2026-05-02 04:16:22 |     → Trial 30/50 completed (~4818 evaluations)
+2026-05-02 04:16:46 |     → Trial 40/50 completed (~4873 evaluations)
+2026-05-02 04:17:11 |     → Trial 50/50 completed (~4806 evaluations)
+2026-05-02 04:17:11 |     → Instance 91/100
+2026-05-02 04:17:11 |     → ShapleyFlow (Backward Path Sampling): 138 edges, 9 sources
+2026-05-02 04:17:11 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 04:17:13 |     → Trial 1/50 completed (~4983 evaluations)
+2026-05-02 04:17:35 |     → Trial 10/50 completed (~4896 evaluations)
+2026-05-02 04:17:59 |     → Trial 20/50 completed (~4849 evaluations)
+2026-05-02 04:18:24 |     → Trial 30/50 completed (~4797 evaluations)
+2026-05-02 04:18:48 |     → Trial 40/50 completed (~4952 evaluations)
+2026-05-02 04:19:12 |     → Trial 50/50 completed (~4984 evaluations)
+2026-05-02 04:19:12 |     → Instance 92/100
+2026-05-02 04:19:12 |     → ShapleyFlow (Backward Path Sampling): 138 edges, 9 sources
+2026-05-02 04:19:12 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 04:19:15 |     → Trial 1/50 completed (~4843 evaluations)
+2026-05-02 04:19:37 |     → Trial 10/50 completed (~5013 evaluations)
+2026-05-02 04:20:01 |     → Trial 20/50 completed (~4873 evaluations)
+2026-05-02 04:20:25 |     → Trial 30/50 completed (~4885 evaluations)
+2026-05-02 04:20:49 |     → Trial 40/50 completed (~4971 evaluations)
+2026-05-02 04:21:14 |     → Trial 50/50 completed (~4834 evaluations)
+2026-05-02 04:21:14 |     → Instance 93/100
+2026-05-02 04:21:14 |     → ShapleyFlow (Backward Path Sampling): 138 edges, 9 sources
+2026-05-02 04:21:14 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 04:21:16 |     → Trial 1/50 completed (~4879 evaluations)
+2026-05-02 04:21:38 |     → Trial 10/50 completed (~4890 evaluations)
+2026-05-02 04:22:03 |     → Trial 20/50 completed (~4885 evaluations)
+2026-05-02 04:22:27 |     → Trial 30/50 completed (~5034 evaluations)
+2026-05-02 04:22:51 |     → Trial 40/50 completed (~4861 evaluations)
+2026-05-02 04:23:15 |     → Trial 50/50 completed (~4864 evaluations)
+2026-05-02 04:23:15 |     → Instance 94/100
+2026-05-02 04:23:15 |     → ShapleyFlow (Backward Path Sampling): 138 edges, 9 sources
+2026-05-02 04:23:15 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 04:23:18 |     → Trial 1/50 completed (~4874 evaluations)
+2026-05-02 04:23:39 |     → Trial 10/50 completed (~4793 evaluations)
+2026-05-02 04:24:04 |     → Trial 20/50 completed (~4882 evaluations)
+2026-05-02 04:24:28 |     → Trial 30/50 completed (~4956 evaluations)
+2026-05-02 04:24:52 |     → Trial 40/50 completed (~4871 evaluations)
+2026-05-02 04:25:16 |     → Trial 50/50 completed (~4907 evaluations)
+2026-05-02 04:25:16 |     → Instance 95/100
+2026-05-02 04:25:16 |     → ShapleyFlow (Backward Path Sampling): 138 edges, 9 sources
+2026-05-02 04:25:16 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 04:25:19 |     → Trial 1/50 completed (~4784 evaluations)
+2026-05-02 04:25:40 |     → Trial 10/50 completed (~4847 evaluations)
+2026-05-02 04:26:04 |     → Trial 20/50 completed (~4967 evaluations)
+2026-05-02 04:26:29 |     → Trial 30/50 completed (~4957 evaluations)
+2026-05-02 04:26:53 |     → Trial 40/50 completed (~4778 evaluations)
+2026-05-02 04:27:17 |     → Trial 50/50 completed (~4745 evaluations)
+2026-05-02 04:27:17 |     → Instance 96/100
+2026-05-02 04:27:17 |     → ShapleyFlow (Backward Path Sampling): 138 edges, 9 sources
+2026-05-02 04:27:17 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 04:27:19 |     → Trial 1/50 completed (~4998 evaluations)
+2026-05-02 04:27:41 |     → Trial 10/50 completed (~4943 evaluations)
+2026-05-02 04:28:06 |     → Trial 20/50 completed (~4993 evaluations)
+2026-05-02 04:28:30 |     → Trial 30/50 completed (~4978 evaluations)
+2026-05-02 04:28:54 |     → Trial 40/50 completed (~4830 evaluations)
+2026-05-02 04:29:19 |     → Trial 50/50 completed (~4989 evaluations)
+2026-05-02 04:29:19 |     → Instance 97/100
+2026-05-02 04:29:19 |     → ShapleyFlow (Backward Path Sampling): 138 edges, 9 sources
+2026-05-02 04:29:19 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 04:29:21 |     → Trial 1/50 completed (~4838 evaluations)
+2026-05-02 04:29:43 |     → Trial 10/50 completed (~4781 evaluations)
+2026-05-02 04:30:07 |     → Trial 20/50 completed (~4782 evaluations)
+2026-05-02 04:30:32 |     → Trial 30/50 completed (~4915 evaluations)
+2026-05-02 04:30:56 |     → Trial 40/50 completed (~4852 evaluations)
+2026-05-02 04:31:20 |     → Trial 50/50 completed (~4844 evaluations)
+2026-05-02 04:31:20 |     → Instance 98/100
+2026-05-02 04:31:20 |     → ShapleyFlow (Backward Path Sampling): 138 edges, 9 sources
+2026-05-02 04:31:20 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 04:31:23 |     → Trial 1/50 completed (~4746 evaluations)
+2026-05-02 04:31:45 |     → Trial 10/50 completed (~4954 evaluations)
+2026-05-02 04:32:09 |     → Trial 20/50 completed (~4859 evaluations)
+2026-05-02 04:32:33 |     → Trial 30/50 completed (~4963 evaluations)
+2026-05-02 04:32:58 |     → Trial 40/50 completed (~4858 evaluations)
+2026-05-02 04:33:22 |     → Trial 50/50 completed (~4968 evaluations)
+2026-05-02 04:33:22 |     → Instance 99/100
+2026-05-02 04:33:22 |     → ShapleyFlow (Backward Path Sampling): 138 edges, 9 sources
+2026-05-02 04:33:22 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 04:33:25 |     → Trial 1/50 completed (~4767 evaluations)
+2026-05-02 04:33:46 |     → Trial 10/50 completed (~4828 evaluations)
+2026-05-02 04:34:11 |     → Trial 20/50 completed (~4967 evaluations)
+2026-05-02 04:34:35 |     → Trial 30/50 completed (~4870 evaluations)
+2026-05-02 04:34:59 |     → Trial 40/50 completed (~4932 evaluations)
+2026-05-02 04:35:23 |     → Trial 50/50 completed (~4784 evaluations)
+2026-05-02 04:35:24 |     → Instance 100/100
+2026-05-02 04:35:24 |     → ShapleyFlow (Backward Path Sampling): 138 edges, 9 sources
+2026-05-02 04:35:24 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 04:35:26 |     → Trial 1/50 completed (~5036 evaluations)
+2026-05-02 04:35:48 |     → Trial 10/50 completed (~4952 evaluations)
+2026-05-02 04:36:12 |     → Trial 20/50 completed (~4904 evaluations)
+2026-05-02 04:36:36 |     → Trial 30/50 completed (~5028 evaluations)
+2026-05-02 04:37:00 |     → Trial 40/50 completed (~4777 evaluations)
+2026-05-02 04:37:24 |     → Trial 50/50 completed (~4853 evaluations)
+2026-05-02 04:37:25 |     → All instances completed
+2026-05-02 04:37:25 |   [Progress: 5/9] LGBM + PC - GraphExplainer
+2026-05-02 04:37:25 |   [Progress: 6/9] LGBM + LINGAM - AsymmetricShapley
+2026-05-02 04:37:25 |  Calculating asymmetric SHAP values
+2026-05-02 04:37:25 | Starting Asymmetric Shapley (topo-ordering) computation for 100 instances
+2026-05-02 04:37:25 | Using 50 samples per instance
+2026-05-02 04:37:25 |     Sample 10/50 completed
+2026-05-02 04:37:25 |     Sample 20/50 completed
+2026-05-02 04:37:25 |     Sample 30/50 completed
+2026-05-02 04:37:26 |     Sample 40/50 completed
+2026-05-02 04:37:26 |     Sample 50/50 completed
+2026-05-02 04:37:26 |     Sample 10/50 completed
+2026-05-02 04:37:26 |     Sample 20/50 completed
+2026-05-02 04:37:27 |     Sample 30/50 completed
+2026-05-02 04:37:27 |     Sample 40/50 completed
+2026-05-02 04:37:27 |     Sample 50/50 completed
+2026-05-02 04:37:27 |     Sample 10/50 completed
+2026-05-02 04:37:28 |     Sample 20/50 completed
+2026-05-02 04:37:28 |     Sample 30/50 completed
+2026-05-02 04:37:28 |     Sample 40/50 completed
+2026-05-02 04:37:28 |     Sample 50/50 completed
+2026-05-02 04:37:29 |     Sample 10/50 completed
+2026-05-02 04:37:29 |     Sample 20/50 completed
+2026-05-02 04:37:29 |     Sample 30/50 completed
+2026-05-02 04:37:29 |     Sample 40/50 completed
+2026-05-02 04:37:30 |     Sample 50/50 completed
+2026-05-02 04:37:30 |     Sample 10/50 completed
+2026-05-02 04:37:30 |     Sample 20/50 completed
+2026-05-02 04:37:30 |     Sample 30/50 completed
+2026-05-02 04:37:31 |     Sample 40/50 completed
+2026-05-02 04:37:31 |     Sample 50/50 completed
+2026-05-02 04:37:31 |     Sample 10/50 completed
+2026-05-02 04:37:31 |     Sample 20/50 completed
+2026-05-02 04:37:32 |     Sample 30/50 completed
+2026-05-02 04:37:32 |     Sample 40/50 completed
+2026-05-02 04:37:32 |     Sample 50/50 completed
+2026-05-02 04:37:32 |     Sample 10/50 completed
+2026-05-02 04:37:32 |     Sample 20/50 completed
+2026-05-02 04:37:33 |     Sample 30/50 completed
+2026-05-02 04:37:33 |     Sample 40/50 completed
+2026-05-02 04:37:33 |     Sample 50/50 completed
+2026-05-02 04:37:33 |     Sample 10/50 completed
+2026-05-02 04:37:34 |     Sample 20/50 completed
+2026-05-02 04:37:34 |     Sample 30/50 completed
+2026-05-02 04:37:34 |     Sample 40/50 completed
+2026-05-02 04:37:34 |     Sample 50/50 completed
+2026-05-02 04:37:35 |     Sample 10/50 completed
+2026-05-02 04:37:35 |     Sample 20/50 completed
+2026-05-02 04:37:35 |     Sample 30/50 completed
+2026-05-02 04:37:35 |     Sample 40/50 completed
+2026-05-02 04:37:36 |     Sample 50/50 completed
+2026-05-02 04:37:36 |     Sample 10/50 completed
+2026-05-02 04:37:36 |     Sample 20/50 completed
+2026-05-02 04:37:36 |     Sample 30/50 completed
+2026-05-02 04:37:37 |     Sample 40/50 completed
+2026-05-02 04:37:37 |     Sample 50/50 completed
+2026-05-02 04:37:37 |     Sample 10/50 completed
+2026-05-02 04:37:37 |     Sample 20/50 completed
+2026-05-02 04:37:38 |     Sample 30/50 completed
+2026-05-02 04:37:38 |     Sample 40/50 completed
+2026-05-02 04:37:38 |     Sample 50/50 completed
+2026-05-02 04:37:38 |     Sample 10/50 completed
+2026-05-02 04:37:39 |     Sample 20/50 completed
+2026-05-02 04:37:39 |     Sample 30/50 completed
+2026-05-02 04:37:39 |     Sample 40/50 completed
+2026-05-02 04:37:39 |     Sample 50/50 completed
+2026-05-02 04:37:40 |     Sample 10/50 completed
+2026-05-02 04:37:40 |     Sample 20/50 completed
+2026-05-02 04:37:40 |     Sample 30/50 completed
+2026-05-02 04:37:40 |     Sample 40/50 completed
+2026-05-02 04:37:41 |     Sample 50/50 completed
+2026-05-02 04:37:41 |     Sample 10/50 completed
+2026-05-02 04:37:41 |     Sample 20/50 completed
+2026-05-02 04:37:41 |     Sample 30/50 completed
+2026-05-02 04:37:42 |     Sample 40/50 completed
+2026-05-02 04:37:42 |     Sample 50/50 completed
+2026-05-02 04:37:42 |     Sample 10/50 completed
+2026-05-02 04:37:42 |     Sample 20/50 completed
+2026-05-02 04:37:43 |     Sample 30/50 completed
+2026-05-02 04:37:43 |     Sample 40/50 completed
+2026-05-02 04:37:43 |     Sample 50/50 completed
+2026-05-02 04:37:43 |     Sample 10/50 completed
+2026-05-02 04:37:44 |     Sample 20/50 completed
+2026-05-02 04:37:44 |     Sample 30/50 completed
+2026-05-02 04:37:44 |     Sample 40/50 completed
+2026-05-02 04:37:44 |     Sample 50/50 completed
+2026-05-02 04:37:45 |     Sample 10/50 completed
+2026-05-02 04:37:45 |     Sample 20/50 completed
+2026-05-02 04:37:45 |     Sample 30/50 completed
+2026-05-02 04:37:45 |     Sample 40/50 completed
+2026-05-02 04:37:46 |     Sample 50/50 completed
+2026-05-02 04:37:46 |     Sample 10/50 completed
+2026-05-02 04:37:46 |     Sample 20/50 completed
+2026-05-02 04:37:46 |     Sample 30/50 completed
+2026-05-02 04:37:47 |     Sample 40/50 completed
+2026-05-02 04:37:47 |     Sample 50/50 completed
+2026-05-02 04:37:47 |     Sample 10/50 completed
+2026-05-02 04:37:47 |     Sample 20/50 completed
+2026-05-02 04:37:48 |     Sample 30/50 completed
+2026-05-02 04:37:48 |     Sample 40/50 completed
+2026-05-02 04:37:48 |     Sample 50/50 completed
+2026-05-02 04:37:48 |     Sample 10/50 completed
+2026-05-02 04:37:49 |     Sample 20/50 completed
+2026-05-02 04:37:49 |     Sample 30/50 completed
+2026-05-02 04:37:49 |     Sample 40/50 completed
+2026-05-02 04:37:49 |     Sample 50/50 completed
+2026-05-02 04:37:50 |     Sample 10/50 completed
+2026-05-02 04:37:50 |     Sample 20/50 completed
+2026-05-02 04:37:50 |     Sample 30/50 completed
+2026-05-02 04:37:50 |     Sample 40/50 completed
+2026-05-02 04:37:51 |     Sample 50/50 completed
+2026-05-02 04:37:51 |     Sample 10/50 completed
+2026-05-02 04:37:51 |     Sample 20/50 completed
+2026-05-02 04:37:51 |     Sample 30/50 completed
+2026-05-02 04:37:52 |     Sample 40/50 completed
+2026-05-02 04:37:52 |     Sample 50/50 completed
+2026-05-02 04:37:52 |     Sample 10/50 completed
+2026-05-02 04:37:52 |     Sample 20/50 completed
+2026-05-02 04:37:53 |     Sample 30/50 completed
+2026-05-02 04:37:53 |     Sample 40/50 completed
+2026-05-02 04:37:53 |     Sample 50/50 completed
+2026-05-02 04:37:53 |     Sample 10/50 completed
+2026-05-02 04:37:54 |     Sample 20/50 completed
+2026-05-02 04:37:54 |     Sample 30/50 completed
+2026-05-02 04:37:54 |     Sample 40/50 completed
+2026-05-02 04:37:54 |     Sample 50/50 completed
+2026-05-02 04:37:55 |     Sample 10/50 completed
+2026-05-02 04:37:55 |     Sample 20/50 completed
+2026-05-02 04:37:55 |     Sample 30/50 completed
+2026-05-02 04:37:55 |     Sample 40/50 completed
+2026-05-02 04:37:56 |     Sample 50/50 completed
+2026-05-02 04:37:56 |     Sample 10/50 completed
+2026-05-02 04:37:56 |     Sample 20/50 completed
+2026-05-02 04:37:56 |     Sample 30/50 completed
+2026-05-02 04:37:57 |     Sample 40/50 completed
+2026-05-02 04:37:57 |     Sample 50/50 completed
+2026-05-02 04:37:57 |     Sample 10/50 completed
+2026-05-02 04:37:57 |     Sample 20/50 completed
+2026-05-02 04:37:58 |     Sample 30/50 completed
+2026-05-02 04:37:58 |     Sample 40/50 completed
+2026-05-02 04:37:58 |     Sample 50/50 completed
+2026-05-02 04:37:58 |     Sample 10/50 completed
+2026-05-02 04:37:59 |     Sample 20/50 completed
+2026-05-02 04:37:59 |     Sample 30/50 completed
+2026-05-02 04:37:59 |     Sample 40/50 completed
+2026-05-02 04:37:59 |     Sample 50/50 completed
+2026-05-02 04:38:00 |     Sample 10/50 completed
+2026-05-02 04:38:00 |     Sample 20/50 completed
+2026-05-02 04:38:00 |     Sample 30/50 completed
+2026-05-02 04:38:00 |     Sample 40/50 completed
+2026-05-02 04:38:01 |     Sample 50/50 completed
+2026-05-02 04:38:01 |     Sample 10/50 completed
+2026-05-02 04:38:01 |     Sample 20/50 completed
+2026-05-02 04:38:01 |     Sample 30/50 completed
+2026-05-02 04:38:02 |     Sample 40/50 completed
+2026-05-02 04:38:02 |     Sample 50/50 completed
+2026-05-02 04:38:02 |     Sample 10/50 completed
+2026-05-02 04:38:02 |     Sample 20/50 completed
+2026-05-02 04:38:03 |     Sample 30/50 completed
+2026-05-02 04:38:03 |     Sample 40/50 completed
+2026-05-02 04:38:03 |     Sample 50/50 completed
+2026-05-02 04:38:03 |     Sample 10/50 completed
+2026-05-02 04:38:04 |     Sample 20/50 completed
+2026-05-02 04:38:04 |     Sample 30/50 completed
+2026-05-02 04:38:04 |     Sample 40/50 completed
+2026-05-02 04:38:04 |     Sample 50/50 completed
+2026-05-02 04:38:05 |     Sample 10/50 completed
+2026-05-02 04:38:05 |     Sample 20/50 completed
+2026-05-02 04:38:05 |     Sample 30/50 completed
+2026-05-02 04:38:05 |     Sample 40/50 completed
+2026-05-02 04:38:06 |     Sample 50/50 completed
+2026-05-02 04:38:06 |     Sample 10/50 completed
+2026-05-02 04:38:06 |     Sample 20/50 completed
+2026-05-02 04:38:06 |     Sample 30/50 completed
+2026-05-02 04:38:07 |     Sample 40/50 completed
+2026-05-02 04:38:07 |     Sample 50/50 completed
+2026-05-02 04:38:07 |     Sample 10/50 completed
+2026-05-02 04:38:07 |     Sample 20/50 completed
+2026-05-02 04:38:08 |     Sample 30/50 completed
+2026-05-02 04:38:08 |     Sample 40/50 completed
+2026-05-02 04:38:08 |     Sample 50/50 completed
+2026-05-02 04:38:08 |     Sample 10/50 completed
+2026-05-02 04:38:09 |     Sample 20/50 completed
+2026-05-02 04:38:09 |     Sample 30/50 completed
+2026-05-02 04:38:09 |     Sample 40/50 completed
+2026-05-02 04:38:09 |     Sample 50/50 completed
+2026-05-02 04:38:10 |     Sample 10/50 completed
+2026-05-02 04:38:10 |     Sample 20/50 completed
+2026-05-02 04:38:10 |     Sample 30/50 completed
+2026-05-02 04:38:10 |     Sample 40/50 completed
+2026-05-02 04:38:11 |     Sample 50/50 completed
+2026-05-02 04:38:11 |     Sample 10/50 completed
+2026-05-02 04:38:11 |     Sample 20/50 completed
+2026-05-02 04:38:11 |     Sample 30/50 completed
+2026-05-02 04:38:12 |     Sample 40/50 completed
+2026-05-02 04:38:12 |     Sample 50/50 completed
+2026-05-02 04:38:12 |     Sample 10/50 completed
+2026-05-02 04:38:12 |     Sample 20/50 completed
+2026-05-02 04:38:13 |     Sample 30/50 completed
+2026-05-02 04:38:13 |     Sample 40/50 completed
+2026-05-02 04:38:13 |     Sample 50/50 completed
+2026-05-02 04:38:13 |     Sample 10/50 completed
+2026-05-02 04:38:14 |     Sample 20/50 completed
+2026-05-02 04:38:14 |     Sample 30/50 completed
+2026-05-02 04:38:14 |     Sample 40/50 completed
+2026-05-02 04:38:14 |     Sample 50/50 completed
+2026-05-02 04:38:15 |     Sample 10/50 completed
+2026-05-02 04:38:15 |     Sample 20/50 completed
+2026-05-02 04:38:15 |     Sample 30/50 completed
+2026-05-02 04:38:15 |     Sample 40/50 completed
+2026-05-02 04:38:16 |     Sample 50/50 completed
+2026-05-02 04:38:16 |     Sample 10/50 completed
+2026-05-02 04:38:16 |     Sample 20/50 completed
+2026-05-02 04:38:16 |     Sample 30/50 completed
+2026-05-02 04:38:17 |     Sample 40/50 completed
+2026-05-02 04:38:17 |     Sample 50/50 completed
+2026-05-02 04:38:17 |     Sample 10/50 completed
+2026-05-02 04:38:17 |     Sample 20/50 completed
+2026-05-02 04:38:18 |     Sample 30/50 completed
+2026-05-02 04:38:18 |     Sample 40/50 completed
+2026-05-02 04:38:18 |     Sample 50/50 completed
+2026-05-02 04:38:18 |     Sample 10/50 completed
+2026-05-02 04:38:19 |     Sample 20/50 completed
+2026-05-02 04:38:19 |     Sample 30/50 completed
+2026-05-02 04:38:19 |     Sample 40/50 completed
+2026-05-02 04:38:19 |     Sample 50/50 completed
+2026-05-02 04:38:20 |     Sample 10/50 completed
+2026-05-02 04:38:20 |     Sample 20/50 completed
+2026-05-02 04:38:20 |     Sample 30/50 completed
+2026-05-02 04:38:20 |     Sample 40/50 completed
+2026-05-02 04:38:21 |     Sample 50/50 completed
+2026-05-02 04:38:21 |     Sample 10/50 completed
+2026-05-02 04:38:21 |     Sample 20/50 completed
+2026-05-02 04:38:21 |     Sample 30/50 completed
+2026-05-02 04:38:22 |     Sample 40/50 completed
+2026-05-02 04:38:22 |     Sample 50/50 completed
+2026-05-02 04:38:22 |     Sample 10/50 completed
+2026-05-02 04:38:22 |     Sample 20/50 completed
+2026-05-02 04:38:23 |     Sample 30/50 completed
+2026-05-02 04:38:23 |     Sample 40/50 completed
+2026-05-02 04:38:23 |     Sample 50/50 completed
+2026-05-02 04:38:23 |     Sample 10/50 completed
+2026-05-02 04:38:24 |     Sample 20/50 completed
+2026-05-02 04:38:24 |     Sample 30/50 completed
+2026-05-02 04:38:24 |     Sample 40/50 completed
+2026-05-02 04:38:24 |     Sample 50/50 completed
+2026-05-02 04:38:25 |     Sample 10/50 completed
+2026-05-02 04:38:25 |     Sample 20/50 completed
+2026-05-02 04:38:25 |     Sample 30/50 completed
+2026-05-02 04:38:25 |     Sample 40/50 completed
+2026-05-02 04:38:26 |     Sample 50/50 completed
+2026-05-02 04:38:26 |     Sample 10/50 completed
+2026-05-02 04:38:26 |     Sample 20/50 completed
+2026-05-02 04:38:26 |     Sample 30/50 completed
+2026-05-02 04:38:27 |     Sample 40/50 completed
+2026-05-02 04:38:27 |     Sample 50/50 completed
+2026-05-02 04:38:27 |     Sample 10/50 completed
+2026-05-02 04:38:27 |     Sample 20/50 completed
+2026-05-02 04:38:28 |     Sample 30/50 completed
+2026-05-02 04:38:28 |     Sample 40/50 completed
+2026-05-02 04:38:28 |     Sample 50/50 completed
+2026-05-02 04:38:28 |     Sample 10/50 completed
+2026-05-02 04:38:29 |     Sample 20/50 completed
+2026-05-02 04:38:29 |     Sample 30/50 completed
+2026-05-02 04:38:29 |     Sample 40/50 completed
+2026-05-02 04:38:29 |     Sample 50/50 completed
+2026-05-02 04:38:30 |     Sample 10/50 completed
+2026-05-02 04:38:30 |     Sample 20/50 completed
+2026-05-02 04:38:30 |     Sample 30/50 completed
+2026-05-02 04:38:30 |     Sample 40/50 completed
+2026-05-02 04:38:31 |     Sample 50/50 completed
+2026-05-02 04:38:31 |     Sample 10/50 completed
+2026-05-02 04:38:31 |     Sample 20/50 completed
+2026-05-02 04:38:31 |     Sample 30/50 completed
+2026-05-02 04:38:32 |     Sample 40/50 completed
+2026-05-02 04:38:32 |     Sample 50/50 completed
+2026-05-02 04:38:32 |     Sample 10/50 completed
+2026-05-02 04:38:32 |     Sample 20/50 completed
+2026-05-02 04:38:33 |     Sample 30/50 completed
+2026-05-02 04:38:33 |     Sample 40/50 completed
+2026-05-02 04:38:33 |     Sample 50/50 completed
+2026-05-02 04:38:33 |     Sample 10/50 completed
+2026-05-02 04:38:34 |     Sample 20/50 completed
+2026-05-02 04:38:34 |     Sample 30/50 completed
+2026-05-02 04:38:34 |     Sample 40/50 completed
+2026-05-02 04:38:34 |     Sample 50/50 completed
+2026-05-02 04:38:35 |     Sample 10/50 completed
+2026-05-02 04:38:35 |     Sample 20/50 completed
+2026-05-02 04:38:35 |     Sample 30/50 completed
+2026-05-02 04:38:35 |     Sample 40/50 completed
+2026-05-02 04:38:36 |     Sample 50/50 completed
+2026-05-02 04:38:36 |     Sample 10/50 completed
+2026-05-02 04:38:36 |     Sample 20/50 completed
+2026-05-02 04:38:36 |     Sample 30/50 completed
+2026-05-02 04:38:37 |     Sample 40/50 completed
+2026-05-02 04:38:37 |     Sample 50/50 completed
+2026-05-02 04:38:37 |     Sample 10/50 completed
+2026-05-02 04:38:37 |     Sample 20/50 completed
+2026-05-02 04:38:38 |     Sample 30/50 completed
+2026-05-02 04:38:38 |     Sample 40/50 completed
+2026-05-02 04:38:38 |     Sample 50/50 completed
+2026-05-02 04:38:38 |     Sample 10/50 completed
+2026-05-02 04:38:39 |     Sample 20/50 completed
+2026-05-02 04:38:39 |     Sample 30/50 completed
+2026-05-02 04:38:39 |     Sample 40/50 completed
+2026-05-02 04:38:39 |     Sample 50/50 completed
+2026-05-02 04:38:40 |     Sample 10/50 completed
+2026-05-02 04:38:40 |     Sample 20/50 completed
+2026-05-02 04:38:40 |     Sample 30/50 completed
+2026-05-02 04:38:40 |     Sample 40/50 completed
+2026-05-02 04:38:41 |     Sample 50/50 completed
+2026-05-02 04:38:41 |     Sample 10/50 completed
+2026-05-02 04:38:41 |     Sample 20/50 completed
+2026-05-02 04:38:41 |     Sample 30/50 completed
+2026-05-02 04:38:42 |     Sample 40/50 completed
+2026-05-02 04:38:42 |     Sample 50/50 completed
+2026-05-02 04:38:42 |     Sample 10/50 completed
+2026-05-02 04:38:42 |     Sample 20/50 completed
+2026-05-02 04:38:43 |     Sample 30/50 completed
+2026-05-02 04:38:43 |     Sample 40/50 completed
+2026-05-02 04:38:43 |     Sample 50/50 completed
+2026-05-02 04:38:43 |     Sample 10/50 completed
+2026-05-02 04:38:44 |     Sample 20/50 completed
+2026-05-02 04:38:44 |     Sample 30/50 completed
+2026-05-02 04:38:44 |     Sample 40/50 completed
+2026-05-02 04:38:44 |     Sample 50/50 completed
+2026-05-02 04:38:45 |     Sample 10/50 completed
+2026-05-02 04:38:45 |     Sample 20/50 completed
+2026-05-02 04:38:45 |     Sample 30/50 completed
+2026-05-02 04:38:45 |     Sample 40/50 completed
+2026-05-02 04:38:46 |     Sample 50/50 completed
+2026-05-02 04:38:46 |     Sample 10/50 completed
+2026-05-02 04:38:46 |     Sample 20/50 completed
+2026-05-02 04:38:46 |     Sample 30/50 completed
+2026-05-02 04:38:47 |     Sample 40/50 completed
+2026-05-02 04:38:47 |     Sample 50/50 completed
+2026-05-02 04:38:47 |     Sample 10/50 completed
+2026-05-02 04:38:47 |     Sample 20/50 completed
+2026-05-02 04:38:48 |     Sample 30/50 completed
+2026-05-02 04:38:48 |     Sample 40/50 completed
+2026-05-02 04:38:48 |     Sample 50/50 completed
+2026-05-02 04:38:48 |     Sample 10/50 completed
+2026-05-02 04:38:49 |     Sample 20/50 completed
+2026-05-02 04:38:49 |     Sample 30/50 completed
+2026-05-02 04:38:49 |     Sample 40/50 completed
+2026-05-02 04:38:49 |     Sample 50/50 completed
+2026-05-02 04:38:50 |     Sample 10/50 completed
+2026-05-02 04:38:50 |     Sample 20/50 completed
+2026-05-02 04:38:50 |     Sample 30/50 completed
+2026-05-02 04:38:50 |     Sample 40/50 completed
+2026-05-02 04:38:51 |     Sample 50/50 completed
+2026-05-02 04:38:51 |     Sample 10/50 completed
+2026-05-02 04:38:51 |     Sample 20/50 completed
+2026-05-02 04:38:51 |     Sample 30/50 completed
+2026-05-02 04:38:52 |     Sample 40/50 completed
+2026-05-02 04:38:52 |     Sample 50/50 completed
+2026-05-02 04:38:52 |     Sample 10/50 completed
+2026-05-02 04:38:52 |     Sample 20/50 completed
+2026-05-02 04:38:53 |     Sample 30/50 completed
+2026-05-02 04:38:53 |     Sample 40/50 completed
+2026-05-02 04:38:53 |     Sample 50/50 completed
+2026-05-02 04:38:53 |     Sample 10/50 completed
+2026-05-02 04:38:54 |     Sample 20/50 completed
+2026-05-02 04:38:54 |     Sample 30/50 completed
+2026-05-02 04:38:54 |     Sample 40/50 completed
+2026-05-02 04:38:54 |     Sample 50/50 completed
+2026-05-02 04:38:55 |     Sample 10/50 completed
+2026-05-02 04:38:55 |     Sample 20/50 completed
+2026-05-02 04:38:55 |     Sample 30/50 completed
+2026-05-02 04:38:55 |     Sample 40/50 completed
+2026-05-02 04:38:56 |     Sample 50/50 completed
+2026-05-02 04:38:56 |     Sample 10/50 completed
+2026-05-02 04:38:56 |     Sample 20/50 completed
+2026-05-02 04:38:56 |     Sample 30/50 completed
+2026-05-02 04:38:57 |     Sample 40/50 completed
+2026-05-02 04:38:57 |     Sample 50/50 completed
+2026-05-02 04:38:57 |     Sample 10/50 completed
+2026-05-02 04:38:57 |     Sample 20/50 completed
+2026-05-02 04:38:58 |     Sample 30/50 completed
+2026-05-02 04:38:58 |     Sample 40/50 completed
+2026-05-02 04:38:58 |     Sample 50/50 completed
+2026-05-02 04:38:58 |     Sample 10/50 completed
+2026-05-02 04:38:59 |     Sample 20/50 completed
+2026-05-02 04:38:59 |     Sample 30/50 completed
+2026-05-02 04:38:59 |     Sample 40/50 completed
+2026-05-02 04:38:59 |     Sample 50/50 completed
+2026-05-02 04:39:00 |     Sample 10/50 completed
+2026-05-02 04:39:00 |     Sample 20/50 completed
+2026-05-02 04:39:00 |     Sample 30/50 completed
+2026-05-02 04:39:00 |     Sample 40/50 completed
+2026-05-02 04:39:01 |     Sample 50/50 completed
+2026-05-02 04:39:01 |     Sample 10/50 completed
+2026-05-02 04:39:01 |     Sample 20/50 completed
+2026-05-02 04:39:01 |     Sample 30/50 completed
+2026-05-02 04:39:02 |     Sample 40/50 completed
+2026-05-02 04:39:02 |     Sample 50/50 completed
+2026-05-02 04:39:02 |     Sample 10/50 completed
+2026-05-02 04:39:02 |     Sample 20/50 completed
+2026-05-02 04:39:03 |     Sample 30/50 completed
+2026-05-02 04:39:03 |     Sample 40/50 completed
+2026-05-02 04:39:03 |     Sample 50/50 completed
+2026-05-02 04:39:03 |     Sample 10/50 completed
+2026-05-02 04:39:04 |     Sample 20/50 completed
+2026-05-02 04:39:04 |     Sample 30/50 completed
+2026-05-02 04:39:04 |     Sample 40/50 completed
+2026-05-02 04:39:04 |     Sample 50/50 completed
+2026-05-02 04:39:05 |     Sample 10/50 completed
+2026-05-02 04:39:05 |     Sample 20/50 completed
+2026-05-02 04:39:05 |     Sample 30/50 completed
+2026-05-02 04:39:05 |     Sample 40/50 completed
+2026-05-02 04:39:06 |     Sample 50/50 completed
+2026-05-02 04:39:06 |     Sample 10/50 completed
+2026-05-02 04:39:06 |     Sample 20/50 completed
+2026-05-02 04:39:06 |     Sample 30/50 completed
+2026-05-02 04:39:07 |     Sample 40/50 completed
+2026-05-02 04:39:07 |     Sample 50/50 completed
+2026-05-02 04:39:07 |     Sample 10/50 completed
+2026-05-02 04:39:07 |     Sample 20/50 completed
+2026-05-02 04:39:08 |     Sample 30/50 completed
+2026-05-02 04:39:08 |     Sample 40/50 completed
+2026-05-02 04:39:08 |     Sample 50/50 completed
+2026-05-02 04:39:08 |     Sample 10/50 completed
+2026-05-02 04:39:09 |     Sample 20/50 completed
+2026-05-02 04:39:09 |     Sample 30/50 completed
+2026-05-02 04:39:09 |     Sample 40/50 completed
+2026-05-02 04:39:09 |     Sample 50/50 completed
+2026-05-02 04:39:10 |     Sample 10/50 completed
+2026-05-02 04:39:10 |     Sample 20/50 completed
+2026-05-02 04:39:10 |     Sample 30/50 completed
+2026-05-02 04:39:10 |     Sample 40/50 completed
+2026-05-02 04:39:11 |     Sample 50/50 completed
+2026-05-02 04:39:11 |     Sample 10/50 completed
+2026-05-02 04:39:11 |     Sample 20/50 completed
+2026-05-02 04:39:11 |     Sample 30/50 completed
+2026-05-02 04:39:12 |     Sample 40/50 completed
+2026-05-02 04:39:12 |     Sample 50/50 completed
+2026-05-02 04:39:12 |     Sample 10/50 completed
+2026-05-02 04:39:12 |     Sample 20/50 completed
+2026-05-02 04:39:13 |     Sample 30/50 completed
+2026-05-02 04:39:13 |     Sample 40/50 completed
+2026-05-02 04:39:13 |     Sample 50/50 completed
+2026-05-02 04:39:13 |     Sample 10/50 completed
+2026-05-02 04:39:14 |     Sample 20/50 completed
+2026-05-02 04:39:14 |     Sample 30/50 completed
+2026-05-02 04:39:14 |     Sample 40/50 completed
+2026-05-02 04:39:14 |     Sample 50/50 completed
+2026-05-02 04:39:15 |     Sample 10/50 completed
+2026-05-02 04:39:15 |     Sample 20/50 completed
+2026-05-02 04:39:15 |     Sample 30/50 completed
+2026-05-02 04:39:15 |     Sample 40/50 completed
+2026-05-02 04:39:16 |     Sample 50/50 completed
+2026-05-02 04:39:16 |     Sample 10/50 completed
+2026-05-02 04:39:16 |     Sample 20/50 completed
+2026-05-02 04:39:16 |     Sample 30/50 completed
+2026-05-02 04:39:17 |     Sample 40/50 completed
+2026-05-02 04:39:17 |     Sample 50/50 completed
+2026-05-02 04:39:17 |     Sample 10/50 completed
+2026-05-02 04:39:17 |     Sample 20/50 completed
+2026-05-02 04:39:18 |     Sample 30/50 completed
+2026-05-02 04:39:18 |     Sample 40/50 completed
+2026-05-02 04:39:18 |     Sample 50/50 completed
+2026-05-02 04:39:18 |     Sample 10/50 completed
+2026-05-02 04:39:19 |     Sample 20/50 completed
+2026-05-02 04:39:19 |     Sample 30/50 completed
+2026-05-02 04:39:19 |     Sample 40/50 completed
+2026-05-02 04:39:19 |     Sample 50/50 completed
+2026-05-02 04:39:20 |     Sample 10/50 completed
+2026-05-02 04:39:20 |     Sample 20/50 completed
+2026-05-02 04:39:20 |     Sample 30/50 completed
+2026-05-02 04:39:20 |     Sample 40/50 completed
+2026-05-02 04:39:21 |     Sample 50/50 completed
+2026-05-02 04:39:21 |     Sample 10/50 completed
+2026-05-02 04:39:21 |     Sample 20/50 completed
+2026-05-02 04:39:21 |     Sample 30/50 completed
+2026-05-02 04:39:22 |     Sample 40/50 completed
+2026-05-02 04:39:22 |     Sample 50/50 completed
+2026-05-02 04:39:22 |     Sample 10/50 completed
+2026-05-02 04:39:22 |     Sample 20/50 completed
+2026-05-02 04:39:23 |     Sample 30/50 completed
+2026-05-02 04:39:23 |     Sample 40/50 completed
+2026-05-02 04:39:23 |     Sample 50/50 completed
+2026-05-02 04:39:23 |     Sample 10/50 completed
+2026-05-02 04:39:24 |     Sample 20/50 completed
+2026-05-02 04:39:24 |     Sample 30/50 completed
+2026-05-02 04:39:24 |     Sample 40/50 completed
+2026-05-02 04:39:24 |     Sample 50/50 completed
+2026-05-02 04:39:25 |     Sample 10/50 completed
+2026-05-02 04:39:25 |     Sample 20/50 completed
+2026-05-02 04:39:25 |     Sample 30/50 completed
+2026-05-02 04:39:25 |     Sample 40/50 completed
+2026-05-02 04:39:26 |     Sample 50/50 completed
+2026-05-02 04:39:26 |     Sample 10/50 completed
+2026-05-02 04:39:26 |     Sample 20/50 completed
+2026-05-02 04:39:26 |     Sample 30/50 completed
+2026-05-02 04:39:27 |     Sample 40/50 completed
+2026-05-02 04:39:27 |     Sample 50/50 completed
+2026-05-02 04:39:27 |     Sample 10/50 completed
+2026-05-02 04:39:27 |     Sample 20/50 completed
+2026-05-02 04:39:28 |     Sample 30/50 completed
+2026-05-02 04:39:28 |     Sample 40/50 completed
+2026-05-02 04:39:28 |     Sample 50/50 completed
+2026-05-02 04:39:28 |     Sample 10/50 completed
+2026-05-02 04:39:29 |     Sample 20/50 completed
+2026-05-02 04:39:29 |     Sample 30/50 completed
+2026-05-02 04:39:29 |     Sample 40/50 completed
+2026-05-02 04:39:29 |     Sample 50/50 completed
+2026-05-02 04:39:29 | Completed all 100 instances
+2026-05-02 04:39:29 |   [Progress: 7/9] LGBM + LINGAM - CausalShapley (SLOW - uses 10 inner samples)
+2026-05-02 05:14:37 |   [Progress: 8/9] LGBM + LINGAM - ShapleyFlow
+2026-05-02 05:14:37 |     → ShapleyFlowWrapper: 51 features, 287 edges, 3 sources
+2026-05-02 05:14:37 |     → Computing Shapley Flow for 100 instances...
+2026-05-02 05:14:37 |     → Instance 1/100
+2026-05-02 05:14:37 |     → ShapleyFlow (Backward Path Sampling): 287 edges, 3 sources
+2026-05-02 05:14:37 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 05:14:38 |     → Trial 1/50 completed (~1610 evaluations)
+2026-05-02 05:14:45 |     → Trial 10/50 completed (~1565 evaluations)
+2026-05-02 05:14:52 |     → Trial 20/50 completed (~1610 evaluations)
+2026-05-02 05:15:00 |     → Trial 30/50 completed (~1612 evaluations)
+2026-05-02 05:15:08 |     → Trial 40/50 completed (~1567 evaluations)
+2026-05-02 05:15:16 |     → Trial 50/50 completed (~1583 evaluations)
+2026-05-02 05:15:16 |     → Instance 2/100
+2026-05-02 05:15:16 |     → ShapleyFlow (Backward Path Sampling): 287 edges, 3 sources
+2026-05-02 05:15:16 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 05:15:17 |     → Trial 1/50 completed (~1578 evaluations)
+2026-05-02 05:15:24 |     → Trial 10/50 completed (~1569 evaluations)
+2026-05-02 05:15:31 |     → Trial 20/50 completed (~1527 evaluations)
+2026-05-02 05:15:39 |     → Trial 30/50 completed (~1549 evaluations)
+2026-05-02 05:15:47 |     → Trial 40/50 completed (~1518 evaluations)
+2026-05-02 05:15:55 |     → Trial 50/50 completed (~1573 evaluations)
+2026-05-02 05:15:55 |     → Instance 3/100
+2026-05-02 05:15:55 |     → ShapleyFlow (Backward Path Sampling): 287 edges, 3 sources
+2026-05-02 05:15:55 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 05:15:55 |     → Trial 1/50 completed (~1562 evaluations)
+2026-05-02 05:16:02 |     → Trial 10/50 completed (~1558 evaluations)
+2026-05-02 05:16:10 |     → Trial 20/50 completed (~1612 evaluations)
+2026-05-02 05:16:18 |     → Trial 30/50 completed (~1514 evaluations)
+2026-05-02 05:16:26 |     → Trial 40/50 completed (~1614 evaluations)
+2026-05-02 05:16:34 |     → Trial 50/50 completed (~1595 evaluations)
+2026-05-02 05:16:34 |     → Instance 4/100
+2026-05-02 05:16:34 |     → ShapleyFlow (Backward Path Sampling): 287 edges, 3 sources
+2026-05-02 05:16:34 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 05:16:34 |     → Trial 1/50 completed (~1535 evaluations)
+2026-05-02 05:16:41 |     → Trial 10/50 completed (~1559 evaluations)
+2026-05-02 05:16:49 |     → Trial 20/50 completed (~1567 evaluations)
+2026-05-02 05:16:57 |     → Trial 30/50 completed (~1535 evaluations)
+2026-05-02 05:17:05 |     → Trial 40/50 completed (~1539 evaluations)
+2026-05-02 05:17:13 |     → Trial 50/50 completed (~1546 evaluations)
+2026-05-02 05:17:13 |     → Instance 5/100
+2026-05-02 05:17:13 |     → ShapleyFlow (Backward Path Sampling): 287 edges, 3 sources
+2026-05-02 05:17:13 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 05:17:13 |     → Trial 1/50 completed (~1615 evaluations)
+2026-05-02 05:17:20 |     → Trial 10/50 completed (~1612 evaluations)
+2026-05-02 05:17:28 |     → Trial 20/50 completed (~1540 evaluations)
+2026-05-02 05:17:36 |     → Trial 30/50 completed (~1561 evaluations)
+2026-05-02 05:17:44 |     → Trial 40/50 completed (~1615 evaluations)
+2026-05-02 05:17:52 |     → Trial 50/50 completed (~1571 evaluations)
+2026-05-02 05:17:52 |     → Instance 6/100
+2026-05-02 05:17:52 |     → ShapleyFlow (Backward Path Sampling): 287 edges, 3 sources
+2026-05-02 05:17:52 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 05:17:53 |     → Trial 1/50 completed (~1549 evaluations)
+2026-05-02 05:18:00 |     → Trial 10/50 completed (~1530 evaluations)
+2026-05-02 05:18:07 |     → Trial 20/50 completed (~1601 evaluations)
+2026-05-02 05:18:15 |     → Trial 30/50 completed (~1553 evaluations)
+2026-05-02 05:18:23 |     → Trial 40/50 completed (~1622 evaluations)
+2026-05-02 05:18:31 |     → Trial 50/50 completed (~1670 evaluations)
+2026-05-02 05:18:31 |     → Instance 7/100
+2026-05-02 05:18:31 |     → ShapleyFlow (Backward Path Sampling): 287 edges, 3 sources
+2026-05-02 05:18:31 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 05:18:32 |     → Trial 1/50 completed (~1558 evaluations)
+2026-05-02 05:18:39 |     → Trial 10/50 completed (~1571 evaluations)
+2026-05-02 05:18:46 |     → Trial 20/50 completed (~1541 evaluations)
+2026-05-02 05:18:54 |     → Trial 30/50 completed (~1562 evaluations)
+2026-05-02 05:19:02 |     → Trial 40/50 completed (~1577 evaluations)
+2026-05-02 05:19:10 |     → Trial 50/50 completed (~1584 evaluations)
+2026-05-02 05:19:10 |     → Instance 8/100
+2026-05-02 05:19:10 |     → ShapleyFlow (Backward Path Sampling): 287 edges, 3 sources
+2026-05-02 05:19:10 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 05:19:11 |     → Trial 1/50 completed (~1550 evaluations)
+2026-05-02 05:19:18 |     → Trial 10/50 completed (~1550 evaluations)
+2026-05-02 05:19:25 |     → Trial 20/50 completed (~1574 evaluations)
+2026-05-02 05:19:33 |     → Trial 30/50 completed (~1547 evaluations)
+2026-05-02 05:19:41 |     → Trial 40/50 completed (~1570 evaluations)
+2026-05-02 05:19:49 |     → Trial 50/50 completed (~1536 evaluations)
+2026-05-02 05:19:49 |     → Instance 9/100
+2026-05-02 05:19:49 |     → ShapleyFlow (Backward Path Sampling): 287 edges, 3 sources
+2026-05-02 05:19:49 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 05:19:50 |     → Trial 1/50 completed (~1570 evaluations)
+2026-05-02 05:19:57 |     → Trial 10/50 completed (~1561 evaluations)
+2026-05-02 05:20:05 |     → Trial 20/50 completed (~1576 evaluations)
+2026-05-02 05:20:12 |     → Trial 30/50 completed (~1501 evaluations)
+2026-05-02 05:20:20 |     → Trial 40/50 completed (~1515 evaluations)
+2026-05-02 05:20:28 |     → Trial 50/50 completed (~1512 evaluations)
+2026-05-02 05:20:28 |     → Instance 10/100
+2026-05-02 05:20:28 |     → ShapleyFlow (Backward Path Sampling): 287 edges, 3 sources
+2026-05-02 05:20:28 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 05:20:29 |     → Trial 1/50 completed (~1545 evaluations)
+2026-05-02 05:20:36 |     → Trial 10/50 completed (~1524 evaluations)
+2026-05-02 05:20:44 |     → Trial 20/50 completed (~1621 evaluations)
+2026-05-02 05:20:51 |     → Trial 30/50 completed (~1537 evaluations)
+2026-05-02 05:20:59 |     → Trial 40/50 completed (~1546 evaluations)
+2026-05-02 05:21:07 |     → Trial 50/50 completed (~1542 evaluations)
+2026-05-02 05:21:07 |     → Instance 11/100
+2026-05-02 05:21:07 |     → ShapleyFlow (Backward Path Sampling): 287 edges, 3 sources
+2026-05-02 05:21:07 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 05:21:08 |     → Trial 1/50 completed (~1553 evaluations)
+2026-05-02 05:21:15 |     → Trial 10/50 completed (~1573 evaluations)
+2026-05-02 05:21:23 |     → Trial 20/50 completed (~1631 evaluations)
+2026-05-02 05:21:31 |     → Trial 30/50 completed (~1593 evaluations)
+2026-05-02 05:21:39 |     → Trial 40/50 completed (~1585 evaluations)
+2026-05-02 05:21:46 |     → Trial 50/50 completed (~1581 evaluations)
+2026-05-02 05:21:46 |     → Instance 12/100
+2026-05-02 05:21:46 |     → ShapleyFlow (Backward Path Sampling): 287 edges, 3 sources
+2026-05-02 05:21:46 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 05:21:47 |     → Trial 1/50 completed (~1540 evaluations)
+2026-05-02 05:21:54 |     → Trial 10/50 completed (~1525 evaluations)
+2026-05-02 05:22:02 |     → Trial 20/50 completed (~1588 evaluations)
+2026-05-02 05:22:10 |     → Trial 30/50 completed (~1591 evaluations)
+2026-05-02 05:22:18 |     → Trial 40/50 completed (~1556 evaluations)
+2026-05-02 05:22:25 |     → Trial 50/50 completed (~1556 evaluations)
+2026-05-02 05:22:26 |     → Instance 13/100
+2026-05-02 05:22:26 |     → ShapleyFlow (Backward Path Sampling): 287 edges, 3 sources
+2026-05-02 05:22:26 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 05:22:26 |     → Trial 1/50 completed (~1571 evaluations)
+2026-05-02 05:22:33 |     → Trial 10/50 completed (~1542 evaluations)
+2026-05-02 05:22:41 |     → Trial 20/50 completed (~1569 evaluations)
+2026-05-02 05:22:49 |     → Trial 30/50 completed (~1567 evaluations)
+2026-05-02 05:22:57 |     → Trial 40/50 completed (~1589 evaluations)
+2026-05-02 05:23:05 |     → Trial 50/50 completed (~1496 evaluations)
+2026-05-02 05:23:05 |     → Instance 14/100
+2026-05-02 05:23:05 |     → ShapleyFlow (Backward Path Sampling): 287 edges, 3 sources
+2026-05-02 05:23:05 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 05:23:05 |     → Trial 1/50 completed (~1497 evaluations)
+2026-05-02 05:23:12 |     → Trial 10/50 completed (~1545 evaluations)
+2026-05-02 05:23:20 |     → Trial 20/50 completed (~1555 evaluations)
+2026-05-02 05:23:28 |     → Trial 30/50 completed (~1498 evaluations)
+2026-05-02 05:23:36 |     → Trial 40/50 completed (~1645 evaluations)
+2026-05-02 05:23:44 |     → Trial 50/50 completed (~1541 evaluations)
+2026-05-02 05:23:44 |     → Instance 15/100
+2026-05-02 05:23:44 |     → ShapleyFlow (Backward Path Sampling): 287 edges, 3 sources
+2026-05-02 05:23:44 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 05:23:45 |     → Trial 1/50 completed (~1606 evaluations)
+2026-05-02 05:23:52 |     → Trial 10/50 completed (~1567 evaluations)
+2026-05-02 05:23:59 |     → Trial 20/50 completed (~1571 evaluations)
+2026-05-02 05:24:07 |     → Trial 30/50 completed (~1569 evaluations)
+2026-05-02 05:24:15 |     → Trial 40/50 completed (~1547 evaluations)
+2026-05-02 05:24:23 |     → Trial 50/50 completed (~1496 evaluations)
+2026-05-02 05:24:23 |     → Instance 16/100
+2026-05-02 05:24:23 |     → ShapleyFlow (Backward Path Sampling): 287 edges, 3 sources
+2026-05-02 05:24:23 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 05:24:24 |     → Trial 1/50 completed (~1539 evaluations)
+2026-05-02 05:24:31 |     → Trial 10/50 completed (~1580 evaluations)
+2026-05-02 05:24:39 |     → Trial 20/50 completed (~1541 evaluations)
+2026-05-02 05:24:46 |     → Trial 30/50 completed (~1600 evaluations)
+2026-05-02 05:24:54 |     → Trial 40/50 completed (~1546 evaluations)
+2026-05-02 05:25:02 |     → Trial 50/50 completed (~1544 evaluations)
+2026-05-02 05:25:02 |     → Instance 17/100
+2026-05-02 05:25:02 |     → ShapleyFlow (Backward Path Sampling): 287 edges, 3 sources
+2026-05-02 05:25:02 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 05:25:03 |     → Trial 1/50 completed (~1565 evaluations)
+2026-05-02 05:25:10 |     → Trial 10/50 completed (~1539 evaluations)
+2026-05-02 05:25:18 |     → Trial 20/50 completed (~1589 evaluations)
+2026-05-02 05:25:25 |     → Trial 30/50 completed (~1537 evaluations)
+2026-05-02 05:25:33 |     → Trial 40/50 completed (~1538 evaluations)
+2026-05-02 05:25:41 |     → Trial 50/50 completed (~1562 evaluations)
+2026-05-02 05:25:41 |     → Instance 18/100
+2026-05-02 05:25:41 |     → ShapleyFlow (Backward Path Sampling): 287 edges, 3 sources
+2026-05-02 05:25:41 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 05:25:42 |     → Trial 1/50 completed (~1521 evaluations)
+2026-05-02 05:25:49 |     → Trial 10/50 completed (~1565 evaluations)
+2026-05-02 05:25:57 |     → Trial 20/50 completed (~1583 evaluations)
+2026-05-02 05:26:04 |     → Trial 30/50 completed (~1558 evaluations)
+2026-05-02 05:26:12 |     → Trial 40/50 completed (~1589 evaluations)
+2026-05-02 05:26:20 |     → Trial 50/50 completed (~1590 evaluations)
+2026-05-02 05:26:20 |     → Instance 19/100
+2026-05-02 05:26:20 |     → ShapleyFlow (Backward Path Sampling): 287 edges, 3 sources
+2026-05-02 05:26:20 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 05:26:21 |     → Trial 1/50 completed (~1593 evaluations)
+2026-05-02 05:26:28 |     → Trial 10/50 completed (~1549 evaluations)
+2026-05-02 05:26:36 |     → Trial 20/50 completed (~1554 evaluations)
+2026-05-02 05:26:44 |     → Trial 30/50 completed (~1615 evaluations)
+2026-05-02 05:26:52 |     → Trial 40/50 completed (~1599 evaluations)
+2026-05-02 05:26:59 |     → Trial 50/50 completed (~1597 evaluations)
+2026-05-02 05:26:59 |     → Instance 20/100
+2026-05-02 05:26:59 |     → ShapleyFlow (Backward Path Sampling): 287 edges, 3 sources
+2026-05-02 05:26:59 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 05:27:00 |     → Trial 1/50 completed (~1623 evaluations)
+2026-05-02 05:27:07 |     → Trial 10/50 completed (~1596 evaluations)
+2026-05-02 05:27:15 |     → Trial 20/50 completed (~1582 evaluations)
+2026-05-02 05:27:23 |     → Trial 30/50 completed (~1562 evaluations)
+2026-05-02 05:27:31 |     → Trial 40/50 completed (~1533 evaluations)
+2026-05-02 05:27:39 |     → Trial 50/50 completed (~1520 evaluations)
+2026-05-02 05:27:39 |     → Instance 21/100
+2026-05-02 05:27:39 |     → ShapleyFlow (Backward Path Sampling): 287 edges, 3 sources
+2026-05-02 05:27:39 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 05:27:39 |     → Trial 1/50 completed (~1547 evaluations)
+2026-05-02 05:27:46 |     → Trial 10/50 completed (~1596 evaluations)
+2026-05-02 05:27:54 |     → Trial 20/50 completed (~1560 evaluations)
+2026-05-02 05:28:02 |     → Trial 30/50 completed (~1583 evaluations)
+2026-05-02 05:28:10 |     → Trial 40/50 completed (~1597 evaluations)
+2026-05-02 05:28:18 |     → Trial 50/50 completed (~1608 evaluations)
+2026-05-02 05:28:18 |     → Instance 22/100
+2026-05-02 05:28:18 |     → ShapleyFlow (Backward Path Sampling): 287 edges, 3 sources
+2026-05-02 05:28:18 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 05:28:19 |     → Trial 1/50 completed (~1553 evaluations)
+2026-05-02 05:28:26 |     → Trial 10/50 completed (~1498 evaluations)
+2026-05-02 05:28:33 |     → Trial 20/50 completed (~1506 evaluations)
+2026-05-02 05:28:41 |     → Trial 30/50 completed (~1548 evaluations)
+2026-05-02 05:28:49 |     → Trial 40/50 completed (~1526 evaluations)
+2026-05-02 05:28:57 |     → Trial 50/50 completed (~1625 evaluations)
+2026-05-02 05:28:57 |     → Instance 23/100
+2026-05-02 05:28:57 |     → ShapleyFlow (Backward Path Sampling): 287 edges, 3 sources
+2026-05-02 05:28:57 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 05:28:58 |     → Trial 1/50 completed (~1517 evaluations)
+2026-05-02 05:29:05 |     → Trial 10/50 completed (~1608 evaluations)
+2026-05-02 05:29:12 |     → Trial 20/50 completed (~1554 evaluations)
+2026-05-02 05:29:20 |     → Trial 30/50 completed (~1566 evaluations)
+2026-05-02 05:29:28 |     → Trial 40/50 completed (~1622 evaluations)
+2026-05-02 05:29:36 |     → Trial 50/50 completed (~1544 evaluations)
+2026-05-02 05:29:36 |     → Instance 24/100
+2026-05-02 05:29:36 |     → ShapleyFlow (Backward Path Sampling): 287 edges, 3 sources
+2026-05-02 05:29:36 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 05:29:37 |     → Trial 1/50 completed (~1543 evaluations)
+2026-05-02 05:29:44 |     → Trial 10/50 completed (~1518 evaluations)
+2026-05-02 05:29:51 |     → Trial 20/50 completed (~1557 evaluations)
+2026-05-02 05:29:59 |     → Trial 30/50 completed (~1547 evaluations)
+2026-05-02 05:30:07 |     → Trial 40/50 completed (~1589 evaluations)
+2026-05-02 05:30:15 |     → Trial 50/50 completed (~1522 evaluations)
+2026-05-02 05:30:15 |     → Instance 25/100
+2026-05-02 05:30:15 |     → ShapleyFlow (Backward Path Sampling): 287 edges, 3 sources
+2026-05-02 05:30:15 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 05:30:16 |     → Trial 1/50 completed (~1546 evaluations)
+2026-05-02 05:30:23 |     → Trial 10/50 completed (~1582 evaluations)
+2026-05-02 05:30:30 |     → Trial 20/50 completed (~1579 evaluations)
+2026-05-02 05:30:38 |     → Trial 30/50 completed (~1546 evaluations)
+2026-05-02 05:30:46 |     → Trial 40/50 completed (~1580 evaluations)
+2026-05-02 05:30:54 |     → Trial 50/50 completed (~1568 evaluations)
+2026-05-02 05:30:54 |     → Instance 26/100
+2026-05-02 05:30:54 |     → ShapleyFlow (Backward Path Sampling): 287 edges, 3 sources
+2026-05-02 05:30:54 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 05:30:55 |     → Trial 1/50 completed (~1547 evaluations)
+2026-05-02 05:31:02 |     → Trial 10/50 completed (~1533 evaluations)
+2026-05-02 05:31:10 |     → Trial 20/50 completed (~1565 evaluations)
+2026-05-02 05:31:17 |     → Trial 30/50 completed (~1555 evaluations)
+2026-05-02 05:31:25 |     → Trial 40/50 completed (~1618 evaluations)
+2026-05-02 05:31:33 |     → Trial 50/50 completed (~1565 evaluations)
+2026-05-02 05:31:33 |     → Instance 27/100
+2026-05-02 05:31:33 |     → ShapleyFlow (Backward Path Sampling): 287 edges, 3 sources
+2026-05-02 05:31:33 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 05:31:34 |     → Trial 1/50 completed (~1543 evaluations)
+2026-05-02 05:31:41 |     → Trial 10/50 completed (~1568 evaluations)
+2026-05-02 05:31:49 |     → Trial 20/50 completed (~1577 evaluations)
+2026-05-02 05:31:57 |     → Trial 30/50 completed (~1489 evaluations)
+2026-05-02 05:32:04 |     → Trial 40/50 completed (~1527 evaluations)
+2026-05-02 05:32:12 |     → Trial 50/50 completed (~1621 evaluations)
+2026-05-02 05:32:12 |     → Instance 28/100
+2026-05-02 05:32:12 |     → ShapleyFlow (Backward Path Sampling): 287 edges, 3 sources
+2026-05-02 05:32:12 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 05:32:13 |     → Trial 1/50 completed (~1600 evaluations)
+2026-05-02 05:32:20 |     → Trial 10/50 completed (~1628 evaluations)
+2026-05-02 05:32:28 |     → Trial 20/50 completed (~1511 evaluations)
+2026-05-02 05:32:36 |     → Trial 30/50 completed (~1526 evaluations)
+2026-05-02 05:32:44 |     → Trial 40/50 completed (~1560 evaluations)
+2026-05-02 05:32:52 |     → Trial 50/50 completed (~1603 evaluations)
+2026-05-02 05:32:52 |     → Instance 29/100
+2026-05-02 05:32:52 |     → ShapleyFlow (Backward Path Sampling): 287 edges, 3 sources
+2026-05-02 05:32:52 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 05:32:52 |     → Trial 1/50 completed (~1533 evaluations)
+2026-05-02 05:32:59 |     → Trial 10/50 completed (~1588 evaluations)
+2026-05-02 05:33:07 |     → Trial 20/50 completed (~1543 evaluations)
+2026-05-02 05:33:15 |     → Trial 30/50 completed (~1568 evaluations)
+2026-05-02 05:33:23 |     → Trial 40/50 completed (~1569 evaluations)
+2026-05-02 05:33:31 |     → Trial 50/50 completed (~1574 evaluations)
+2026-05-02 05:33:31 |     → Instance 30/100
+2026-05-02 05:33:31 |     → ShapleyFlow (Backward Path Sampling): 287 edges, 3 sources
+2026-05-02 05:33:31 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 05:33:31 |     → Trial 1/50 completed (~1528 evaluations)
+2026-05-02 05:33:39 |     → Trial 10/50 completed (~1604 evaluations)
+2026-05-02 05:33:46 |     → Trial 20/50 completed (~1549 evaluations)
+2026-05-02 05:33:54 |     → Trial 30/50 completed (~1577 evaluations)
+2026-05-02 05:34:02 |     → Trial 40/50 completed (~1537 evaluations)
+2026-05-02 05:34:10 |     → Trial 50/50 completed (~1607 evaluations)
+2026-05-02 05:34:10 |     → Instance 31/100
+2026-05-02 05:34:10 |     → ShapleyFlow (Backward Path Sampling): 287 edges, 3 sources
+2026-05-02 05:34:10 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 05:34:11 |     → Trial 1/50 completed (~1559 evaluations)
+2026-05-02 05:34:18 |     → Trial 10/50 completed (~1604 evaluations)
+2026-05-02 05:34:26 |     → Trial 20/50 completed (~1533 evaluations)
+2026-05-02 05:34:33 |     → Trial 30/50 completed (~1511 evaluations)
+2026-05-02 05:34:41 |     → Trial 40/50 completed (~1562 evaluations)
+2026-05-02 05:34:49 |     → Trial 50/50 completed (~1520 evaluations)
+2026-05-02 05:34:49 |     → Instance 32/100
+2026-05-02 05:34:49 |     → ShapleyFlow (Backward Path Sampling): 287 edges, 3 sources
+2026-05-02 05:34:49 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 05:34:50 |     → Trial 1/50 completed (~1578 evaluations)
+2026-05-02 05:34:57 |     → Trial 10/50 completed (~1570 evaluations)
+2026-05-02 05:35:05 |     → Trial 20/50 completed (~1639 evaluations)
+2026-05-02 05:35:13 |     → Trial 30/50 completed (~1564 evaluations)
+2026-05-02 05:35:20 |     → Trial 40/50 completed (~1553 evaluations)
+2026-05-02 05:35:28 |     → Trial 50/50 completed (~1550 evaluations)
+2026-05-02 05:35:28 |     → Instance 33/100
+2026-05-02 05:35:28 |     → ShapleyFlow (Backward Path Sampling): 287 edges, 3 sources
+2026-05-02 05:35:28 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 05:35:29 |     → Trial 1/50 completed (~1590 evaluations)
+2026-05-02 05:35:36 |     → Trial 10/50 completed (~1626 evaluations)
+2026-05-02 05:35:44 |     → Trial 20/50 completed (~1587 evaluations)
+2026-05-02 05:35:52 |     → Trial 30/50 completed (~1581 evaluations)
+2026-05-02 05:36:00 |     → Trial 40/50 completed (~1589 evaluations)
+2026-05-02 05:36:07 |     → Trial 50/50 completed (~1578 evaluations)
+2026-05-02 05:36:07 |     → Instance 34/100
+2026-05-02 05:36:07 |     → ShapleyFlow (Backward Path Sampling): 287 edges, 3 sources
+2026-05-02 05:36:07 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 05:36:08 |     → Trial 1/50 completed (~1574 evaluations)
+2026-05-02 05:36:15 |     → Trial 10/50 completed (~1573 evaluations)
+2026-05-02 05:36:23 |     → Trial 20/50 completed (~1555 evaluations)
+2026-05-02 05:36:31 |     → Trial 30/50 completed (~1569 evaluations)
+2026-05-02 05:36:39 |     → Trial 40/50 completed (~1567 evaluations)
+2026-05-02 05:36:47 |     → Trial 50/50 completed (~1596 evaluations)
+2026-05-02 05:36:47 |     → Instance 35/100
+2026-05-02 05:36:47 |     → ShapleyFlow (Backward Path Sampling): 287 edges, 3 sources
+2026-05-02 05:36:47 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 05:36:47 |     → Trial 1/50 completed (~1519 evaluations)
+2026-05-02 05:36:54 |     → Trial 10/50 completed (~1562 evaluations)
+2026-05-02 05:37:02 |     → Trial 20/50 completed (~1566 evaluations)
+2026-05-02 05:37:10 |     → Trial 30/50 completed (~1568 evaluations)
+2026-05-02 05:37:18 |     → Trial 40/50 completed (~1591 evaluations)
+2026-05-02 05:37:26 |     → Trial 50/50 completed (~1569 evaluations)
+2026-05-02 05:37:26 |     → Instance 36/100
+2026-05-02 05:37:26 |     → ShapleyFlow (Backward Path Sampling): 287 edges, 3 sources
+2026-05-02 05:37:26 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 05:37:26 |     → Trial 1/50 completed (~1572 evaluations)
+2026-05-02 05:37:33 |     → Trial 10/50 completed (~1603 evaluations)
+2026-05-02 05:37:41 |     → Trial 20/50 completed (~1599 evaluations)
+2026-05-02 05:37:49 |     → Trial 30/50 completed (~1528 evaluations)
+2026-05-02 05:37:57 |     → Trial 40/50 completed (~1577 evaluations)
+2026-05-02 05:38:05 |     → Trial 50/50 completed (~1570 evaluations)
+2026-05-02 05:38:05 |     → Instance 37/100
+2026-05-02 05:38:05 |     → ShapleyFlow (Backward Path Sampling): 287 edges, 3 sources
+2026-05-02 05:38:05 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 05:38:05 |     → Trial 1/50 completed (~1539 evaluations)
+2026-05-02 05:38:12 |     → Trial 10/50 completed (~1595 evaluations)
+2026-05-02 05:38:20 |     → Trial 20/50 completed (~1548 evaluations)
+2026-05-02 05:38:28 |     → Trial 30/50 completed (~1580 evaluations)
+2026-05-02 05:38:36 |     → Trial 40/50 completed (~1607 evaluations)
+2026-05-02 05:38:44 |     → Trial 50/50 completed (~1592 evaluations)
+2026-05-02 05:38:44 |     → Instance 38/100
+2026-05-02 05:38:44 |     → ShapleyFlow (Backward Path Sampling): 287 edges, 3 sources
+2026-05-02 05:38:44 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 05:38:44 |     → Trial 1/50 completed (~1522 evaluations)
+2026-05-02 05:38:51 |     → Trial 10/50 completed (~1577 evaluations)
+2026-05-02 05:38:59 |     → Trial 20/50 completed (~1613 evaluations)
+2026-05-02 05:39:07 |     → Trial 30/50 completed (~1559 evaluations)
+2026-05-02 05:39:15 |     → Trial 40/50 completed (~1525 evaluations)
+2026-05-02 05:39:23 |     → Trial 50/50 completed (~1522 evaluations)
+2026-05-02 05:39:23 |     → Instance 39/100
+2026-05-02 05:39:23 |     → ShapleyFlow (Backward Path Sampling): 287 edges, 3 sources
+2026-05-02 05:39:23 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 05:39:24 |     → Trial 1/50 completed (~1517 evaluations)
+2026-05-02 05:39:31 |     → Trial 10/50 completed (~1604 evaluations)
+2026-05-02 05:39:38 |     → Trial 20/50 completed (~1591 evaluations)
+2026-05-02 05:39:46 |     → Trial 30/50 completed (~1548 evaluations)
+2026-05-02 05:39:54 |     → Trial 40/50 completed (~1604 evaluations)
+2026-05-02 05:40:02 |     → Trial 50/50 completed (~1543 evaluations)
+2026-05-02 05:40:02 |     → Instance 40/100
+2026-05-02 05:40:02 |     → ShapleyFlow (Backward Path Sampling): 287 edges, 3 sources
+2026-05-02 05:40:02 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 05:40:03 |     → Trial 1/50 completed (~1514 evaluations)
+2026-05-02 05:40:10 |     → Trial 10/50 completed (~1598 evaluations)
+2026-05-02 05:40:18 |     → Trial 20/50 completed (~1555 evaluations)
+2026-05-02 05:40:25 |     → Trial 30/50 completed (~1524 evaluations)
+2026-05-02 05:40:33 |     → Trial 40/50 completed (~1620 evaluations)
+2026-05-02 05:40:41 |     → Trial 50/50 completed (~1557 evaluations)
+2026-05-02 05:40:41 |     → Instance 41/100
+2026-05-02 05:40:41 |     → ShapleyFlow (Backward Path Sampling): 287 edges, 3 sources
+2026-05-02 05:40:41 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 05:40:42 |     → Trial 1/50 completed (~1534 evaluations)
+2026-05-02 05:40:49 |     → Trial 10/50 completed (~1536 evaluations)
+2026-05-02 05:40:57 |     → Trial 20/50 completed (~1563 evaluations)
+2026-05-02 05:41:05 |     → Trial 30/50 completed (~1539 evaluations)
+2026-05-02 05:41:12 |     → Trial 40/50 completed (~1578 evaluations)
+2026-05-02 05:41:20 |     → Trial 50/50 completed (~1567 evaluations)
+2026-05-02 05:41:20 |     → Instance 42/100
+2026-05-02 05:41:20 |     → ShapleyFlow (Backward Path Sampling): 287 edges, 3 sources
+2026-05-02 05:41:20 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 05:41:21 |     → Trial 1/50 completed (~1591 evaluations)
+2026-05-02 05:41:28 |     → Trial 10/50 completed (~1529 evaluations)
+2026-05-02 05:41:36 |     → Trial 20/50 completed (~1581 evaluations)
+2026-05-02 05:41:44 |     → Trial 30/50 completed (~1551 evaluations)
+2026-05-02 05:41:51 |     → Trial 40/50 completed (~1521 evaluations)
+2026-05-02 05:41:59 |     → Trial 50/50 completed (~1595 evaluations)
+2026-05-02 05:41:59 |     → Instance 43/100
+2026-05-02 05:41:59 |     → ShapleyFlow (Backward Path Sampling): 287 edges, 3 sources
+2026-05-02 05:41:59 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 05:42:00 |     → Trial 1/50 completed (~1563 evaluations)
+2026-05-02 05:42:07 |     → Trial 10/50 completed (~1543 evaluations)
+2026-05-02 05:42:15 |     → Trial 20/50 completed (~1600 evaluations)
+2026-05-02 05:42:23 |     → Trial 30/50 completed (~1541 evaluations)
+2026-05-02 05:42:30 |     → Trial 40/50 completed (~1564 evaluations)
+2026-05-02 05:42:38 |     → Trial 50/50 completed (~1561 evaluations)
+2026-05-02 05:42:38 |     → Instance 44/100
+2026-05-02 05:42:38 |     → ShapleyFlow (Backward Path Sampling): 287 edges, 3 sources
+2026-05-02 05:42:38 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 05:42:39 |     → Trial 1/50 completed (~1623 evaluations)
+2026-05-02 05:42:46 |     → Trial 10/50 completed (~1530 evaluations)
+2026-05-02 05:42:54 |     → Trial 20/50 completed (~1592 evaluations)
+2026-05-02 05:43:02 |     → Trial 30/50 completed (~1603 evaluations)
+2026-05-02 05:43:10 |     → Trial 40/50 completed (~1572 evaluations)
+2026-05-02 05:43:17 |     → Trial 50/50 completed (~1542 evaluations)
+2026-05-02 05:43:17 |     → Instance 45/100
+2026-05-02 05:43:17 |     → ShapleyFlow (Backward Path Sampling): 287 edges, 3 sources
+2026-05-02 05:43:17 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 05:43:18 |     → Trial 1/50 completed (~1562 evaluations)
+2026-05-02 05:43:25 |     → Trial 10/50 completed (~1568 evaluations)
+2026-05-02 05:43:33 |     → Trial 20/50 completed (~1610 evaluations)
+2026-05-02 05:43:41 |     → Trial 30/50 completed (~1558 evaluations)
+2026-05-02 05:43:49 |     → Trial 40/50 completed (~1605 evaluations)
+2026-05-02 05:43:57 |     → Trial 50/50 completed (~1524 evaluations)
+2026-05-02 05:43:57 |     → Instance 46/100
+2026-05-02 05:43:57 |     → ShapleyFlow (Backward Path Sampling): 287 edges, 3 sources
+2026-05-02 05:43:57 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 05:43:57 |     → Trial 1/50 completed (~1611 evaluations)
+2026-05-02 05:44:04 |     → Trial 10/50 completed (~1538 evaluations)
+2026-05-02 05:44:12 |     → Trial 20/50 completed (~1595 evaluations)
+2026-05-02 05:44:20 |     → Trial 30/50 completed (~1564 evaluations)
+2026-05-02 05:44:28 |     → Trial 40/50 completed (~1565 evaluations)
+2026-05-02 05:44:36 |     → Trial 50/50 completed (~1637 evaluations)
+2026-05-02 05:44:36 |     → Instance 47/100
+2026-05-02 05:44:36 |     → ShapleyFlow (Backward Path Sampling): 287 edges, 3 sources
+2026-05-02 05:44:36 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 05:44:37 |     → Trial 1/50 completed (~1567 evaluations)
+2026-05-02 05:44:44 |     → Trial 10/50 completed (~1597 evaluations)
+2026-05-02 05:44:51 |     → Trial 20/50 completed (~1612 evaluations)
+2026-05-02 05:44:59 |     → Trial 30/50 completed (~1534 evaluations)
+2026-05-02 05:45:07 |     → Trial 40/50 completed (~1547 evaluations)
+2026-05-02 05:45:15 |     → Trial 50/50 completed (~1573 evaluations)
+2026-05-02 05:45:15 |     → Instance 48/100
+2026-05-02 05:45:15 |     → ShapleyFlow (Backward Path Sampling): 287 edges, 3 sources
+2026-05-02 05:45:15 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 05:45:16 |     → Trial 1/50 completed (~1545 evaluations)
+2026-05-02 05:45:23 |     → Trial 10/50 completed (~1525 evaluations)
+2026-05-02 05:45:30 |     → Trial 20/50 completed (~1590 evaluations)
+2026-05-02 05:45:38 |     → Trial 30/50 completed (~1528 evaluations)
+2026-05-02 05:45:46 |     → Trial 40/50 completed (~1572 evaluations)
+2026-05-02 05:45:54 |     → Trial 50/50 completed (~1554 evaluations)
+2026-05-02 05:45:54 |     → Instance 49/100
+2026-05-02 05:45:54 |     → ShapleyFlow (Backward Path Sampling): 287 edges, 3 sources
+2026-05-02 05:45:54 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 05:45:55 |     → Trial 1/50 completed (~1627 evaluations)
+2026-05-02 05:46:02 |     → Trial 10/50 completed (~1567 evaluations)
+2026-05-02 05:46:09 |     → Trial 20/50 completed (~1567 evaluations)
+2026-05-02 05:46:17 |     → Trial 30/50 completed (~1604 evaluations)
+2026-05-02 05:46:25 |     → Trial 40/50 completed (~1525 evaluations)
+2026-05-02 05:46:33 |     → Trial 50/50 completed (~1612 evaluations)
+2026-05-02 05:46:33 |     → Instance 50/100
+2026-05-02 05:46:33 |     → ShapleyFlow (Backward Path Sampling): 287 edges, 3 sources
+2026-05-02 05:46:33 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 05:46:34 |     → Trial 1/50 completed (~1595 evaluations)
+2026-05-02 05:46:41 |     → Trial 10/50 completed (~1634 evaluations)
+2026-05-02 05:46:48 |     → Trial 20/50 completed (~1541 evaluations)
+2026-05-02 05:46:56 |     → Trial 30/50 completed (~1608 evaluations)
+2026-05-02 05:47:04 |     → Trial 40/50 completed (~1604 evaluations)
+2026-05-02 05:47:12 |     → Trial 50/50 completed (~1612 evaluations)
+2026-05-02 05:47:12 |     → Instance 51/100
+2026-05-02 05:47:12 |     → ShapleyFlow (Backward Path Sampling): 287 edges, 3 sources
+2026-05-02 05:47:12 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 05:47:13 |     → Trial 1/50 completed (~1552 evaluations)
+2026-05-02 05:47:20 |     → Trial 10/50 completed (~1546 evaluations)
+2026-05-02 05:47:28 |     → Trial 20/50 completed (~1609 evaluations)
+2026-05-02 05:47:36 |     → Trial 30/50 completed (~1545 evaluations)
+2026-05-02 05:47:43 |     → Trial 40/50 completed (~1500 evaluations)
+2026-05-02 05:47:51 |     → Trial 50/50 completed (~1567 evaluations)
+2026-05-02 05:47:51 |     → Instance 52/100
+2026-05-02 05:47:51 |     → ShapleyFlow (Backward Path Sampling): 287 edges, 3 sources
+2026-05-02 05:47:51 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 05:47:52 |     → Trial 1/50 completed (~1558 evaluations)
+2026-05-02 05:47:59 |     → Trial 10/50 completed (~1524 evaluations)
+2026-05-02 05:48:07 |     → Trial 20/50 completed (~1534 evaluations)
+2026-05-02 05:48:14 |     → Trial 30/50 completed (~1604 evaluations)
+2026-05-02 05:48:22 |     → Trial 40/50 completed (~1519 evaluations)
+2026-05-02 05:48:30 |     → Trial 50/50 completed (~1518 evaluations)
+2026-05-02 05:48:30 |     → Instance 53/100
+2026-05-02 05:48:30 |     → ShapleyFlow (Backward Path Sampling): 287 edges, 3 sources
+2026-05-02 05:48:30 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 05:48:31 |     → Trial 1/50 completed (~1553 evaluations)
+2026-05-02 05:48:38 |     → Trial 10/50 completed (~1565 evaluations)
+2026-05-02 05:48:46 |     → Trial 20/50 completed (~1572 evaluations)
+2026-05-02 05:48:54 |     → Trial 30/50 completed (~1531 evaluations)
+2026-05-02 05:49:01 |     → Trial 40/50 completed (~1550 evaluations)
+2026-05-02 05:49:09 |     → Trial 50/50 completed (~1584 evaluations)
+2026-05-02 05:49:09 |     → Instance 54/100
+2026-05-02 05:49:09 |     → ShapleyFlow (Backward Path Sampling): 287 edges, 3 sources
+2026-05-02 05:49:09 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 05:49:10 |     → Trial 1/50 completed (~1583 evaluations)
+2026-05-02 05:49:17 |     → Trial 10/50 completed (~1571 evaluations)
+2026-05-02 05:49:25 |     → Trial 20/50 completed (~1569 evaluations)
+2026-05-02 05:49:33 |     → Trial 30/50 completed (~1551 evaluations)
+2026-05-02 05:49:40 |     → Trial 40/50 completed (~1597 evaluations)
+2026-05-02 05:49:48 |     → Trial 50/50 completed (~1572 evaluations)
+2026-05-02 05:49:48 |     → Instance 55/100
+2026-05-02 05:49:48 |     → ShapleyFlow (Backward Path Sampling): 287 edges, 3 sources
+2026-05-02 05:49:48 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 05:49:49 |     → Trial 1/50 completed (~1566 evaluations)
+2026-05-02 05:49:56 |     → Trial 10/50 completed (~1529 evaluations)
+2026-05-02 05:50:04 |     → Trial 20/50 completed (~1513 evaluations)
+2026-05-02 05:50:12 |     → Trial 30/50 completed (~1581 evaluations)
+2026-05-02 05:50:19 |     → Trial 40/50 completed (~1537 evaluations)
+2026-05-02 05:50:27 |     → Trial 50/50 completed (~1566 evaluations)
+2026-05-02 05:50:27 |     → Instance 56/100
+2026-05-02 05:50:27 |     → ShapleyFlow (Backward Path Sampling): 287 edges, 3 sources
+2026-05-02 05:50:27 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 05:50:28 |     → Trial 1/50 completed (~1640 evaluations)
+2026-05-02 05:50:35 |     → Trial 10/50 completed (~1527 evaluations)
+2026-05-02 05:50:43 |     → Trial 20/50 completed (~1577 evaluations)
+2026-05-02 05:50:51 |     → Trial 30/50 completed (~1601 evaluations)
+2026-05-02 05:50:58 |     → Trial 40/50 completed (~1560 evaluations)
+2026-05-02 05:51:06 |     → Trial 50/50 completed (~1539 evaluations)
+2026-05-02 05:51:06 |     → Instance 57/100
+2026-05-02 05:51:06 |     → ShapleyFlow (Backward Path Sampling): 287 edges, 3 sources
+2026-05-02 05:51:06 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 05:51:07 |     → Trial 1/50 completed (~1532 evaluations)
+2026-05-02 05:51:14 |     → Trial 10/50 completed (~1550 evaluations)
+2026-05-02 05:51:22 |     → Trial 20/50 completed (~1544 evaluations)
+2026-05-02 05:51:30 |     → Trial 30/50 completed (~1560 evaluations)
+2026-05-02 05:51:37 |     → Trial 40/50 completed (~1595 evaluations)
+2026-05-02 05:51:45 |     → Trial 50/50 completed (~1591 evaluations)
+2026-05-02 05:51:45 |     → Instance 58/100
+2026-05-02 05:51:45 |     → ShapleyFlow (Backward Path Sampling): 287 edges, 3 sources
+2026-05-02 05:51:45 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 05:51:46 |     → Trial 1/50 completed (~1587 evaluations)
+2026-05-02 05:51:53 |     → Trial 10/50 completed (~1628 evaluations)
+2026-05-02 05:52:01 |     → Trial 20/50 completed (~1561 evaluations)
+2026-05-02 05:52:09 |     → Trial 30/50 completed (~1558 evaluations)
+2026-05-02 05:52:16 |     → Trial 40/50 completed (~1593 evaluations)
+2026-05-02 05:52:24 |     → Trial 50/50 completed (~1544 evaluations)
+2026-05-02 05:52:24 |     → Instance 59/100
+2026-05-02 05:52:24 |     → ShapleyFlow (Backward Path Sampling): 287 edges, 3 sources
+2026-05-02 05:52:24 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 05:52:25 |     → Trial 1/50 completed (~1553 evaluations)
+2026-05-02 05:52:32 |     → Trial 10/50 completed (~1578 evaluations)
+2026-05-02 05:52:40 |     → Trial 20/50 completed (~1572 evaluations)
+2026-05-02 05:52:48 |     → Trial 30/50 completed (~1546 evaluations)
+2026-05-02 05:52:55 |     → Trial 40/50 completed (~1574 evaluations)
+2026-05-02 05:53:03 |     → Trial 50/50 completed (~1543 evaluations)
+2026-05-02 05:53:03 |     → Instance 60/100
+2026-05-02 05:53:03 |     → ShapleyFlow (Backward Path Sampling): 287 edges, 3 sources
+2026-05-02 05:53:03 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 05:53:04 |     → Trial 1/50 completed (~1558 evaluations)
+2026-05-02 05:53:11 |     → Trial 10/50 completed (~1597 evaluations)
+2026-05-02 05:53:19 |     → Trial 20/50 completed (~1531 evaluations)
+2026-05-02 05:53:27 |     → Trial 30/50 completed (~1562 evaluations)
+2026-05-02 05:53:34 |     → Trial 40/50 completed (~1563 evaluations)
+2026-05-02 05:53:42 |     → Trial 50/50 completed (~1594 evaluations)
+2026-05-02 05:53:42 |     → Instance 61/100
+2026-05-02 05:53:42 |     → ShapleyFlow (Backward Path Sampling): 287 edges, 3 sources
+2026-05-02 05:53:42 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 05:53:43 |     → Trial 1/50 completed (~1600 evaluations)
+2026-05-02 05:53:50 |     → Trial 10/50 completed (~1558 evaluations)
+2026-05-02 05:53:58 |     → Trial 20/50 completed (~1505 evaluations)
+2026-05-02 05:54:05 |     → Trial 30/50 completed (~1484 evaluations)
+2026-05-02 05:54:13 |     → Trial 40/50 completed (~1577 evaluations)
+2026-05-02 05:54:21 |     → Trial 50/50 completed (~1539 evaluations)
+2026-05-02 05:54:21 |     → Instance 62/100
+2026-05-02 05:54:21 |     → ShapleyFlow (Backward Path Sampling): 287 edges, 3 sources
+2026-05-02 05:54:21 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 05:54:22 |     → Trial 1/50 completed (~1626 evaluations)
+2026-05-02 05:54:29 |     → Trial 10/50 completed (~1548 evaluations)
+2026-05-02 05:54:37 |     → Trial 20/50 completed (~1549 evaluations)
+2026-05-02 05:54:45 |     → Trial 30/50 completed (~1565 evaluations)
+2026-05-02 05:54:53 |     → Trial 40/50 completed (~1523 evaluations)
+2026-05-02 05:55:00 |     → Trial 50/50 completed (~1612 evaluations)
+2026-05-02 05:55:00 |     → Instance 63/100
+2026-05-02 05:55:00 |     → ShapleyFlow (Backward Path Sampling): 287 edges, 3 sources
+2026-05-02 05:55:00 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 05:55:01 |     → Trial 1/50 completed (~1565 evaluations)
+2026-05-02 05:55:08 |     → Trial 10/50 completed (~1548 evaluations)
+2026-05-02 05:55:16 |     → Trial 20/50 completed (~1576 evaluations)
+2026-05-02 05:55:24 |     → Trial 30/50 completed (~1552 evaluations)
+2026-05-02 05:55:32 |     → Trial 40/50 completed (~1581 evaluations)
+2026-05-02 05:55:39 |     → Trial 50/50 completed (~1568 evaluations)
+2026-05-02 05:55:39 |     → Instance 64/100
+2026-05-02 05:55:39 |     → ShapleyFlow (Backward Path Sampling): 287 edges, 3 sources
+2026-05-02 05:55:39 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 05:55:40 |     → Trial 1/50 completed (~1554 evaluations)
+2026-05-02 05:55:47 |     → Trial 10/50 completed (~1599 evaluations)
+2026-05-02 05:55:55 |     → Trial 20/50 completed (~1616 evaluations)
+2026-05-02 05:56:03 |     → Trial 30/50 completed (~1533 evaluations)
+2026-05-02 05:56:11 |     → Trial 40/50 completed (~1587 evaluations)
+2026-05-02 05:56:18 |     → Trial 50/50 completed (~1609 evaluations)
+2026-05-02 05:56:19 |     → Instance 65/100
+2026-05-02 05:56:19 |     → ShapleyFlow (Backward Path Sampling): 287 edges, 3 sources
+2026-05-02 05:56:19 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 05:56:19 |     → Trial 1/50 completed (~1538 evaluations)
+2026-05-02 05:56:26 |     → Trial 10/50 completed (~1600 evaluations)
+2026-05-02 05:56:34 |     → Trial 20/50 completed (~1558 evaluations)
+2026-05-02 05:56:42 |     → Trial 30/50 completed (~1582 evaluations)
+2026-05-02 05:56:50 |     → Trial 40/50 completed (~1629 evaluations)
+2026-05-02 05:56:57 |     → Trial 50/50 completed (~1553 evaluations)
+2026-05-02 05:56:57 |     → Instance 66/100
+2026-05-02 05:56:57 |     → ShapleyFlow (Backward Path Sampling): 287 edges, 3 sources
+2026-05-02 05:56:57 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 05:56:58 |     → Trial 1/50 completed (~1514 evaluations)
+2026-05-02 05:57:05 |     → Trial 10/50 completed (~1577 evaluations)
+2026-05-02 05:57:13 |     → Trial 20/50 completed (~1535 evaluations)
+2026-05-02 05:57:21 |     → Trial 30/50 completed (~1592 evaluations)
+2026-05-02 05:57:29 |     → Trial 40/50 completed (~1515 evaluations)
+2026-05-02 05:57:37 |     → Trial 50/50 completed (~1596 evaluations)
+2026-05-02 05:57:37 |     → Instance 67/100
+2026-05-02 05:57:37 |     → ShapleyFlow (Backward Path Sampling): 287 edges, 3 sources
+2026-05-02 05:57:37 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 05:57:37 |     → Trial 1/50 completed (~1556 evaluations)
+2026-05-02 05:57:45 |     → Trial 10/50 completed (~1559 evaluations)
+2026-05-02 05:57:52 |     → Trial 20/50 completed (~1502 evaluations)
+2026-05-02 05:58:00 |     → Trial 30/50 completed (~1566 evaluations)
+2026-05-02 05:58:08 |     → Trial 40/50 completed (~1533 evaluations)
+2026-05-02 05:58:16 |     → Trial 50/50 completed (~1519 evaluations)
+2026-05-02 05:58:16 |     → Instance 68/100
+2026-05-02 05:58:16 |     → ShapleyFlow (Backward Path Sampling): 287 edges, 3 sources
+2026-05-02 05:58:16 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 05:58:16 |     → Trial 1/50 completed (~1528 evaluations)
+2026-05-02 05:58:23 |     → Trial 10/50 completed (~1543 evaluations)
+2026-05-02 05:58:31 |     → Trial 20/50 completed (~1549 evaluations)
+2026-05-02 05:58:39 |     → Trial 30/50 completed (~1494 evaluations)
+2026-05-02 05:58:47 |     → Trial 40/50 completed (~1558 evaluations)
+2026-05-02 05:58:55 |     → Trial 50/50 completed (~1535 evaluations)
+2026-05-02 05:58:55 |     → Instance 69/100
+2026-05-02 05:58:55 |     → ShapleyFlow (Backward Path Sampling): 287 edges, 3 sources
+2026-05-02 05:58:55 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 05:58:55 |     → Trial 1/50 completed (~1583 evaluations)
+2026-05-02 05:59:02 |     → Trial 10/50 completed (~1535 evaluations)
+2026-05-02 05:59:10 |     → Trial 20/50 completed (~1572 evaluations)
+2026-05-02 05:59:18 |     → Trial 30/50 completed (~1581 evaluations)
+2026-05-02 05:59:26 |     → Trial 40/50 completed (~1579 evaluations)
+2026-05-02 05:59:34 |     → Trial 50/50 completed (~1573 evaluations)
+2026-05-02 05:59:34 |     → Instance 70/100
+2026-05-02 05:59:34 |     → ShapleyFlow (Backward Path Sampling): 287 edges, 3 sources
+2026-05-02 05:59:34 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 05:59:34 |     → Trial 1/50 completed (~1580 evaluations)
+2026-05-02 05:59:41 |     → Trial 10/50 completed (~1548 evaluations)
+2026-05-02 05:59:49 |     → Trial 20/50 completed (~1516 evaluations)
+2026-05-02 05:59:57 |     → Trial 30/50 completed (~1579 evaluations)
+2026-05-02 06:00:05 |     → Trial 40/50 completed (~1584 evaluations)
+2026-05-02 06:00:12 |     → Trial 50/50 completed (~1584 evaluations)
+2026-05-02 06:00:12 |     → Instance 71/100
+2026-05-02 06:00:12 |     → ShapleyFlow (Backward Path Sampling): 287 edges, 3 sources
+2026-05-02 06:00:12 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 06:00:13 |     → Trial 1/50 completed (~1605 evaluations)
+2026-05-02 06:00:20 |     → Trial 10/50 completed (~1532 evaluations)
+2026-05-02 06:00:28 |     → Trial 20/50 completed (~1550 evaluations)
+2026-05-02 06:00:36 |     → Trial 30/50 completed (~1577 evaluations)
+2026-05-02 06:00:44 |     → Trial 40/50 completed (~1556 evaluations)
+2026-05-02 06:00:51 |     → Trial 50/50 completed (~1609 evaluations)
+2026-05-02 06:00:51 |     → Instance 72/100
+2026-05-02 06:00:51 |     → ShapleyFlow (Backward Path Sampling): 287 edges, 3 sources
+2026-05-02 06:00:51 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 06:00:52 |     → Trial 1/50 completed (~1554 evaluations)
+2026-05-02 06:00:59 |     → Trial 10/50 completed (~1542 evaluations)
+2026-05-02 06:01:07 |     → Trial 20/50 completed (~1583 evaluations)
+2026-05-02 06:01:15 |     → Trial 30/50 completed (~1528 evaluations)
+2026-05-02 06:01:23 |     → Trial 40/50 completed (~1541 evaluations)
+2026-05-02 06:01:30 |     → Trial 50/50 completed (~1571 evaluations)
+2026-05-02 06:01:30 |     → Instance 73/100
+2026-05-02 06:01:30 |     → ShapleyFlow (Backward Path Sampling): 287 edges, 3 sources
+2026-05-02 06:01:30 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 06:01:31 |     → Trial 1/50 completed (~1531 evaluations)
+2026-05-02 06:01:38 |     → Trial 10/50 completed (~1558 evaluations)
+2026-05-02 06:01:46 |     → Trial 20/50 completed (~1580 evaluations)
+2026-05-02 06:01:54 |     → Trial 30/50 completed (~1571 evaluations)
+2026-05-02 06:02:01 |     → Trial 40/50 completed (~1453 evaluations)
+2026-05-02 06:02:09 |     → Trial 50/50 completed (~1564 evaluations)
+2026-05-02 06:02:09 |     → Instance 74/100
+2026-05-02 06:02:09 |     → ShapleyFlow (Backward Path Sampling): 287 edges, 3 sources
+2026-05-02 06:02:09 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 06:02:10 |     → Trial 1/50 completed (~1560 evaluations)
+2026-05-02 06:02:17 |     → Trial 10/50 completed (~1527 evaluations)
+2026-05-02 06:02:25 |     → Trial 20/50 completed (~1558 evaluations)
+2026-05-02 06:02:33 |     → Trial 30/50 completed (~1621 evaluations)
+2026-05-02 06:02:41 |     → Trial 40/50 completed (~1566 evaluations)
+2026-05-02 06:02:49 |     → Trial 50/50 completed (~1549 evaluations)
+2026-05-02 06:02:49 |     → Instance 75/100
+2026-05-02 06:02:49 |     → ShapleyFlow (Backward Path Sampling): 287 edges, 3 sources
+2026-05-02 06:02:49 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 06:02:49 |     → Trial 1/50 completed (~1542 evaluations)
+2026-05-02 06:02:56 |     → Trial 10/50 completed (~1595 evaluations)
+2026-05-02 06:03:04 |     → Trial 20/50 completed (~1555 evaluations)
+2026-05-02 06:03:12 |     → Trial 30/50 completed (~1576 evaluations)
+2026-05-02 06:03:20 |     → Trial 40/50 completed (~1537 evaluations)
+2026-05-02 06:03:28 |     → Trial 50/50 completed (~1605 evaluations)
+2026-05-02 06:03:28 |     → Instance 76/100
+2026-05-02 06:03:28 |     → ShapleyFlow (Backward Path Sampling): 287 edges, 3 sources
+2026-05-02 06:03:28 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 06:03:29 |     → Trial 1/50 completed (~1526 evaluations)
+2026-05-02 06:03:35 |     → Trial 10/50 completed (~1533 evaluations)
+2026-05-02 06:03:43 |     → Trial 20/50 completed (~1567 evaluations)
+2026-05-02 06:03:51 |     → Trial 30/50 completed (~1602 evaluations)
+2026-05-02 06:03:59 |     → Trial 40/50 completed (~1545 evaluations)
+2026-05-02 06:04:07 |     → Trial 50/50 completed (~1549 evaluations)
+2026-05-02 06:04:07 |     → Instance 77/100
+2026-05-02 06:04:07 |     → ShapleyFlow (Backward Path Sampling): 287 edges, 3 sources
+2026-05-02 06:04:07 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 06:04:07 |     → Trial 1/50 completed (~1562 evaluations)
+2026-05-02 06:04:15 |     → Trial 10/50 completed (~1520 evaluations)
+2026-05-02 06:04:22 |     → Trial 20/50 completed (~1573 evaluations)
+2026-05-02 06:04:30 |     → Trial 30/50 completed (~1545 evaluations)
+2026-05-02 06:04:38 |     → Trial 40/50 completed (~1605 evaluations)
+2026-05-02 06:04:46 |     → Trial 50/50 completed (~1559 evaluations)
+2026-05-02 06:04:46 |     → Instance 78/100
+2026-05-02 06:04:46 |     → ShapleyFlow (Backward Path Sampling): 287 edges, 3 sources
+2026-05-02 06:04:46 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 06:04:47 |     → Trial 1/50 completed (~1580 evaluations)
+2026-05-02 06:04:54 |     → Trial 10/50 completed (~1600 evaluations)
+2026-05-02 06:05:02 |     → Trial 20/50 completed (~1545 evaluations)
+2026-05-02 06:05:09 |     → Trial 30/50 completed (~1570 evaluations)
+2026-05-02 06:05:17 |     → Trial 40/50 completed (~1507 evaluations)
+2026-05-02 06:05:25 |     → Trial 50/50 completed (~1555 evaluations)
+2026-05-02 06:05:25 |     → Instance 79/100
+2026-05-02 06:05:25 |     → ShapleyFlow (Backward Path Sampling): 287 edges, 3 sources
+2026-05-02 06:05:25 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 06:05:26 |     → Trial 1/50 completed (~1575 evaluations)
+2026-05-02 06:05:33 |     → Trial 10/50 completed (~1584 evaluations)
+2026-05-02 06:05:41 |     → Trial 20/50 completed (~1629 evaluations)
+2026-05-02 06:05:48 |     → Trial 30/50 completed (~1581 evaluations)
+2026-05-02 06:05:56 |     → Trial 40/50 completed (~1571 evaluations)
+2026-05-02 06:06:04 |     → Trial 50/50 completed (~1520 evaluations)
+2026-05-02 06:06:04 |     → Instance 80/100
+2026-05-02 06:06:04 |     → ShapleyFlow (Backward Path Sampling): 287 edges, 3 sources
+2026-05-02 06:06:04 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 06:06:05 |     → Trial 1/50 completed (~1610 evaluations)
+2026-05-02 06:06:12 |     → Trial 10/50 completed (~1509 evaluations)
+2026-05-02 06:06:20 |     → Trial 20/50 completed (~1610 evaluations)
+2026-05-02 06:06:27 |     → Trial 30/50 completed (~1538 evaluations)
+2026-05-02 06:06:35 |     → Trial 40/50 completed (~1588 evaluations)
+2026-05-02 06:06:43 |     → Trial 50/50 completed (~1592 evaluations)
+2026-05-02 06:06:43 |     → Instance 81/100
+2026-05-02 06:06:43 |     → ShapleyFlow (Backward Path Sampling): 287 edges, 3 sources
+2026-05-02 06:06:43 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 06:06:44 |     → Trial 1/50 completed (~1561 evaluations)
+2026-05-02 06:06:51 |     → Trial 10/50 completed (~1585 evaluations)
+2026-05-02 06:06:59 |     → Trial 20/50 completed (~1584 evaluations)
+2026-05-02 06:07:07 |     → Trial 30/50 completed (~1656 evaluations)
+2026-05-02 06:07:14 |     → Trial 40/50 completed (~1547 evaluations)
+2026-05-02 06:07:22 |     → Trial 50/50 completed (~1564 evaluations)
+2026-05-02 06:07:22 |     → Instance 82/100
+2026-05-02 06:07:22 |     → ShapleyFlow (Backward Path Sampling): 287 edges, 3 sources
+2026-05-02 06:07:22 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 06:07:23 |     → Trial 1/50 completed (~1641 evaluations)
+2026-05-02 06:07:30 |     → Trial 10/50 completed (~1498 evaluations)
+2026-05-02 06:07:38 |     → Trial 20/50 completed (~1585 evaluations)
+2026-05-02 06:07:46 |     → Trial 30/50 completed (~1535 evaluations)
+2026-05-02 06:07:54 |     → Trial 40/50 completed (~1528 evaluations)
+2026-05-02 06:08:01 |     → Trial 50/50 completed (~1521 evaluations)
+2026-05-02 06:08:01 |     → Instance 83/100
+2026-05-02 06:08:01 |     → ShapleyFlow (Backward Path Sampling): 287 edges, 3 sources
+2026-05-02 06:08:01 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 06:08:02 |     → Trial 1/50 completed (~1561 evaluations)
+2026-05-02 06:08:09 |     → Trial 10/50 completed (~1579 evaluations)
+2026-05-02 06:08:17 |     → Trial 20/50 completed (~1579 evaluations)
+2026-05-02 06:08:25 |     → Trial 30/50 completed (~1643 evaluations)
+2026-05-02 06:08:33 |     → Trial 40/50 completed (~1512 evaluations)
+2026-05-02 06:08:40 |     → Trial 50/50 completed (~1577 evaluations)
+2026-05-02 06:08:40 |     → Instance 84/100
+2026-05-02 06:08:40 |     → ShapleyFlow (Backward Path Sampling): 287 edges, 3 sources
+2026-05-02 06:08:40 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 06:08:41 |     → Trial 1/50 completed (~1571 evaluations)
+2026-05-02 06:08:48 |     → Trial 10/50 completed (~1583 evaluations)
+2026-05-02 06:08:56 |     → Trial 20/50 completed (~1534 evaluations)
+2026-05-02 06:09:04 |     → Trial 30/50 completed (~1565 evaluations)
+2026-05-02 06:09:12 |     → Trial 40/50 completed (~1535 evaluations)
+2026-05-02 06:09:19 |     → Trial 50/50 completed (~1552 evaluations)
+2026-05-02 06:09:19 |     → Instance 85/100
+2026-05-02 06:09:19 |     → ShapleyFlow (Backward Path Sampling): 287 edges, 3 sources
+2026-05-02 06:09:19 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 06:09:20 |     → Trial 1/50 completed (~1579 evaluations)
+2026-05-02 06:09:27 |     → Trial 10/50 completed (~1511 evaluations)
+2026-05-02 06:09:35 |     → Trial 20/50 completed (~1605 evaluations)
+2026-05-02 06:09:43 |     → Trial 30/50 completed (~1544 evaluations)
+2026-05-02 06:09:50 |     → Trial 40/50 completed (~1540 evaluations)
+2026-05-02 06:09:58 |     → Trial 50/50 completed (~1549 evaluations)
+2026-05-02 06:09:58 |     → Instance 86/100
+2026-05-02 06:09:58 |     → ShapleyFlow (Backward Path Sampling): 287 edges, 3 sources
+2026-05-02 06:09:58 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 06:09:59 |     → Trial 1/50 completed (~1562 evaluations)
+2026-05-02 06:10:06 |     → Trial 10/50 completed (~1572 evaluations)
+2026-05-02 06:10:14 |     → Trial 20/50 completed (~1528 evaluations)
+2026-05-02 06:10:21 |     → Trial 30/50 completed (~1575 evaluations)
+2026-05-02 06:10:29 |     → Trial 40/50 completed (~1562 evaluations)
+2026-05-02 06:10:37 |     → Trial 50/50 completed (~1563 evaluations)
+2026-05-02 06:10:37 |     → Instance 87/100
+2026-05-02 06:10:37 |     → ShapleyFlow (Backward Path Sampling): 287 edges, 3 sources
+2026-05-02 06:10:37 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 06:10:38 |     → Trial 1/50 completed (~1562 evaluations)
+2026-05-02 06:10:45 |     → Trial 10/50 completed (~1539 evaluations)
+2026-05-02 06:10:53 |     → Trial 20/50 completed (~1563 evaluations)
+2026-05-02 06:11:00 |     → Trial 30/50 completed (~1520 evaluations)
+2026-05-02 06:11:08 |     → Trial 40/50 completed (~1526 evaluations)
+2026-05-02 06:11:16 |     → Trial 50/50 completed (~1566 evaluations)
+2026-05-02 06:11:16 |     → Instance 88/100
+2026-05-02 06:11:16 |     → ShapleyFlow (Backward Path Sampling): 287 edges, 3 sources
+2026-05-02 06:11:16 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 06:11:17 |     → Trial 1/50 completed (~1551 evaluations)
+2026-05-02 06:11:24 |     → Trial 10/50 completed (~1557 evaluations)
+2026-05-02 06:11:31 |     → Trial 20/50 completed (~1570 evaluations)
+2026-05-02 06:11:39 |     → Trial 30/50 completed (~1597 evaluations)
+2026-05-02 06:11:47 |     → Trial 40/50 completed (~1547 evaluations)
+2026-05-02 06:11:55 |     → Trial 50/50 completed (~1505 evaluations)
+2026-05-02 06:11:55 |     → Instance 89/100
+2026-05-02 06:11:55 |     → ShapleyFlow (Backward Path Sampling): 287 edges, 3 sources
+2026-05-02 06:11:55 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 06:11:56 |     → Trial 1/50 completed (~1548 evaluations)
+2026-05-02 06:12:03 |     → Trial 10/50 completed (~1554 evaluations)
+2026-05-02 06:12:10 |     → Trial 20/50 completed (~1560 evaluations)
+2026-05-02 06:12:18 |     → Trial 30/50 completed (~1530 evaluations)
+2026-05-02 06:12:26 |     → Trial 40/50 completed (~1562 evaluations)
+2026-05-02 06:12:34 |     → Trial 50/50 completed (~1592 evaluations)
+2026-05-02 06:12:34 |     → Instance 90/100
+2026-05-02 06:12:34 |     → ShapleyFlow (Backward Path Sampling): 287 edges, 3 sources
+2026-05-02 06:12:34 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 06:12:34 |     → Trial 1/50 completed (~1582 evaluations)
+2026-05-02 06:12:41 |     → Trial 10/50 completed (~1546 evaluations)
+2026-05-02 06:12:49 |     → Trial 20/50 completed (~1638 evaluations)
+2026-05-02 06:12:57 |     → Trial 30/50 completed (~1550 evaluations)
+2026-05-02 06:13:05 |     → Trial 40/50 completed (~1491 evaluations)
+2026-05-02 06:13:13 |     → Trial 50/50 completed (~1573 evaluations)
+2026-05-02 06:13:13 |     → Instance 91/100
+2026-05-02 06:13:13 |     → ShapleyFlow (Backward Path Sampling): 287 edges, 3 sources
+2026-05-02 06:13:13 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 06:13:13 |     → Trial 1/50 completed (~1626 evaluations)
+2026-05-02 06:13:20 |     → Trial 10/50 completed (~1605 evaluations)
+2026-05-02 06:13:28 |     → Trial 20/50 completed (~1561 evaluations)
+2026-05-02 06:13:36 |     → Trial 30/50 completed (~1549 evaluations)
+2026-05-02 06:13:44 |     → Trial 40/50 completed (~1554 evaluations)
+2026-05-02 06:13:51 |     → Trial 50/50 completed (~1574 evaluations)
+2026-05-02 06:13:51 |     → Instance 92/100
+2026-05-02 06:13:51 |     → ShapleyFlow (Backward Path Sampling): 287 edges, 3 sources
+2026-05-02 06:13:51 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 06:13:52 |     → Trial 1/50 completed (~1581 evaluations)
+2026-05-02 06:13:59 |     → Trial 10/50 completed (~1533 evaluations)
+2026-05-02 06:14:07 |     → Trial 20/50 completed (~1467 evaluations)
+2026-05-02 06:14:15 |     → Trial 30/50 completed (~1550 evaluations)
+2026-05-02 06:14:23 |     → Trial 40/50 completed (~1590 evaluations)
+2026-05-02 06:14:31 |     → Trial 50/50 completed (~1545 evaluations)
+2026-05-02 06:14:31 |     → Instance 93/100
+2026-05-02 06:14:31 |     → ShapleyFlow (Backward Path Sampling): 287 edges, 3 sources
+2026-05-02 06:14:31 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 06:14:31 |     → Trial 1/50 completed (~1546 evaluations)
+2026-05-02 06:14:38 |     → Trial 10/50 completed (~1591 evaluations)
+2026-05-02 06:14:46 |     → Trial 20/50 completed (~1490 evaluations)
+2026-05-02 06:14:54 |     → Trial 30/50 completed (~1560 evaluations)
+2026-05-02 06:15:02 |     → Trial 40/50 completed (~1617 evaluations)
+2026-05-02 06:15:09 |     → Trial 50/50 completed (~1609 evaluations)
+2026-05-02 06:15:09 |     → Instance 94/100
+2026-05-02 06:15:09 |     → ShapleyFlow (Backward Path Sampling): 287 edges, 3 sources
+2026-05-02 06:15:09 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 06:15:10 |     → Trial 1/50 completed (~1571 evaluations)
+2026-05-02 06:15:17 |     → Trial 10/50 completed (~1607 evaluations)
+2026-05-02 06:15:25 |     → Trial 20/50 completed (~1580 evaluations)
+2026-05-02 06:15:33 |     → Trial 30/50 completed (~1544 evaluations)
+2026-05-02 06:15:41 |     → Trial 40/50 completed (~1614 evaluations)
+2026-05-02 06:15:49 |     → Trial 50/50 completed (~1540 evaluations)
+2026-05-02 06:15:49 |     → Instance 95/100
+2026-05-02 06:15:49 |     → ShapleyFlow (Backward Path Sampling): 287 edges, 3 sources
+2026-05-02 06:15:49 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 06:15:49 |     → Trial 1/50 completed (~1540 evaluations)
+2026-05-02 06:15:56 |     → Trial 10/50 completed (~1472 evaluations)
+2026-05-02 06:16:04 |     → Trial 20/50 completed (~1556 evaluations)
+2026-05-02 06:16:12 |     → Trial 30/50 completed (~1578 evaluations)
+2026-05-02 06:16:20 |     → Trial 40/50 completed (~1511 evaluations)
+2026-05-02 06:16:27 |     → Trial 50/50 completed (~1546 evaluations)
+2026-05-02 06:16:27 |     → Instance 96/100
+2026-05-02 06:16:27 |     → ShapleyFlow (Backward Path Sampling): 287 edges, 3 sources
+2026-05-02 06:16:27 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 06:16:28 |     → Trial 1/50 completed (~1552 evaluations)
+2026-05-02 06:16:35 |     → Trial 10/50 completed (~1546 evaluations)
+2026-05-02 06:16:43 |     → Trial 20/50 completed (~1556 evaluations)
+2026-05-02 06:16:51 |     → Trial 30/50 completed (~1569 evaluations)
+2026-05-02 06:16:59 |     → Trial 40/50 completed (~1516 evaluations)
+2026-05-02 06:17:06 |     → Trial 50/50 completed (~1521 evaluations)
+2026-05-02 06:17:06 |     → Instance 97/100
+2026-05-02 06:17:06 |     → ShapleyFlow (Backward Path Sampling): 287 edges, 3 sources
+2026-05-02 06:17:06 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 06:17:07 |     → Trial 1/50 completed (~1561 evaluations)
+2026-05-02 06:17:14 |     → Trial 10/50 completed (~1550 evaluations)
+2026-05-02 06:17:22 |     → Trial 20/50 completed (~1596 evaluations)
+2026-05-02 06:17:30 |     → Trial 30/50 completed (~1504 evaluations)
+2026-05-02 06:17:38 |     → Trial 40/50 completed (~1613 evaluations)
+2026-05-02 06:17:45 |     → Trial 50/50 completed (~1578 evaluations)
+2026-05-02 06:17:45 |     → Instance 98/100
+2026-05-02 06:17:45 |     → ShapleyFlow (Backward Path Sampling): 287 edges, 3 sources
+2026-05-02 06:17:45 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 06:17:46 |     → Trial 1/50 completed (~1559 evaluations)
+2026-05-02 06:17:53 |     → Trial 10/50 completed (~1501 evaluations)
+2026-05-02 06:18:01 |     → Trial 20/50 completed (~1558 evaluations)
+2026-05-02 06:18:09 |     → Trial 30/50 completed (~1593 evaluations)
+2026-05-02 06:18:16 |     → Trial 40/50 completed (~1506 evaluations)
+2026-05-02 06:18:24 |     → Trial 50/50 completed (~1616 evaluations)
+2026-05-02 06:18:24 |     → Instance 99/100
+2026-05-02 06:18:24 |     → ShapleyFlow (Backward Path Sampling): 287 edges, 3 sources
+2026-05-02 06:18:24 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 06:18:25 |     → Trial 1/50 completed (~1560 evaluations)
+2026-05-02 06:18:32 |     → Trial 10/50 completed (~1559 evaluations)
+2026-05-02 06:18:40 |     → Trial 20/50 completed (~1565 evaluations)
+2026-05-02 06:18:48 |     → Trial 30/50 completed (~1540 evaluations)
+2026-05-02 06:18:55 |     → Trial 40/50 completed (~1603 evaluations)
+2026-05-02 06:19:03 |     → Trial 50/50 completed (~1593 evaluations)
+2026-05-02 06:19:03 |     → Instance 100/100
+2026-05-02 06:19:03 |     → ShapleyFlow (Backward Path Sampling): 287 edges, 3 sources
+2026-05-02 06:19:03 |     → Sampling 100 paths/source × 50 trials (backward: sink → source)
+2026-05-02 06:19:04 |     → Trial 1/50 completed (~1543 evaluations)
+2026-05-02 06:19:11 |     → Trial 10/50 completed (~1567 evaluations)
+2026-05-02 06:19:19 |     → Trial 20/50 completed (~1570 evaluations)
+2026-05-02 06:19:26 |     → Trial 30/50 completed (~1488 evaluations)
+2026-05-02 06:19:34 |     → Trial 40/50 completed (~1542 evaluations)
+2026-05-02 06:19:42 |     → Trial 50/50 completed (~1616 evaluations)
+2026-05-02 06:19:42 |     → All instances completed
+2026-05-02 06:19:42 |   [Progress: 9/9] LGBM + LINGAM - GraphExplainer
+2026-05-02 06:19:42 |   ✓ Completed mixed_no_conf_f50_s1000_p50 in 334.8 minutes
+2026-05-02 06:19:42 | 
+================================================================================
+2026-05-02 06:19:42 | Step 5 Complete: Shapley values calculated for all combinations
+2026-05-02 06:19:42 | ================================================================================
+
+2026-05-02 06:19:42 | 
+================================================================================
+2026-05-02 06:19:42 | PIPELINE COMPLETED SUCCESSFULLY!
+2026-05-02 06:19:42 | ================================================================================
+2026-05-02 06:19:42 | 
+Total execution time: 337.2 minutes (5.62 hours)
+2026-05-02 06:19:42 | 
+Results saved in:
+2026-05-02 06:19:42 |   - Synthetic data: /Users/juanrios/Documents/master_thesis/data/synthetic
+2026-05-02 06:19:42 |   - Processed data: /Users/juanrios/Documents/master_thesis/data/processed
+2026-05-02 06:19:42 |   - Causal discovery: /Users/juanrios/Documents/master_thesis/data/causal
+2026-05-02 06:19:42 |   - Models: /Users/juanrios/Documents/master_thesis/models
+2026-05-02 06:19:42 |   - Explainability: /Users/juanrios/Documents/master_thesis/data/explainability
+2026-05-02 06:19:42 |   - Logs: /Users/juanrios/Documents/master_thesis/logs
+2026-05-02 06:19:42 | 
+================================================================================
+

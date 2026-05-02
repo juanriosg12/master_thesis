@@ -386,120 +386,97 @@ class ShapleyFromScratch:
         return pd.DataFrame(self.shap_values, columns=self.feature_names, index= X.abs)
 
 class AsymmetricShapley(ShapleyFromScratch):
-    """Asymmetric Shapley values with causal ordering constraints.
+    """Asymmetric Shapley values with causal ordering constraints (Frye et al. 2021).
     
     ═══════════════════════════════════════════════════════════════════════════════
     WHAT THIS METHOD ACTUALLY DOES (based on code implementation):
     ═══════════════════════════════════════════════════════════════════════════════
     
-    Computes Shapley values using ONLY causal paths from source nodes to outcome Y.
+    Computes Shapley values using random topological orderings of ALL features,
+    sampled uniformly from the set of valid linear extensions of the causal DAG.
     
     KEY BEHAVIORS:
-    1. Samples random paths from sources to Y (not all permutations)
-    2. Only features ON the sampled path receive attributions
-    3. Features NOT on any path to Y get ZERO attribution (completely excluded)
-    4. Each sample uses ONE random path (current implementation: line 908)
+    1. Every permutation is a valid topological ordering of the X-feature DAG
+    2. ALL features appear in every permutation — no structural zeros
+    3. Causal partial order is respected for every pair (ancestor before descendant)
+    4. Y (outcome node) is excluded from the X-only ordering; it is never a player
     
     ═══════════════════════════════════════════════════════════════════════════════
-    ALGORITHM (Monte Carlo Path Sampling):
+    ALGORITHM (Monte Carlo, Random Topological Ordering):
     ═══════════════════════════════════════════════════════════════════════════════
     
     PREPROCESSING:
         1. Extract directed graph from causal_graph adjacency matrix
-        2. Find source nodes (no incoming edges, excluding outcome Y)
-        3. Filter sources: Keep only those with paths to outcome Y (backward BFS)
-        4. Build parent/child dictionaries for path finding
+        2. Build X-only children list and initial in-degrees (outcome Y excluded)
+        3. Detect and disable cycles (DAG required)
     
     FOR trial = 1 to n_samples:
-        1. Randomly select ONE source from filtered sources
-        2. Find all paths from that source to outcome Y (DFS, max 20 paths)
-        3. Randomly select ONE path from available paths
-        4. Remove outcome Y from path (conceptually last)
-        5. Use path as permutation: π = [node₁, node₂, ..., nodeₖ]
-        
-        6. Compute marginal contributions:
-           S ← ∅, v_prev ← baseline
-           FOR each feature i in path order:
-               S ← S ∪ {i}
-               v_curr ← v(S)  # Coalition value via background marginalization
-               Δᵢ ← v_curr - v_prev
-               φᵢ += Δᵢ
-               v_prev ← v_curr
-        
+        1. Sample a random valid topological ordering π of all X features:
+               - Kahn-style: maintain a pool of ready nodes (in-degree 0)
+               - At each step pick uniformly at random from the pool (swap-remove)
+               - Decrement in-degrees of children; add newly-ready children to pool
+               - This generates a sample from the uniform distribution over all
+                 linear extensions of the DAG (Frye et al. 2021)
+        2. Compute marginal contributions:
+               S ← ∅, v_prev ← baseline
+               FOR each feature i in π:
+                   S ← S ∪ {i}
+                   v_curr ← v(S)  # coalition value via background marginalization
+                   φᵢ += v_curr − v_prev
+                   v_prev ← v_curr
+    
     RETURN φ / n_samples
     
     ═══════════════════════════════════════════════════════════════════════════════
     CAUSAL GRAPH USAGE:
     ═══════════════════════════════════════════════════════════════════════════════
     
-    1. **Source Filtering (Backward BFS from Y)**:
-       - Build parents[j] = [i where causal_graph[i,j] ≠ 0]
-       - Find potential sources: nodes with no parents
-       - Backward BFS from Y to identify reachable nodes
-       - source_nodes = potential_sources ∩ reachable_from_Y
+    1. **Graph extraction**:
+       - Adjacency matrix → binary directed graph (directed_graph)
+       - Outcome node Y is always the last index (n_features)
     
-    2. **Path Finding (DFS)**:
-       - For each source, DFS to find all paths to Y
-       - Paths automatically maintain topological order
-       - Limits to max 20 paths per source (performance)
+    2. **X-only ordering structures** (precomputed in __init__):
+       - _x_children[i]: children of node i among X features (excludes Y)
+       - _x_in_degree[i]: number of X-feature parents of node i
+       - Used by _sample_topological_ordering() at every trial; O(n) per call
     
-    3. **Topological Ordering**:
-       - Paths inherently respect causal order (parents before children)
-       - No explicit topological sort needed (implicit in DFS)
-    
-    4. **NO ADJACENCY FILTERING**:
-       - Uses full causal graph for path finding
-       - Only filters which nodes are sources (not edges)
+    3. **NO ADJACENCY FILTERING** — uses the full X-feature subgraph
     
     ═══════════════════════════════════════════════════════════════════════════════
     COALITION & PERMUTATION MECHANICS:
     ═══════════════════════════════════════════════════════════════════════════════
     
     **Coalition Formation:**
-    - Only contains features from the sampled path
-    - Non-path features are EXCLUDED (not even in background)
-    - Coalition value v(S): Same as vanilla Shapley (condition on S, marginalize rest)
+    - All features are included in every permutation
+    - Coalition value v(S): same as vanilla Shapley
+      (condition on S features, marginalize the rest from background)
     
     **Permutation Space:**
-    - NOT all n! permutations
-    - ONLY valid causal paths from sources to Y
-    - Much smaller space than vanilla Shapley
-    - Biases attributions toward path-connected features
-    
-    **Key Implementation Detail (line 908):**
-    ```python
-    ordering = path  # Only include path nodes for strict causal order focus
-    ```
-    This means non-path nodes receive ZERO contribution (not sampled at all).
+    - The set of all valid topological orderings of the X-feature DAG
+      (linear extensions of the partial order defined by the causal graph)
+    - Strictly larger than path-based orderings and strictly smaller than n!
+    - Every feature receives non-zero expected attribution
     
     ═══════════════════════════════════════════════════════════════════════════════
     DIFFERENCE FROM OTHER METHODS:
     ═══════════════════════════════════════════════════════════════════════════════
     
     vs Vanilla Shapley:
-    - Vanilla: All features in every permutation
-    - Asymmetric: Only path features in each permutation
-    - Result: Asymmetric focuses credit on causal paths to Y
-    
-    vs Frye et al. (2021) Asymmetric Shapley:
-    - Frye: Enforces direct parent constraints only
-    - This: Enforces complete path constraints
-    - Example: X0→X1→X2→Y
-      * Frye allows: {X0, X2} without X1
-      * This implementation: Requires complete paths
-    
+    - Vanilla: uniform over all n! permutations (ignores causal order)
+    - Asymmetric: uniform over valid topological orderings only
+
     vs Causal Shapley (Heskes et al.):
-    - Causal: Uses do-calculus, all features, interventional semantics
-    - Asymmetric: Uses paths, only path features, observational semantics
+    - Causal: uses do-calculus, interventional coalition values
+    - Asymmetric: uses observational coalition values (background marginalization)
     
     ═══════════════════════════════════════════════════════════════════════════════
     BACKGROUND DATA USAGE:
     ═══════════════════════════════════════════════════════════════════════════════
     
     Same as vanilla Shapley:
-    - Features IN coalition S: Use instance's actual values (foreground)
-    - Features NOT in coalition S: Sample from background data
-    - Average predictions over background samples
+    - Features IN coalition S: use instance's actual values (foreground)
+    - Features NOT in coalition S: sample from background data
+    - Average predictions over all background samples
     
     No interventional sampling (unlike CausalShapley).
     
@@ -518,7 +495,7 @@ class AsymmetricShapley(ShapleyFromScratch):
         Shape: (n_features+1, n_features+1) where last row/col is outcome Y
         Entry [i,j]=1 means i causes j (binary directed graph)
     n_samples : int, default=1000
-        Number of random path samples to evaluate
+        Number of random topological orderings to sample
     random_state : int or None
         Random seed for reproducibility
     
@@ -526,14 +503,22 @@ class AsymmetricShapley(ShapleyFromScratch):
     ----------
     directed_graph : np.ndarray
         Binary directed adjacency matrix (n_features+1 × n_features+1)
-    source_nodes : List[int]
-        Indices of source nodes that can reach outcome Y
-    parents : Dict[int, Set[int]]
-        Parent features for each node
     outcome_node : int
         Index of outcome variable Y (typically n_features)
+    parents : Dict[int, Set[int]]
+        Parent nodes for each node (full graph including Y)
+    _x_children : Dict[int, List[int]]
+        Children of each X feature within the X-only subgraph (excludes Y)
+    _x_in_degree : List[int]
+        Initial in-degree of each X feature within the X-only subgraph
     shap_values : np.ndarray or None
         Computed Shapley values after calling explain()
+    
+    References
+    ----------
+    Frye, C., Rowat, C., & Feige, I. (2021). "Asymmetric Shapley Values:
+    Incorporating Causal Knowledge into Model-Agnostic Explainability."
+    NeurIPS 2021.
     
     Examples
     --------
@@ -593,14 +578,16 @@ class AsymmetricShapley(ShapleyFromScratch):
             has_incoming = any(self.directed_graph[j, i] != 0 for j in range(n_features_total))
             if not has_incoming:
                 all_source_nodes.append(i)
-        
-        # Filter source nodes to only those with at least one path to outcome
-        source_nodes_with_paths = []
-        for source in all_source_nodes:
-            paths_from_source = self._find_all_paths_to_outcome(source, self.outcome_node, max_paths=1)
-            if paths_from_source:
-                source_nodes_with_paths.append(source)
-        self.source_nodes = source_nodes_with_paths
+
+        # Precompute X-only children list and initial in-degrees for the
+        # random topological ordering sampler (excludes the outcome/Y node).
+        self._x_children: Dict[int, List[int]] = {i: [] for i in range(self.n_features)}
+        self._x_in_degree: List[int] = [0] * self.n_features
+        for i in range(self.n_features):
+            for j in range(self.n_features):
+                if self.directed_graph[i, j] != 0:
+                    self._x_children[i].append(j)
+                    self._x_in_degree[j] += 1
 
 
     def _extract_directed_graph(self, causal_graph: np.ndarray) -> np.ndarray:
@@ -661,218 +648,124 @@ class AsymmetricShapley(ShapleyFromScratch):
         return visited != n_nodes_total
 
     
-    def _find_all_paths_to_outcome(self, source: int, outcome: int, max_paths: int = 20) -> List[List[int]]:
-        """Find all paths from source to outcome in DAG using DFS.
-        
-        Parameters
-        ----------
-        source : int
-            Starting node index
-        outcome : int
-            Target/outcome node index (Y)
-        max_paths : int, default=20
-            Maximum number of paths to return
-        
-        Returns
-        -------
-        paths : List[List[int]]
-            List of paths, where each path is [source, ..., outcome]
-        """
-        n_features_total = self.directed_graph.shape[0]
-        
-        def dfs(current, target, path, visited, all_paths):
-            if current == target:
-                all_paths.append(path[:])
-                return
-            
-            if len(all_paths) >= max_paths:
-                return
-            
-            # Get children of current node
-            children = [j for j in range(n_features_total) 
-                       if self.directed_graph[current, j] != 0]
-            
-            for child in children:
-                if child not in visited:
-                    visited.add(child)
-                    path.append(child)
-                    dfs(child, target, path, visited, all_paths)
-                    path.pop()
-                    visited.remove(child)
-        
-        paths = []
-        visited = {source}
-        dfs(source, outcome, [source], visited, paths)
-        return paths
     
-    def _insert_non_path_nodes(self, path: List[int], non_path_nodes: List[int]) -> List[int]:
-        """Insert non-path nodes randomly while preserving path order.
-        
-        Parameters
-        ----------
-        path : List[int]
-            Ordered causal path (e.g., [X0, X2, Y])
-        non_path_nodes : List[int]
-            Nodes not on this path
-        
-        Returns
-        -------
-        ordering : List[int]
-            Complete ordering with all nodes
-        """
-        # Start with the path nodes in order
-        ordering = path[:]
-        
-        # Shuffle non-path nodes for variety
-        shuffled_non_path = non_path_nodes[:]
-        self.rng.shuffle(shuffled_non_path)
-        
+    def _sample_topological_ordering(self) -> List[int]:
+        """Sample a uniformly random topological ordering of all X features.
 
-        ordering = ordering + shuffled_non_path
-        
-        return ordering
-    
-    def _sample_causal_paths_to_outcome(self, outcome_node: int) -> List[int]:
-        """Sample causal path-based permutation focusing on paths to outcome Y.
-        
-        KEY CONCEPT:
-        - Focus on causal **paths** from source nodes to outcome Y
-        - Nodes **ON the path** must maintain causal order
-        - Nodes **NOT on the path** can appear anywhere (no constraint)
-        - Outcome node is always last
-        
-        ALGORITHM:
-        1. Identify source nodes (no incoming edges, excluding outcome)
-        2. For each source, find all paths to outcome
-        3. Get union of ALL nodes across all paths from that source
-        4. Remove outcome from paths (will be added at end)
-        5. Randomly select a path and insert non-path nodes randomly
-        6. Return ordering with outcome at the end
-        
-        DIFFERENCE FROM FRYE METHOD:
-        - Frye: Only enforces DIRECT parent constraints
-        - Path-based: Enforces ALL ancestors on path to Y must be included
-        - Example: If 0→1→2→Y, Frye allows {0, 2} but path-based requires {0, 1, 2}
-        
-        Parameters
-        ----------
-        outcome_node : int
-            Index of outcome node Y (typically n_features)
-        
+        Implements the standard random topological sort (Knuth 1997):
+        1. Initialise a pool of *ready* nodes — those whose in-degree
+           among X-only edges has fallen to zero.
+        2. Repeatedly pick **uniformly at random** from the pool, append
+           to the ordering, and decrement the in-degrees of its children;
+           add any newly-ready child to the pool.
+        3. Y (outcome node) is NOT included here; the caller decides
+           whether to append it.
+
+        This generates a sample from the **uniform distribution over all
+        valid topological orderings** (linear extensions) of the DAG,
+        which is exactly the permutation distribution assumed by Frye et
+        al. (2021) Asymmetric Shapley values.
+
+        Differences from the old path-sampling approach
+        -----------------------------------------------
+        - Every feature appears in **every** permutation (no zero-credit
+          features due to not being on a sampled path).
+        - The causal partial order is always respected for *all* pairs,
+          not just pairs on a single source-to-Y path.
+        - O(n) per sample instead of DFS path enumeration.
+
         Returns
         -------
         ordering : List[int]
-            Valid path-based permutation with outcome last
+            A random valid topological ordering of feature indices 0…n_x-1.
         """
-        n_features_total = self.directed_graph.shape[0]
-        
-        
-        if not self.source_nodes:
-            # No source nodes with paths to outcome - return random permutation of features (excluding outcome)
-            warnings.warn("No source nodes with paths to outcome found. Using random permutation of features.")
-            features_only = list(range(outcome_node))  # Exclude outcome node
-            self.rng.shuffle(features_only)
-            return features_only
-        
-        # Randomly select a source node (from those with paths to outcome)
-        source = self.source_nodes[self.rng.randint(len(self.source_nodes))]
-        
-        # Find paths from this source to outcome
-        paths = self._find_all_paths_to_outcome(source, outcome_node, max_paths=10)
-        
-        if not paths:
-            # This should not happen since we filtered, but safety fallback
-            warnings.warn(f"No paths found from source {source} to outcome {outcome_node}. Using random permutation.")
-            features_only = list(range(outcome_node))  # Exclude outcome node
-            self.rng.shuffle(features_only)
-            return features_only
-        
-        # Get union of ALL nodes across all paths from this source
-        all_path_nodes_from_source = set().union(*paths) if paths else set()
-        non_path_nodes_all = [i for i in range(n_features_total) 
-                              if i not in all_path_nodes_from_source]
-        
-        # Remove the outcome node from all paths so it can be appended at the end
-        paths = [path[:-1] for path in paths]
-        
-        # Randomly select a path (without outcome)
-        path = paths[self.rng.randint(len(paths))] if len(paths) > 1 else paths[0]
-        
-        # Generate ordering by inserting nodes NOT on ANY path from this source
-        ## Trying to remove the nodes that are not part of the path to see the real effect of ASV on the causal nodes. This is a more restrictive approach that focuses on the causal order itself, which is the core idea of this method.
-        ##ordering = self._insert_non_path_nodes(path, non_path_nodes_all)
-        ordering = path  # Only include path nodes for strict causal order focus
-        
+        n_x = self.n_features
+        remaining_in_degree = self._x_in_degree[:]
+        ready = [i for i in range(n_x) if remaining_in_degree[i] == 0]
+        ordering: List[int] = []
+
+        while ready:
+            # Uniform random pick via swap-remove (O(1))
+            idx = self.rng.randint(len(ready))
+            node = ready[idx]
+            ready[idx] = ready[-1]
+            ready.pop()
+
+            ordering.append(node)
+
+            for child in self._x_children[node]:
+                remaining_in_degree[child] -= 1
+                if remaining_in_degree[child] == 0:
+                    ready.append(child)
+
+        # Safety fallback if the graph still has cycles (should not happen
+        # after cycle removal in causal discovery, but be defensive).
+        if len(ordering) < n_x:
+            placed = set(ordering)
+            remaining = [i for i in range(n_x) if i not in placed]
+            self.rng.shuffle(remaining)
+            ordering.extend(remaining)
+
         return ordering
-    
+
     def _compute_monte_carlo_causal_shapley(self, instance: np.ndarray) -> np.ndarray:
-        """Compute Asymmetric Shapley values using Monte Carlo with path-based permutations.
-        
-        ALGORITHM:
+        """Compute Asymmetric Shapley values via random topological orderings.
+
+        ALGORITHM (Frye et al. 2021):
         Repeat n_samples times:
-            1. Sample valid path-based permutation π (from sources to outcome Y)
-            2. Initialize: S = ∅, v_prev = baseline
-            3. For each feature f_i in order π (excluding outcome Y):
-                a. Add f_i to coalition: S = S ∪ {f_i}
-                b. Compute: v_curr = v(S)
-                c. Marginal: Δ_i = v_curr - v_prev
-                d. Accumulate: φ_i += Δ_i
-                e. Update: v_prev = v_curr
+            1. Draw a uniformly random valid topological ordering π of all X features.
+               A valid ordering respects the DAG partial order:
+               if i → j then i precedes j in π.
+            2. Initialise: S = ∅, v_prev = baseline
+            3. For each feature f_i in order π:
+                a. S ← S ∪ {f_i}
+                b. v_curr ← v(S)   # coalition value (background marginalisation)
+                c. φᵢ += v_curr − v_prev
+                d. v_prev ← v_curr
         Return: φ / n_samples
-        
-        PATH-BASED APPROACH:
-        - Focuses on causal paths from sources to outcome Y
-        - Nodes ON the path maintain causal order (full ancestor chains)
-        - Nodes NOT on the path can appear anywhere
-        - More restrictive than Frye for path nodes (ensures complete causal chains)
-        - More flexible than Frye for non-path nodes (no ordering constraint)
-        
+
+        Advantages over path sampling
+        -----------------------------
+        - All features contribute in every permutation (no structural zeros).
+        - Respects the DAG partial order for every pair of features, not
+          just for pairs on a sampled source-to-Y path.
+        - O(n) sampling cost per permutation instead of DFS.
+
         Parameters
         ----------
         instance : np.ndarray
             Instance to explain (shape: n_features,)
-        
+
         Returns
         -------
         shapley_values : np.ndarray
-            Asymmetric Shapley values respecting causal path constraints
+            Asymmetric Shapley values (shape: n_features,)
         """
-
         shapley_values = np.zeros(self.n_features)
-        
-        # Outcome node is assumed to be the last node in the causal graph
-        # (causal_graph should be (n_features+1, n_features+1) including outcome)
-        outcome_node = self.outcome_node
-        
+
         for sample_idx in range(self.n_samples):
-            # Sample path-based permutation
-            perm = self._sample_causal_paths_to_outcome(outcome_node)
+            # Sample a random valid topological ordering of all X features
+            perm = self._sample_topological_ordering()
 
             prev_value = self.baseline_value
-            coalition = []
-            for feature_idx in perm:
+            coalition: List[int] = []
 
+            for feature_idx in perm:
                 coalition.append(feature_idx)
                 curr_value = self._predict_coalition(instance, coalition)
-
-                marginal = curr_value - prev_value
-
-                shapley_values[feature_idx] += marginal
-
+                shapley_values[feature_idx] += curr_value - prev_value
                 prev_value = curr_value
-            
-            # Log progress every 100 samples
+
             if (sample_idx + 1) % 10 == 0:
                 logging.info(f"    Sample {sample_idx + 1}/{self.n_samples} completed")
 
         shapley_values /= self.n_samples
-
         return shapley_values
     
     def explain(self, X: pd.DataFrame, method: str = 'monte_carlo') -> np.ndarray:
 
-        print(f"Computing Path-based Asymmetric Shapley values using {method} method...")
-        logging.info(f"Starting Path-based Asymmetric Shapley computation for {len(X)} instances")
+        print(f"Computing Asymmetric Shapley values (random topological ordering, {method} mode)...")
+        logging.info(f"Starting Asymmetric Shapley (topo-ordering) computation for {len(X)} instances")
         logging.info(f"Using {self.n_samples} samples per instance")
         # Detailed configuration info removed for cleaner output
         # print(f"Sampling approach: Path-based (focuses on causal paths to outcome)")
@@ -911,10 +804,12 @@ class CausalShapley(ShapleyFromScratch):
     distributions P(X | X_S = x_S) with do-calculus P(X | do(X_S = x_S)).
     
     KEY BEHAVIORS:
-    1. Uses ALL features in random permutations (like vanilla Shapley)
-    2. For each coalition, samples from do-distribution (not observational)
-    3. Handles confounding via component-based sampling
-    4. Much more computationally expensive than vanilla (nested sampling loops)
+    1. Uses ALL features in every permutation
+    2. Outer permutation loop draws from the uniform distribution over valid
+       topological orderings of the component DAG (causal-constrained)
+    3. For each coalition, inner loop samples from the do-distribution
+    4. Handles confounding via component-based independent/joint sampling
+    5. Much more computationally expensive than vanilla (nested sampling loops)
     
     ═══════════════════════════════════════════════════════════════════════
     KEY CONCEPTUAL DIFFERENCE FROM OTHER METHODS:
@@ -961,18 +856,41 @@ class CausalShapley(ShapleyFromScratch):
     
     3. COMPONENT STRUCTURE:
        - Features are partitioned into causal components
-       - CONFOUNDED component: Features share a hidden confounder
-       - NON-CONFOUNDED component: Individual features or causally related features
+       - CONFOUNDED component: features share a hidden confounder
+       - NON-CONFOUNDED component: individual feature or causally related features
+    
+    4. COMPONENT DAG (precomputed in __init__):
+       - _comp_children[c]: child components of component c
+       - _comp_in_degree[c]: number of parent components of component c
+       - Used by _sample_component_topological_ordering() at every outer iteration
     
     ═══════════════════════════════════════════════════════════════════════
-    POST-INTERVENTIONAL SAMPLING ALGORITHM:
+    OUTER PERMUTATION — COMPONENT TOPOLOGICAL ORDERING:
+    ═══════════════════════════════════════════════════════════════════════
+    
+    The outer loop samples a random valid topological ordering of all features
+    in two stages:
+    
+    Stage 1 — Kahn-style random sort of components:
+        - Maintain a pool of ready components (in-degree 0 in the component DAG)
+        - At each step pick uniformly at random from the pool (swap-remove, O(1))
+        - Decrement child in-degrees; add newly-ready children to pool
+        - Produces a uniform sample from the linear extensions of the component DAG
+    
+    Stage 2 — Expand to features:
+        - For each component in the sampled order, expand to its features
+        - Within a confounded component the features are shuffled randomly
+        - Single-feature (non-confounded) components are trivially ordered
+    
+    ═══════════════════════════════════════════════════════════════════════
+    POST-INTERVENTIONAL SAMPLING ALGORITHM (inner loop):
     ═══════════════════════════════════════════════════════════════════════
     
     To sample from P(X | do(X_S = x_S)):
     
     1. Fix intervened features: X_S = x_S (from instance)
     
-    2. For each component t in topological order:
+    2. For each component t in FIXED topological order:
        a. Identify: fixed_features = component ∩ S (intervened)
                    missing_features = component \\ S (to sample)
        
@@ -989,6 +907,10 @@ class CausalShapley(ShapleyFromScratch):
              → Preserves mutual interactions within component
              → (X_missing) ~ P(X_missing | Parents, X_fixed)
     
+    Note: the inner loop always traverses components in the FIXED deterministic
+    topological order (not random), because the do-calculus requires a consistent
+    structural ordering to propagate interventions correctly.
+    
     3. Repeat M times to get samples from the do-distribution
     
     ═══════════════════════════════════════════════════════════════════════
@@ -1000,8 +922,8 @@ class CausalShapley(ShapleyFromScratch):
     - Use conditional Gaussian formulas for sampling:
       X_A | X_B = b ~ N(μ_A + Σ_AB Σ_BB^{-1}(b - μ_B), Σ_AA - Σ_AB Σ_BB^{-1} Σ_BA)
     
-    Note: Current implementation assumes Gaussian distributions
-    For non-Gaussian: could use Gibbs sampling or other methods
+    Note: Current implementation assumes Gaussian distributions.
+    For non-Gaussian: could use Gibbs sampling or other methods.
     
     ═══════════════════════════════════════════════════════════════════════
     PARAMETERS:
@@ -1036,6 +958,10 @@ class CausalShapley(ShapleyFromScratch):
         Maps component_idx → list of parent feature indices
     feature_to_component : Dict[int, int]
         Maps feature_idx → component_idx
+    _comp_children : Dict[int, List[int]]
+        Children of each component in the component DAG
+    _comp_in_degree : List[int]
+        Initial in-degree of each component in the component DAG
     
     ═══════════════════════════════════════════════════════════════════════
     REFERENCES:
@@ -1060,7 +986,7 @@ class CausalShapley(ShapleyFromScratch):
                  discovered_conf: List[Tuple[str,str]],
                  feature_names: List[str],
                  n_samples: int = 100,
-                 M_inner_samples: int = 50,
+                 M_inner_samples: int = 100,
                  random_state: Optional[int] = None):
         """Initialize CausalShapley with post-interventional sampling.
         
@@ -1105,6 +1031,21 @@ class CausalShapley(ShapleyFromScratch):
 
         # Precompute statistics for Gaussian conditional sampling
         self._precompute_statistics()
+
+        # Precompute component-level children and in-degrees so we can draw a
+        # random valid topological ordering of components at each outer iteration.
+        n_comps = len(self.causal_graph_components)
+        self._comp_children: Dict[int, List[int]] = {i: [] for i in range(n_comps)}
+        self._comp_in_degree: List[int] = [0] * n_comps
+        for comp_idx in range(n_comps):
+            parent_feat_indices = self.parents_dict.get(comp_idx, [])
+            # Map each parent feature to its component, deduplicate
+            parent_comp_indices = set(
+                self.feature_to_component[f] for f in parent_feat_indices
+            )
+            for parent_comp in parent_comp_indices:
+                self._comp_children[parent_comp].append(comp_idx)
+                self._comp_in_degree[comp_idx] += 1
 
         # Verbose initialization removed for cleaner output
         # print("CausalShapleyPostInterventional Initialzied:")
@@ -1351,71 +1292,45 @@ class CausalShapley(ShapleyFromScratch):
         S_set = set(S)
         samples = []
         for _ in range(self.M_inner_samples):
-            # Initialize sample vector
+            # Initialize: fix intervened features, zero out the rest
             sample = np.zeros(self.n_features)
+            sample[list(S)] = x_instance[list(S)]
 
-            # Step 1: Fix interventional values X_s = X_s
-            for feature in S:
-                sample[feature] = x_instance[feature]
-            
-            # Step 2: Iterate through components in topological order
+            # Iterate through components in topological order
             for comp_idx, component in enumerate(self.causal_graph_components):
-                # Identify fixed vs missing features in this component
-                fixed_in_comp = [f for f in component if f in S_set]
                 missing_in_comp = [f for f in component if f not in S_set]
-
-                if len(missing_in_comp) == 0:
-                    # All features in component are fixed, nothing to sample
+                if not missing_in_comp:
                     continue
 
-                # Get parent values (parents are in earlier components, already determined)
+                # Parent values are already determined (topological order guarantees this)
                 parent_features = self.parents_dict.get(comp_idx, [])
-                parent_values = sample[parent_features] if len(parent_features) > 0 else np.array([])
+                parent_values = sample[parent_features]  # empty array when no parents
 
-                # CRITICAL DISTINTION: Confounded vs Non-confounded
+                # CRITICAL DISTINCTION: Confounded vs Non-confounded
                 if self.confounded_info.get(comp_idx, False):
-                    # CONFOUNDED COMPONENT
-                    # Sample each missing feature INDEPENDENTLY conditional on parents only
+                    # CONFOUNDED COMPONENT: sample each missing feature INDEPENDENTLY
+                    # given parents only — this is what breaks the confounded correlation.
+                    # (Joint sampling would preserve it, hence the per-feature loop.)
                     for feature in missing_in_comp:
-                        if len(parent_features)>0:
-                            sampled_value = self._sample_conditional_gaussian(
-                                target_features=[feature],
-                                conditioning_features=parent_features,
-                                conditioning_values=parent_values
-                            )[0]
-                        else:
-                            # No parents: sample from marginal
-                            sampled_value = self.rng.normal(self.mean[feature],
-                                                            np.sqrt(self.cov[feature,feature]))
-                        sample[feature] = sampled_value
+                        sample[feature] = self._sample_conditional_gaussian(
+                            target_features=[feature],
+                            conditioning_features=parent_features,
+                            conditioning_values=parent_values
+                        )[0]
                 else:
-                    # NON-CONFOUNDED COMPONENT
-                    # Sample missing features JOINTLY conditional on parents + siblings in S
+                    # NON-CONFOUNDED COMPONENT: sample missing features JOINTLY given
+                    # parents + fixed siblings — preserves within-component interactions.
+                    # NOTE: for non-Gaussian distributions this should use Gibbs sampling.
+                    fixed_in_comp = [f for f in component if f in S_set]
+                    conditioning_features = parent_features + fixed_in_comp
+                    conditioning_values = sample[conditioning_features]
+                    sampled_values = self._sample_conditional_gaussian(
+                        target_features=missing_in_comp,
+                        conditioning_features=conditioning_features,
+                        conditioning_values=conditioning_values
+                    )
+                    sample[missing_in_comp] = sampled_values
 
-                    # NOTE : For non-Gaussian or complex distributions, this step should 
-                    # be refined using Gibbs sampling to properly capture joint dependencies
-
-                    # Conditional set: parents + fixed siblings in component
-                    conditioning_features = list(parent_features) + fixed_in_comp
-                    conditioning_values = sample[conditioning_features] if len(conditioning_features) > 0 else np.array([])
-
-                    if len(conditioning_features) > 0:
-                        sampled_values = self._sample_conditional_gaussian(
-                            target_features=missing_in_comp,
-                            conditioning_features=conditioning_features,
-                            conditioning_values=conditioning_values
-                        )
-                    else:
-                        # No conditioning: sample from joint marginal
-                        if len(missing_in_comp) == 1:
-                            sampled_values = np.array([self.rng.normal(self.mean[missing_in_comp[0]],
-                                                                      np.sqrt(self.cov[missing_in_comp[0],missing_in_comp[0]]))])
-                        else:
-                            cov_missing = self.cov[np.ix_(missing_in_comp,missing_in_comp)]
-                            sampled_values = self.rng.multivariate_normal(self.mean[missing_in_comp],cov_missing)
-                    
-                    for feature, value in zip(missing_in_comp,sampled_values):
-                        sample[feature] = value
             samples.append(sample)
 
         return np.array(samples)
@@ -1446,26 +1361,96 @@ class CausalShapley(ShapleyFromScratch):
         predictions = self._predict_with_feature_alignment(samples)
 
         return predictions.mean()
-    
+
+    def _sample_component_topological_ordering(self) -> List[int]:
+        """Sample a random topological ordering of features via component-level randomisation.
+
+        Two-stage algorithm:
+
+        Stage 1 — random topological sort of **components**:
+            Uses the same Kahn-style uniform random pick as AsymmetricShapley
+            (swap-remove from the *ready* pool at each step).  This generates
+            a sample from the uniform distribution over all linear extensions
+            of the component DAG.
+
+        Stage 2 — expand to features:
+            Within each component the features are shuffled randomly.  For a
+            single-feature (non-confounded) component this is a no-op.
+
+        The resulting flat list satisfies the causal partial order: every
+        feature always appears after **all** features in its ancestor components.
+        Confounded siblings within a component may appear in any relative order.
+
+        Returns
+        -------
+        ordering : List[int]
+            Feature indices in a random valid topological order (length n_features).
+        """
+        n_comps = len(self.causal_graph_components)
+        remaining_in_degree = self._comp_in_degree[:]
+        ready = [i for i in range(n_comps) if remaining_in_degree[i] == 0]
+        comp_order: List[int] = []
+
+        while ready:
+            # Uniform random pick via swap-remove — O(1)
+            idx = self.rng.randint(len(ready))
+            comp_idx = ready[idx]
+            ready[idx] = ready[-1]
+            ready.pop()
+            comp_order.append(comp_idx)
+            for child_comp in self._comp_children[comp_idx]:
+                remaining_in_degree[child_comp] -= 1
+                if remaining_in_degree[child_comp] == 0:
+                    ready.append(child_comp)
+
+        # Safety fallback — only reached if the component DAG has unexpected cycles
+        if len(comp_order) < n_comps:
+            placed = set(comp_order)
+            remaining = [i for i in range(n_comps) if i not in placed]
+            comp_order.extend(remaining)
+
+        # Expand components → flat feature list, shuffling within each component
+        feature_ordering: List[int] = []
+        for comp_idx in comp_order:
+            features = list(self.causal_graph_components[comp_idx])
+            if len(features) > 1:
+                self.rng.shuffle(features)
+            feature_ordering.extend(features)
+
+        return feature_ordering
+
     def _compute_monte_carlo_causal_shapley(self, instance: np.ndarray) -> np.ndarray:
         """
-        Compute Causal Shapley values using Monte Carlo permutation Sampling
+        Compute Causal Shapley values using Monte Carlo with causal-order-constrained permutations.
 
         Outer Loop (n_samples iterations):
-        - Sample random permutation of features
-        - Initialize empty coalition S = 0
-        - For each feature J in permutation order:
-            * Compute v(S) using inner sampling loop
-            * compute v(S u {j} ) using inner sampling loop
-            * Marginal contribution = V(S u {j}) - V(S)
-            * Add to features j's Shapley value
-            * Add j to coalition: S = S u {j}
+        - Sample a **random valid topological ordering** of all features,
+          respecting the component-level DAG partial order.
+        - Initialize empty coalition S = ∅
+        - For each feature j in that order:
+            * S ← S ∪ {j}
+            * v_curr ← E[f(X) | do(X_S = x_S)]  (post-interventional, inner loop)
+            * φ_j += v_curr − v_prev
+            * v_prev ← v_curr
+        Return: φ / n_samples
+
+        Why this fixes the original implementation
+        ------------------------------------------
+        The original code used `rng.permutation(n_features)` — a fully random
+        shuffle with no causal constraints.  The topological order existed only
+        *inside* `_sample_post_interventional` (for building the interventional
+        sample), but the *outer* Shapley permutation was unconstrained.
+
+        With this fix both layers respect causality:
+          - Outer permutation: random linear extension of the component DAG
+            (ancestors always precede descendants in the Shapley sum)
+          - Inner sampling: fixed topological component traversal for do-calculus
 
         Parameters:
         ----------
         instance: np.ndarray
             Instance to explain
-        
+
         Returns:
         --------
         shapley_values : np.ndarray
@@ -1475,10 +1460,11 @@ class CausalShapley(ShapleyFromScratch):
         shapley_values = np.zeros(self.n_features)
 
         for perm_idx in range(self.n_samples):
-            # Sample random permutation of all features
-            perm = self.rng.permutation(self.n_features).tolist()
+            # Sample a random valid topological ordering of all features,
+            # respecting the causal partial order defined by the component DAG.
+            perm = self._sample_component_topological_ordering()
 
-            # Initialize empty coaliton
+            # Initialize empty coalition
             coalition = []
 
             # Track previous value to compute marginals efficiently
@@ -1913,6 +1899,14 @@ class ShapleyFlow:
                         node_values[node] = x_background.get(node, 0.0)
                         observed_nodes[node] = node_values[node]
                 elif has_active_incoming:
+                    node_values[node] = x_foreground.get(node, 0.0)
+                    observed_nodes[node] = node_values[node]
+                elif self.sink_node is not None and (node, self.sink_node) in history_set:
+                    # Edge X_k → Y is active: X_k must take its foreground value so
+                    # the model sees the real feature value for this direct Y-parent.
+                    # Note: Y itself is always stripped from the prediction input via
+                    # `feature_indices` below, so no observed Y data ever reaches the
+                    # model — the user's requirement is satisfied.
                     node_values[node] = x_foreground.get(node, 0.0)
                     observed_nodes[node] = node_values[node]
             # For missing nodes, use background values

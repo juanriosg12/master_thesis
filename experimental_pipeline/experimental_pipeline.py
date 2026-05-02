@@ -727,35 +727,35 @@ def calculate_all_shapley_values(dataset_configs: List[Dict]):
                 sys.stdout.flush()  # Ensure output is visible
                 progress_counter += 1
                 
-                # Create GraphExplainerWrapper
-                # Uses same causal_graph and data as ShapleyFlowWrapper for consistency
-                try:
-                    graphexp_explainer = GraphExplainerWrapper(
-                        adjacency_matrix=causal_graph,  # Already includes Y from discovery
-                        feature_names=feature_names,  # Already includes Y
-                        train_data=train_data,  # Full training data with Y
-                        background_data=background_data_flow,  # Reuse from ShapleyFlow
-                        sink_name='Y',
-                        nruns=N_SHAPLEY_SAMPLES,
-                        silent=True,
-                        method='bruteforce_sampling',
-                        fit_method='xgboost'
-                    )
+                # # Create GraphExplainerWrapper
+                # # Uses same causal_graph and data as ShapleyFlowWrapper for consistency
+                # try:
+                #     graphexp_explainer = GraphExplainerWrapper(
+                #         adjacency_matrix=causal_graph,  # Already includes Y from discovery
+                #         feature_names=feature_names,  # Already includes Y
+                #         train_data=train_data,  # Full training data with Y
+                #         background_data=background_data_flow,  # Reuse from ShapleyFlow
+                #         sink_name='Y',
+                #         nruns=N_SHAPLEY_SAMPLES,
+                #         silent=True,
+                #         method='bruteforce_sampling',
+                #         fit_method='xgboost'
+                #     )
                     
-                    graphexp_values = graphexp_explainer.explain(test_instances_flow)  # Reuse from ShapleyFlow
-                    graphexp_importance = graphexp_explainer.get_feature_importance()
+                #     graphexp_values = graphexp_explainer.explain(test_instances_flow)  # Reuse from ShapleyFlow
+                #     graphexp_importance = graphexp_explainer.get_feature_importance()
                     
-                    # Save GraphExplainer results
-                    graphexp_dir = EXPLAINABILITY_DIR / filename / model_name / discovery_method / 'flow_real'
-                    graphexp_dir.mkdir(parents=True, exist_ok=True)
+                #     # Save GraphExplainer results
+                #     graphexp_dir = EXPLAINABILITY_DIR / filename / model_name / discovery_method / 'flow_real'
+                #     graphexp_dir.mkdir(parents=True, exist_ok=True)
                     
-                    np.save(graphexp_dir / 'shapley_values.npy', graphexp_values)
-                    graphexp_importance.to_csv(graphexp_dir / 'feature_importance.csv', index=False)
+                #     np.save(graphexp_dir / 'shapley_values.npy', graphexp_values)
+                #     graphexp_importance.to_csv(graphexp_dir / 'feature_importance.csv', index=False)
                     
-                    logging.info(f"    ✓ GraphExplainer completed: {graphexp_values.shape}")
-                except Exception as e:
-                    logging.error(f"    ✗ GraphExplainer failed: {str(e)}")
-                    logging.warning("    Skipping GraphExplainer for this combination...")
+                #     logging.info(f"    ✓ GraphExplainer completed: {graphexp_values.shape}")
+                # except Exception as e:
+                #     logging.error(f"    ✗ GraphExplainer failed: {str(e)}")
+                #     logging.warning("    Skipping GraphExplainer for this combination...")
         
         elapsed = time.time() - start_time
         logging.info(f"  ✓ Completed {filename} in {elapsed/60:.1f} minutes")
@@ -1020,8 +1020,8 @@ def main():
         # Step 4: Run causal discovery (uses trained models for Y-edge assignment)
         run_causal_discovery(dataset_configs)
         
-        # # Step 5: Calculate Shapley values
-        # calculate_all_shapley_values(dataset_configs)
+        # Step 5: Calculate Shapley values
+        calculate_all_shapley_values(dataset_configs)
         
         # # Step 6: Calculate comparison metrics
         # calculate_comparison_metrics(dataset_configs)
