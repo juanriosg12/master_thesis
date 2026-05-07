@@ -1573,25 +1573,20 @@ class ShapleyFlow:
     RETURN edge_attributions / (n_samples × total_paths)
     
     ═══════════════════════════════════════════════════════════════════════════════
-    WHY BACKWARD SAMPLING? (Critical Design Choice)
+    WHY ALL-EDGE MC PERMUTATION? (Correct Shapley Estimator)
     ═══════════════════════════════════════════════════════════════════════════════
-    
-    Forward (source→sink) random walk problems:
-    - Many sources, uncertain if random walk reaches sink
-    - Need retries, wasted samples
-    - Inefficient for large graphs
-    
-    Backward (sink→source) walk advantages:
-    - source_nodes are PRE-FILTERED (wrapper's backward BFS guarantees reachability)
-    - Walking backward from sink ALWAYS hits a valid source
-    - NO RETRIES needed, every attempt succeeds
-    - Much more efficient sampling
-    
-    Backward (sink→source) walk advantages:
-    - source_nodes are PRE-FILTERED (wrapper's backward BFS guarantees reachability)
-    - Walking backward from sink ALWAYS hits a valid source
-    - NO RETRIES needed, every attempt succeeds
-    - Much more efficient sampling
+
+    Path-sampling (backward walk) is INCORRECT for edge Shapley values because:
+    - Each backward path covers only ~5 of the 275+ edges
+    - Deep edges appear in <1% of paths → accumulated marginals ≈ 0
+    - But ALL edges are divided by the same denominator → deep edges undervalued 50-100×
+    - Result: efficiency ratio ≈ 0.17× instead of 1.0×
+
+    Correct estimator: random permutation of ALL edges
+    - Every edge participates in every permutation → no visitation-frequency bias
+    - Σ marginals in one permutation = v(all_edges) − v({}) = f(x) − f(bg) exactly
+    - Efficiency axiom holds at 1.00× by construction
+    - Cost: n_samples × (n_edges + 1) model calls (e.g. 50 × 276 = 13,800)
     
     ═══════════════════════════════════════════════════════════════════════════════
     EDGE COALITION SEMANTICS:
@@ -2159,43 +2154,58 @@ class ShapleyFlow:
         
         if self.use_path_sampling:
             logging.info(f"    → ShapleyFlow (Backward Path Sampling): {n_edges} edges, {len(self.source_nodes)} sources")
-            logging.info(f"    → Sampling {self.paths_per_source} paths/source × {self.n_samples} trials (backward: sink → source)")
         else:
             logging.info(f"    → ShapleyFlow (Exhaustive DFS): {n_edges} edges, {len(self.source_nodes)} sources, {self.n_samples} trials")
         sys.stdout.flush()
 
         if self.use_path_sampling:
-            # PATH SAMPLING MODE - faster for dense graphs
-            # Using BACKWARD sampling: sink → random parents → source
-            # More efficient: no retries, every attempt succeeds!
-            total_paths_per_trial = len(self.source_nodes) * self.paths_per_source
-            
+            # CORRECT MC PERMUTATION MODE
+            # Permute ALL edges randomly every trial → every edge participates in
+            # every permutation → no visitation-frequency bias → efficiency = 1.00×.
+            #
+            # WHY unconstrained (not causal-depth-ordered):
+            # _evaluate_system determines a node's fg/bg status from its INCOMING
+            # edges.  If we enforce causal order (parents' edges before children's),
+            # a non-source node Xi is already foreground (from its parent edge) by
+            # the time (Xi→Y) fires.  The model already sees Xi at fg → marginal of
+            # (Xi→Y) ≈ 0 → every non-source direct Y-parent gets zero attribution.
+            #
+            # With unconstrained ordering, roughly half the permutations will place
+            # (Xi→Y) BEFORE (Xparent→Xi).  In those trials Xi is still at background
+            # when (Xi→Y) fires, so the special-case branch in _evaluate_system sets
+            # Xi=fg and the marginal captures Xi's full contribution to Y.  Averaged
+            # over N trials, every edge gets a non-zero, unbiased estimate.
+            #
+            # Cost: n_samples × (n_edges + 1) model calls (e.g. 50 × 276 = 13,800).
+            all_edges = [(u, v) for u, children in self.graph.items() for v in children]
+            logging.info(
+                f"    → ShapleyFlow (MC Permutation): {len(all_edges)} edges, "
+                f"{self.n_samples} trials = {self.n_samples * (len(all_edges) + 1):,} model calls"
+            )
+            sys.stdout.flush()
+
             for trial in range(self.n_samples):
                 self.eval_count = 0
-                
-                # Sample paths using backward walk from sink
-                for _ in range(total_paths_per_trial):
-                    # Sample one random path (backward from sink to random source)
-                    path_edges = self._sample_random_path_backward()
-                    
-                    if not path_edges:
-                        continue  # Empty path, skip (should be rare)
-                    
-                    # Compute marginal contributions for edges in this path
-                    edge_marginals = self._evaluate_path_contribution(path_edges, x_foreground, x_background)
-                    
-                    # Accumulate to global edge attributions
-                    for edge, marginal in edge_marginals.items():
-                        self.edge_attributions[edge] += marginal
-                
-                # Progress indicator
+
+                # Uniform random permutation of ALL edges (unbiased Shapley estimator)
+                perm_idx = self.rng.permutation(len(all_edges))
+                perm_edges = [all_edges[i] for i in perm_idx]
+
+                prev_v = self._evaluate_system([], x_foreground, x_background)
+                history = []
+                for edge in perm_edges:
+                    history.append(edge)
+                    curr_v = self._evaluate_system(history, x_foreground, x_background)
+                    self.edge_attributions[edge] += curr_v - prev_v
+                    prev_v = curr_v
+
                 if (trial + 1) % 10 == 0 or trial == 0:
-                    logging.info(f"    → Trial {trial + 1}/{self.n_samples} completed (~{self.eval_count} evaluations)")
+                    logging.info(f"    → Trial {trial + 1}/{self.n_samples} completed ({self.eval_count} evaluations)")
                     sys.stdout.flush()
-            
-            # Average across trials (normalized by total paths sampled)
+
+            # Average across trials (one permutation per trial → divide by n_samples)
             for edge in self.edge_attributions:
-                self.edge_attributions[edge] /= (self.n_samples * total_paths_per_trial)
+                self.edge_attributions[edge] /= self.n_samples
                 
         else:
             # EXHAUSTIVE DFS MODE - original algorithm
@@ -2232,11 +2242,11 @@ class ShapleyFlow:
         relative_error = abs(total_attribution - expected_total) / (abs(expected_total) + 1e-10)
 
         # Debug output removed for cleaner output
-        # print(f" Total edge attributions: {total_attribution:.6f}")
-        # print(f" Expected (f(x) - f(x')) : {expected_total:.6f}")
-        # print(f" Difference: {abs(total_attribution - expected_total)}" 
-        #       f" using {n_eval_samples} samples to calculate f(x) and f(x')")
-        # print(f" Relative error: {relative_error:.4f}")
+        logging.info(f" Total edge attributions: {total_attribution:.6f}")
+        logging.info(f" Expected (f(x) - f(x')) : {expected_total:.6f}")
+        logging.info(f" Difference: {abs(total_attribution - expected_total)}" 
+              f" using {n_eval_samples} samples to calculate f(x) and f(x')")
+        logging.info(f" Relative error: {relative_error:.4f}")
 
         return self.edge_attributions
     

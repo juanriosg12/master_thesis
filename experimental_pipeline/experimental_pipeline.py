@@ -73,7 +73,7 @@ RANDOM_STATE = 42
 TEST_SIZE = 0.2
 BACKGROUND_RATIO = 0.3
 TEST_INSTANCES_RATIO = 0.5
-N_SHAPLEY_SAMPLES = 50
+N_SHAPLEY_SAMPLES = 100  # this could be increased if shapley flow performs well and we want more stable estimates (currently set low for faster debugging)
 M_INNER_SAMPLES_CAUSAL = 10  # Reduced for CausalShapley performance (was 50 default)
 
 # Discovery parameters

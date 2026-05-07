@@ -21,3 +21,4 @@ graphviz>=0.20.0
 pyarrow
 fastparquet
 shapflow
+plotly==6.7.0
