@@ -1,0 +1,1274 @@
+2026-05-10 22:05:26 | Log file: /Users/juanrios/Documents/master_thesis/logs/pipeline_20260510_220526.log
+2026-05-10 22:05:26 | 
+================================================================================
+2026-05-10 22:05:26 | EXPERIMENTAL PIPELINE: CAUSAL FEATURE IMPORTANCE COMPARISON
+2026-05-10 22:05:26 | ================================================================================
+2026-05-10 22:05:26 | 
+================================================================================
+2026-05-10 22:05:26 | CONFIGURATION PARAMETERS
+2026-05-10 22:05:26 | ================================================================================
+2026-05-10 22:05:26 | 
+1. DATASET PARAMETERS:
+2026-05-10 22:05:26 |    - N_FEATURES: 50
+2026-05-10 22:05:26 |    - N_SAMPLES: 1000
+2026-05-10 22:05:26 |    - Y_PARENTS_RATIO: 0.5
+2026-05-10 22:05:26 |    - NOISE_STD: 0.5
+2026-05-10 22:05:26 |    - EDGE_PROBABILITY: 0.2
+2026-05-10 22:05:26 |    - MIN_CONNECTED_EDGES: 2
+2026-05-10 22:05:26 |    - RANDOM_STATE: 42
+2026-05-10 22:05:26 | 
+2. MODEL TRAINING PARAMETERS:
+2026-05-10 22:05:26 |    - TEST_SIZE: 0.2
+2026-05-10 22:05:26 |    - BACKGROUND_RATIO: 0.3
+2026-05-10 22:05:26 |    - TEST_INSTANCES_RATIO: 0.5
+2026-05-10 22:05:26 | 
+3. EXPLAINABILITY PARAMETERS:
+2026-05-10 22:05:26 |    - N_SHAPLEY_SAMPLES: 100
+2026-05-10 22:05:26 |    - M_INNER_SAMPLES_CAUSAL: 10
+2026-05-10 22:05:26 | 
+4. CAUSAL DISCOVERY PARAMETERS:
+2026-05-10 22:05:26 |    - LINGAM_ALPHA: 0.05
+2026-05-10 22:05:26 |    - PC_ALPHA: 0.05
+2026-05-10 22:05:26 |    - INDEP_TEST: fisherz
+2026-05-10 22:05:26 | 
+5. TARGET CONFIGURATION:
+2026-05-10 22:05:26 |    - TARGET_DATASETS: ['mixed_no_conf_f50_s1000_p50']
+2026-05-10 22:05:26 |    - MODEL: LGBM (only)
+2026-05-10 22:05:26 | 
+6. DIRECTORIES:
+2026-05-10 22:05:26 |    - BASE_DIR: /Users/juanrios/Documents/master_thesis
+2026-05-10 22:05:26 |    - SYNTHETIC_DIR: /Users/juanrios/Documents/master_thesis/data/synthetic
+2026-05-10 22:05:26 |    - PROCESSED_DIR: /Users/juanrios/Documents/master_thesis/data/processed
+2026-05-10 22:05:26 |    - CAUSAL_DIR: /Users/juanrios/Documents/master_thesis/data/causal
+2026-05-10 22:05:26 |    - EXPLAINABILITY_DIR: /Users/juanrios/Documents/master_thesis/data/explainability
+2026-05-10 22:05:26 |    - MODELS_DIR: /Users/juanrios/Documents/master_thesis/models
+2026-05-10 22:05:26 |    - LOGS_DIR: /Users/juanrios/Documents/master_thesis/logs
+2026-05-10 22:05:26 | 
+================================================================================
+
+2026-05-10 22:05:26 | ================================================================================
+2026-05-10 22:05:26 | STEP 1: GENERATING SYNTHETIC DATASETS
+2026-05-10 22:05:26 | ================================================================================
+2026-05-10 22:05:26 | 
+[Dataset 1/6] Generating linear system without confounders
+2026-05-10 22:05:26 |   ✓ Saved: linear_no_conf_f50_s1000_p50 | Features: 50, Samples: 1000, Y parents: 25, Edges: 291, Confounders: 0
+2026-05-10 22:05:26 | 
+[Dataset 2/6] Generating linear system with confounders
+2026-05-10 22:05:26 |   ✓ Saved: linear_conf_f50_s1000_p50 | Features: 50, Samples: 1000, Y parents: 25, Edges: 291, Confounders: 5
+2026-05-10 22:05:26 | 
+[Dataset 3/6] Generating nonlinear system without confounders
+2026-05-10 22:05:26 |   ✓ Saved: nonlinear_no_conf_f50_s1000_p50 | Features: 50, Samples: 1000, Y parents: 25, Edges: 291, Confounders: 0
+2026-05-10 22:05:26 | 
+[Dataset 4/6] Generating nonlinear system with confounders
+2026-05-10 22:05:26 |   ✓ Saved: nonlinear_conf_f50_s1000_p50 | Features: 50, Samples: 1000, Y parents: 25, Edges: 291, Confounders: 5
+2026-05-10 22:05:26 | 
+[Dataset 5/6] Generating mixed system without confounders
+2026-05-10 22:05:26 |   ✓ Saved: mixed_no_conf_f50_s1000_p50 | Features: 50, Samples: 1000, Y parents: 25, Edges: 291, Confounders: 0
+2026-05-10 22:05:26 | 
+[Dataset 6/6] Generating mixed system with confounders
+2026-05-10 22:05:26 |   ✓ Saved: mixed_conf_f50_s1000_p50 | Features: 50, Samples: 1000, Y parents: 25, Edges: 291, Confounders: 5
+2026-05-10 22:05:26 | 
+================================================================================
+2026-05-10 22:05:26 | Step 1 Complete: 6 datasets generated
+2026-05-10 22:05:26 | ================================================================================
+
+2026-05-10 22:05:26 | ================================================================================
+2026-05-10 22:05:26 | STEP 2: CREATING TRAIN/TEST SPLITS
+2026-05-10 22:05:26 | ================================================================================
+2026-05-10 22:05:26 | 
+[Dataset 1/6] Processing linear_no_conf_f50_s1000_p50...
+2026-05-10 22:05:26 |   ✓ Train: (800, 51), Test: (200, 51)
+2026-05-10 22:05:26 | 
+[Dataset 2/6] Processing linear_conf_f50_s1000_p50...
+2026-05-10 22:05:26 |   ✓ Train: (800, 51), Test: (200, 51)
+2026-05-10 22:05:26 | 
+[Dataset 3/6] Processing nonlinear_no_conf_f50_s1000_p50...
+2026-05-10 22:05:26 |   ✓ Train: (800, 51), Test: (200, 51)
+2026-05-10 22:05:26 | 
+[Dataset 4/6] Processing nonlinear_conf_f50_s1000_p50...
+2026-05-10 22:05:26 |   ✓ Train: (800, 51), Test: (200, 51)
+2026-05-10 22:05:26 | 
+[Dataset 5/6] Processing mixed_no_conf_f50_s1000_p50...
+2026-05-10 22:05:26 |   ✓ Train: (800, 51), Test: (200, 51)
+2026-05-10 22:05:26 | 
+[Dataset 6/6] Processing mixed_conf_f50_s1000_p50...
+2026-05-10 22:05:26 |   ✓ Train: (800, 51), Test: (200, 51)
+2026-05-10 22:05:26 | 
+================================================================================
+2026-05-10 22:05:26 | Step 2 Complete: Train/test splits created for 6 datasets
+2026-05-10 22:05:26 | ================================================================================
+
+2026-05-10 22:05:26 | ================================================================================
+2026-05-10 22:05:26 | STEP 3: TRAINING PREDICTIVE MODELS (LGBM only, 6 datasets — all)
+2026-05-10 22:05:26 | ================================================================================
+2026-05-10 22:05:26 | 
+[Dataset 1/6] Training LGBM model for linear_no_conf_f50_s1000_p50
+2026-05-10 22:05:26 |   Training LGBM...
+2026-05-10 22:05:52 |   ✓ LGBM: R²=0.8918, MSE=7.4967, MAE=2.1488, RMSE=2.7380
+2026-05-10 22:05:52 |   ✓ LGBM model saved with the following number of features: 50
+2026-05-10 22:05:52 | 
+[Dataset 2/6] Training LGBM model for linear_conf_f50_s1000_p50
+2026-05-10 22:05:52 |   Training LGBM...
+2026-05-10 22:06:22 |   ✓ LGBM: R²=0.9187, MSE=3.7283, MAE=1.5601, RMSE=1.9309
+2026-05-10 22:06:22 |   ✓ LGBM model saved with the following number of features: 50
+2026-05-10 22:06:22 | 
+[Dataset 3/6] Training LGBM model for nonlinear_no_conf_f50_s1000_p50
+2026-05-10 22:06:22 |   Training LGBM...
+2026-05-10 22:06:45 |   ✓ LGBM: R²=0.3452, MSE=0.7368, MAE=0.5609, RMSE=0.8584
+2026-05-10 22:06:45 |   ✓ LGBM model saved with the following number of features: 50
+2026-05-10 22:06:45 | 
+[Dataset 4/6] Training LGBM model for nonlinear_conf_f50_s1000_p50
+2026-05-10 22:06:45 |   Training LGBM...
+2026-05-10 22:06:58 |   ✓ LGBM: R²=0.2003, MSE=0.8833, MAE=0.4984, RMSE=0.9399
+2026-05-10 22:06:58 |   ✓ LGBM model saved with the following number of features: 50
+2026-05-10 22:06:58 | 
+[Dataset 5/6] Training LGBM model for mixed_no_conf_f50_s1000_p50
+2026-05-10 22:06:58 |   Training LGBM...
+2026-05-10 22:07:06 |   ✓ LGBM: R²=0.7617, MSE=0.3109, MAE=0.4372, RMSE=0.5576
+2026-05-10 22:07:06 |   ✓ LGBM model saved with the following number of features: 50
+2026-05-10 22:07:06 | 
+[Dataset 6/6] Training LGBM model for mixed_conf_f50_s1000_p50
+2026-05-10 22:07:06 |   Training LGBM...
+2026-05-10 22:07:15 |   ✓ LGBM: R²=0.5561, MSE=0.6293, MAE=0.5373, RMSE=0.7933
+2026-05-10 22:07:15 |   ✓ LGBM model saved with the following number of features: 50
+2026-05-10 22:07:15 | 
+================================================================================
+2026-05-10 22:07:15 | Step 3 Complete: LGBM model trained for 6 datasets
+2026-05-10 22:07:15 | ================================================================================
+
+2026-05-10 22:07:15 | ================================================================================
+2026-05-10 22:07:15 | STEP 4: RUNNING CAUSAL DISCOVERY
+2026-05-10 22:07:15 | ================================================================================
+2026-05-10 22:07:15 | 
+[Dataset 1/6] Processing linear_no_conf_f50_s1000_p50
+2026-05-10 22:07:15 |   Running LiNGAM...
+2026-05-10 22:07:22 |   Running PC...
+2026-05-10 22:07:27 |   Extracting X-only train adjacency matrices for Step 5...
+2026-05-10 22:07:27 |   ✓ LINGAM: F1=0.271, Precision=0.243, Recall=0.306
+2026-05-10 22:07:30 |   ✓ PC: F1=0.128, Precision=0.286, Recall=0.082
+2026-05-10 22:07:31 | 
+[Dataset 2/6] Processing linear_conf_f50_s1000_p50
+2026-05-10 22:07:31 |   Running LiNGAM...
+2026-05-10 22:07:38 |   Running PC...
+2026-05-10 22:07:43 |   Extracting X-only train adjacency matrices for Step 5...
+2026-05-10 22:07:43 |   ✓ LINGAM: F1=0.239, Precision=0.213, Recall=0.271
+2026-05-10 22:07:45 |   ✓ PC: F1=0.129, Precision=0.293, Recall=0.082
+2026-05-10 22:07:46 | 
+[Dataset 3/6] Processing nonlinear_no_conf_f50_s1000_p50
+2026-05-10 22:07:46 |   Running LiNGAM...
+2026-05-10 22:07:52 |   Running PC...
+2026-05-10 22:07:56 |   Extracting X-only train adjacency matrices for Step 5...
+2026-05-10 22:07:56 |   ✓ LINGAM: F1=0.194, Precision=0.217, Recall=0.175
+2026-05-10 22:07:58 |   ✓ PC: F1=0.122, Precision=0.238, Recall=0.082
+2026-05-10 22:08:00 | 
+[Dataset 4/6] Processing nonlinear_conf_f50_s1000_p50
+2026-05-10 22:08:00 |   Running LiNGAM...
+2026-05-10 22:08:21 |   Running PC...
+2026-05-10 22:08:56 |   Extracting X-only train adjacency matrices for Step 5...
+2026-05-10 22:08:56 |   ✓ LINGAM: F1=0.170, Precision=0.195, Recall=0.151
+2026-05-10 22:08:57 |   ✓ PC: F1=0.126, Precision=0.238, Recall=0.086
+2026-05-10 22:08:59 | 
+[Dataset 5/6] Processing mixed_no_conf_f50_s1000_p50
+2026-05-10 22:08:59 |   Loaded LGBM model (50 features used for Y edges)
+2026-05-10 22:08:59 |   Running LiNGAM...
+2026-05-10 22:09:05 |   Running PC...
+2026-05-10 22:09:08 |   Extracting X-only train adjacency matrices for Step 5...
+2026-05-10 22:09:08 |   ✓ LINGAM: F1=0.246, Precision=0.247, Recall=0.244
+2026-05-10 22:09:10 |   ✓ PC: F1=0.256, Precision=0.399, Recall=0.189
+2026-05-10 22:09:12 | 
+[Dataset 6/6] Processing mixed_conf_f50_s1000_p50
+2026-05-10 22:09:12 |   Running LiNGAM...
+2026-05-10 22:09:18 |   Running PC...
+2026-05-10 22:09:22 |   Extracting X-only train adjacency matrices for Step 5...
+2026-05-10 22:09:22 |   ✓ LINGAM: F1=0.155, Precision=0.160, Recall=0.151
+2026-05-10 22:09:24 |   ✓ PC: F1=0.157, Precision=0.301, Recall=0.107
+2026-05-10 22:09:25 | 
+================================================================================
+2026-05-10 22:09:25 | Step 4 Complete: Causal discovery completed for 6 datasets
+2026-05-10 22:09:25 | ================================================================================
+
+2026-05-10 22:09:25 | ================================================================================
+2026-05-10 22:09:25 | STEP 5: CALCULATING SHAPLEY VALUES (1 datasets + LGBM only)
+2026-05-10 22:09:25 | ================================================================================
+2026-05-10 22:09:25 | 
+[Dataset 1/1] Processing mixed_no_conf_f50_s1000_p50
+2026-05-10 22:09:25 |   [Progress: 1/10] LGBM - ShapleyFromScratch
+2026-05-10 22:09:25 | Starting ShapleyFromScratch computation for 100 instances
+2026-05-10 22:09:25 | Using 100 samples per instance
+2026-05-10 22:09:28 |     Sample 100/100 completed
+2026-05-10 22:09:30 |     Sample 100/100 completed
+2026-05-10 22:09:33 |     Sample 100/100 completed
+2026-05-10 22:09:36 |     Sample 100/100 completed
+2026-05-10 22:09:39 |     Sample 100/100 completed
+2026-05-10 22:09:41 |     Sample 100/100 completed
+2026-05-10 22:09:44 |     Sample 100/100 completed
+2026-05-10 22:09:47 |     Sample 100/100 completed
+2026-05-10 22:09:49 |     Sample 100/100 completed
+2026-05-10 22:09:52 |     Sample 100/100 completed
+2026-05-10 22:09:55 |     Sample 100/100 completed
+2026-05-10 22:09:57 |     Sample 100/100 completed
+2026-05-10 22:10:00 |     Sample 100/100 completed
+2026-05-10 22:10:03 |     Sample 100/100 completed
+2026-05-10 22:10:05 |     Sample 100/100 completed
+2026-05-10 22:10:08 |     Sample 100/100 completed
+2026-05-10 22:10:11 |     Sample 100/100 completed
+2026-05-10 22:10:13 |     Sample 100/100 completed
+2026-05-10 22:10:16 |     Sample 100/100 completed
+2026-05-10 22:10:19 |     Sample 100/100 completed
+2026-05-10 22:10:19 |   Completed 20/100 instances
+2026-05-10 22:10:21 |     Sample 100/100 completed
+2026-05-10 22:10:24 |     Sample 100/100 completed
+2026-05-10 22:10:26 |     Sample 100/100 completed
+2026-05-10 22:10:29 |     Sample 100/100 completed
+2026-05-10 22:10:32 |     Sample 100/100 completed
+2026-05-10 22:10:34 |     Sample 100/100 completed
+2026-05-10 22:10:37 |     Sample 100/100 completed
+2026-05-10 22:10:39 |     Sample 100/100 completed
+2026-05-10 22:10:42 |     Sample 100/100 completed
+2026-05-10 22:10:45 |     Sample 100/100 completed
+2026-05-10 22:10:47 |     Sample 100/100 completed
+2026-05-10 22:10:50 |     Sample 100/100 completed
+2026-05-10 22:10:52 |     Sample 100/100 completed
+2026-05-10 22:10:55 |     Sample 100/100 completed
+2026-05-10 22:10:57 |     Sample 100/100 completed
+2026-05-10 22:11:00 |     Sample 100/100 completed
+2026-05-10 22:11:03 |     Sample 100/100 completed
+2026-05-10 22:11:05 |     Sample 100/100 completed
+2026-05-10 22:11:08 |     Sample 100/100 completed
+2026-05-10 22:11:10 |     Sample 100/100 completed
+2026-05-10 22:11:10 |   Completed 40/100 instances
+2026-05-10 22:11:13 |     Sample 100/100 completed
+2026-05-10 22:11:16 |     Sample 100/100 completed
+2026-05-10 22:11:18 |     Sample 100/100 completed
+2026-05-10 22:11:21 |     Sample 100/100 completed
+2026-05-10 22:11:23 |     Sample 100/100 completed
+2026-05-10 22:11:26 |     Sample 100/100 completed
+2026-05-10 22:11:28 |     Sample 100/100 completed
+2026-05-10 22:11:31 |     Sample 100/100 completed
+2026-05-10 22:11:34 |     Sample 100/100 completed
+2026-05-10 22:11:36 |     Sample 100/100 completed
+2026-05-10 22:11:39 |     Sample 100/100 completed
+2026-05-10 22:11:41 |     Sample 100/100 completed
+2026-05-10 22:11:44 |     Sample 100/100 completed
+2026-05-10 22:11:47 |     Sample 100/100 completed
+2026-05-10 22:11:49 |     Sample 100/100 completed
+2026-05-10 22:11:52 |     Sample 100/100 completed
+2026-05-10 22:11:55 |     Sample 100/100 completed
+2026-05-10 22:11:57 |     Sample 100/100 completed
+2026-05-10 22:12:00 |     Sample 100/100 completed
+2026-05-10 22:12:02 |     Sample 100/100 completed
+2026-05-10 22:12:02 |   Completed 60/100 instances
+2026-05-10 22:12:05 |     Sample 100/100 completed
+2026-05-10 22:12:08 |     Sample 100/100 completed
+2026-05-10 22:12:10 |     Sample 100/100 completed
+2026-05-10 22:12:13 |     Sample 100/100 completed
+2026-05-10 22:12:15 |     Sample 100/100 completed
+2026-05-10 22:12:18 |     Sample 100/100 completed
+2026-05-10 22:12:21 |     Sample 100/100 completed
+2026-05-10 22:12:23 |     Sample 100/100 completed
+2026-05-10 22:12:26 |     Sample 100/100 completed
+2026-05-10 22:12:28 |     Sample 100/100 completed
+2026-05-10 22:12:31 |     Sample 100/100 completed
+2026-05-10 22:12:33 |     Sample 100/100 completed
+2026-05-10 22:12:36 |     Sample 100/100 completed
+2026-05-10 22:12:39 |     Sample 100/100 completed
+2026-05-10 22:12:41 |     Sample 100/100 completed
+2026-05-10 22:12:44 |     Sample 100/100 completed
+2026-05-10 22:12:46 |     Sample 100/100 completed
+2026-05-10 22:12:49 |     Sample 100/100 completed
+2026-05-10 22:12:52 |     Sample 100/100 completed
+2026-05-10 22:12:54 |     Sample 100/100 completed
+2026-05-10 22:12:54 |   Completed 80/100 instances
+2026-05-10 22:12:57 |     Sample 100/100 completed
+2026-05-10 22:12:59 |     Sample 100/100 completed
+2026-05-10 22:13:02 |     Sample 100/100 completed
+2026-05-10 22:13:05 |     Sample 100/100 completed
+2026-05-10 22:13:07 |     Sample 100/100 completed
+2026-05-10 22:13:10 |     Sample 100/100 completed
+2026-05-10 22:13:12 |     Sample 100/100 completed
+2026-05-10 22:13:15 |     Sample 100/100 completed
+2026-05-10 22:13:17 |     Sample 100/100 completed
+2026-05-10 22:13:20 |     Sample 100/100 completed
+2026-05-10 22:13:23 |     Sample 100/100 completed
+2026-05-10 22:13:25 |     Sample 100/100 completed
+2026-05-10 22:13:28 |     Sample 100/100 completed
+2026-05-10 22:13:30 |     Sample 100/100 completed
+2026-05-10 22:13:33 |     Sample 100/100 completed
+2026-05-10 22:13:36 |     Sample 100/100 completed
+2026-05-10 22:13:38 |     Sample 100/100 completed
+2026-05-10 22:13:41 |     Sample 100/100 completed
+2026-05-10 22:13:43 |     Sample 100/100 completed
+2026-05-10 22:13:46 |     Sample 100/100 completed
+2026-05-10 22:13:46 |   Completed 100/100 instances
+2026-05-10 22:13:46 | Completed all 100 instances
+2026-05-10 22:13:46 |   [Progress: 2/10] LGBM + PC - AsymmetricShapley
+2026-05-10 22:13:46 |  Calculating asymmetric SHAP values
+2026-05-10 22:13:46 | Starting Asymmetric Shapley (topo-ordering) computation for 100 instances
+2026-05-10 22:13:46 | Using 100 samples per instance
+2026-05-10 22:13:46 |     Sample 10/100 completed
+2026-05-10 22:13:47 |     Sample 20/100 completed
+2026-05-10 22:13:47 |     Sample 30/100 completed
+2026-05-10 22:13:47 |     Sample 40/100 completed
+2026-05-10 22:13:47 |     Sample 50/100 completed
+2026-05-10 22:13:48 |     Sample 60/100 completed
+2026-05-10 22:13:48 |     Sample 70/100 completed
+2026-05-10 22:13:48 |     Sample 80/100 completed
+2026-05-10 22:13:48 |     Sample 90/100 completed
+2026-05-10 22:13:49 |     Sample 100/100 completed
+2026-05-10 22:13:49 |     Sample 10/100 completed
+2026-05-10 22:13:49 |     Sample 20/100 completed
+2026-05-10 22:13:49 |     Sample 30/100 completed
+2026-05-10 22:13:50 |     Sample 40/100 completed
+2026-05-10 22:13:50 |     Sample 50/100 completed
+2026-05-10 22:13:50 |     Sample 60/100 completed
+2026-05-10 22:13:50 |     Sample 70/100 completed
+2026-05-10 22:13:51 |     Sample 80/100 completed
+2026-05-10 22:13:51 |     Sample 90/100 completed
+2026-05-10 22:13:51 |     Sample 100/100 completed
+2026-05-10 22:13:51 |     Sample 10/100 completed
+2026-05-10 22:13:52 |     Sample 20/100 completed
+2026-05-10 22:13:52 |     Sample 30/100 completed
+2026-05-10 22:13:52 |     Sample 40/100 completed
+2026-05-10 22:13:53 |     Sample 50/100 completed
+2026-05-10 22:13:53 |     Sample 60/100 completed
+2026-05-10 22:13:53 |     Sample 70/100 completed
+2026-05-10 22:13:53 |     Sample 80/100 completed
+2026-05-10 22:13:54 |     Sample 90/100 completed
+2026-05-10 22:13:54 |     Sample 100/100 completed
+2026-05-10 22:13:54 |     Sample 10/100 completed
+2026-05-10 22:13:54 |     Sample 20/100 completed
+2026-05-10 22:13:55 |     Sample 30/100 completed
+2026-05-10 22:13:55 |     Sample 40/100 completed
+2026-05-10 22:13:55 |     Sample 50/100 completed
+2026-05-10 22:13:55 |     Sample 60/100 completed
+2026-05-10 22:13:56 |     Sample 70/100 completed
+2026-05-10 22:13:56 |     Sample 80/100 completed
+2026-05-10 22:13:56 |     Sample 90/100 completed
+2026-05-10 22:13:56 |     Sample 100/100 completed
+2026-05-10 22:13:57 |     Sample 10/100 completed
+2026-05-10 22:13:57 |     Sample 20/100 completed
+2026-05-10 22:13:57 |     Sample 30/100 completed
+2026-05-10 22:13:57 |     Sample 40/100 completed
+2026-05-10 22:13:58 |     Sample 50/100 completed
+2026-05-10 22:13:58 |     Sample 60/100 completed
+2026-05-10 22:13:58 |     Sample 70/100 completed
+2026-05-10 22:13:59 |     Sample 80/100 completed
+2026-05-10 22:13:59 |     Sample 90/100 completed
+2026-05-10 22:13:59 |     Sample 100/100 completed
+2026-05-10 22:13:59 |     Sample 10/100 completed
+2026-05-10 22:14:00 |     Sample 20/100 completed
+2026-05-10 22:14:00 |     Sample 30/100 completed
+2026-05-10 22:14:00 |     Sample 40/100 completed
+2026-05-10 22:14:00 |     Sample 50/100 completed
+2026-05-10 22:14:01 |     Sample 60/100 completed
+2026-05-10 22:14:01 |     Sample 70/100 completed
+2026-05-10 22:14:01 |     Sample 80/100 completed
+2026-05-10 22:14:01 |     Sample 90/100 completed
+2026-05-10 22:14:02 |     Sample 100/100 completed
+2026-05-10 22:14:02 |     Sample 10/100 completed
+2026-05-10 22:14:02 |     Sample 20/100 completed
+2026-05-10 22:14:02 |     Sample 30/100 completed
+2026-05-10 22:14:03 |     Sample 40/100 completed
+2026-05-10 22:14:03 |     Sample 50/100 completed
+2026-05-10 22:14:03 |     Sample 60/100 completed
+2026-05-10 22:14:03 |     Sample 70/100 completed
+2026-05-10 22:14:04 |     Sample 80/100 completed
+2026-05-10 22:14:04 |     Sample 90/100 completed
+2026-05-10 22:14:04 |     Sample 100/100 completed
+2026-05-10 22:14:04 |     Sample 10/100 completed
+2026-05-10 22:14:05 |     Sample 20/100 completed
+2026-05-10 22:14:05 |     Sample 30/100 completed
+2026-05-10 22:14:05 |     Sample 40/100 completed
+2026-05-10 22:14:05 |     Sample 50/100 completed
+2026-05-10 22:14:06 |     Sample 60/100 completed
+2026-05-10 22:14:06 |     Sample 70/100 completed
+2026-05-10 22:14:06 |     Sample 80/100 completed
+2026-05-10 22:14:07 |     Sample 90/100 completed
+2026-05-10 22:14:07 |     Sample 100/100 completed
+2026-05-10 22:14:07 |     Sample 10/100 completed
+2026-05-10 22:14:07 |     Sample 20/100 completed
+2026-05-10 22:14:08 |     Sample 30/100 completed
+2026-05-10 22:14:08 |     Sample 40/100 completed
+2026-05-10 22:14:08 |     Sample 50/100 completed
+2026-05-10 22:14:08 |     Sample 60/100 completed
+2026-05-10 22:14:09 |     Sample 70/100 completed
+2026-05-10 22:14:09 |     Sample 80/100 completed
+2026-05-10 22:14:09 |     Sample 90/100 completed
+2026-05-10 22:14:09 |     Sample 100/100 completed
+2026-05-10 22:14:10 |     Sample 10/100 completed
+2026-05-10 22:14:10 |     Sample 20/100 completed
+2026-05-10 22:14:10 |     Sample 30/100 completed
+2026-05-10 22:14:10 |     Sample 40/100 completed
+2026-05-10 22:14:11 |     Sample 50/100 completed
+2026-05-10 22:14:11 |     Sample 60/100 completed
+2026-05-10 22:14:11 |     Sample 70/100 completed
+2026-05-10 22:14:11 |     Sample 80/100 completed
+2026-05-10 22:14:12 |     Sample 90/100 completed
+2026-05-10 22:14:12 |     Sample 100/100 completed
+2026-05-10 22:14:12 |     Sample 10/100 completed
+2026-05-10 22:14:12 |     Sample 20/100 completed
+2026-05-10 22:14:13 |     Sample 30/100 completed
+2026-05-10 22:14:13 |     Sample 40/100 completed
+2026-05-10 22:14:13 |     Sample 50/100 completed
+2026-05-10 22:14:14 |     Sample 60/100 completed
+2026-05-10 22:14:14 |     Sample 70/100 completed
+2026-05-10 22:14:14 |     Sample 80/100 completed
+2026-05-10 22:14:14 |     Sample 90/100 completed
+2026-05-10 22:14:15 |     Sample 100/100 completed
+2026-05-10 22:14:15 |     Sample 10/100 completed
+2026-05-10 22:14:15 |     Sample 20/100 completed
+2026-05-10 22:14:15 |     Sample 30/100 completed
+2026-05-10 22:14:16 |     Sample 40/100 completed
+2026-05-10 22:14:16 |     Sample 50/100 completed
+2026-05-10 22:14:16 |     Sample 60/100 completed
+2026-05-10 22:14:16 |     Sample 70/100 completed
+2026-05-10 22:14:17 |     Sample 80/100 completed
+2026-05-10 22:14:17 |     Sample 90/100 completed
+2026-05-10 22:14:17 |     Sample 100/100 completed
+2026-05-10 22:14:18 |     Sample 10/100 completed
+2026-05-10 22:14:18 |     Sample 20/100 completed
+2026-05-10 22:14:18 |     Sample 30/100 completed
+2026-05-10 22:14:18 |     Sample 40/100 completed
+2026-05-10 22:14:19 |     Sample 50/100 completed
+2026-05-10 22:14:19 |     Sample 60/100 completed
+2026-05-10 22:14:19 |     Sample 70/100 completed
+2026-05-10 22:14:19 |     Sample 80/100 completed
+2026-05-10 22:14:20 |     Sample 90/100 completed
+2026-05-10 22:14:20 |     Sample 100/100 completed
+2026-05-10 22:14:20 |     Sample 10/100 completed
+2026-05-10 22:14:20 |     Sample 20/100 completed
+2026-05-10 22:14:21 |     Sample 30/100 completed
+2026-05-10 22:14:21 |     Sample 40/100 completed
+2026-05-10 22:14:21 |     Sample 50/100 completed
+2026-05-10 22:14:22 |     Sample 60/100 completed
+2026-05-10 22:14:22 |     Sample 70/100 completed
+2026-05-10 22:14:22 |     Sample 80/100 completed
+2026-05-10 22:14:22 |     Sample 90/100 completed
+2026-05-10 22:14:23 |     Sample 100/100 completed
+2026-05-10 22:14:23 |     Sample 10/100 completed
+2026-05-10 22:14:23 |     Sample 20/100 completed
+2026-05-10 22:14:23 |     Sample 30/100 completed
+2026-05-10 22:14:24 |     Sample 40/100 completed
+2026-05-10 22:14:24 |     Sample 50/100 completed
+2026-05-10 22:14:24 |     Sample 60/100 completed
+2026-05-10 22:14:24 |     Sample 70/100 completed
+2026-05-10 22:14:25 |     Sample 80/100 completed
+2026-05-10 22:14:25 |     Sample 90/100 completed
+2026-05-10 22:14:25 |     Sample 100/100 completed
+2026-05-10 22:14:26 |     Sample 10/100 completed
+2026-05-10 22:14:26 |     Sample 20/100 completed
+2026-05-10 22:14:26 |     Sample 30/100 completed
+2026-05-10 22:14:26 |     Sample 40/100 completed
+2026-05-10 22:14:27 |     Sample 50/100 completed
+2026-05-10 22:14:27 |     Sample 60/100 completed
+2026-05-10 22:14:27 |     Sample 70/100 completed
+2026-05-10 22:14:27 |     Sample 80/100 completed
+2026-05-10 22:14:28 |     Sample 90/100 completed
+2026-05-10 22:14:28 |     Sample 100/100 completed
+2026-05-10 22:14:28 |     Sample 10/100 completed
+2026-05-10 22:14:28 |     Sample 20/100 completed
+2026-05-10 22:14:29 |     Sample 30/100 completed
+2026-05-10 22:14:29 |     Sample 40/100 completed
+2026-05-10 22:14:29 |     Sample 50/100 completed
+2026-05-10 22:14:29 |     Sample 60/100 completed
+2026-05-10 22:14:30 |     Sample 70/100 completed
+2026-05-10 22:14:30 |     Sample 80/100 completed
+2026-05-10 22:14:30 |     Sample 90/100 completed
+2026-05-10 22:14:31 |     Sample 100/100 completed
+2026-05-10 22:14:31 |     Sample 10/100 completed
+2026-05-10 22:14:31 |     Sample 20/100 completed
+2026-05-10 22:14:31 |     Sample 30/100 completed
+2026-05-10 22:14:32 |     Sample 40/100 completed
+2026-05-10 22:14:32 |     Sample 50/100 completed
+2026-05-10 22:14:32 |     Sample 60/100 completed
+2026-05-10 22:14:32 |     Sample 70/100 completed
+2026-05-10 22:14:33 |     Sample 80/100 completed
+2026-05-10 22:14:33 |     Sample 90/100 completed
+2026-05-10 22:14:33 |     Sample 100/100 completed
+2026-05-10 22:14:33 |     Sample 10/100 completed
+2026-05-10 22:14:34 |     Sample 20/100 completed
+2026-05-10 22:14:34 |     Sample 30/100 completed
+2026-05-10 22:14:34 |     Sample 40/100 completed
+2026-05-10 22:14:35 |     Sample 50/100 completed
+2026-05-10 22:14:35 |     Sample 60/100 completed
+2026-05-10 22:14:35 |     Sample 70/100 completed
+2026-05-10 22:14:35 |     Sample 80/100 completed
+2026-05-10 22:14:36 |     Sample 90/100 completed
+2026-05-10 22:14:36 |     Sample 100/100 completed
+2026-05-10 22:14:36 |     Sample 10/100 completed
+2026-05-10 22:14:36 |     Sample 20/100 completed
+2026-05-10 22:14:37 |     Sample 30/100 completed
+2026-05-10 22:14:37 |     Sample 40/100 completed
+2026-05-10 22:14:37 |     Sample 50/100 completed
+2026-05-10 22:14:37 |     Sample 60/100 completed
+2026-05-10 22:14:38 |     Sample 70/100 completed
+2026-05-10 22:14:38 |     Sample 80/100 completed
+2026-05-10 22:14:38 |     Sample 90/100 completed
+2026-05-10 22:14:38 |     Sample 100/100 completed
+2026-05-10 22:14:39 |     Sample 10/100 completed
+2026-05-10 22:14:39 |     Sample 20/100 completed
+2026-05-10 22:14:39 |     Sample 30/100 completed
+2026-05-10 22:14:39 |     Sample 40/100 completed
+2026-05-10 22:14:40 |     Sample 50/100 completed
+2026-05-10 22:14:40 |     Sample 60/100 completed
+2026-05-10 22:14:40 |     Sample 70/100 completed
+2026-05-10 22:14:41 |     Sample 80/100 completed
+2026-05-10 22:14:41 |     Sample 90/100 completed
+2026-05-10 22:14:41 |     Sample 100/100 completed
+2026-05-10 22:14:41 |     Sample 10/100 completed
+2026-05-10 22:14:42 |     Sample 20/100 completed
+2026-05-10 22:14:42 |     Sample 30/100 completed
+2026-05-10 22:14:42 |     Sample 40/100 completed
+2026-05-10 22:14:42 |     Sample 50/100 completed
+2026-05-10 22:14:43 |     Sample 60/100 completed
+2026-05-10 22:14:43 |     Sample 70/100 completed
+2026-05-10 22:14:43 |     Sample 80/100 completed
+2026-05-10 22:14:43 |     Sample 90/100 completed
+2026-05-10 22:14:44 |     Sample 100/100 completed
+2026-05-10 22:14:44 |     Sample 10/100 completed
+2026-05-10 22:14:44 |     Sample 20/100 completed
+2026-05-10 22:14:44 |     Sample 30/100 completed
+2026-05-10 22:14:45 |     Sample 40/100 completed
+2026-05-10 22:14:45 |     Sample 50/100 completed
+2026-05-10 22:14:45 |     Sample 60/100 completed
+2026-05-10 22:14:46 |     Sample 70/100 completed
+2026-05-10 22:14:46 |     Sample 80/100 completed
+2026-05-10 22:14:46 |     Sample 90/100 completed
+2026-05-10 22:14:46 |     Sample 100/100 completed
+2026-05-10 22:14:47 |     Sample 10/100 completed
+2026-05-10 22:14:47 |     Sample 20/100 completed
+2026-05-10 22:14:47 |     Sample 30/100 completed
+2026-05-10 22:14:47 |     Sample 40/100 completed
+2026-05-10 22:14:48 |     Sample 50/100 completed
+2026-05-10 22:14:48 |     Sample 60/100 completed
+2026-05-10 22:14:48 |     Sample 70/100 completed
+2026-05-10 22:14:48 |     Sample 80/100 completed
+2026-05-10 22:14:49 |     Sample 90/100 completed
+2026-05-10 22:14:49 |     Sample 100/100 completed
+2026-05-10 22:14:49 |     Sample 10/100 completed
+2026-05-10 22:14:49 |     Sample 20/100 completed
+2026-05-10 22:14:50 |     Sample 30/100 completed
+2026-05-10 22:14:50 |     Sample 40/100 completed
+2026-05-10 22:14:50 |     Sample 50/100 completed
+2026-05-10 22:14:50 |     Sample 60/100 completed
+2026-05-10 22:14:51 |     Sample 70/100 completed
+2026-05-10 22:14:51 |     Sample 80/100 completed
+2026-05-10 22:14:51 |     Sample 90/100 completed
+2026-05-10 22:14:51 |     Sample 100/100 completed
+2026-05-10 22:14:52 |     Sample 10/100 completed
+2026-05-10 22:14:52 |     Sample 20/100 completed
+2026-05-10 22:14:52 |     Sample 30/100 completed
+2026-05-10 22:14:52 |     Sample 40/100 completed
+2026-05-10 22:14:53 |     Sample 50/100 completed
+2026-05-10 22:14:53 |     Sample 60/100 completed
+2026-05-10 22:14:53 |     Sample 70/100 completed
+2026-05-10 22:14:54 |     Sample 80/100 completed
+2026-05-10 22:14:54 |     Sample 90/100 completed
+2026-05-10 22:14:54 |     Sample 100/100 completed
+2026-05-10 22:14:54 |     Sample 10/100 completed
+2026-05-10 22:14:55 |     Sample 20/100 completed
+2026-05-10 22:14:55 |     Sample 30/100 completed
+2026-05-10 22:14:55 |     Sample 40/100 completed
+2026-05-10 22:14:55 |     Sample 50/100 completed
+2026-05-10 22:14:56 |     Sample 60/100 completed
+2026-05-10 22:14:56 |     Sample 70/100 completed
+2026-05-10 22:14:56 |     Sample 80/100 completed
+2026-05-10 22:14:56 |     Sample 90/100 completed
+2026-05-10 22:14:57 |     Sample 100/100 completed
+2026-05-10 22:14:57 |     Sample 10/100 completed
+2026-05-10 22:14:57 |     Sample 20/100 completed
+2026-05-10 22:14:57 |     Sample 30/100 completed
+2026-05-10 22:14:58 |     Sample 40/100 completed
+2026-05-10 22:14:58 |     Sample 50/100 completed
+2026-05-10 22:14:58 |     Sample 60/100 completed
+2026-05-10 22:14:58 |     Sample 70/100 completed
+2026-05-10 22:14:59 |     Sample 80/100 completed
+2026-05-10 22:14:59 |     Sample 90/100 completed
+2026-05-10 22:14:59 |     Sample 100/100 completed
+2026-05-10 22:15:00 |     Sample 10/100 completed
+2026-05-10 22:15:00 |     Sample 20/100 completed
+2026-05-10 22:15:00 |     Sample 30/100 completed
+2026-05-10 22:15:00 |     Sample 40/100 completed
+2026-05-10 22:15:01 |     Sample 50/100 completed
+2026-05-10 22:15:01 |     Sample 60/100 completed
+2026-05-10 22:15:01 |     Sample 70/100 completed
+2026-05-10 22:15:01 |     Sample 80/100 completed
+2026-05-10 22:15:02 |     Sample 90/100 completed
+2026-05-10 22:15:02 |     Sample 100/100 completed
+2026-05-10 22:15:02 |     Sample 10/100 completed
+2026-05-10 22:15:02 |     Sample 20/100 completed
+2026-05-10 22:15:03 |     Sample 30/100 completed
+2026-05-10 22:15:03 |     Sample 40/100 completed
+2026-05-10 22:15:03 |     Sample 50/100 completed
+2026-05-10 22:15:03 |     Sample 60/100 completed
+2026-05-10 22:15:04 |     Sample 70/100 completed
+2026-05-10 22:15:04 |     Sample 80/100 completed
+2026-05-10 22:15:04 |     Sample 90/100 completed
+2026-05-10 22:15:04 |     Sample 100/100 completed
+2026-05-10 22:15:05 |     Sample 10/100 completed
+2026-05-10 22:15:05 |     Sample 20/100 completed
+2026-05-10 22:15:05 |     Sample 30/100 completed
+2026-05-10 22:15:05 |     Sample 40/100 completed
+2026-05-10 22:15:06 |     Sample 50/100 completed
+2026-05-10 22:15:06 |     Sample 60/100 completed
+2026-05-10 22:15:06 |     Sample 70/100 completed
+2026-05-10 22:15:07 |     Sample 80/100 completed
+2026-05-10 22:15:07 |     Sample 90/100 completed
+2026-05-10 22:15:07 |     Sample 100/100 completed
+2026-05-10 22:15:07 |     Sample 10/100 completed
+2026-05-10 22:15:08 |     Sample 20/100 completed
+2026-05-10 22:15:08 |     Sample 30/100 completed
+2026-05-10 22:15:08 |     Sample 40/100 completed
+2026-05-10 22:15:08 |     Sample 50/100 completed
+2026-05-10 22:15:09 |     Sample 60/100 completed
+2026-05-10 22:15:09 |     Sample 70/100 completed
+2026-05-10 22:15:09 |     Sample 80/100 completed
+2026-05-10 22:15:09 |     Sample 90/100 completed
+2026-05-10 22:15:10 |     Sample 100/100 completed
+2026-05-10 22:15:10 |     Sample 10/100 completed
+2026-05-10 22:15:10 |     Sample 20/100 completed
+2026-05-10 22:15:11 |     Sample 30/100 completed
+2026-05-10 22:15:11 |     Sample 40/100 completed
+2026-05-10 22:15:11 |     Sample 50/100 completed
+2026-05-10 22:15:11 |     Sample 60/100 completed
+2026-05-10 22:15:12 |     Sample 70/100 completed
+2026-05-10 22:15:12 |     Sample 80/100 completed
+2026-05-10 22:15:12 |     Sample 90/100 completed
+2026-05-10 22:15:12 |     Sample 100/100 completed
+2026-05-10 22:15:13 |     Sample 10/100 completed
+2026-05-10 22:15:13 |     Sample 20/100 completed
+2026-05-10 22:15:13 |     Sample 30/100 completed
+2026-05-10 22:15:13 |     Sample 40/100 completed
+2026-05-10 22:15:14 |     Sample 50/100 completed
+2026-05-10 22:15:14 |     Sample 60/100 completed
+2026-05-10 22:15:14 |     Sample 70/100 completed
+2026-05-10 22:15:14 |     Sample 80/100 completed
+2026-05-10 22:15:15 |     Sample 90/100 completed
+2026-05-10 22:15:15 |     Sample 100/100 completed
+2026-05-10 22:15:15 |     Sample 10/100 completed
+2026-05-10 22:15:15 |     Sample 20/100 completed
+2026-05-10 22:15:16 |     Sample 30/100 completed
+2026-05-10 22:15:16 |     Sample 40/100 completed
+2026-05-10 22:15:16 |     Sample 50/100 completed
+2026-05-10 22:15:16 |     Sample 60/100 completed
+2026-05-10 22:15:17 |     Sample 70/100 completed
+2026-05-10 22:15:17 |     Sample 80/100 completed
+2026-05-10 22:15:17 |     Sample 90/100 completed
+2026-05-10 22:15:17 |     Sample 100/100 completed
+2026-05-10 22:15:18 |     Sample 10/100 completed
+2026-05-10 22:15:18 |     Sample 20/100 completed
+2026-05-10 22:15:18 |     Sample 30/100 completed
+2026-05-10 22:15:19 |     Sample 40/100 completed
+2026-05-10 22:15:19 |     Sample 50/100 completed
+2026-05-10 22:15:19 |     Sample 60/100 completed
+2026-05-10 22:15:19 |     Sample 70/100 completed
+2026-05-10 22:15:20 |     Sample 80/100 completed
+2026-05-10 22:15:20 |     Sample 90/100 completed
+2026-05-10 22:15:20 |     Sample 100/100 completed
+2026-05-10 22:15:20 |     Sample 10/100 completed
+2026-05-10 22:15:21 |     Sample 20/100 completed
+2026-05-10 22:15:21 |     Sample 30/100 completed
+2026-05-10 22:15:21 |     Sample 40/100 completed
+2026-05-10 22:15:21 |     Sample 50/100 completed
+2026-05-10 22:15:22 |     Sample 60/100 completed
+2026-05-10 22:15:22 |     Sample 70/100 completed
+2026-05-10 22:15:22 |     Sample 80/100 completed
+2026-05-10 22:15:22 |     Sample 90/100 completed
+2026-05-10 22:15:23 |     Sample 100/100 completed
+2026-05-10 22:15:23 |     Sample 10/100 completed
+2026-05-10 22:15:23 |     Sample 20/100 completed
+2026-05-10 22:15:24 |     Sample 30/100 completed
+2026-05-10 22:15:24 |     Sample 40/100 completed
+2026-05-10 22:15:24 |     Sample 50/100 completed
+2026-05-10 22:15:24 |     Sample 60/100 completed
+2026-05-10 22:15:25 |     Sample 70/100 completed
+2026-05-10 22:15:25 |     Sample 80/100 completed
+2026-05-10 22:15:25 |     Sample 90/100 completed
+2026-05-10 22:15:25 |     Sample 100/100 completed
+2026-05-10 22:15:26 |     Sample 10/100 completed
+2026-05-10 22:15:26 |     Sample 20/100 completed
+2026-05-10 22:15:26 |     Sample 30/100 completed
+2026-05-10 22:15:26 |     Sample 40/100 completed
+2026-05-10 22:15:27 |     Sample 50/100 completed
+2026-05-10 22:15:27 |     Sample 60/100 completed
+2026-05-10 22:15:27 |     Sample 70/100 completed
+2026-05-10 22:15:28 |     Sample 80/100 completed
+2026-05-10 22:15:28 |     Sample 90/100 completed
+2026-05-10 22:15:28 |     Sample 100/100 completed
+2026-05-10 22:15:28 |     Sample 10/100 completed
+2026-05-10 22:15:29 |     Sample 20/100 completed
+2026-05-10 22:15:29 |     Sample 30/100 completed
+2026-05-10 22:15:29 |     Sample 40/100 completed
+2026-05-10 22:15:29 |     Sample 50/100 completed
+2026-05-10 22:15:30 |     Sample 60/100 completed
+2026-05-10 22:15:30 |     Sample 70/100 completed
+2026-05-10 22:15:30 |     Sample 80/100 completed
+2026-05-10 22:15:30 |     Sample 90/100 completed
+2026-05-10 22:15:31 |     Sample 100/100 completed
+2026-05-10 22:15:31 |     Sample 10/100 completed
+2026-05-10 22:15:31 |     Sample 20/100 completed
+2026-05-10 22:15:32 |     Sample 30/100 completed
+2026-05-10 22:15:32 |     Sample 40/100 completed
+2026-05-10 22:15:32 |     Sample 50/100 completed
+2026-05-10 22:15:32 |     Sample 60/100 completed
+2026-05-10 22:15:33 |     Sample 70/100 completed
+2026-05-10 22:15:33 |     Sample 80/100 completed
+2026-05-10 22:15:33 |     Sample 90/100 completed
+2026-05-10 22:15:33 |     Sample 100/100 completed
+2026-05-10 22:15:34 |     Sample 10/100 completed
+2026-05-10 22:15:34 |     Sample 20/100 completed
+2026-05-10 22:15:34 |     Sample 30/100 completed
+2026-05-10 22:15:35 |     Sample 40/100 completed
+2026-05-10 22:15:35 |     Sample 50/100 completed
+2026-05-10 22:15:35 |     Sample 60/100 completed
+2026-05-10 22:15:35 |     Sample 70/100 completed
+2026-05-10 22:15:36 |     Sample 80/100 completed
+2026-05-10 22:15:36 |     Sample 90/100 completed
+2026-05-10 22:15:36 |     Sample 100/100 completed
+2026-05-10 22:15:36 |     Sample 10/100 completed
+2026-05-10 22:15:37 |     Sample 20/100 completed
+2026-05-10 22:15:37 |     Sample 30/100 completed
+2026-05-10 22:15:37 |     Sample 40/100 completed
+2026-05-10 22:15:37 |     Sample 50/100 completed
+2026-05-10 22:15:38 |     Sample 60/100 completed
+2026-05-10 22:15:38 |     Sample 70/100 completed
+2026-05-10 22:15:38 |     Sample 80/100 completed
+2026-05-10 22:15:38 |     Sample 90/100 completed
+2026-05-10 22:15:39 |     Sample 100/100 completed
+2026-05-10 22:15:39 |     Sample 10/100 completed
+2026-05-10 22:15:39 |     Sample 20/100 completed
+2026-05-10 22:15:40 |     Sample 30/100 completed
+2026-05-10 22:15:40 |     Sample 40/100 completed
+2026-05-10 22:15:40 |     Sample 50/100 completed
+2026-05-10 22:15:40 |     Sample 60/100 completed
+2026-05-10 22:15:41 |     Sample 70/100 completed
+2026-05-10 22:15:41 |     Sample 80/100 completed
+2026-05-10 22:15:41 |     Sample 90/100 completed
+2026-05-10 22:15:41 |     Sample 100/100 completed
+2026-05-10 22:15:42 |     Sample 10/100 completed
+2026-05-10 22:15:42 |     Sample 20/100 completed
+2026-05-10 22:15:42 |     Sample 30/100 completed
+2026-05-10 22:15:42 |     Sample 40/100 completed
+2026-05-10 22:15:43 |     Sample 50/100 completed
+2026-05-10 22:15:43 |     Sample 60/100 completed
+2026-05-10 22:15:43 |     Sample 70/100 completed
+2026-05-10 22:15:44 |     Sample 80/100 completed
+2026-05-10 22:15:44 |     Sample 90/100 completed
+2026-05-10 22:15:44 |     Sample 100/100 completed
+2026-05-10 22:15:44 |     Sample 10/100 completed
+2026-05-10 22:15:45 |     Sample 20/100 completed
+2026-05-10 22:15:45 |     Sample 30/100 completed
+2026-05-10 22:15:45 |     Sample 40/100 completed
+2026-05-10 22:15:45 |     Sample 50/100 completed
+2026-05-10 22:15:46 |     Sample 60/100 completed
+2026-05-10 22:15:46 |     Sample 70/100 completed
+2026-05-10 22:15:46 |     Sample 80/100 completed
+2026-05-10 22:15:46 |     Sample 90/100 completed
+2026-05-10 22:15:47 |     Sample 100/100 completed
+2026-05-10 22:15:47 |     Sample 10/100 completed
+2026-05-10 22:15:47 |     Sample 20/100 completed
+2026-05-10 22:15:48 |     Sample 30/100 completed
+2026-05-10 22:15:48 |     Sample 40/100 completed
+2026-05-10 22:15:48 |     Sample 50/100 completed
+2026-05-10 22:15:48 |     Sample 60/100 completed
+2026-05-10 22:15:49 |     Sample 70/100 completed
+2026-05-10 22:15:49 |     Sample 80/100 completed
+2026-05-10 22:15:49 |     Sample 90/100 completed
+2026-05-10 22:15:49 |     Sample 100/100 completed
+2026-05-10 22:15:50 |     Sample 10/100 completed
+2026-05-10 22:15:50 |     Sample 20/100 completed
+2026-05-10 22:15:50 |     Sample 30/100 completed
+2026-05-10 22:15:51 |     Sample 40/100 completed
+2026-05-10 22:15:51 |     Sample 50/100 completed
+2026-05-10 22:15:51 |     Sample 60/100 completed
+2026-05-10 22:15:51 |     Sample 70/100 completed
+2026-05-10 22:15:52 |     Sample 80/100 completed
+2026-05-10 22:15:52 |     Sample 90/100 completed
+2026-05-10 22:15:52 |     Sample 100/100 completed
+2026-05-10 22:15:52 |     Sample 10/100 completed
+2026-05-10 22:15:53 |     Sample 20/100 completed
+2026-05-10 22:15:53 |     Sample 30/100 completed
+2026-05-10 22:15:53 |     Sample 40/100 completed
+2026-05-10 22:15:53 |     Sample 50/100 completed
+2026-05-10 22:15:54 |     Sample 60/100 completed
+2026-05-10 22:15:54 |     Sample 70/100 completed
+2026-05-10 22:15:54 |     Sample 80/100 completed
+2026-05-10 22:15:54 |     Sample 90/100 completed
+2026-05-10 22:15:55 |     Sample 100/100 completed
+2026-05-10 22:15:55 |     Sample 10/100 completed
+2026-05-10 22:15:55 |     Sample 20/100 completed
+2026-05-10 22:15:56 |     Sample 30/100 completed
+2026-05-10 22:15:56 |     Sample 40/100 completed
+2026-05-10 22:15:56 |     Sample 50/100 completed
+2026-05-10 22:15:56 |     Sample 60/100 completed
+2026-05-10 22:15:57 |     Sample 70/100 completed
+2026-05-10 22:15:57 |     Sample 80/100 completed
+2026-05-10 22:15:57 |     Sample 90/100 completed
+2026-05-10 22:15:57 |     Sample 100/100 completed
+2026-05-10 22:15:58 |     Sample 10/100 completed
+2026-05-10 22:15:58 |     Sample 20/100 completed
+2026-05-10 22:15:58 |     Sample 30/100 completed
+2026-05-10 22:15:58 |     Sample 40/100 completed
+2026-05-10 22:15:59 |     Sample 50/100 completed
+2026-05-10 22:15:59 |     Sample 60/100 completed
+2026-05-10 22:15:59 |     Sample 70/100 completed
+2026-05-10 22:16:00 |     Sample 80/100 completed
+2026-05-10 22:16:00 |     Sample 90/100 completed
+2026-05-10 22:16:00 |     Sample 100/100 completed
+2026-05-10 22:16:00 |     Sample 10/100 completed
+2026-05-10 22:16:01 |     Sample 20/100 completed
+2026-05-10 22:16:01 |     Sample 30/100 completed
+2026-05-10 22:16:01 |     Sample 40/100 completed
+2026-05-10 22:16:01 |     Sample 50/100 completed
+2026-05-10 22:16:02 |     Sample 60/100 completed
+2026-05-10 22:16:02 |     Sample 70/100 completed
+2026-05-10 22:16:02 |     Sample 80/100 completed
+2026-05-10 22:16:02 |     Sample 90/100 completed
+2026-05-10 22:16:03 |     Sample 100/100 completed
+2026-05-10 22:16:03 |     Sample 10/100 completed
+2026-05-10 22:16:03 |     Sample 20/100 completed
+2026-05-10 22:16:03 |     Sample 30/100 completed
+2026-05-10 22:16:04 |     Sample 40/100 completed
+2026-05-10 22:16:04 |     Sample 50/100 completed
+2026-05-10 22:16:04 |     Sample 60/100 completed
+2026-05-10 22:16:05 |     Sample 70/100 completed
+2026-05-10 22:16:05 |     Sample 80/100 completed
+2026-05-10 22:16:05 |     Sample 90/100 completed
+2026-05-10 22:16:05 |     Sample 100/100 completed
+2026-05-10 22:16:06 |     Sample 10/100 completed
+2026-05-10 22:16:06 |     Sample 20/100 completed
+2026-05-10 22:16:06 |     Sample 30/100 completed
+2026-05-10 22:16:06 |     Sample 40/100 completed
+2026-05-10 22:16:07 |     Sample 50/100 completed
+2026-05-10 22:16:07 |     Sample 60/100 completed
+2026-05-10 22:16:07 |     Sample 70/100 completed
+2026-05-10 22:16:07 |     Sample 80/100 completed
+2026-05-10 22:16:08 |     Sample 90/100 completed
+2026-05-10 22:16:08 |     Sample 100/100 completed
+2026-05-10 22:16:08 |     Sample 10/100 completed
+2026-05-10 22:16:08 |     Sample 20/100 completed
+2026-05-10 22:16:09 |     Sample 30/100 completed
+2026-05-10 22:16:09 |     Sample 40/100 completed
+2026-05-10 22:16:09 |     Sample 50/100 completed
+2026-05-10 22:16:10 |     Sample 60/100 completed
+2026-05-10 22:16:10 |     Sample 70/100 completed
+2026-05-10 22:16:10 |     Sample 80/100 completed
+2026-05-10 22:16:10 |     Sample 90/100 completed
+2026-05-10 22:16:11 |     Sample 100/100 completed
+2026-05-10 22:16:11 |     Sample 10/100 completed
+2026-05-10 22:16:11 |     Sample 20/100 completed
+2026-05-10 22:16:11 |     Sample 30/100 completed
+2026-05-10 22:16:12 |     Sample 40/100 completed
+2026-05-10 22:16:12 |     Sample 50/100 completed
+2026-05-10 22:16:12 |     Sample 60/100 completed
+2026-05-10 22:16:12 |     Sample 70/100 completed
+2026-05-10 22:16:13 |     Sample 80/100 completed
+2026-05-10 22:16:13 |     Sample 90/100 completed
+2026-05-10 22:16:13 |     Sample 100/100 completed
+2026-05-10 22:16:13 |     Sample 10/100 completed
+2026-05-10 22:16:14 |     Sample 20/100 completed
+2026-05-10 22:16:14 |     Sample 30/100 completed
+2026-05-10 22:16:14 |     Sample 40/100 completed
+2026-05-10 22:16:15 |     Sample 50/100 completed
+2026-05-10 22:16:15 |     Sample 60/100 completed
+2026-05-10 22:16:15 |     Sample 70/100 completed
+2026-05-10 22:16:15 |     Sample 80/100 completed
+2026-05-10 22:16:16 |     Sample 90/100 completed
+2026-05-10 22:16:16 |     Sample 100/100 completed
+2026-05-10 22:16:16 |     Sample 10/100 completed
+2026-05-10 22:16:16 |     Sample 20/100 completed
+2026-05-10 22:16:17 |     Sample 30/100 completed
+2026-05-10 22:16:17 |     Sample 40/100 completed
+2026-05-10 22:16:17 |     Sample 50/100 completed
+2026-05-10 22:16:17 |     Sample 60/100 completed
+2026-05-10 22:16:18 |     Sample 70/100 completed
+2026-05-10 22:16:18 |     Sample 80/100 completed
+2026-05-10 22:16:18 |     Sample 90/100 completed
+2026-05-10 22:16:18 |     Sample 100/100 completed
+2026-05-10 22:16:19 |     Sample 10/100 completed
+2026-05-10 22:16:19 |     Sample 20/100 completed
+2026-05-10 22:16:19 |     Sample 30/100 completed
+2026-05-10 22:16:19 |     Sample 40/100 completed
+2026-05-10 22:16:20 |     Sample 50/100 completed
+2026-05-10 22:16:20 |     Sample 60/100 completed
+2026-05-10 22:16:20 |     Sample 70/100 completed
+2026-05-10 22:16:21 |     Sample 80/100 completed
+2026-05-10 22:16:21 |     Sample 90/100 completed
+2026-05-10 22:16:21 |     Sample 100/100 completed
+2026-05-10 22:16:21 |     Sample 10/100 completed
+2026-05-10 22:16:22 |     Sample 20/100 completed
+2026-05-10 22:16:22 |     Sample 30/100 completed
+2026-05-10 22:16:22 |     Sample 40/100 completed
+2026-05-10 22:16:22 |     Sample 50/100 completed
+2026-05-10 22:16:23 |     Sample 60/100 completed
+2026-05-10 22:16:23 |     Sample 70/100 completed
+2026-05-10 22:16:23 |     Sample 80/100 completed
+2026-05-10 22:16:23 |     Sample 90/100 completed
+2026-05-10 22:16:24 |     Sample 100/100 completed
+2026-05-10 22:16:24 |     Sample 10/100 completed
+2026-05-10 22:16:24 |     Sample 20/100 completed
+2026-05-10 22:16:25 |     Sample 30/100 completed
+2026-05-10 22:16:25 |     Sample 40/100 completed
+2026-05-10 22:16:25 |     Sample 50/100 completed
+2026-05-10 22:16:25 |     Sample 60/100 completed
+2026-05-10 22:16:26 |     Sample 70/100 completed
+2026-05-10 22:16:26 |     Sample 80/100 completed
+2026-05-10 22:16:26 |     Sample 90/100 completed
+2026-05-10 22:16:26 |     Sample 100/100 completed
+2026-05-10 22:16:27 |     Sample 10/100 completed
+2026-05-10 22:16:27 |     Sample 20/100 completed
+2026-05-10 22:16:27 |     Sample 30/100 completed
+2026-05-10 22:16:27 |     Sample 40/100 completed
+2026-05-10 22:16:28 |     Sample 50/100 completed
+2026-05-10 22:16:28 |     Sample 60/100 completed
+2026-05-10 22:16:28 |     Sample 70/100 completed
+2026-05-10 22:16:28 |     Sample 80/100 completed
+2026-05-10 22:16:29 |     Sample 90/100 completed
+2026-05-10 22:16:29 |     Sample 100/100 completed
+2026-05-10 22:16:29 |     Sample 10/100 completed
+2026-05-10 22:16:29 |     Sample 20/100 completed
+2026-05-10 22:16:30 |     Sample 30/100 completed
+2026-05-10 22:16:30 |     Sample 40/100 completed
+2026-05-10 22:16:30 |     Sample 50/100 completed
+2026-05-10 22:16:31 |     Sample 60/100 completed
+2026-05-10 22:16:31 |     Sample 70/100 completed
+2026-05-10 22:16:31 |     Sample 80/100 completed
+2026-05-10 22:16:31 |     Sample 90/100 completed
+2026-05-10 22:16:32 |     Sample 100/100 completed
+2026-05-10 22:16:32 |     Sample 10/100 completed
+2026-05-10 22:16:32 |     Sample 20/100 completed
+2026-05-10 22:16:32 |     Sample 30/100 completed
+2026-05-10 22:16:33 |     Sample 40/100 completed
+2026-05-10 22:16:33 |     Sample 50/100 completed
+2026-05-10 22:16:33 |     Sample 60/100 completed
+2026-05-10 22:16:33 |     Sample 70/100 completed
+2026-05-10 22:16:34 |     Sample 80/100 completed
+2026-05-10 22:16:34 |     Sample 90/100 completed
+2026-05-10 22:16:34 |     Sample 100/100 completed
+2026-05-10 22:16:35 |     Sample 10/100 completed
+2026-05-10 22:16:35 |     Sample 20/100 completed
+2026-05-10 22:16:35 |     Sample 30/100 completed
+2026-05-10 22:16:35 |     Sample 40/100 completed
+2026-05-10 22:16:36 |     Sample 50/100 completed
+2026-05-10 22:16:36 |     Sample 60/100 completed
+2026-05-10 22:16:36 |     Sample 70/100 completed
+2026-05-10 22:16:36 |     Sample 80/100 completed
+2026-05-10 22:16:37 |     Sample 90/100 completed
+2026-05-10 22:16:37 |     Sample 100/100 completed
+2026-05-10 22:16:37 |     Sample 10/100 completed
+2026-05-10 22:16:37 |     Sample 20/100 completed
+2026-05-10 22:16:38 |     Sample 30/100 completed
+2026-05-10 22:16:38 |     Sample 40/100 completed
+2026-05-10 22:16:38 |     Sample 50/100 completed
+2026-05-10 22:16:38 |     Sample 60/100 completed
+2026-05-10 22:16:39 |     Sample 70/100 completed
+2026-05-10 22:16:39 |     Sample 80/100 completed
+2026-05-10 22:16:39 |     Sample 90/100 completed
+2026-05-10 22:16:40 |     Sample 100/100 completed
+2026-05-10 22:16:40 |     Sample 10/100 completed
+2026-05-10 22:16:40 |     Sample 20/100 completed
+2026-05-10 22:16:40 |     Sample 30/100 completed
+2026-05-10 22:16:41 |     Sample 40/100 completed
+2026-05-10 22:16:41 |     Sample 50/100 completed
+2026-05-10 22:16:41 |     Sample 60/100 completed
+2026-05-10 22:16:41 |     Sample 70/100 completed
+2026-05-10 22:16:42 |     Sample 80/100 completed
+2026-05-10 22:16:42 |     Sample 90/100 completed
+2026-05-10 22:16:42 |     Sample 100/100 completed
+2026-05-10 22:16:42 |     Sample 10/100 completed
+2026-05-10 22:16:43 |     Sample 20/100 completed
+2026-05-10 22:16:43 |     Sample 30/100 completed
+2026-05-10 22:16:43 |     Sample 40/100 completed
+2026-05-10 22:16:44 |     Sample 50/100 completed
+2026-05-10 22:16:44 |     Sample 60/100 completed
+2026-05-10 22:16:44 |     Sample 70/100 completed
+2026-05-10 22:16:44 |     Sample 80/100 completed
+2026-05-10 22:16:45 |     Sample 90/100 completed
+2026-05-10 22:16:45 |     Sample 100/100 completed
+2026-05-10 22:16:45 |     Sample 10/100 completed
+2026-05-10 22:16:45 |     Sample 20/100 completed
+2026-05-10 22:16:46 |     Sample 30/100 completed
+2026-05-10 22:16:46 |     Sample 40/100 completed
+2026-05-10 22:16:46 |     Sample 50/100 completed
+2026-05-10 22:16:47 |     Sample 60/100 completed
+2026-05-10 22:16:47 |     Sample 70/100 completed
+2026-05-10 22:16:47 |     Sample 80/100 completed
+2026-05-10 22:16:47 |     Sample 90/100 completed
+2026-05-10 22:16:48 |     Sample 100/100 completed
+2026-05-10 22:16:48 |     Sample 10/100 completed
+2026-05-10 22:16:48 |     Sample 20/100 completed
+2026-05-10 22:16:48 |     Sample 30/100 completed
+2026-05-10 22:16:49 |     Sample 40/100 completed
+2026-05-10 22:16:49 |     Sample 50/100 completed
+2026-05-10 22:16:49 |     Sample 60/100 completed
+2026-05-10 22:16:49 |     Sample 70/100 completed
+2026-05-10 22:16:50 |     Sample 80/100 completed
+2026-05-10 22:16:50 |     Sample 90/100 completed
+2026-05-10 22:16:50 |     Sample 100/100 completed
+2026-05-10 22:16:51 |     Sample 10/100 completed
+2026-05-10 22:16:51 |     Sample 20/100 completed
+2026-05-10 22:16:51 |     Sample 30/100 completed
+2026-05-10 22:16:51 |     Sample 40/100 completed
+2026-05-10 22:16:52 |     Sample 50/100 completed
+2026-05-10 22:16:52 |     Sample 60/100 completed
+2026-05-10 22:16:52 |     Sample 70/100 completed
+2026-05-10 22:16:52 |     Sample 80/100 completed
+2026-05-10 22:16:53 |     Sample 90/100 completed
+2026-05-10 22:16:53 |     Sample 100/100 completed
+2026-05-10 22:16:53 |     Sample 10/100 completed
+2026-05-10 22:16:54 |     Sample 20/100 completed
+2026-05-10 22:16:54 |     Sample 30/100 completed
+2026-05-10 22:16:54 |     Sample 40/100 completed
+2026-05-10 22:16:54 |     Sample 50/100 completed
+2026-05-10 22:16:55 |     Sample 60/100 completed
+2026-05-10 22:16:55 |     Sample 70/100 completed
+2026-05-10 22:16:55 |     Sample 80/100 completed
+2026-05-10 22:16:55 |     Sample 90/100 completed
+2026-05-10 22:16:56 |     Sample 100/100 completed
+2026-05-10 22:16:56 |     Sample 10/100 completed
+2026-05-10 22:16:56 |     Sample 20/100 completed
+2026-05-10 22:16:56 |     Sample 30/100 completed
+2026-05-10 22:16:57 |     Sample 40/100 completed
+2026-05-10 22:16:57 |     Sample 50/100 completed
+2026-05-10 22:16:57 |     Sample 60/100 completed
+2026-05-10 22:16:58 |     Sample 70/100 completed
+2026-05-10 22:16:58 |     Sample 80/100 completed
+2026-05-10 22:16:58 |     Sample 90/100 completed
+2026-05-10 22:16:58 |     Sample 100/100 completed
+2026-05-10 22:16:59 |     Sample 10/100 completed
+2026-05-10 22:16:59 |     Sample 20/100 completed
+2026-05-10 22:16:59 |     Sample 30/100 completed
+2026-05-10 22:16:59 |     Sample 40/100 completed
+2026-05-10 22:17:00 |     Sample 50/100 completed
+2026-05-10 22:17:00 |     Sample 60/100 completed
+2026-05-10 22:17:00 |     Sample 70/100 completed
+2026-05-10 22:17:00 |     Sample 80/100 completed
+2026-05-10 22:17:01 |     Sample 90/100 completed
+2026-05-10 22:17:01 |     Sample 100/100 completed
+2026-05-10 22:17:01 |     Sample 10/100 completed
+2026-05-10 22:17:02 |     Sample 20/100 completed
+2026-05-10 22:17:02 |     Sample 30/100 completed
+2026-05-10 22:17:02 |     Sample 40/100 completed
+2026-05-10 22:17:02 |     Sample 50/100 completed
+2026-05-10 22:17:03 |     Sample 60/100 completed
+2026-05-10 22:17:03 |     Sample 70/100 completed
+2026-05-10 22:17:03 |     Sample 80/100 completed
+2026-05-10 22:17:03 |     Sample 90/100 completed
+2026-05-10 22:17:04 |     Sample 100/100 completed
+2026-05-10 22:17:04 |     Sample 10/100 completed
+2026-05-10 22:17:04 |     Sample 20/100 completed
+2026-05-10 22:17:05 |     Sample 30/100 completed
+2026-05-10 22:17:05 |     Sample 40/100 completed
+2026-05-10 22:17:05 |     Sample 50/100 completed
+2026-05-10 22:17:05 |     Sample 60/100 completed
+2026-05-10 22:17:06 |     Sample 70/100 completed
+2026-05-10 22:17:06 |     Sample 80/100 completed
+2026-05-10 22:17:06 |     Sample 90/100 completed
+2026-05-10 22:17:06 |     Sample 100/100 completed
+2026-05-10 22:17:07 |     Sample 10/100 completed
+2026-05-10 22:17:07 |     Sample 20/100 completed
+2026-05-10 22:17:07 |     Sample 30/100 completed
+2026-05-10 22:17:07 |     Sample 40/100 completed
+2026-05-10 22:17:08 |     Sample 50/100 completed
+2026-05-10 22:17:08 |     Sample 60/100 completed
+2026-05-10 22:17:08 |     Sample 70/100 completed
+2026-05-10 22:17:09 |     Sample 80/100 completed
+2026-05-10 22:17:09 |     Sample 90/100 completed
+2026-05-10 22:17:09 |     Sample 100/100 completed
+2026-05-10 22:17:09 |     Sample 10/100 completed
+2026-05-10 22:17:10 |     Sample 20/100 completed
+2026-05-10 22:17:10 |     Sample 30/100 completed
+2026-05-10 22:17:10 |     Sample 40/100 completed
+2026-05-10 22:17:11 |     Sample 50/100 completed
+2026-05-10 22:17:11 |     Sample 60/100 completed
+2026-05-10 22:17:11 |     Sample 70/100 completed
+2026-05-10 22:17:11 |     Sample 80/100 completed
+2026-05-10 22:17:12 |     Sample 90/100 completed
+2026-05-10 22:17:12 |     Sample 100/100 completed
+2026-05-10 22:17:12 |     Sample 10/100 completed
+2026-05-10 22:17:13 |     Sample 20/100 completed
+2026-05-10 22:17:13 |     Sample 30/100 completed
+2026-05-10 22:17:13 |     Sample 40/100 completed
+2026-05-10 22:17:13 |     Sample 50/100 completed
+2026-05-10 22:17:14 |     Sample 60/100 completed
+2026-05-10 22:17:14 |     Sample 70/100 completed
+2026-05-10 22:17:14 |     Sample 80/100 completed
+2026-05-10 22:17:14 |     Sample 90/100 completed
+2026-05-10 22:17:15 |     Sample 100/100 completed
+2026-05-10 22:17:15 |     Sample 10/100 completed
+2026-05-10 22:17:15 |     Sample 20/100 completed
+2026-05-10 22:17:16 |     Sample 30/100 completed
+2026-05-10 22:17:16 |     Sample 40/100 completed
+2026-05-10 22:17:16 |     Sample 50/100 completed
+2026-05-10 22:17:16 |     Sample 60/100 completed
+2026-05-10 22:17:17 |     Sample 70/100 completed
+2026-05-10 22:17:17 |     Sample 80/100 completed
+2026-05-10 22:17:17 |     Sample 90/100 completed
+2026-05-10 22:17:17 |     Sample 100/100 completed
+2026-05-10 22:17:18 |     Sample 10/100 completed
+2026-05-10 22:17:18 |     Sample 20/100 completed
+2026-05-10 22:17:18 |     Sample 30/100 completed
+2026-05-10 22:17:19 |     Sample 40/100 completed
+2026-05-10 22:17:19 |     Sample 50/100 completed
+2026-05-10 22:17:19 |     Sample 60/100 completed
+2026-05-10 22:17:19 |     Sample 70/100 completed
+2026-05-10 22:17:20 |     Sample 80/100 completed
+2026-05-10 22:17:20 |     Sample 90/100 completed
+2026-05-10 22:17:20 |     Sample 100/100 completed
+2026-05-10 22:17:20 |     Sample 10/100 completed
+2026-05-10 22:17:21 |     Sample 20/100 completed
+2026-05-10 22:17:21 |     Sample 30/100 completed
+2026-05-10 22:17:21 |     Sample 40/100 completed
+2026-05-10 22:17:22 |     Sample 50/100 completed
+2026-05-10 22:17:22 |     Sample 60/100 completed
+2026-05-10 22:17:22 |     Sample 70/100 completed
+2026-05-10 22:17:22 |     Sample 80/100 completed
+2026-05-10 22:17:23 |     Sample 90/100 completed
+2026-05-10 22:17:23 |     Sample 100/100 completed
+2026-05-10 22:17:23 |     Sample 10/100 completed
+2026-05-10 22:17:23 |     Sample 20/100 completed
+2026-05-10 22:17:24 |     Sample 30/100 completed
+2026-05-10 22:17:24 |     Sample 40/100 completed
+2026-05-10 22:17:24 |     Sample 50/100 completed
+2026-05-10 22:17:25 |     Sample 60/100 completed
+2026-05-10 22:17:25 |     Sample 70/100 completed
+2026-05-10 22:17:25 |     Sample 80/100 completed
+2026-05-10 22:17:25 |     Sample 90/100 completed
+2026-05-10 22:17:26 |     Sample 100/100 completed
+2026-05-10 22:17:26 |     Sample 10/100 completed
+2026-05-10 22:17:26 |     Sample 20/100 completed
+2026-05-10 22:17:26 |     Sample 30/100 completed
+2026-05-10 22:17:27 |     Sample 40/100 completed
+2026-05-10 22:17:27 |     Sample 50/100 completed
+2026-05-10 22:17:27 |     Sample 60/100 completed
+2026-05-10 22:17:27 |     Sample 70/100 completed
+2026-05-10 22:17:28 |     Sample 80/100 completed
+2026-05-10 22:17:28 |     Sample 90/100 completed
+2026-05-10 22:17:28 |     Sample 100/100 completed
+2026-05-10 22:17:29 |     Sample 10/100 completed
+2026-05-10 22:17:29 |     Sample 20/100 completed
+2026-05-10 22:17:29 |     Sample 30/100 completed
+2026-05-10 22:17:29 |     Sample 40/100 completed
+2026-05-10 22:17:30 |     Sample 50/100 completed
+2026-05-10 22:17:30 |     Sample 60/100 completed
+2026-05-10 22:17:30 |     Sample 70/100 completed
+2026-05-10 22:17:31 |     Sample 80/100 completed
+2026-05-10 22:17:31 |     Sample 90/100 completed
+2026-05-10 22:17:31 |     Sample 100/100 completed
+2026-05-10 22:17:31 |     Sample 10/100 completed
+2026-05-10 22:17:32 |     Sample 20/100 completed
+2026-05-10 22:17:32 |     Sample 30/100 completed
+2026-05-10 22:17:32 |     Sample 40/100 completed
+2026-05-10 22:17:32 |     Sample 50/100 completed
+2026-05-10 22:17:33 |     Sample 60/100 completed
+2026-05-10 22:17:33 |     Sample 70/100 completed
+2026-05-10 22:17:33 |     Sample 80/100 completed
+2026-05-10 22:17:34 |     Sample 90/100 completed
+2026-05-10 22:17:34 |     Sample 100/100 completed
+2026-05-10 22:17:34 |     Sample 10/100 completed
+2026-05-10 22:17:34 |     Sample 20/100 completed
+2026-05-10 22:17:35 |     Sample 30/100 completed
+2026-05-10 22:17:35 |     Sample 40/100 completed
+2026-05-10 22:17:35 |     Sample 50/100 completed
+2026-05-10 22:17:35 |     Sample 60/100 completed
+2026-05-10 22:17:36 |     Sample 70/100 completed
+2026-05-10 22:17:36 |     Sample 80/100 completed
+2026-05-10 22:17:36 |     Sample 90/100 completed
+2026-05-10 22:17:37 |     Sample 100/100 completed
+2026-05-10 22:17:37 |     Sample 10/100 completed
+2026-05-10 22:17:37 |     Sample 20/100 completed
+2026-05-10 22:17:37 |     Sample 30/100 completed
+2026-05-10 22:17:38 |     Sample 40/100 completed
+2026-05-10 22:17:38 |     Sample 50/100 completed
+2026-05-10 22:17:38 |     Sample 60/100 completed
+2026-05-10 22:17:39 |     Sample 70/100 completed
+2026-05-10 22:17:39 |     Sample 80/100 completed
+2026-05-10 22:17:39 |     Sample 90/100 completed
+2026-05-10 22:17:39 |     Sample 100/100 completed
+2026-05-10 22:17:40 |     Sample 10/100 completed
+2026-05-10 22:17:40 |     Sample 20/100 completed
+2026-05-10 22:17:40 |     Sample 30/100 completed
+2026-05-10 22:17:40 |     Sample 40/100 completed
+2026-05-10 22:17:41 |     Sample 50/100 completed
+2026-05-10 22:17:41 |     Sample 60/100 completed
+2026-05-10 22:17:41 |     Sample 70/100 completed
+2026-05-10 22:17:42 |     Sample 80/100 completed
+2026-05-10 22:17:42 |     Sample 90/100 completed
+2026-05-10 22:17:42 |     Sample 100/100 completed
+2026-05-10 22:17:42 |     Sample 10/100 completed
+2026-05-10 22:17:43 |     Sample 20/100 completed
+2026-05-10 22:17:43 |     Sample 30/100 completed
+2026-05-10 22:17:43 |     Sample 40/100 completed
+2026-05-10 22:17:43 |     Sample 50/100 completed
+2026-05-10 22:17:44 |     Sample 60/100 completed
+2026-05-10 22:17:44 |     Sample 70/100 completed
+2026-05-10 22:17:44 |     Sample 80/100 completed
+2026-05-10 22:17:45 |     Sample 90/100 completed
+2026-05-10 22:17:45 |     Sample 100/100 completed
+2026-05-10 22:17:45 |     Sample 10/100 completed
+2026-05-10 22:17:45 |     Sample 20/100 completed
+2026-05-10 22:17:46 |     Sample 30/100 completed
+2026-05-10 22:17:46 |     Sample 40/100 completed
+2026-05-10 22:17:46 |     Sample 50/100 completed
+2026-05-10 22:17:46 |     Sample 60/100 completed
+2026-05-10 22:17:47 |     Sample 70/100 completed
+2026-05-10 22:17:47 |     Sample 80/100 completed
+2026-05-10 22:17:47 |     Sample 90/100 completed
+2026-05-10 22:17:48 |     Sample 100/100 completed
+2026-05-10 22:17:48 |     Sample 10/100 completed
+2026-05-10 22:17:48 |     Sample 20/100 completed
+2026-05-10 22:17:48 |     Sample 30/100 completed
+2026-05-10 22:17:49 |     Sample 40/100 completed
+2026-05-10 22:17:49 |     Sample 50/100 completed
+2026-05-10 22:17:49 |     Sample 60/100 completed
+2026-05-10 22:17:49 |     Sample 70/100 completed
+2026-05-10 22:17:50 |     Sample 80/100 completed
+2026-05-10 22:17:50 |     Sample 90/100 completed
+2026-05-10 22:17:50 |     Sample 100/100 completed
+2026-05-10 22:17:51 |     Sample 10/100 completed
+2026-05-10 22:17:51 |     Sample 20/100 completed
+2026-05-10 22:17:51 |     Sample 30/100 completed
+2026-05-10 22:17:51 |     Sample 40/100 completed
+2026-05-10 22:17:52 |     Sample 50/100 completed
+2026-05-10 22:17:52 |     Sample 60/100 completed
+2026-05-10 22:17:52 |     Sample 70/100 completed
+2026-05-10 22:17:52 |     Sample 80/100 completed
+2026-05-10 22:17:53 |     Sample 90/100 completed
+2026-05-10 22:17:53 |     Sample 100/100 completed
+2026-05-10 22:17:53 |     Sample 10/100 completed
+2026-05-10 22:17:54 |     Sample 20/100 completed
+2026-05-10 22:17:54 |     Sample 30/100 completed
+2026-05-10 22:17:54 |     Sample 40/100 completed
+2026-05-10 22:17:54 |     Sample 50/100 completed
+2026-05-10 22:17:55 |     Sample 60/100 completed
+2026-05-10 22:17:55 |     Sample 70/100 completed
+2026-05-10 22:17:55 |     Sample 80/100 completed
+2026-05-10 22:17:55 |     Sample 90/100 completed
+2026-05-10 22:17:56 |     Sample 100/100 completed
+2026-05-10 22:17:56 |     Sample 10/100 completed
+2026-05-10 22:17:56 |     Sample 20/100 completed
+2026-05-10 22:17:57 |     Sample 30/100 completed
+2026-05-10 22:17:57 |     Sample 40/100 completed
+2026-05-10 22:17:57 |     Sample 50/100 completed
+2026-05-10 22:17:57 |     Sample 60/100 completed
+2026-05-10 22:17:58 |     Sample 70/100 completed
+2026-05-10 22:17:58 |     Sample 80/100 completed
+2026-05-10 22:17:58 |     Sample 90/100 completed
+2026-05-10 22:17:58 |     Sample 100/100 completed
+2026-05-10 22:17:59 |     Sample 10/100 completed
+2026-05-10 22:17:59 |     Sample 20/100 completed
+2026-05-10 22:17:59 |     Sample 30/100 completed
+2026-05-10 22:18:00 |     Sample 40/100 completed
+2026-05-10 22:18:00 |     Sample 50/100 completed
+2026-05-10 22:18:00 |     Sample 60/100 completed
+2026-05-10 22:18:00 |     Sample 70/100 completed
+2026-05-10 22:18:01 |     Sample 80/100 completed
+2026-05-10 22:18:01 |     Sample 90/100 completed
+2026-05-10 22:18:01 |     Sample 100/100 completed
+2026-05-10 22:18:01 |     Sample 10/100 completed
+2026-05-10 22:18:02 |     Sample 20/100 completed
+2026-05-10 22:18:02 |     Sample 30/100 completed
+2026-05-10 22:18:02 |     Sample 40/100 completed
+2026-05-10 22:18:03 |     Sample 50/100 completed
+2026-05-10 22:18:03 |     Sample 60/100 completed
+2026-05-10 22:18:03 |     Sample 70/100 completed

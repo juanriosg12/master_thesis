@@ -7,8 +7,8 @@ methods on synthetic causal data.
 Steps:
 1. Generate synthetic datasets (6 systems: linear/nonlinear/mixed × confounders/no-confounders)
 2. Create standardized train/test splits
-3. Run causal discovery (PC and LiNGAM)
-4. Train predictive models (LGBM)
+3. Train predictive models (LGBM)
+4. Run causal discovery (PC and LiNGAM)
 5. Calculate Shapley values using all methods and compare across causal discovery algorithms
 
 Author: Juan Rios
@@ -51,7 +51,7 @@ from predictive_models.predictive_models import (
 )
 from explainability_models import (
     ShapleyFromScratch, AsymmetricShapley,
-    ShapleyFlowWrapper, CausalShapley, GraphExplainerWrapper
+    ShapleyFlowWrapper, CausalShapley
 )
 from utils.utils import visualize_comparison, visualize_causal_graph, plot_shapley_feature_comparison
 
@@ -91,7 +91,7 @@ EXPLAINABILITY_DIR = DATA_DIR / 'explainability'
 MODELS_DIR = BASE_DIR / 'models'
 LOGS_DIR = BASE_DIR / 'logs'
 # TARGET_DATASETS = ["mixed_conf_f50_s1000_p50", "mixed_no_conf_f50_s1000_p50"]
-TARGET_DATASETS = ["mixed_no_conf_f50_s1000_p50"]
+TARGET_DATASETS = ["mixed_no_conf_f50_s1000_p50","linear_conf_f50_s1000_p50"]
 # Create directories
 for directory in [SYNTHETIC_DIR, PROCESSED_DIR, CAUSAL_DIR, EXPLAINABILITY_DIR, MODELS_DIR, LOGS_DIR]:
     directory.mkdir(parents=True, exist_ok=True)
@@ -295,7 +295,7 @@ def create_train_test_splits(dataset_configs: List[Dict]):
 
 
 # ============================================================================
-# Step 3: Run Causal Discovery
+# Step 4: Run Causal Discovery
 # ============================================================================
 
 def run_causal_discovery(dataset_configs: List[Dict]):
@@ -317,7 +317,7 @@ def run_causal_discovery(dataset_configs: List[Dict]):
         Dataset configurations from Step 1
     """
     logging.info("=" * 80)
-    logging.info("STEP 4 (was 3): RUNNING CAUSAL DISCOVERY")
+    logging.info("STEP 4: RUNNING CAUSAL DISCOVERY")
     logging.info("=" * 80)
     
     for idx, config in enumerate(dataset_configs, 1):
@@ -329,9 +329,6 @@ def run_causal_discovery(dataset_configs: List[Dict]):
         data = pd.read_parquet(data_path)
         X_train = data.drop(columns=['Y'])
 
-        subsample_size = min(500, len(X_train))
-        subsample_data = X_train.sample(n=subsample_size, random_state=RANDOM_STATE)
-        
         adj_path = SYNTHETIC_DIR / f"{filename}_adjacency.npy"
         true_adj = np.load(adj_path)
         
@@ -354,11 +351,11 @@ def run_causal_discovery(dataset_configs: List[Dict]):
         pc_fci = PCWithFCI(alpha=PC_ALPHA, indep_test=INDEP_TEST)
         
         # Run discovery (X only; model determines Y edges inside the method)
-        logging.info("  Running LiNGAM...")
-        results_lingam = lingam_fci.get_causal_relationships(subsample_data, model=trained_model)
+        logging.info(f"  Running LiNGAM on full training set ({len(X_train)} rows)...")
+        results_lingam = lingam_fci.get_causal_relationships(X_train, model=trained_model)
         
-        logging.info("  Running PC...")
-        results_pc = pc_fci.get_causal_relationships(subsample_data, model=trained_model)
+        logging.info(f"  Running PC on full training set ({len(X_train)} rows)...")
+        results_pc = pc_fci.get_causal_relationships(X_train, model=trained_model)
         
         logging.info("  Extracting X-only train adjacency matrices for Step 5...")
         lingam_train_adj = results_lingam['adjacency_matrix'][:-1, :-1]  # Exclude Y
@@ -438,7 +435,7 @@ def run_causal_discovery(dataset_configs: List[Dict]):
 
 
 # ============================================================================
-# Step 4: Train Predictive Models
+# Step 3: Train Predictive Models
 # ============================================================================
 
 def train_all_models(dataset_configs: List[Dict]):
@@ -451,19 +448,12 @@ def train_all_models(dataset_configs: List[Dict]):
         Dataset configurations from Step 1
     """
     logging.info("=" * 80)
-    logging.info(f"STEP 4: TRAINING PREDICTIVE MODELS (LGBM only, {len(TARGET_DATASETS)} datasets)")
+    logging.info(f"STEP 3: TRAINING PREDICTIVE MODELS (LGBM only, {len(dataset_configs)} datasets — all)")
     logging.info("=" * 80)
-    
-    # Filter to only target datasets
-    filtered_configs = [c for c in dataset_configs if c['filename'] in TARGET_DATASETS]
-    
-    if not filtered_configs:
-        logging.warning(f"Target datasets {TARGET_DATASETS} not found!")
-        return
-    
-    for idx, config in enumerate(filtered_configs, 1):
+
+    for idx, config in enumerate(dataset_configs, 1):
         filename = config['filename']
-        logging.info(f"\n[Dataset {idx}/{len(filtered_configs)}] Training LGBM model for {filename}")
+        logging.info(f"\n[Dataset {idx}/{len(dataset_configs)}] Training LGBM model for {filename}")
         
         # Load train/test data
         train_path = PROCESSED_DIR / f"{filename}_train.parquet"
@@ -533,7 +523,7 @@ def train_all_models(dataset_configs: List[Dict]):
             json.dump(metrics, f, indent=2)
     
     logging.info(f"\n{'='*80}")
-    logging.info(f"Step 4 Complete: LGBM model trained for {len(filtered_configs)} datasets")
+    logging.info(f"Step 3 Complete: LGBM model trained for {len(dataset_configs)} datasets")
     logging.info(f"{'='*80}\n")
 
 
@@ -602,7 +592,7 @@ def calculate_all_shapley_values(dataset_configs: List[Dict]):
         y_parent_indices = metadata['y_parent_indices']
         
         # Process LGBM model only
-        total_combinations = 1 + 2 * 4  # 1 scratch + 2 discovery methods * 4 causal methods (Asym, Causal, Flow, GraphExplainer)
+        total_combinations = 1 + 2 * 3 + 3  # 1 scratch + 2 disc methods × 3 causal methods + 3 True-graph methods
         progress_counter = 1
         
         for model_name in ['lgbm']:  # Only LGBM
@@ -721,42 +711,86 @@ def calculate_all_shapley_values(dataset_configs: List[Dict]):
                 
                 np.save(flow_dir / 'shapley_values.npy', flow_values)
                 flow_importance.to_csv(flow_dir / 'feature_importance.csv', index=False)
-                
-                # Calculate GraphExplainerWrapper (shapflow's GraphExplainer with learned functions)
-                logging.info(f"  [Progress: {progress_counter}/{total_combinations}] {model_name.upper()} + {discovery_method.upper()} - GraphExplainer")
-                sys.stdout.flush()  # Ensure output is visible
-                progress_counter += 1
-                
-                # # Create GraphExplainerWrapper
-                # # Uses same causal_graph and data as ShapleyFlowWrapper for consistency
-                # try:
-                #     graphexp_explainer = GraphExplainerWrapper(
-                #         adjacency_matrix=causal_graph,  # Already includes Y from discovery
-                #         feature_names=feature_names,  # Already includes Y
-                #         train_data=train_data,  # Full training data with Y
-                #         background_data=background_data_flow,  # Reuse from ShapleyFlow
-                #         sink_name='Y',
-                #         nruns=N_SHAPLEY_SAMPLES,
-                #         silent=True,
-                #         method='bruteforce_sampling',
-                #         fit_method='xgboost'
-                #     )
-                    
-                #     graphexp_values = graphexp_explainer.explain(test_instances_flow)  # Reuse from ShapleyFlow
-                #     graphexp_importance = graphexp_explainer.get_feature_importance()
-                    
-                #     # Save GraphExplainer results
-                #     graphexp_dir = EXPLAINABILITY_DIR / filename / model_name / discovery_method / 'flow_real'
-                #     graphexp_dir.mkdir(parents=True, exist_ok=True)
-                    
-                #     np.save(graphexp_dir / 'shapley_values.npy', graphexp_values)
-                #     graphexp_importance.to_csv(graphexp_dir / 'feature_importance.csv', index=False)
-                    
-                #     logging.info(f"    ✓ GraphExplainer completed: {graphexp_values.shape}")
-                # except Exception as e:
-                #     logging.error(f"    ✗ GraphExplainer failed: {str(e)}")
-                #     logging.warning("    Skipping GraphExplainer for this combination...")
-        
+
+            # ── True DAG Shapley values ────────────────────────────────────────────
+            # Build full True DAG adjacency using the same logic as run_causal_discovery:
+            #   • X→Y for every feature used by the LGBM model
+            #   • X→Y for every sink node in true_adj_xx (no outgoing X→X edges)
+            logging.info(f"\n  ─── True DAG (ground-truth causal structure) ───")
+            feature_names_xx = X_train.columns.tolist()
+            n_feat_xx = len(feature_names_xx)
+            raw_true_adj = np.load(SYNTHETIC_DIR / f"{filename}_adjacency.npy")
+            true_adj_xx_pipe = raw_true_adj[:n_feat_xx, :n_feat_xx]
+
+            true_full_adj = np.zeros((n_feat_xx + 1, n_feat_xx + 1), dtype=int)
+            true_full_adj[:n_feat_xx, :n_feat_xx] = true_adj_xx_pipe
+            for _feat in model.selected_features:
+                if _feat in feature_names_xx:
+                    _fi = feature_names_xx.index(_feat)
+                    true_full_adj[_fi, n_feat_xx] = 1
+            for _fi in range(n_feat_xx):
+                if true_adj_xx_pipe[_fi, :].sum() == 0:
+                    true_full_adj[_fi, n_feat_xx] = 1
+            y_edges_true = int(true_full_adj[:n_feat_xx, n_feat_xx].sum())
+            logging.info(f"  True DAG: {int(true_adj_xx_pipe.sum())} X→X edges + {y_edges_true} X→Y edges")
+
+            # AsymmetricShapley (True)
+            logging.info(f"  [Progress: {progress_counter}/{total_combinations}] {model_name.upper()} + TRUE - AsymmetricShapley")
+            progress_counter += 1
+            asym_true_exp = AsymmetricShapley(
+                model, background_data,
+                causal_graph=true_full_adj,
+                n_samples=N_SHAPLEY_SAMPLES,
+                random_state=RANDOM_STATE,
+            )
+            asym_true_values = asym_true_exp.explain(test_instances, method='monte_carlo')
+            asym_true_dir = EXPLAINABILITY_DIR / filename / model_name / 'true' / 'asymmetric'
+            asym_true_dir.mkdir(parents=True, exist_ok=True)
+            np.save(asym_true_dir / 'shapley_values.npy', asym_true_values)
+            asym_true_exp.get_feature_importance().to_csv(asym_true_dir / 'feature_importance.csv', index=False)
+
+            # CausalShapley (True) — X-only adj, no confounders
+            logging.info(f"  [Progress: {progress_counter}/{total_combinations}] {model_name.upper()} + TRUE - CausalShapley")
+            progress_counter += 1
+            causal_true_exp = CausalShapley(
+                model,
+                background_data=background_data,
+                discovered_adj=true_adj_xx_pipe,
+                discovered_conf=[],
+                feature_names=feature_names_xx,
+                n_samples=N_SHAPLEY_SAMPLES,
+                M_inner_samples=M_INNER_SAMPLES_CAUSAL,
+                random_state=RANDOM_STATE,
+            )
+            causal_true_values = causal_true_exp.explain(test_instances)
+            causal_true_dir = EXPLAINABILITY_DIR / filename / model_name / 'true' / 'causal'
+            causal_true_dir.mkdir(parents=True, exist_ok=True)
+            np.save(causal_true_dir / 'shapley_values.npy', causal_true_values)
+            causal_true_exp.get_feature_importance().to_csv(causal_true_dir / 'feature_importance.csv', index=False)
+
+            # ShapleyFlow (True)
+            logging.info(f"  [Progress: {progress_counter}/{total_combinations}] {model_name.upper()} + TRUE - ShapleyFlow")
+            progress_counter += 1
+            true_bg_flow = background_data.copy()
+            true_bg_flow['Y'] = y_train.loc[background_data.index]
+            true_test_flow = test_instances.copy()
+            true_test_flow['Y'] = y_test.loc[test_instances.index]
+            flow_true_exp = ShapleyFlowWrapper(
+                model=model,
+                background_data=true_bg_flow,
+                causal_graph=true_full_adj,
+                y_index=n_feat_xx,
+                n_samples=N_SHAPLEY_SAMPLES,
+                random_state=RANDOM_STATE,
+            )
+            flow_true_values = flow_true_exp.explain(true_test_flow)
+            flow_true_dir = EXPLAINABILITY_DIR / filename / model_name / 'true' / 'flow'
+            flow_true_dir.mkdir(parents=True, exist_ok=True)
+            np.save(flow_true_dir / 'shapley_values.npy', flow_true_values)
+            flow_true_exp.get_feature_importance().to_csv(flow_true_dir / 'feature_importance.csv', index=False)
+            logging.info(f"  ✓ True DAG Shapley values saved ({len(test_instances)} instances)")
+
+
         elapsed = time.time() - start_time
         logging.info(f"  ✓ Completed {filename} in {elapsed/60:.1f} minutes")
     
@@ -864,49 +898,39 @@ def calculate_comparison_metrics(dataset_configs: List[Dict]):
             asym_dir = EXPLAINABILITY_DIR / filename / model_name / discovery_method / 'asymmetric'
             causal_dir = EXPLAINABILITY_DIR / filename / model_name / discovery_method / 'causal'
             flow_dir = EXPLAINABILITY_DIR / filename / model_name / discovery_method / 'flow'
-            flow_real_dir = EXPLAINABILITY_DIR / filename / model_name / discovery_method / 'flow_real'
-            
             asymmetric_values = np.load(asym_dir / 'shapley_values.npy')
             causal_values = np.load(causal_dir / 'shapley_values.npy')
             flow_values = np.load(flow_dir / 'shapley_values.npy')
-            flow_real_values = np.load(flow_real_dir / 'shapley_values.npy')
-            
             
             # Calculate mean importance for top 10 features
             asym_importance_top10 = np.abs(asymmetric_values)[:, top_10_indices].mean(axis=0)
             causal_importance_top10 = np.abs(causal_values)[:, top_10_indices].mean(axis=0)
             flow_importance_top10 = np.abs(flow_values)[:, top_10_indices].mean(axis=0)
             scratch_importance_top10 = scratch_importance[top_10_indices]
-            flow_real_importance_top10 = np.abs(flow_real_values)[:, top_10_indices].mean(axis=0)
             
             methods_data[discovery_method] = {
                 'Scratch': scratch_importance_top10,
                 'Asymmetric': asym_importance_top10,
                 'Causal': causal_importance_top10,
                 'Flow': flow_importance_top10,
-                'GraphExplainer': flow_real_importance_top10
             }
             
-        
-        # Determine number of methods to plot
-        n_methods = 5 if 'GraphExplainer' in methods_data['pc'] else 4
         
         # Create PC vs LiNGAM comparison visualization
         fig, axes = plt.subplots(1, 2, figsize=(16, 8), sharey=True)
         
         x_pos = np.arange(len(top_10_features))
-        width = 0.15 if n_methods == 5 else 0.2
+        width = 0.2
         
         for ax_idx, discovery_method in enumerate(['pc', 'lingam']):
             ax = axes[ax_idx]
             data = methods_data[discovery_method]
             
-            # All 5 methods: Scratch, Asymmetric, Causal, Flow, GraphExplainer
-            ax.barh(x_pos - 2*width, data['Scratch'], width, label='Scratch', alpha=0.8)
-            ax.barh(x_pos - width, data['Asymmetric'], width, label='Asymmetric', alpha=0.8)
-            ax.barh(x_pos, data['Causal'], width, label='Causal', alpha=0.8)
-            ax.barh(x_pos + width, data['Flow'], width, label='Flow (Path)', alpha=0.8)
-            ax.barh(x_pos + 2*width, data['GraphExplainer'], width, label='GraphExplainer', alpha=0.8)
+            # 4 methods: Scratch, Asymmetric, Causal, Flow
+            ax.barh(x_pos - 1.5*width, data['Scratch'], width, label='Scratch', alpha=0.8)
+            ax.barh(x_pos - 0.5*width, data['Asymmetric'], width, label='Asymmetric', alpha=0.8)
+            ax.barh(x_pos + 0.5*width, data['Causal'], width, label='Causal', alpha=0.8)
+            ax.barh(x_pos + 1.5*width, data['Flow'], width, label='Flow (Path)', alpha=0.8)
             
             ax.set_yticks(x_pos)
             ax.set_yticklabels(top_10_features)

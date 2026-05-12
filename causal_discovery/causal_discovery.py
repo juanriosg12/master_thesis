@@ -135,15 +135,19 @@ class CausalDiscoveryMethod:
                     elif edge_ij == 1 and edge_ji == -1:
                         adjacency[j, i] = 1
                     
-                    # # Undirected edge i - j (orient arbitrarily as i -> j)
-                    # elif edge_ij == -1 and edge_ji == -1:
-                    #     adjacency[i, j] = 1
+                    # Undirected edge i - j: PC cannot determine orientation.
+                    # Orient arbitrarily as i -> j (lower index to higher index).
+                    # This preserves the skeleton (recall) at the cost of ~50%
+                    # direction errors on these edges — better than dropping them
+                    # entirely which causes massive false negatives.
+                    elif edge_ij == -1 and edge_ji == -1:
+                        adjacency[i, j] = 1
                     
-                    # # Bidirected edge i <-> j (confounder - only add one direction to avoid cycle)
-                    # # The confounders will be tracked separately via FCI
-                    # elif edge_ij == 1 and edge_ji == 1:
-                    #     adjacency[i, j] = 1
-                    #     # Do NOT add adjacency[j, i] = 1 to avoid creating a cycle
+                    # Bidirected i <-> j: confounder indicator from PAG.
+                    # Add one direction only (avoid creating a cycle).
+                    # These are also captured in the confounders list via FCI.
+                    elif edge_ij == 1 and edge_ji == 1:
+                        adjacency[i, j] = 1
                         
         except Exception as e:
             warnings.warn(f"Error extracting adjacency from graph: {str(e)}")
@@ -437,7 +441,11 @@ class LiNGAMWithFCI(CausalDiscoveryMethod):
             lingam_model = DirectLiNGAM()
             lingam_model.fit(data_array)
 
-            adjacency_lingam = lingam_model.adjacency_matrix_
+            # DirectLiNGAM convention: adjacency_matrix_[i, j] is the
+            # coefficient of X_j *on* X_i, i.e. edge j -> i.
+            # Our convention: adj[i, j] = 1 means edge i -> j.
+            # Fix: transpose before binarising.
+            adjacency_lingam = lingam_model.adjacency_matrix_.T  # now [i,j] = effect of X_i on X_j
             
             threashold = 0.1
             adjacency_lingam[np.abs(adjacency_lingam) < threashold] = 0
