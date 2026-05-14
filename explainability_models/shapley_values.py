@@ -1531,46 +1531,26 @@ class ShapleyFlow:
     
     KEY BEHAVIORS:
     1. Game players are EDGES (i→j) rather than features
-    2. Two modes: Exhaustive DFS or Path Sampling (path sampling is default)
-    3. Path sampling uses BACKWARD walks from sink to sources
+    2. Two modes: MC edge permutation (default) or exhaustive DFS
+    3. MC mode permutes ALL edges uniformly — no path sampling is performed
     4. Edge attributions are aggregated to get node (feature) importance
-    5. Core class does NOT filter - wrapper handles source/adjacency filtering
+    5. Core class does NOT filter - wrapper handles source detection
     
     ═══════════════════════════════════════════════════════════════════════════════
-    ALGORITHM (Path Sampling Mode - DEFAULT, use_path_sampling=True):
+    ALGORITHM (MC Permutation Mode - DEFAULT, use_mc_permutation=True):
     ═══════════════════════════════════════════════════════════════════════════════
-    
+
     FOR trial = 1 to n_samples:
-        FOR path_idx = 1 to (n_sources × paths_per_source):
-            # ===== BACKWARD PATH SAMPLING (key innovation) =====
-            path_edges ← []
-            current ← sink_node
-            visited ← {sink_node}
-            
-            WHILE current not in source_nodes:
-                parents ← [p for p in parents[current] if p not visited]
-                IF parents is empty: BREAK
-                
-                parent ← random_choice(parents)  # Random parent
-                path_edges.append((parent, current))
-                visited.add(parent)
-                current ← parent
-            
-            path_edges ← reverse(path_edges)  # Source→Sink direction
-            
-            # ===== MARGINAL CONTRIBUTIONS =====
-            perm_edges ← random_permutation(path_edges)
-            v_prev ← evaluate_system([], x_foreground, x_background)
-            history ← []
-            
-            FOR each edge in perm_edges:
-                history.append(edge)
-                v_curr ← evaluate_system(history, x_fg, x_bg)
-                marginal ← v_curr - v_prev
-                edge_attributions[edge] += marginal
-                v_prev ← v_curr
-    
-    RETURN edge_attributions / (n_samples × total_paths)
+        perm_edges ← random_permutation(ALL edges in graph)
+        v_prev ← evaluate_system([], x_foreground, x_background)
+        history ← []
+        FOR each edge in perm_edges:
+            history.append(edge)
+            v_curr ← evaluate_system(history, x_fg, x_bg)
+            edge_attributions[edge] += v_curr − v_prev
+            v_prev ← v_curr
+
+    RETURN edge_attributions / n_samples
     
     ═══════════════════════════════════════════════════════════════════════════════
     WHY ALL-EDGE MC PERMUTATION? (Correct Shapley Estimator)
@@ -1711,11 +1691,11 @@ class ShapleyFlow:
         Random seed
     feature_names : List[str] or None
         Feature names for model alignment
-    use_path_sampling : bool, default=True
-        If True, use efficient path sampling (recommended for dense graphs)
-        If False, use exhaustive DFS (original algorithm)
+    use_mc_permutation : bool, default=True
+        If True, permute ALL edges uniformly each trial (unbiased Shapley estimator).
+        If False, use exhaustive DFS traversal (original algorithm).
     paths_per_source : int, default=100
-        Number of random paths to sample per source (only if use_path_sampling=True)
+        Unused when use_mc_permutation=True; retained for the DFS fallback mode.
     
     Attributes
     ----------
@@ -1745,7 +1725,7 @@ class ShapleyFlow:
                  n_samples: int = 100,
                  random_state: Optional[int] = None,
                  feature_names: Optional[List[str]] = None,
-                 use_path_sampling: bool = True,
+                 use_mc_permutation: bool = True,
                  paths_per_source: int = 100):
         """Initialize Shapley Flow calculator."""
 
@@ -1756,7 +1736,7 @@ class ShapleyFlow:
         self.sink_node = sink_node
         self.n_samples = n_samples
         self.feature_names = feature_names
-        self.use_path_sampling = use_path_sampling
+        self.use_mc_permutation = use_mc_permutation
         self.paths_per_source = paths_per_source
 
         self.rng = np.random.RandomState(random_state)
@@ -2152,13 +2132,13 @@ class ShapleyFlow:
         import logging
         n_edges = len(self.edge_attributions)
         
-        if self.use_path_sampling:
-            logging.info(f"    → ShapleyFlow (Backward Path Sampling): {n_edges} edges, {len(self.source_nodes)} sources")
+        if self.use_mc_permutation:
+            logging.info(f"    → ShapleyFlow (MC Edge Permutation): {n_edges} edges, {self.n_samples} trials")
         else:
             logging.info(f"    → ShapleyFlow (Exhaustive DFS): {n_edges} edges, {len(self.source_nodes)} sources, {self.n_samples} trials")
         sys.stdout.flush()
 
-        if self.use_path_sampling:
+        if self.use_mc_permutation:
             # CORRECT MC PERMUTATION MODE
             # Permute ALL edges randomly every trial → every edge participates in
             # every permutation → no visitation-frequency bias → efficiency = 1.00×.
@@ -2360,10 +2340,11 @@ class ShapleyFlowWrapper:
         Number of Monte Carlo trials
     random_state : int or None
         Random seed
-    use_path_sampling : bool, default=True
-        Use fast path sampling (recommended for dense graphs)
+    use_mc_permutation : bool, default=True
+        If True, permute ALL edges uniformly each trial (unbiased Shapley estimator).
+        If False, use exhaustive DFS traversal.
     paths_per_source : int, default=100
-        Paths to sample per source (if use_path_sampling=True)
+        Unused when use_mc_permutation=True; retained for the DFS fallback mode.
     
     Attributes
     ----------
@@ -2392,7 +2373,7 @@ class ShapleyFlowWrapper:
                 y_index: int,
                 n_samples: int = 100,
                 random_state: Optional[int] = None,
-                use_path_sampling: bool = True,
+                use_mc_permutation: bool = True,
                 paths_per_source: int = 100):
         """Initialize Shapley Flow wrapper for ML models."""
         self.model = model
@@ -2404,7 +2385,7 @@ class ShapleyFlowWrapper:
         self.n_samples = n_samples
         self.random_state = random_state
         self.rng = np.random.RandomState(random_state)
-        self.use_path_sampling = use_path_sampling
+        self.use_mc_permutation = use_mc_permutation
         self.paths_per_source = paths_per_source
 
         # Extract directed graph 
@@ -2533,8 +2514,8 @@ class ShapleyFlowWrapper:
             n_samples=self.n_samples,
             random_state=self.random_state,
             feature_names=self.features_names,  # Pass feature names for alignment
-            use_path_sampling=self.use_path_sampling,  # Use path sampling mode
-            paths_per_source=self.paths_per_source  # Number of paths to sample
+            use_mc_permutation=self.use_mc_permutation,
+            paths_per_source=self.paths_per_source
         )
 
         for i, instance in enumerate(X_values):

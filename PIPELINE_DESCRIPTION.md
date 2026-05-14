@@ -1,0 +1,422 @@
+# Pipeline Description
+
+This document describes every design decision, parameter choice, and data flow
+in the experimental pipeline (`experimental_pipeline/experimental_pipeline.py`).
+
+---
+
+## Table of Contents
+
+1. [Overview](#1-overview)
+2. [Datasets](#2-datasets)
+3. [Train / Test Split](#3-train--test-split)
+4. [Predictive Model](#4-predictive-model)
+5. [Causal Discovery](#5-causal-discovery)
+6. [Ground-Truth Reference Graph (true_full_adj)](#6-ground-truth-reference-graph-true_full_adj)
+7. [Shapley Value Computation](#7-shapley-value-computation)
+8. [Output File Structure](#8-output-file-structure)
+9. [Global Constants](#9-global-constants)
+
+---
+
+## 1. Overview
+
+The pipeline has five sequential steps:
+
+| Step | Function | Purpose |
+|------|----------|---------|
+| 1 | `generate_all_datasets` | Produce 6 synthetic datasets (X + Y) |
+| 2 | `create_train_test_splits` | 80 / 20 split, saved to parquet |
+| 3 | `train_all_models` | Fit one LGBMRegressor per dataset (all 6) |
+| 4 | `run_causal_discovery` | Run LiNGAM + PC; build & persist `true_full_adj` |
+| 5 | `calculate_all_shapley_values` | Compute 10 method × graph combinations per target dataset |
+
+Steps 3 and 4 are independent of each other (4 uses the model saved by 3 only
+to determine X→Y edges, not for discovery itself).
+
+---
+
+## 2. Datasets
+
+### 2.1 Combinatorial Design
+
+Six datasets are the Cartesian product of:
+
+* **Functional form**: `linear` | `nonlinear` | `mixed`
+* **Confounding**: `no_conf` | `conf`
+
+Filenames follow the pattern `{type}_{conf}_f50_s1000_p50`, e.g.
+`mixed_no_conf_f50_s1000_p50`.
+
+### 2.2 Data-Generation Parameters
+
+| Parameter | Value | Description |
+|-----------|-------|-------------|
+| `N_FEATURES` | 50 | Number of X features (X0 … X49) |
+| `N_SAMPLES` | 1 000 | Total number of observations |
+| `Y_PARENTS_RATIO` | 0.50 | Fraction of X features that are direct parents of Y → 25 parents |
+| `NOISE_STD` | 0.5 | Standard deviation of Gaussian noise added to every structural equation |
+| `EDGE_PROBABILITY` | 0.20 | Erdős–Rényi edge probability for the X→X DAG |
+| `MIN_CONNECTED_EDGES` | 2 | Minimum edges added if the random DAG is empty |
+| `RANDOM_STATE` | 42 | Seed passed to `SyntheticCausalSystem` |
+| mixed `linear_ratio` | 0.50 | Half of X→X edges are linear, half are nonlinear |
+
+### 2.3 Structural Equations
+
+**X→X edges (all functional forms)**
+
+Variables are generated in topological order (X0 first, X49 last).  Before
+each child accumulates parent contributions, edge weights (linear) or
+coefficients (nonlinear) are sampled once.  After all parents of a node have
+contributed, the node is normalized to unit variance (outlier-clipped at ±5σ)
+before Gaussian noise $\mathcal{N}(0, 0.5)$ is added.
+
+* **Linear**: $X_j = \sum_{i \in \text{pa}(j)} w_{ij} X_i + \epsilon_j$,
+  with weights $w_{ij} \sim \text{Uniform}(0.5, 2.0) \times \text{sign}$.
+* **Nonlinear**: same sum, but each term uses one of
+  $\{x^2,\ x^3,\ \tanh(x),\ \sin(x)\}$ with coefficient
+  $\in [0.3, 0.8]$.
+* **Mixed**: each edge $(i \to j)$ is independently assigned linear or
+  nonlinear (50 / 50) at dataset-generation time.
+
+**Confounders**
+
+When `with_confounders=True`, `_add_confounders` samples up to
+$\lfloor 0.2 \times 50 \rfloor = 10$ confounder variables.  Each confounder
+affects 2–3 randomly chosen X nodes before those nodes accumulate parent
+contributions from the DAG.  For linear datasets the confounder effect is
+linear; for nonlinear / mixed it uses the same function pool above.
+
+**Y generation**
+
+25 X features are drawn (without replacement) as Y's parents.  Y is
+accumulated, normalized to unit variance, then $\mathcal{N}(0, 0.5)$ noise is
+added:
+
+* Linear Y: $Y = \sum_{k \in \text{pa}(Y)} c_k X_k + \epsilon$,
+  $c_k \sim \text{Uniform}(0.5, 2.0) \times \text{sign}$.
+* Nonlinear Y: each $c_k X_k^{f_k}$ term uses $\{x^2, x^3, \tanh, \sin\}$,
+  with smaller coefficients for power functions.
+* Mixed Y: even-indexed parents get a linear term, odd-indexed get nonlinear.
+
+### 2.4 Saved Files (`data/synthetic/`)
+
+| File | Content |
+|------|---------|
+| `{filename}.parquet` | Full data: 50 X columns + Y column, 1 000 rows |
+| `{filename}_adjacency.npy` | $(51 \times 51)$ true adjacency; `adj[i,j]=1` means $i \to j$ |
+| `{filename}_confounders.json` | List of `[confounder_id, [affected_node_ids]]` pairs |
+| `{filename}_y_params.json` | Coefficients and parent indices used to generate Y |
+| `{filename}_metadata.json` | All generation parameters + `y_parent_indices` |
+
+---
+
+## 3. Train / Test Split
+
+```
+sklearn.model_selection.train_test_split(X, y, test_size=0.20, random_state=42)
+```
+
+| Split | Rows | Use |
+|-------|------|-----|
+| Train | 800 | Model fitting, causal discovery, SHAP background |
+| Test | 200 | Model evaluation, SHAP test instances |
+
+Files saved to `data/processed/`:
+* `{filename}_train.parquet` — 800 rows (X + Y)
+* `{filename}_test.parquet`  — 200 rows (X + Y)
+
+---
+
+## 4. Predictive Model
+
+### 4.1 Model
+
+`LGBMRegressor` (LightGBM gradient-boosted trees) from
+`predictive_models/predictive_models.py`.
+
+### 4.2 Training
+
+* `feature_selection=False` — all 50 X features are used; no pre-selection.
+* `model.selected_features` therefore lists all 50 feature names.
+* Trained on the 800-row training split.
+
+### 4.3 Scope
+
+All 6 datasets are trained (not just the two target datasets), so a saved model
+exists for every filename.  Only the models for `TARGET_DATASETS` are loaded in
+Steps 4 and 5.
+
+```python
+TARGET_DATASETS = ["mixed_no_conf_f50_s1000_p50", "linear_conf_f50_s1000_p50"]
+```
+
+### 4.4 Evaluation Metrics (test set)
+
+R², MSE, MAE, RMSE — saved to `models/{filename}_metrics.json`.
+
+### 4.5 Saved Files
+
+| File | Content |
+|------|---------|
+| `models/{filename}_lgbm.pkl` | Serialised `LGBMRegressor` |
+| `models/{filename}_metrics.json` | `{"lgbm": {"r2":…, "mse":…, "mae":…, "rmse":…}}` |
+
+---
+
+## 5. Causal Discovery
+
+### 5.1 Input
+
+Both algorithms receive the **X-only training set** (Y column dropped, 800
+rows, no subsampling).
+
+### 5.2 DirectLiNGAM
+
+* Implementation: `causal-learn`'s `DirectLiNGAM`.
+* Assumption: linear non-Gaussian acyclic model.
+* **Transpose convention**: `adjacency_matrix_[i,j]` is the coefficient of
+  $X_j$ on $X_i$, so the raw matrix is transposed before binarisation to match
+  the convention `adj[i,j] = 1 ↔ i → j`.
+* **Threshold**: edges with |coefficient| < 0.10 are pruned to zero.
+* Wrapper: `LiNGAMWithFCI` in `causal_discovery/causal_discovery.py`.
+
+### 5.3 PC Algorithm
+
+* Implementation: `causal-learn`'s `pc`.
+* Independence test: Fisher-z (`fisherz`), significance level `PC_ALPHA = 0.05`.
+* Output: CPDAG (partially directed acyclic graph).
+* **Edge orientation**:
+  * Directed edge `graph[i,j] == -1 and graph[j,i] == 1` → preserved as $i \to j$.
+  * Undirected edge `graph[i,j] == -1 and graph[j,i] == -1` → arbitrarily
+    oriented as $i \to j$ (lower index to higher index).
+* Wrapper: `PCWithFCI` in `causal_discovery/causal_discovery.py`.
+
+### 5.4 X→Y Edge Augmentation
+
+Both discovered graphs are $(n+1) \times (n+1)$ matrices.  Edges to Y (column /
+row index $n = 50$) are appended by the discovery wrapper using two rules:
+
+1. $X_i \to Y$ for every feature in `model.selected_features` (available for
+   `TARGET_DATASETS` where a trained model was loaded; for other datasets this
+   rule is skipped).
+2. $X_i \to Y$ for every **sink node** — any $X_i$ with no outgoing $X \to X$
+   edges in the discovered graph — ensuring Y remains the terminal sink for
+   all datasets regardless of whether a model is available.
+
+### 5.5 Accuracy Evaluation
+
+Discovered graphs are compared against `true_full_adj` (see §6) using
+F1, Precision, and Recall over directed edges.  This means the accuracy metrics
+account for both the X→X structure and the X→Y edges that the Shapley methods
+will actually use.
+
+### 5.6 Saved Files (`data/causal/`)
+
+For each dataset × method (`lingam` / `pc`):
+
+| File | Content |
+|------|---------|
+| `{filename}_{method}_results.json` | Full $(n+1) \times (n+1)$ adj + feature names + confounders |
+| `{filename}_{method}_train_adjacency.npy` | X-only $(n \times n)$ adj (for CausalShapley) |
+| `{filename}_{method}_comparison.json` | F1 / Precision / Recall vs `true_full_adj` |
+| `{filename}_{method}_visualization.png` | Full graph comparison plot |
+| `{filename}_{method}_visualization_filtered.png` | Sink-filtered comparison plot |
+
+Additionally:
+
+| File | Content |
+|------|---------|
+| `{filename}_true_full_adjacency.npy` | Ground-truth reference graph (§6) |
+
+---
+
+## 6. Ground-Truth Reference Graph (`true_full_adj`)
+
+### 6.1 Motivation
+
+The raw data-generation adjacency only encodes $X \to X$ edges (plus the true
+$X \to Y$ parents).  However, the Shapley methods and accuracy metrics operate
+on a graph that must include X→Y edges consistent with what the LGBM model
+uses.  A single canonical reference is built once in Step 4 and persisted to
+disk so that Steps 4 and 5 use an identical matrix.
+
+### 6.2 Construction
+
+```
+true_full_adj : (n+1) × (n+1) integer matrix, n = 50
+
+1. Copy the X→X block from the raw data-generation adjacency:
+       true_full_adj[:n, :n]  ←  true_adj[:n, :n]
+
+2. Add X→Y edges for every feature in model.selected_features
+   (only when a trained model is available for that dataset).
+
+3. Add X→Y edges for every sink node:
+       X_i → Y  if  true_adj[i, :n].sum() == 0
+   (ensures all leaf features connect to the outcome).
+```
+
+### 6.3 Properties
+
+* Identical matrix used for: accuracy metrics in Step 4, AsymmetricShapley
+  (True) and ShapleyFlow (True) in Step 5.
+* For CausalShapley (True), only the X-only block `true_full_adj[:n, :n]` is
+  extracted.
+* Persisted to `data/causal/{filename}_true_full_adjacency.npy`.
+
+---
+
+## 7. Shapley Value Computation
+
+### 7.1 Scope
+
+Only `TARGET_DATASETS` receive Shapley computation:
+
+```python
+TARGET_DATASETS = ["mixed_no_conf_f50_s1000_p50", "linear_conf_f50_s1000_p50"]
+```
+
+### 7.2 Background and Test Instances
+
+| Set | Source | Fraction | Approx. rows | Seed |
+|-----|--------|----------|--------------|------|
+| Background | Training set (800 rows) | 30 % (`BACKGROUND_RATIO`) | ~240 | 42 |
+| Test instances | Test set (200 rows) | 50 % (`TEST_INSTANCES_RATIO`) | ~100 | 42 |
+
+Both are drawn with `DataFrame.sample(n=…, random_state=42)`.
+
+Background data is **X-only** for all methods except ShapleyFlow, which
+requires Y in the data frame (see §7.5).
+
+### 7.3 Combinations (10 per dataset)
+
+| # | Graph source | Shapley method | Class | Graph format |
+|---|-------------|----------------|-------|-------------|
+| 1 | — | Vanilla | `ShapleyFromScratch` | none |
+| 2 | PC | Asymmetric | `AsymmetricShapley` | $(n+1) \times (n+1)$ |
+| 3 | PC | Causal | `CausalShapley` | $n \times n$ (X only) |
+| 4 | PC | Flow | `ShapleyFlowWrapper` | $(n+1) \times (n+1)$ |
+| 5 | LiNGAM | Asymmetric | `AsymmetricShapley` | $(n+1) \times (n+1)$ |
+| 6 | LiNGAM | Causal | `CausalShapley` | $n \times n$ (X only) |
+| 7 | LiNGAM | Flow | `ShapleyFlowWrapper` | $(n+1) \times (n+1)$ |
+| 8 | True DAG | Asymmetric | `AsymmetricShapley` | $(n+1) \times (n+1)$ |
+| 9 | True DAG | Causal | `CausalShapley` | $n \times n$ (X only) |
+| 10 | True DAG | Flow | `ShapleyFlowWrapper` | $(n+1) \times (n+1)$ |
+
+### 7.4 Shared Parameters
+
+| Parameter | Value |
+|-----------|-------|
+| `N_SHAPLEY_SAMPLES` | 100 (number of Monte Carlo permutations) |
+| `M_INNER_SAMPLES_CAUSAL` | 10 (inner post-interventional samples for CausalShapley) |
+| `RANDOM_STATE` | 42 |
+
+### 7.5 ShapleyFlow Data Format
+
+`ShapleyFlowWrapper` requires Y as the last column of both background and test
+frames.  In Step 5, dedicated frames are constructed:
+
+```python
+background_data_flow = X_train.copy()
+background_data_flow['Y'] = y_train          # full 800-row background
+
+test_instances_flow = test_instances.copy()
+test_instances_flow['Y'] = y_test.loc[test_instances.index]
+```
+
+The `y_index` argument is set to `len(feature_names) - 1` (index 50 for a
+51-column frame).
+
+### 7.6 Saved Outputs (`data/explainability/{dataset}/lgbm/`)
+
+```
+{graph}/
+    {method}/
+        shapley_values.npy       # shape (n_test_instances, n_features)
+        feature_importance.csv   # mean |SHAP| per feature, sorted descending
+```
+
+Where `{graph}` ∈ `{scratch, pc, lingam, true}` and
+`{method}` ∈ `{asymmetric, causal, flow}` (scratch has no sub-method directory).
+
+---
+
+## 8. Output File Structure
+
+```
+data/
+├── synthetic/
+│   ├── {filename}.parquet
+│   ├── {filename}_adjacency.npy         # (51×51) true adj incl. X→Y parents
+│   ├── {filename}_confounders.json
+│   ├── {filename}_y_params.json
+│   └── {filename}_metadata.json
+├── processed/
+│   ├── {filename}_train.parquet         # 800 rows
+│   └── {filename}_test.parquet          # 200 rows
+├── causal/
+│   ├── {filename}_true_full_adjacency.npy   # (51×51) canonical reference
+│   ├── {filename}_{method}_results.json
+│   ├── {filename}_{method}_train_adjacency.npy   # (50×50) X-only
+│   ├── {filename}_{method}_comparison.json
+│   ├── {filename}_{method}_visualization.png
+│   └── {filename}_{method}_visualization_filtered.png
+└── explainability/
+    └── {dataset}/lgbm/
+        ├── scratch/
+        │   ├── shapley_values.npy
+        │   └── feature_importance.csv
+        ├── pc/
+        │   ├── asymmetric/
+        │   ├── causal/
+        │   └── flow/
+        ├── lingam/
+        │   ├── asymmetric/
+        │   ├── causal/
+        │   └── flow/
+        └── true/
+            ├── asymmetric/
+            ├── causal/
+            └── flow/
+
+models/
+├── {filename}_lgbm.pkl
+└── {filename}_metrics.json
+
+logs/
+└── pipeline_{timestamp}.log
+```
+
+---
+
+## 9. Global Constants
+
+```python
+# Data generation
+N_FEATURES             = 50
+N_SAMPLES              = 1_000
+Y_PARENTS_RATIO        = 0.50     # → 25 direct parents of Y
+NOISE_STD              = 0.5
+EDGE_PROBABILITY       = 0.20
+MIN_CONNECTED_EDGES    = 2
+RANDOM_STATE           = 42
+
+# Split
+TEST_SIZE              = 0.20     # → 200 test rows, 800 train rows
+
+# Shapley sampling
+BACKGROUND_RATIO       = 0.30     # → ~240 background rows from train
+TEST_INSTANCES_RATIO   = 0.50     # → ~100 test instances from test
+N_SHAPLEY_SAMPLES      = 100      # Monte Carlo permutations
+M_INNER_SAMPLES_CAUSAL = 10       # Inner samples for CausalShapley
+
+# Causal discovery
+LINGAM_ALPHA           = 0.05
+PC_ALPHA               = 0.05
+INDEP_TEST             = "fisherz"
+
+# Experiment scope
+TARGET_DATASETS        = ["mixed_no_conf_f50_s1000_p50",
+                          "linear_conf_f50_s1000_p50"]
+```

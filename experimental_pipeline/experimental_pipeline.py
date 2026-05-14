@@ -1,15 +1,20 @@
 """
-Comprehensive Experimental Pipeline for Causal Feature Importance Methods
+Experimental Pipeline: Causal Feature Importance Comparison
 
-This script runs a complete experimental pipeline comparing different Shapley value
-methods on synthetic causal data.
+Compares three causal Shapley value methods — Asymmetric Shapley, Causal Shapley,
+and Shapley Flow — across three causal graph sources (PC, LiNGAM, True DAG) on
+six synthetic datasets that vary in functional form (linear / nonlinear / mixed)
+and confounding structure (with / without confounders).
 
-Steps:
-1. Generate synthetic datasets (6 systems: linear/nonlinear/mixed × confounders/no-confounders)
-2. Create standardized train/test splits
-3. Train predictive models (LGBM)
-4. Run causal discovery (PC and LiNGAM)
-5. Calculate Shapley values using all methods and compare across causal discovery algorithms
+Execution order
+---------------
+1. generate_all_datasets      — produce 6 synthetic datasets (X features + Y)
+2. create_train_test_splits   — 80 / 20 stratified random split, saved to parquet
+3. train_all_models           — fit one LGBMRegressor per dataset (all 6)
+4. run_causal_discovery       — run DirectLiNGAM and PC on X-only train data;
+                                augment with X→Y edges; build and persist true_full_adj
+5. calculate_all_shapley_values — compute 10 method × graph combinations per
+                                  target dataset and save shapley_values.npy
 
 Author: Juan Rios
 """
@@ -102,7 +107,17 @@ for directory in [SYNTHETIC_DIR, PROCESSED_DIR, CAUSAL_DIR, EXPLAINABILITY_DIR, 
 # ============================================================================
 
 def setup_logging():
-    """Setup simple logging configuration."""
+    """Configure file + stdout logging with timestamps.
+
+    Creates a timestamped log file under LOGS_DIR (e.g.
+    ``pipeline_20260511_142300.log``) and simultaneously streams all output to
+    stdout so progress is visible during a long run.
+
+    Returns
+    -------
+    logging.Logger
+        Module-level logger (not strictly needed; callers use the root logger).
+    """
     timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
     log_file = LOGS_DIR / f'pipeline_{timestamp}.log'
     
@@ -131,12 +146,35 @@ def setup_logging():
 
 def generate_all_datasets():
     """
-    Generate all 6 synthetic datasets and save them with metadata.
-    
-    Returns:
-    --------
+    Generate the 6 synthetic causal datasets used in the experiment.
+
+    The six datasets are the Cartesian product of:
+      * functional form : linear | nonlinear | mixed (50 % linear / 50 % nonlinear)
+      * confounding     : no confounders | with confounders
+
+    Each dataset is produced by ``SyntheticCausalSystem`` with a shared random
+    seed (``RANDOM_STATE``) and the following global parameters:
+
+      * N_FEATURES = 50 input features (X1 … X50) + 1 target (Y)
+      * N_SAMPLES  = 1 000 total observations
+      * Y_PARENTS_RATIO = 0.50  → 25 of the 50 features are direct parents of Y
+      * NOISE_STD = 0.5  added to every structural equation
+      * EDGE_PROBABILITY = 0.2  (Erdős–Rényi probability for X→X edges)
+      * MIN_CONNECTED_EDGES = 2  (minimum degree for connectivity guarantee)
+      * mixed systems use linear_ratio = 0.5
+
+    For each dataset the following files are written to ``data/synthetic/``:
+      * ``{filename}.parquet``           — full data (X columns + Y column)
+      * ``{filename}_adjacency.npy``     — true adjacency matrix, shape (51, 51),
+                                           adj[i,j]=1 means i→j
+      * ``{filename}_confounders.json``  — list of confounder pairs
+      * ``{filename}_y_params.json``     — weights / parameters used to generate Y
+      * ``{filename}_metadata.json``     — experiment parameters + y_parent_indices
+
+    Returns
+    -------
     dataset_configs : List[Dict]
-        Configuration for each generated dataset
+        One metadata dict per dataset (same content as the saved JSON files).
     """
     logging.info("=" * 80)
     logging.info("STEP 1: GENERATING SYNTHETIC DATASETS")
@@ -247,12 +285,24 @@ def generate_all_datasets():
 
 def create_train_test_splits(dataset_configs: List[Dict]):
     """
-    Create standardized train/test splits for all datasets.
-    
-    Parameters:
-    -----------
+    Create and persist 80 / 20 train–test splits for all 6 datasets.
+
+    The split is performed with ``sklearn.model_selection.train_test_split``
+    using ``TEST_SIZE = 0.20`` and ``RANDOM_STATE = 42`` so the partition is
+    identical across all runs.
+
+    With N_SAMPLES = 1 000 this yields:
+      * 800 training rows   (used for model training and causal discovery)
+      * 200 test rows       (used for SHAP evaluation)
+
+    Each split is saved as a parquet file under ``data/processed/``:
+      * ``{filename}_train.parquet``  — 800 rows, X columns + Y column
+      * ``{filename}_test.parquet``   — 200 rows, X columns + Y column
+
+    Parameters
+    ----------
     dataset_configs : List[Dict]
-        Dataset configurations from Step 1
+        Dataset configurations returned by ``generate_all_datasets``.
     """
     logging.info("=" * 80)
     logging.info("STEP 2: CREATING TRAIN/TEST SPLITS")
@@ -300,21 +350,64 @@ def create_train_test_splits(dataset_configs: List[Dict]):
 
 def run_causal_discovery(dataset_configs: List[Dict]):
     """
-    Run PC and LiNGAM causal discovery on all datasets.
+    Run DirectLiNGAM and PC causal discovery on all 6 datasets and build the
+    ground-truth reference graph (True DAG) used for both accuracy evaluation
+    and True-DAG Shapley computation.
 
-    The discovery algorithms run on X features only (Y is excluded from the
-    input).  After discovery, edges to Y are added for:
-      - Features used by the trained LGBM model (available for TARGET_DATASETS
-        since Step 4 / train_all_models runs first)
-      - Sink nodes in the X-only causal graph (ensures Y is the ultimate sink)
+    Discovery algorithms
+    --------------------
+    Both algorithms operate on the **X-only training set** (Y excluded from
+    the input; 800 rows, full dataset — no subsampling):
 
-    For datasets that have no trained model (non-target datasets) only the
-    sink-node rule applies.
+    * **DirectLiNGAM** (``causal-learn``)
+        - Fits a linear non-Gaussian acyclic model.
+        - ``adjacency_matrix_[i,j]`` is the coefficient of X_j *on* X_i, so
+          the matrix is transposed before binarisation to obtain the convention
+          ``adj[i,j] = 1 ↔ edge i → j``.
+        - Edges with |coefficient| < 0.10 are pruned to zero.
 
-    Parameters:
-    -----------
+    * **PC** (``causal-learn``, Fisher-z conditional independence test,
+      ``PC_ALPHA = 0.05``)
+        - Produces a CPDAG.
+        - Directed edges (``graph[i,j] == -1 and graph[j,i] == 1``) are
+          preserved as-is.
+        - Undirected edges (``graph[i,j] == -1 and graph[j,i] == -1``) are
+          arbitrarily oriented as i→j (lower index to higher).
+
+    X→Y edge augmentation
+    ---------------------
+    After X-only discovery, edges to Y are added so that the full (n+1)×(n+1)
+    adjacency matrix reflects what the LGBM model actually uses:
+      1. X_i → Y for every feature in ``model.selected_features`` (for datasets
+         in TARGET_DATASETS where a trained model exists).
+      2. X_i → Y for every sink node — any X_i with no outgoing X→X edges —
+         so that Y remains the terminal sink for all datasets.
+
+    True DAG reference (true_full_adj)
+    -----------------------------------
+    The raw data-generation adjacency (X→X only, shape 50×50) is extended to a
+    (51×51) matrix using the same two rules above.  This becomes the canonical
+    ground-truth graph used for:
+      * Accuracy metrics (F1, Precision, Recall) of PC and LiNGAM.
+      * True-DAG Shapley values in Step 5.
+    The matrix is persisted to ``data/causal/{filename}_true_full_adjacency.npy``
+    so that Step 5 can load it without recomputing.
+
+    Saved outputs (``data/causal/``)
+    ----------------------------------
+    For each dataset × method (lingam / pc):
+      * ``{filename}_{method}_results.json``          — full (n+1)×(n+1) adj + feature names
+      * ``{filename}_{method}_train_adjacency.npy``   — X-only (n×n) adj for CausalShapley
+      * ``{filename}_{method}_comparison.json``       — F1 / Precision / Recall vs true_full_adj
+      * ``{filename}_{method}_visualization.png``     — full graph comparison plot
+      * ``{filename}_{method}_visualization_filtered.png`` — sink-filtered comparison plot
+    Additionally:
+      * ``{filename}_true_full_adjacency.npy``        — True DAG reference matrix
+
+    Parameters
+    ----------
     dataset_configs : List[Dict]
-        Dataset configurations from Step 1
+        Dataset configurations returned by ``generate_all_datasets``.
     """
     logging.info("=" * 80)
     logging.info("STEP 4: RUNNING CAUSAL DISCOVERY")
@@ -345,6 +438,31 @@ def run_causal_discovery(dataset_configs: List[Dict]):
                 logging.info(f"  Loaded LGBM model ({len(trained_model.selected_features)} features used for Y edges)")
             else:
                 logging.warning(f"  No trained model found for {filename}; Y edges determined by sink nodes only")
+
+        # Build true_full_adj: canonical reference graph for accuracy metrics.
+        # Matches the construction used in Step 5 (calculate_all_shapley_values):
+        #   • X→Y for every feature used by the LGBM model (if available)
+        #   • X→Y for every sink node in true_adj_xx (no outgoing X→X edges)
+        _feature_names_list = X_train.columns.tolist()
+        _n_feat = len(_feature_names_list)
+        _true_adj_xx = true_adj[:_n_feat, :_n_feat]
+        true_full_adj = np.zeros((_n_feat + 1, _n_feat + 1), dtype=int)
+        true_full_adj[:_n_feat, :_n_feat] = _true_adj_xx
+        if trained_model is not None:
+            for _feat in trained_model.selected_features:
+                if _feat in _feature_names_list:
+                    _fi = _feature_names_list.index(_feat)
+                    true_full_adj[_fi, _n_feat] = 1
+        for _fi in range(_n_feat):
+            if _true_adj_xx[_fi, :].sum() == 0:
+                true_full_adj[_fi, _n_feat] = 1
+        _y_edges_ref = int(true_full_adj[:_n_feat, _n_feat].sum())
+        logging.info(f"  True DAG reference: {int(_true_adj_xx.sum())} X→X edges + {_y_edges_ref} X→Y edges")
+
+        # Persist true_full_adj so Step 5 can load it without recomputing
+        true_full_adj_path = CAUSAL_DIR / f"{filename}_true_full_adjacency.npy"
+        np.save(true_full_adj_path, true_full_adj)
+        logging.info(f"  True DAG reference saved to {true_full_adj_path.name}")
 
         # Initialize discovery methods
         lingam_fci = LiNGAMWithFCI(alpha=LINGAM_ALPHA, indep_test=INDEP_TEST)
@@ -382,11 +500,12 @@ def run_causal_discovery(dataset_configs: List[Dict]):
                 train_adj_path = CAUSAL_DIR / f"{filename}_{method_name}_train_adjacency.npy"
                 np.save(train_adj_path, pc_train_adj)
             
-            # Compare with ground truth (note: Y column now reflects model/sink
-            # edges rather than algorithm-discovered Y parents — intentional)
+            # Compare with ground truth using true_full_adj (LGBM features + sink
+            # nodes as X→Y edges) so that accuracy metrics account for the model's
+            # view of which features matter, not just the raw data-generation parents.
             comparison = compare_with_ground_truth(
                 discovered_adj=results['adjacency_matrix'],
-                true_adj=true_adj,
+                true_adj=true_full_adj,
                 discovered_confounders=results['confounders'],
                 true_confounders=true_conf
             )
@@ -401,7 +520,7 @@ def run_causal_discovery(dataset_configs: List[Dict]):
             # Visualizations — feature_names from results already includes 'Y'
             all_feature_names = results['feature_names']
             fig = visualize_comparison(
-                true_adj=true_adj,
+                true_adj=true_full_adj,
                 discovered_adj=results['adjacency_matrix'],
                 features_names=all_feature_names,
                 y_parent_indices=config['y_parent_indices'],
@@ -411,7 +530,7 @@ def run_causal_discovery(dataset_configs: List[Dict]):
             )
 
             fig_filtered = visualize_comparison(
-                true_adj=true_adj,
+                true_adj=true_full_adj,
                 discovered_adj=results['adjacency_matrix'],
                 features_names=all_feature_names,
                 y_parent_indices=config['y_parent_indices'],
@@ -440,12 +559,30 @@ def run_causal_discovery(dataset_configs: List[Dict]):
 
 def train_all_models(dataset_configs: List[Dict]):
     """
-    Train LGBM model on target datasets.
-    
-    Parameters:
-    -----------
+    Fit one LightGBM regressor per dataset (all 6 datasets).
+
+    Feature selection is **disabled** (``feature_selection=False``) so that
+    the model uses all 50 input features, which keeps the feature space
+    consistent with the causal graph and SHAP computation.
+
+    For each dataset the following are computed on the 200-row test split and
+    logged / saved to ``models/{filename}_metrics.json``:
+      * R²  (coefficient of determination)
+      * MSE (mean squared error)
+      * MAE (mean absolute error)
+      * RMSE (root mean squared error)
+
+    The trained model is serialised to:
+      * ``models/{filename}_lgbm.pkl``  (via ``LGBMRegressor.save``)
+
+    ``model.selected_features`` contains the list of all feature names (all 50)
+    and is used downstream by ``run_causal_discovery`` to assign X→Y edges in
+    the reference graph.
+
+    Parameters
+    ----------
     dataset_configs : List[Dict]
-        Dataset configurations from Step 1
+        Dataset configurations returned by ``generate_all_datasets``.
     """
     logging.info("=" * 80)
     logging.info(f"STEP 3: TRAINING PREDICTIVE MODELS (LGBM only, {len(dataset_configs)} datasets — all)")
@@ -533,25 +670,60 @@ def train_all_models(dataset_configs: List[Dict]):
 
 def calculate_all_shapley_values(dataset_configs: List[Dict]):
     """
-    Calculate and save Shapley values using explainability methods.
-    
-    For mixed_no_conf_f50_s1000_p50 dataset with LGBM model:
-      - ShapleyFromScratch (no causal graph)
-      - For each discovery method (PC, LiNGAM):
-        - AsymmetricShapley
-        - CausalShapley
-        - ShapleyFlowWrapper (path sampling)
-        - GraphExplainerWrapper (shapflow's GraphExplainer with learned functions)
-    
-    Saves:
-    ------
-    - shapley_values.npy: SHAP values for each instance
-    - feature_importance.csv: Average feature importance
-    
-    Parameters:
-    -----------
+    Compute and persist Shapley values for all method × causal-graph combinations
+    on the TARGET_DATASETS.
+
+    Only datasets listed in ``TARGET_DATASETS`` are processed.
+
+    Data setup
+    ----------
+    For each target dataset:
+      * Background data : random sample of 30 % of training rows
+        (``BACKGROUND_RATIO = 0.30`` → ~240 rows), used as the reference
+        distribution for all methods.
+      * Test instances  : random sample of 50 % of test rows
+        (``TEST_INSTANCES_RATIO = 0.50`` → ~100 rows), the instances whose
+        predictions are explained.
+    Both samples are drawn with ``RANDOM_STATE = 42`` for reproducibility.
+
+    Combinations computed  (10 total per dataset)
+    ----------------------------------------------
+    1. **Scratch**                — ``ShapleyFromScratch`` (no causal graph),
+                                   Monte Carlo permutation, N_SHAPLEY_SAMPLES = 100
+    2. **PC + Asymmetric**        — ``AsymmetricShapley`` with PC full_adj (n+1 × n+1)
+    3. **PC + Causal**            — ``CausalShapley`` with PC X-only adj (n × n)
+    4. **PC + Flow**              — ``ShapleyFlowWrapper`` with PC full_adj
+    5. **LiNGAM + Asymmetric**    — ``AsymmetricShapley`` with LiNGAM full_adj
+    6. **LiNGAM + Causal**        — ``CausalShapley`` with LiNGAM X-only adj
+    7. **LiNGAM + Flow**          — ``ShapleyFlowWrapper`` with LiNGAM full_adj
+    8. **True + Asymmetric**      — ``AsymmetricShapley`` with true_full_adj
+    9. **True + Causal**          — ``CausalShapley`` with true X-only adj (raw 50 × 50)
+    10. **True + Flow**           — ``ShapleyFlowWrapper`` with true_full_adj
+
+    Causal graph sources
+    --------------------
+    * PC / LiNGAM : loaded from ``data/causal/{filename}_{method}_results.json``
+      (full n+1 × n+1 adj) and ``{method}_train_adjacency.npy`` (X-only adj).
+    * True DAG    : ``true_full_adj`` loaded from
+      ``data/causal/{filename}_true_full_adjacency.npy`` (produced by Step 4);
+      the raw X-only block is re-extracted for CausalShapley.
+
+    ShapleyFlow data format
+    -----------------------
+    ShapleyFlow requires Y in the data frame.  Background and test frames are
+    extended with the corresponding Y column before being passed to
+    ``ShapleyFlowWrapper``.
+
+    Saved outputs (``data/explainability/{dataset}/lgbm/``)
+    --------------------------------------------------------
+    Each combination writes two files:
+      * ``{graph}/{method}/shapley_values.npy``      — shape (n_test_instances, n_features)
+      * ``{graph}/{method}/feature_importance.csv``  — mean |SHAP| per feature
+
+    Parameters
+    ----------
     dataset_configs : List[Dict]
-        Dataset configurations from Step 1
+        Dataset configurations returned by ``generate_all_datasets``.
     """
     logging.info("=" * 80)
     logging.info(f"STEP 5: CALCULATING SHAPLEY VALUES ({len(TARGET_DATASETS)} datasets + LGBM only)")
@@ -713,26 +885,17 @@ def calculate_all_shapley_values(dataset_configs: List[Dict]):
                 flow_importance.to_csv(flow_dir / 'feature_importance.csv', index=False)
 
             # ── True DAG Shapley values ────────────────────────────────────────────
-            # Build full True DAG adjacency using the same logic as run_causal_discovery:
-            #   • X→Y for every feature used by the LGBM model
-            #   • X→Y for every sink node in true_adj_xx (no outgoing X→X edges)
+            # Load true_full_adj saved by run_causal_discovery (Step 4):
+            # that step builds X→X from raw adjacency + X→Y for LGBM features
+            # and sink nodes, then persists it as {filename}_true_full_adjacency.npy.
             logging.info(f"\n  ─── True DAG (ground-truth causal structure) ───")
             feature_names_xx = X_train.columns.tolist()
             n_feat_xx = len(feature_names_xx)
-            raw_true_adj = np.load(SYNTHETIC_DIR / f"{filename}_adjacency.npy")
-            true_adj_xx_pipe = raw_true_adj[:n_feat_xx, :n_feat_xx]
+            true_adj_xx_pipe = np.load(SYNTHETIC_DIR / f"{filename}_adjacency.npy")[:n_feat_xx, :n_feat_xx]
 
-            true_full_adj = np.zeros((n_feat_xx + 1, n_feat_xx + 1), dtype=int)
-            true_full_adj[:n_feat_xx, :n_feat_xx] = true_adj_xx_pipe
-            for _feat in model.selected_features:
-                if _feat in feature_names_xx:
-                    _fi = feature_names_xx.index(_feat)
-                    true_full_adj[_fi, n_feat_xx] = 1
-            for _fi in range(n_feat_xx):
-                if true_adj_xx_pipe[_fi, :].sum() == 0:
-                    true_full_adj[_fi, n_feat_xx] = 1
+            true_full_adj = np.load(CAUSAL_DIR / f"{filename}_true_full_adjacency.npy")
             y_edges_true = int(true_full_adj[:n_feat_xx, n_feat_xx].sum())
-            logging.info(f"  True DAG: {int(true_adj_xx_pipe.sum())} X→X edges + {y_edges_true} X→Y edges")
+            logging.info(f"  True DAG loaded: {int(true_adj_xx_pipe.sum())} X→X edges + {y_edges_true} X→Y edges")
 
             # AsymmetricShapley (True)
             logging.info(f"  [Progress: {progress_counter}/{total_combinations}] {model_name.upper()} + TRUE - AsymmetricShapley")
@@ -805,16 +968,25 @@ def calculate_all_shapley_values(dataset_configs: List[Dict]):
 
 def calculate_comparison_metrics(dataset_configs: List[Dict]):
     """
-    Create PC vs LiNGAM comparison visualizations for target datasets.
-    
-    This step loads the saved SHAP values from Step 5 and creates:
-    - Visualization comparing PC vs LiNGAM for top 10 features from Scratch
-    - Shows Scratch, Asymmetric, and Causal methods
-    
-    Parameters:
-    -----------
+    Produce a side-by-side PC vs LiNGAM bar chart for the top-10 features.
+
+    Operates only on TARGET_DATASETS.  For each target dataset:
+
+    1. Load mean |SHAP| from ``scratch/shapley_values.npy`` and rank all 50
+       features by importance.
+    2. Restrict to features that appear in at least one edge of the PC *or*
+       LiNGAM discovered graph.
+    3. Select the top 10 among those filtered features.
+    4. For each discovery method (PC, LiNGAM), display four bars per feature:
+         Scratch | Asymmetric | Causal | Flow
+
+    The resulting figure is saved to:
+      ``data/explainability/{dataset}/lgbm/pc_vs_lingam_comparison.png``
+
+    Parameters
+    ----------
     dataset_configs : List[Dict]
-        Dataset configurations from Step 1
+        Dataset configurations returned by ``generate_all_datasets``.
     """
     logging.info("=" * 80)
     logging.info(f"STEP 6: CREATING PC vs LiNGAM COMPARISON ({len(TARGET_DATASETS)} datasets + LGBM)")
