@@ -668,8 +668,6 @@ class AsymmetricShapley(ShapleyFromScratch):
 
         Differences from the old path-sampling approach
         -----------------------------------------------
-        - Every feature appears in **every** permutation (no zero-credit
-          features due to not being on a sampled path).
         - The causal partial order is always respected for *all* pairs,
           not just pairs on a single source-to-Y path.
         - O(n) per sample instead of DFS path enumeration.
