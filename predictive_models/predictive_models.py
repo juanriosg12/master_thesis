@@ -19,7 +19,9 @@ from sklearn.model_selection import train_test_split, cross_val_score
 from sklearn.preprocessing import StandardScaler
 from sklearn.feature_selection import mutual_info_regression, SelectKBest, f_regression
 from sklearn.metrics import (mean_squared_error, mean_absolute_error,
-                             r2_score, mean_absolute_percentage_error)
+                             r2_score, mean_absolute_percentage_error,
+                             accuracy_score, roc_auc_score, f1_score,
+                             log_loss, classification_report)
 from sklearn.neural_network import MLPRegressor
 
 # LightGBM
@@ -420,6 +422,181 @@ class NeuralNetRegressor(PredictiveModel):
         instance.metrics = model_data["metrics"]
 
         print(f"Neural Network model loaded from {filepath}.pkl")
+        return instance
+
+
+class LGBMClassifier(PredictiveModel):
+    """LightGBM classifier with Optuna hyperparameter optimisation.
+
+    Supports binary and multiclass classification.  The public interface
+    mirrors ``LGBMRegressor`` so callers can swap models with minimal changes.
+
+    Parameters
+    ----------
+    task : {'binary', 'multiclass'}, default 'binary'
+        LightGBM objective.  Use 'multiclass' for > 2 target classes.
+    random_state : int, default 42
+    n_trials : int, default 50
+        Number of Optuna optimisation trials.
+    """
+
+    def __init__(self, task: str = 'binary', random_state: int = 42,
+                 n_trials: int = 50):
+        super().__init__(random_state=random_state)
+        self.task = task
+        self.n_trials = n_trials
+        self.best_params = None
+        self.n_classes_ = None
+
+    # ------------------------------------------------------------------
+    def optimize_hyperparameters(self, X_train: pd.DataFrame, y_train: pd.Series,
+                                 X_val: pd.DataFrame, y_val: pd.Series) -> Dict:
+        metric = 'binary_logloss' if self.task == 'binary' else 'multi_logloss'
+
+        def objective(trial):
+            params = {
+                'objective':       self.task,
+                'metric':          metric,
+                'verbosity':       -1,
+                'random_state':    self.random_state,
+                'n_estimators':    trial.suggest_int('n_estimators', 50, 500),
+                'learning_rate':   trial.suggest_float('learning_rate', 0.01, 0.3, log=True),
+                'num_leaves':      trial.suggest_int('num_leaves', 20, 150),
+                'max_depth':       trial.suggest_int('max_depth', 3, 12),
+                'min_child_samples': trial.suggest_int('min_child_samples', 5, 100),
+                'subsample':       trial.suggest_float('subsample', 0.6, 1.0),
+                'colsample_bytree': trial.suggest_float('colsample_bytree', 0.6, 1.0),
+                'reg_alpha':       trial.suggest_float('reg_alpha', 1e-8, 10.0, log=True),
+                'reg_lambda':      trial.suggest_float('reg_lambda', 1e-8, 10.0, log=True),
+            }
+            if self.task == 'multiclass':
+                params['num_class'] = self.n_classes_
+
+            model = lgb.LGBMClassifier(**params)
+            model.fit(X_train, y_train,
+                      eval_set=[(X_val, y_val)],
+                      callbacks=[lgb.early_stopping(stopping_rounds=20, verbose=False)])
+            proba = model.predict_proba(X_val)
+            return log_loss(y_val, proba)
+
+        study = optuna.create_study(
+            direction='minimize',
+            sampler=optuna.samplers.TPESampler(seed=self.random_state)
+        )
+        study.optimize(objective, n_trials=self.n_trials, show_progress_bar=False)
+
+        self.best_params = study.best_params
+        self.best_params['objective']    = self.task
+        self.best_params['metric']       = metric
+        self.best_params['verbosity']    = -1
+        self.best_params['random_state'] = self.random_state
+        if self.task == 'multiclass':
+            self.best_params['num_class'] = self.n_classes_
+        return self.best_params
+
+    # ------------------------------------------------------------------
+    def fit(self, X: pd.DataFrame, y: pd.Series,
+            n_features: Optional[int] = None,
+            feature_selection: bool = True,
+            optimize: bool = True) -> 'LGBMClassifier':
+        if feature_selection:
+            X = self.select_features(X, y, n_features=n_features)
+        else:
+            self.selected_features = X.columns.tolist()
+
+        self.n_classes_ = int(y.nunique())
+
+        X_train, X_val, y_train, y_val = train_test_split(
+            X, y, test_size=0.2, random_state=self.random_state, stratify=y
+        )
+
+        if optimize:
+            print(f"Optimizing LightGBM classifier hyperparameters ({self.n_trials} trials)...")
+            self.optimize_hyperparameters(X_train, y_train, X_val, y_val)
+            params = self.best_params
+        else:
+            params = {
+                'objective':    self.task,
+                'metric':       'binary_logloss' if self.task == 'binary' else 'multi_logloss',
+                'verbosity':    -1,
+                'random_state': self.random_state,
+                'n_estimators': 200,
+            }
+            if self.task == 'multiclass':
+                params['num_class'] = self.n_classes_
+
+        print("Training LightGBM classifier...")
+        self.model = lgb.LGBMClassifier(**params)
+        self.model.fit(X_train, y_train,
+                       eval_set=[(X_val, y_val)],
+                       callbacks=[lgb.early_stopping(stopping_rounds=20, verbose=False)])
+
+        self.metrics = self._compute_metrics(X_train, y_train, X_val, y_val)
+        return self
+
+    def _compute_metrics(self, X_train, y_train, X_val, y_val) -> Dict:
+        metrics = {}
+        for prefix, X_, y_ in [('train_', X_train, y_train), ('val_', X_val, y_val)]:
+            preds = self.model.predict(X_)
+            proba = self.model.predict_proba(X_)
+            metrics[f'{prefix}accuracy'] = float(accuracy_score(y_, preds))
+            metrics[f'{prefix}f1']       = float(f1_score(y_, preds, average='weighted'))
+            metrics[f'{prefix}logloss']  = float(log_loss(y_, proba))
+            if self.task == 'binary':
+                metrics[f'{prefix}roc_auc'] = float(roc_auc_score(y_, proba[:, 1]))
+        return metrics
+
+    # ------------------------------------------------------------------
+    def predict(self, X: pd.DataFrame) -> np.ndarray:
+        if self.selected_features is not None and isinstance(X, pd.DataFrame):
+            X = X[self.selected_features]
+        return self.model.predict(X)
+
+    def predict_proba(self, X: pd.DataFrame) -> np.ndarray:
+        if self.selected_features is not None and isinstance(X, pd.DataFrame):
+            X = X[self.selected_features]
+        return self.model.predict_proba(X)
+
+    # ------------------------------------------------------------------
+    def get_feature_importance(self) -> pd.DataFrame:
+        if self.model is None:
+            return None
+        return pd.DataFrame({
+            'feature':    self.selected_features,
+            'importance': self.model.feature_importances_,
+        }).sort_values('importance', ascending=False)
+
+    # ------------------------------------------------------------------
+    def save(self, filepath: str):
+        filepath = Path(filepath)
+        model_data = {
+            'model':             self.model,
+            'selected_features': self.selected_features,
+            'best_params':       self.best_params,
+            'metrics':           self.metrics,
+            'n_trials':          self.n_trials,
+            'random_state':      self.random_state,
+            'task':              self.task,
+            'n_classes_':        self.n_classes_,
+        }
+        joblib.dump(model_data, str(filepath) + '.pkl')
+        print(f"LightGBM classifier saved to {filepath}.pkl")
+
+    @classmethod
+    def load(cls, filepath: str) -> 'LGBMClassifier':
+        filepath = Path(filepath)
+        model_data = joblib.load(str(filepath) + '.pkl')
+        instance = cls(
+            task=model_data['task'],
+            random_state=model_data['random_state'],
+            n_trials=model_data['n_trials'],
+        )
+        instance.model             = model_data['model']
+        instance.selected_features = model_data['selected_features']
+        instance.best_params       = model_data['best_params']
+        instance.metrics           = model_data['metrics']
+        instance.n_classes_        = model_data['n_classes_']
+        print(f"LightGBM classifier loaded from {filepath}.pkl")
         return instance
 
 

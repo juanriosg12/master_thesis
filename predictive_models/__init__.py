@@ -1,1 +1,1 @@
-from .predictive_models import LGBMRegressor, NeuralNetRegressor, train_predictive_models, train_test_split
+from .predictive_models import LGBMRegressor, NeuralNetRegressor, LGBMClassifier, train_predictive_models, train_test_split
