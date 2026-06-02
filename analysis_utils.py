@@ -39,6 +39,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+import matplotlib.patches as mpatches
 import matplotlib.pyplot as plt
 import networkx as nx
 import numpy as np
@@ -1251,4 +1252,1103 @@ def plot_instance_shap_pc_vs_lingam(
         ),
     )
     fig.show()
+    return fig
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 8. Stand-alone plot functions (save to plots/ folder + show)
+#    Each function accepts an optional ``save_dir`` (Path or str).
+#    If supplied the figure is saved there; otherwise nothing is written.
+# ─────────────────────────────────────────────────────────────────────────────
+
+def _save_fig(fig, save_dir, filename):
+    """Save fig (plotly or matplotlib) to save_dir/filename if save_dir is set."""
+    if save_dir is None:
+        return
+    out = Path(save_dir)
+    out.mkdir(parents=True, exist_ok=True)
+    dest = out / filename
+    if hasattr(fig, "write_image"):          # Plotly figure
+        try:
+            fig.write_image(str(dest))
+        except Exception:
+            fig.write_html(str(dest.with_suffix(".html")))
+    else:                                    # Matplotlib figure
+        fig.savefig(str(dest), dpi=150, bbox_inches="tight")
+    print(f"  ✅  Saved → {dest}")
+
+
+def plot_timing_table(
+    timing_df: "pd.DataFrame",
+    total_time: str,
+    dataset: str,
+    save_dir=None,
+) -> "go.Figure":
+    """
+    Plotly table of pipeline timing summary.
+
+    Parameters
+    ----------
+    timing_df  : DataFrame from ``parse_pipeline_timing``.
+    total_time : Human-readable total time string.
+    dataset    : Dataset name for the title.
+    save_dir   : Optional directory to save the figure.
+
+    Returns
+    -------
+    go.Figure
+    """
+    header_vals = list(timing_df.columns)
+    cell_vals   = [timing_df[c].tolist() for c in timing_df.columns]
+    n = len(timing_df)
+    row_colors = [["#f0f4f8" if i % 2 == 0 else "white" for i in range(n)]] * len(header_vals)
+
+    fig = go.Figure(go.Table(
+        header=dict(
+            values=[f"<b>{v}</b>" for v in header_vals],
+            fill_color="#2c3e50", font=dict(color="white", size=12),
+            align="left", height=30,
+        ),
+        cells=dict(
+            values=cell_vals,
+            fill_color=row_colors,
+            align="left", height=26,
+            font=dict(size=11),
+        ),
+    ))
+    fig.update_layout(
+        title=dict(
+            text=(
+                f"Pipeline Timing Summary — {dataset}<br>"
+                f"<sup>Total execution time: {total_time}</sup>"
+            ),
+            font=dict(size=14),
+        ),
+        margin=dict(l=10, r=10, t=60, b=10),
+        height=90 + 30 + n * 50,
+    )
+    fig.show()
+    _save_fig(fig, save_dir, f"timing_table_{dataset}.png")
+    return fig
+
+
+def plot_feature_importance_bar(
+    shap_data:      dict,
+    feature_names:  list,
+    scratch_rank:   "np.ndarray",
+    top_features:   list,
+    mean_abs:       dict,
+    pc_edges:       int,
+    pc_sources:     int,
+    lingam_edges:   int,
+    lingam_sources: int,
+    method_colors:  dict,
+    dataset:        str,
+    n_top_features: int,
+    features:       list | None = None,
+    save_dir=None,
+) -> "go.Figure":
+    """
+    Grouped bar chart of mean |SHAP| per feature × method, split by graph type.
+
+    Parameters
+    ----------
+    shap_data      : method key → SHAP array.
+    feature_names  : ordered list of feature name strings.
+    scratch_rank   : top-N feature indices sorted by Scratch importance.
+    top_features   : corresponding feature name list.
+    mean_abs       : method key → mean |SHAP| array (pre-computed).
+    pc_edges       : number of edges in the PC graph.
+    pc_sources     : number of source nodes in the PC graph.
+    lingam_edges   : number of edges in the LiNGAM graph.
+    lingam_sources : number of source nodes in the LiNGAM graph.
+    method_colors  : dict mapping method short-name → hex colour.
+    dataset        : dataset name for the title.
+    n_top_features : number of top features shown when ``features`` is None.
+    features       : optional explicit list of feature names to display.
+    save_dir       : optional directory to save the figure.
+    """
+    feat_idx, feat_labels = resolve_features(feature_names, scratch_rank, top_features, features)
+    title_tag = f"Top {n_top_features}" if features is None else f"{len(feat_labels)}"
+
+    pc_methods     = ["Scratch", "Asymmetric (PC)",     "Causal (PC)",     "Flow (PC)"]
+    lingam_methods = ["Scratch", "Asymmetric (LiNGAM)", "Causal (LiNGAM)", "Flow (LiNGAM)"]
+
+    rows = []
+    for method in pc_methods:
+        src_key = "Scratch" if method == "Scratch" else method
+        if src_key not in mean_abs:
+            continue
+        label = method.replace(" (PC)", "")
+        for fi in feat_idx:
+            rows.append(dict(
+                Feature    = feature_names[fi],
+                Method     = label,
+                Graph      = f"PC  ({pc_edges} edges, {pc_sources} sources)",
+                Importance = float(mean_abs[src_key][fi]),
+            ))
+    for method in lingam_methods:
+        src_key = "Scratch" if method == "Scratch" else method
+        if src_key not in mean_abs:
+            continue
+        label = method.replace(" (LiNGAM)", "")
+        for fi in feat_idx:
+            rows.append(dict(
+                Feature    = feature_names[fi],
+                Method     = label,
+                Graph      = f"LiNGAM  ({lingam_edges} edges, {lingam_sources} sources)",
+                Importance = float(mean_abs[src_key][fi]),
+            ))
+
+    df_imp = pd.DataFrame(rows)
+    df_imp["Feature"] = pd.Categorical(df_imp["Feature"], categories=feat_labels, ordered=True)
+
+    fig = px.bar(
+        df_imp,
+        x="Feature", y="Importance", color="Method",
+        barmode="group",
+        facet_col="Graph",
+        facet_col_spacing=0.06,
+        category_orders={
+            "Feature": feat_labels,
+            "Method":  ["Scratch", "Asymmetric", "Causal", "Flow"],
+        },
+        color_discrete_map={
+            "Scratch":    method_colors.get("Scratch",     "#636363"),
+            "Asymmetric": method_colors.get("Asymmetric",  "#2166ac"),
+            "Causal":     method_colors.get("Causal",      "#4dac26"),
+            "Flow":       method_colors.get("ShapleyFlow",  "#d01c8b"),
+        },
+        labels={"Importance": "Mean |SHAP|", "Feature": ""},
+        title=(
+            f"Global Feature Importance — {title_tag} Features "
+            f"(sorted by Traditional) — {dataset}"
+        ),
+        height=480,
+        width=1300,
+    )
+    fig.update_yaxes(matches="y")
+    fig.update_layout(legend_title_text="Method", margin=dict(t=80, b=60))
+    fig.show()
+    _save_fig(fig, save_dir, f"feature_importance_{dataset}.png")
+    return fig
+
+
+def plot_dag_comparison(
+    G_pc, pos_pc, td_pc, src_pc, y_pc, ml_pc,
+    G_lingam, pos_lingam, td_lingam, src_lingam, y_lingam, ml_lingam,
+    dataset: str,
+    prox_palette: list,
+    save_dir=None,
+):
+    """
+    Draw discovered PC and LiNGAM DAGs side by side.
+
+    Parameters
+    ----------
+    G_pc, pos_pc, td_pc, src_pc, y_pc, ml_pc         : PC graph from build_dag_graph / make_dag_pos.
+    G_lingam, pos_lingam, td_lingam, src_lingam, ...  : LiNGAM graph from same.
+    dataset     : dataset name for the title.
+    prox_palette: list of hex colours for depth colouring.
+    save_dir    : optional directory to save the figure.
+    """
+    fig, axes = plt.subplots(1, 2, figsize=(26, 14))
+    fig.patch.set_facecolor("#f0f0f0")
+
+    draw_dag(axes[0], G_pc,     pos_pc,     td_pc,     src_pc,     y_pc,     ml_pc,
+             f"PC Discovered — {dataset}")
+    draw_dag(axes[1], G_lingam, pos_lingam, td_lingam, src_lingam, y_lingam, ml_lingam,
+             f"LiNGAM Discovered — {dataset}")
+
+    max_lv_disc    = max(ml_pc, ml_lingam)
+    legend_entries = [mpatches.Patch(color="#e74c3c", label="Y (sink)")]
+    for prox in range(min(len(prox_palette), max_lv_disc + 1)):
+        idx = int(round(prox / max(max_lv_disc, 1) * (len(prox_palette) - 1)))
+        col = prox_palette[min(idx, len(prox_palette) - 1)]
+        d   = max_lv_disc - prox
+        lbl = (f"Depth {d} — sources (no parents)" if prox == max_lv_disc
+               else f"Depth {d}" + (" ← closest to Y" if prox == 0 else ""))
+        legend_entries.append(mpatches.Patch(color=col, label=lbl))
+    legend_entries += [mpatches.Patch(color="#c0392b", label="Edges → Y"),
+                       mpatches.Patch(color="#bdc3c7", label="Other edges")]
+    fig.legend(handles=legend_entries, loc="lower center", ncol=4, fontsize=9,
+               framealpha=0.85, bbox_to_anchor=(0.5, 0.01))
+    fig.suptitle(
+        f"Discovered Causal Graphs — {dataset}\n"
+        f"Node colour = topological depth from sources (Y excluded as intermediate)",
+        fontsize=13, fontweight="bold", y=0.99,
+    )
+    plt.tight_layout(rect=[0, 0.06, 1, 0.98])
+    _save_fig(fig, save_dir, f"dag_comparison_{dataset}.png")
+    plt.show()
+    return fig
+
+
+def plot_true_dag(
+    G_true, pos_true, td_true, src_true, y_true, ml_true,
+    dataset: str,
+    prox_palette: list,
+    save_dir=None,
+):
+    """
+    Draw the ground-truth causal DAG as a standalone panel.
+
+    Parameters
+    ----------
+    G_true, pos_true, td_true, src_true, y_true, ml_true : True graph.
+    dataset      : dataset name for the title.
+    prox_palette : list of hex colours for depth colouring.
+    save_dir     : optional directory to save the figure.
+    """
+    fig, ax = plt.subplots(1, 1, figsize=(18, 14))
+    fig.patch.set_facecolor("#f0f0f0")
+
+    draw_dag(ax, G_true, pos_true, td_true, src_true, y_true, ml_true,
+             f"True Causal Graph — {dataset}")
+
+    legend_entries = [mpatches.Patch(color="#e74c3c", label="Y (sink)")]
+    for prox in range(min(len(prox_palette), ml_true + 1)):
+        idx = int(round(prox / max(ml_true, 1) * (len(prox_palette) - 1)))
+        col = prox_palette[min(idx, len(prox_palette) - 1)]
+        d   = ml_true - prox
+        lbl = (f"Depth {d} — sources (no parents)" if prox == ml_true
+               else f"Depth {d}" + (" ← closest to Y" if prox == 0 else ""))
+        legend_entries.append(mpatches.Patch(color=col, label=lbl))
+    legend_entries += [mpatches.Patch(color="#c0392b", label="Edges → Y"),
+                       mpatches.Patch(color="#bdc3c7", label="Other edges")]
+    fig.legend(handles=legend_entries, loc="lower center", ncol=4, fontsize=9,
+               framealpha=0.85, bbox_to_anchor=(0.5, 0.01))
+    fig.suptitle(
+        f"Ground-Truth Causal Graph — {dataset}\n"
+        f"Node colour = topological depth from sources (Y excluded as intermediate)\n"
+        f"{G_true.number_of_nodes()} nodes  ·  {G_true.number_of_edges()} edges  ·  "
+        f"{sum(1 for u,v in G_true.edges() if v==y_true)} direct Y-parents  ·  "
+        f"{len(src_true)} sources  ·  max depth {ml_true}",
+        fontsize=13, fontweight="bold", y=0.99,
+    )
+    plt.tight_layout(rect=[0, 0.06, 1, 0.97])
+    _save_fig(fig, save_dir, f"dag_true_{dataset}.png")
+    plt.show()
+    return fig
+
+
+def plot_dag_highlight(
+    G_pc, pos_pc, td_pc, src_pc, y_pc, ml_pc,
+    G_lingam, pos_lingam, td_lingam, src_lingam, y_lingam, ml_lingam,
+    feature_name: str,
+    feature_names_list: list,
+    dataset: str,
+    figsize=(26, 14),
+    save_dir=None,
+):
+    """
+    Draw PC and LiNGAM DAGs side by side with one feature node highlighted.
+
+    Parameters
+    ----------
+    feature_name       : Name of the node to highlight, e.g. ``"X5"``.
+    feature_names_list : Ordered list of all node names.
+    dataset            : Dataset name for the title.
+    figsize            : Figure size.
+    save_dir           : Optional directory to save the figure.
+    """
+    fig, axes = plt.subplots(1, 2, figsize=figsize)
+    fig.patch.set_facecolor("#f0f0f0")
+
+    draw_dag_highlight(
+        axes[0], G_pc, pos_pc, td_pc, src_pc, y_pc, ml_pc,
+        title=f"PC Graph — {dataset}  ·  highlight: {feature_name}",
+        highlight_name=feature_name,
+        names=feature_names_list,
+    )
+    draw_dag_highlight(
+        axes[1], G_lingam, pos_lingam, td_lingam, src_lingam, y_lingam, ml_lingam,
+        title=f"LiNGAM Graph — {dataset}  ·  highlight: {feature_name}",
+        highlight_name=feature_name,
+        names=feature_names_list,
+    )
+    fig.suptitle(
+        f"DAG Node Highlight — {feature_name} — {dataset}\n"
+        f"Blue = incoming edges (parents of {feature_name})  ·  "
+        f"Orange-red = outgoing edges (children of {feature_name})",
+        fontsize=13, fontweight="bold", y=0.99,
+    )
+    plt.tight_layout(rect=[0, 0.02, 1, 0.97])
+    _save_fig(fig, save_dir, f"dag_highlight_{feature_name}_{dataset}.png")
+    plt.show()
+    return fig
+
+
+def plot_dag_highlight_true(
+    G_true, pos_true, td_true, src_true, y_true, ml_true,
+    feature_name: str,
+    feature_names_list: list,
+    dataset: str,
+    figsize=(16, 14),
+    save_dir=None,
+):
+    """
+    Draw the True (ground-truth) causal DAG with one feature node highlighted.
+
+    Parameters
+    ----------
+    feature_name       : Name of the node to highlight.
+    feature_names_list : Ordered list of all node names.
+    dataset            : Dataset name for the title.
+    figsize            : Figure size.
+    save_dir           : Optional directory to save the figure.
+    """
+    fig, ax = plt.subplots(1, 1, figsize=figsize)
+    fig.patch.set_facecolor("#f0f0f0")
+
+    draw_dag_highlight(
+        ax, G_true, pos_true, td_true, src_true, y_true, ml_true,
+        title=f"True Causal Graph — {dataset}  ·  highlight: {feature_name}",
+        highlight_name=feature_name,
+        names=feature_names_list,
+    )
+    fig.suptitle(
+        f"True DAG Node Highlight — {feature_name} — {dataset}\n"
+        f"Blue = incoming edges (parents of {feature_name})  ·  "
+        f"Orange-red = outgoing edges (children of {feature_name})",
+        fontsize=13, fontweight="bold", y=0.99,
+    )
+    plt.tight_layout(rect=[0, 0.02, 1, 0.97])
+    _save_fig(fig, save_dir, f"dag_highlight_true_{feature_name}_{dataset}.png")
+    plt.show()
+    return fig
+
+
+def plot_gss_heatmap(
+    gss_feat:      dict,
+    feature_names: list,
+    base_methods:  list,
+    dataset:       str,
+    top_n:         int = 40,
+    save_dir=None,
+) -> "go.Figure":
+    """
+    Feature-level GSS heatmap (methods = rows, features = columns).
+
+    Parameters
+    ----------
+    gss_feat      : method → 1-D np.ndarray of signed GSS per feature.
+    feature_names : ordered list of feature names.
+    base_methods  : ordered list of method names, e.g. ["Asymmetric","Causal","Flow"].
+    dataset       : dataset name for the title.
+    top_n         : number of features to show (sorted by mean |GSS| descending).
+    save_dir      : optional directory to save the figure.
+    """
+    gss_matrix = np.stack([gss_feat[m] for m in base_methods if m in gss_feat], axis=1)
+    feat_order  = np.argsort(np.abs(gss_matrix).mean(axis=1))[::-1]
+    top_n       = min(top_n, len(feature_names))
+    top_idx     = feat_order[:top_n]
+    gss_z_T     = gss_matrix[top_idx].T
+    abs_max     = float(np.nanmax(np.abs(gss_matrix)))
+    labels      = [m for m in base_methods if m in gss_feat]
+
+    fig = go.Figure(go.Heatmap(
+        z=gss_z_T, y=labels,
+        x=[feature_names[i] for i in top_idx],
+        colorscale="RdBu", zmid=0,
+        zmin=-abs_max, zmax=abs_max,
+        colorbar=dict(title=dict(text="GSS", font=dict(size=11))),
+        hovertemplate="<b>%{y}</b> — %{x}<br>GSS = %{z:.4f}<extra></extra>",
+    ))
+    fig.update_layout(
+        title=dict(
+            text=(
+                f"Feature-Level Graph Sensitivity Score — PC vs LiNGAM — {dataset}<br>"
+                f"<sup>GSS = mean_i(|φ(PC)|−|φ(LiNGAM)|).  "
+                f"Red = PC assigns higher importance;  Blue = LiNGAM;  White ≈ 0 = agree.  "
+                f"Top {top_n} features sorted by mean |GSS| descending.</sup>"
+            ),
+            font=dict(size=13),
+        ),
+        height=310, width=max(800, 20 * top_n + 200),
+        xaxis=dict(tickfont=dict(size=8), tickangle=-45, side="bottom"),
+        yaxis=dict(tickfont=dict(size=10)),
+        margin=dict(l=110, r=80, t=85, b=110),
+    )
+    fig.show()
+    _save_fig(fig, save_dir, f"gss_heatmap_{dataset}.png")
+    return fig
+
+
+def plot_gss_delta_box(
+    feat_delta:    dict,
+    feature_names: list,
+    scratch_rank:  "np.ndarray",
+    method_colors: dict,
+    dataset:       str,
+    n_top_features: int,
+    save_dir=None,
+) -> "go.Figure":
+    """
+    Per-instance importance magnitude delta box-plots for the top-N features.
+
+    Parameters
+    ----------
+    feat_delta     : method → (n_instances, n_features) array of |φ(PC)| − |φ(LiNGAM)|.
+    feature_names  : ordered list of feature names.
+    scratch_rank   : top-N feature indices sorted by Scratch importance.
+    method_colors  : method short-name → hex colour.
+    dataset        : dataset name.
+    n_top_features : N shown in the title.
+    save_dir       : optional save directory.
+    """
+    rows = []
+    for label, arr in feat_delta.items():
+        for fi in scratch_rank:
+            for v in arr[:, fi]:
+                rows.append(dict(Feature=feature_names[fi], Method=label, Delta=float(v)))
+    df = pd.DataFrame(rows)
+    df["Feature"] = pd.Categorical(
+        df["Feature"],
+        categories=[feature_names[i] for i in scratch_rank], ordered=True,
+    )
+    fig = px.box(
+        df, x="Feature", y="Delta", color="Method",
+        color_discrete_map={
+            "Asymmetric": method_colors.get("Asymmetric",  "#2166ac"),
+            "Causal":     method_colors.get("Causal",      "#4dac26"),
+            "Flow":       method_colors.get("ShapleyFlow",  "#d01c8b"),
+        },
+        points="outliers",
+        title=(
+            f"Per-Instance Importance Magnitude Delta |φ(PC)| − |φ(LiNGAM)| — "
+            f"Top {n_top_features} Features by Traditional — {dataset}<br>"
+            f"<sup>Positive = PC assigns higher importance; negative = LiNGAM.  "
+            f"Tight boxes = consistent effect; wide = instance-specific sensitivity.</sup>"
+        ),
+        labels={"Delta": "|φ(PC)| − |φ(LiNGAM)|", "Feature": ""},
+        height=480, width=1300,
+    )
+    fig.add_hline(y=0, line=dict(color="black", width=1, dash="dash"))
+    fig.update_layout(xaxis_tickangle=-40, legend_title_text="Method", margin=dict(t=90, b=80))
+    fig.show()
+    _save_fig(fig, save_dir, f"gss_delta_box_{dataset}.png")
+    return fig
+
+
+def plot_spearman_heatmap(
+    spearman_data: dict,
+    base_methods:  list,
+    disc_graphs:   list,
+    dataset:       str,
+    n_shap:        int,
+    save_dir=None,
+) -> "go.Figure":
+    """
+    Heat-map of Spearman ρ (each method × discovered graph vs Scratch).
+
+    Parameters
+    ----------
+    spearman_data : (method, graph) → float.
+    base_methods  : e.g. ["Asymmetric", "Causal", "Flow"].
+    disc_graphs   : e.g. ["PC", "LiNGAM"].
+    dataset       : dataset name.
+    n_shap        : number of SHAP instances (for subtitle).
+    save_dir      : optional save directory.
+    """
+    matrix = np.full((len(base_methods), len(disc_graphs)), np.nan)
+    for mi, meth in enumerate(base_methods):
+        for gi, g in enumerate(disc_graphs):
+            if (meth, g) in spearman_data:
+                matrix[mi, gi] = spearman_data[(meth, g)]
+
+    fig = go.Figure(go.Heatmap(
+        z=matrix, x=disc_graphs, y=base_methods,
+        colorscale="RdYlGn", zmin=0.5, zmax=1.0,
+        text=[[f"{v:.3f}" for v in row] for row in matrix],
+        texttemplate="%{text}", textfont=dict(size=14, color="black"),
+        colorbar=dict(title=dict(text="Spearman ρ", font=dict(size=11)),
+                      tickvals=[0.5, 0.6, 0.7, 0.8, 0.9, 1.0]),
+        hovertemplate="<b>%{y} (%{x})</b> vs Traditional<br>ρ = %{z:.3f}<extra></extra>",
+    ))
+    fig.update_layout(
+        title=dict(
+            text=(
+                f"Feature Ranking Correlation vs Traditional (Spearman ρ) — {dataset}<br>"
+                f"<sup>1.0 = identical ranking to the graph-free baseline.  "
+                f"Lower = graph reshuffles importance order.  n={n_shap} instances.</sup>"
+            ),
+            font=dict(size=13),
+        ),
+        height=250, width=480,
+        margin=dict(l=90, r=60, t=90, b=60),
+        yaxis=dict(tickfont=dict(size=12)),
+        xaxis=dict(tickfont=dict(size=11)),
+    )
+    fig.show()
+    _save_fig(fig, save_dir, f"spearman_heatmap_{dataset}.png")
+    return fig
+
+
+def plot_jaccard_bar(
+    df_jacc:       "pd.DataFrame",
+    method_colors: dict,
+    dataset:       str,
+    save_dir=None,
+) -> "go.Figure":
+    """
+    Grouped bar chart of top-K Jaccard overlap vs Traditional baseline.
+
+    Parameters
+    ----------
+    df_jacc       : DataFrame with columns [Method, Graph, K, Jaccard].
+    method_colors : method short-name → hex colour.
+    dataset       : dataset name.
+    save_dir      : optional save directory.
+    """
+    fig = px.bar(
+        df_jacc, x="Graph", y="Jaccard", color="Method", facet_col="K",
+        barmode="group",
+        color_discrete_map={
+            "Asymmetric": method_colors.get("Asymmetric",  "#2166ac"),
+            "Causal":     method_colors.get("Causal",      "#4dac26"),
+            "Flow":       method_colors.get("ShapleyFlow",  "#d01c8b"),
+        },
+        range_y=[0, 1.05],
+        title=(
+            f"Top-K Feature Set Overlap vs Traditional (Jaccard) — {dataset}<br>"
+            f"<sup>Fraction of top-K features shared with Traditional's top-K.  "
+            f"1.0 = method selects the exact same features as the graph-free baseline.</sup>"
+        ),
+        labels={"Jaccard": "Jaccard vs Traditional", "Graph": "Discovered Graph"},
+        height=380, width=900,
+    )
+    fig.add_hline(y=1.0, line=dict(color="gray", width=1, dash="dot"))
+    fig.update_layout(legend_title_text="Method", margin=dict(t=90, b=60))
+    fig.show()
+    _save_fig(fig, save_dir, f"jaccard_bar_{dataset}.png")
+    return fig
+
+
+def plot_parent_precision_bar(
+    df_parent:       "pd.DataFrame",
+    method_colors:   dict,
+    dataset:         str,
+    disc_graphs:     list,
+    random_baseline: float,
+    save_dir=None,
+) -> "go.Figure":
+    """
+    Bar chart of true Y-parent Precision@K.
+
+    Parameters
+    ----------
+    df_parent        : DataFrame with columns [Method, K, Precision].
+    method_colors    : method short-name → hex colour.
+    dataset          : dataset name.
+    disc_graphs      : list of discovered graph names, e.g. ["PC", "LiNGAM"].
+    random_baseline  : fraction of features that are true Y-parents.
+    save_dir         : optional save directory.
+    """
+    fig = px.bar(
+        df_parent, x="Method", y="Precision", color="Method",
+        facet_col="K", barmode="group",
+        color_discrete_map={
+            "Scratch":               method_colors.get("Scratch",    "#636363"),
+            **{f"Asymmetric ({g})": method_colors.get("Asymmetric", "#2166ac") for g in disc_graphs},
+            **{f"Causal ({g})":     method_colors.get("Causal",     "#4dac26") for g in disc_graphs},
+            **{f"Flow ({g})":       method_colors.get("ShapleyFlow","#d01c8b") for g in disc_graphs},
+        },
+        range_y=[0, 1.05],
+        title=(
+            f"True Y-Parent Precision@K — {dataset}<br>"
+            f"<sup>Red dashed = random baseline ({random_baseline:.2f}).</sup>"
+        ),
+        labels={"Precision": "Precision@K (true Y-parents)", "Method": ""},
+        height=440, width=1150,
+    )
+    fig.add_hline(
+        y=random_baseline,
+        line=dict(color="#d62728", width=1.5, dash="dash"),
+        annotation_text=f"random ({random_baseline:.2f})",
+        annotation_position="top right",
+        annotation_font_size=10,
+    )
+    fig.update_layout(showlegend=False, xaxis_tickangle=-30, margin=dict(t=90, b=100))
+    fig.update_xaxes(tickfont=dict(size=9))
+    fig.show()
+    _save_fig(fig, save_dir, f"parent_precision_bar_{dataset}.png")
+    return fig
+
+
+def plot_sss_heatmap(
+    sss_feat:      dict,
+    feature_names: list,
+    base_methods:  list,
+    dataset:       str,
+    top_n:         int = 40,
+    save_dir=None,
+) -> "go.Figure":
+    """
+    Feature-level Sign Stability Score heat-map.
+
+    Parameters
+    ----------
+    sss_feat      : method → 1-D np.ndarray of SSS per feature.
+    feature_names : ordered list of feature names.
+    base_methods  : ordered list of method names.
+    dataset       : dataset name.
+    top_n         : number of features to show (sorted by mean SSS ascending).
+    save_dir      : optional save directory.
+    """
+    labels     = [m for m in base_methods if m in sss_feat]
+    matrix     = np.stack([sss_feat[m] for m in labels], axis=1)
+    feat_order = np.argsort(np.nanmean(matrix, axis=1))
+    top_n      = min(top_n, len(feature_names))
+    top_idx    = feat_order[:top_n]
+    sss_z_T    = matrix[top_idx].T
+
+    fig = go.Figure(go.Heatmap(
+        z=sss_z_T, y=labels,
+        x=[feature_names[i] for i in top_idx],
+        colorscale="RdYlGn", zmin=0.0, zmax=1.0,
+        colorbar=dict(
+            title=dict(text="SSS", font=dict(size=11)),
+            tickvals=[0.0, 0.25, 0.5, 0.75, 1.0],
+            ticktext=["0 (always flips)", "0.25", "0.5", "0.75", "1 (always agrees)"],
+        ),
+        hovertemplate="<b>%{y}</b> — %{x}<br>SSS = %{z:.3f}<extra></extra>",
+    ))
+    fig.update_layout(
+        title=dict(
+            text=(
+                f"Feature-Level Sign Stability Score — PC vs LiNGAM — {dataset}<br>"
+                f"<sup>SSS = fraction of instances where SHAP sign agrees between PC and LiNGAM.  "
+                f"Top {top_n} features sorted by mean SSS ascending (most unstable first).</sup>"
+            ),
+            font=dict(size=13),
+        ),
+        height=310, width=max(800, 20 * top_n + 200),
+        xaxis=dict(tickfont=dict(size=8), tickangle=-45, side="bottom"),
+        yaxis=dict(tickfont=dict(size=10)),
+        margin=dict(l=110, r=80, t=85, b=110),
+    )
+    fig.show()
+    _save_fig(fig, save_dir, f"sss_heatmap_{dataset}.png")
+    return fig
+
+
+def plot_sss_bar(
+    sss_feat:      dict,
+    base_methods:  list,
+    method_colors: dict,
+    dataset:       str,
+    save_dir=None,
+) -> "go.Figure":
+    """
+    Bar chart of overall mean SSS per method.
+
+    Parameters
+    ----------
+    sss_feat      : method → 1-D np.ndarray of SSS per feature.
+    base_methods  : ordered method list.
+    method_colors : method short-name → hex colour.
+    dataset       : dataset name.
+    save_dir      : optional save directory.
+    """
+    color_map = {
+        "Asymmetric": method_colors.get("Asymmetric",  "#2166ac"),
+        "Causal":     method_colors.get("Causal",      "#4dac26"),
+        "Flow":       method_colors.get("ShapleyFlow",  "#d01c8b"),
+    }
+    fig = go.Figure()
+    for meth in base_methods:
+        if meth not in sss_feat:
+            continue
+        arr = sss_feat[meth]
+        fig.add_trace(go.Bar(
+            x=[meth], y=[float(np.nanmean(arr))],
+            name=meth, marker_color=color_map.get(meth, "#888888"),
+            hovertemplate=f"<b>{meth}</b><br>Mean SSS = %{{y:.4f}}<extra></extra>",
+        ))
+    fig.add_hline(y=1.0, line=dict(color="gray",    dash="dot", width=1))
+    fig.add_hline(y=0.5, line=dict(color="#d62728", dash="dash", width=1),
+                  annotation_text="0.5 (random)", annotation_font_size=9)
+    fig.update_layout(
+        title=dict(
+            text=(
+                f"Overall Sign Stability Score (Mean SSS) — {dataset}<br>"
+                f"<sup>1 = all features preserve sign; 0.5 = random; 0 = always flips.</sup>"
+            ),
+            font=dict(size=13),
+        ),
+        yaxis=dict(title="Mean SSS", range=[0, 1.05]),
+        showlegend=False,
+        height=340, width=420,
+        margin=dict(l=70, r=30, t=90, b=60),
+        xaxis=dict(tickfont=dict(size=11)),
+    )
+    fig.show()
+    _save_fig(fig, save_dir, f"sss_bar_{dataset}.png")
+    return fig
+
+
+def plot_sign_alignment_heatmap(
+    sign_align:    dict,
+    base_methods:  list,
+    disc_graphs:   list,
+    feature_names: list,
+    dataset:       str,
+    n_instances:   int,
+    top_n:         int = 40,
+    save_dir=None,
+) -> "go.Figure":
+    """
+    Heat-map of per-feature sign alignment rate vs True graph.
+
+    Parameters
+    ----------
+    sign_align    : (method, graph) → 1-D np.ndarray.
+    base_methods  : ordered method list.
+    disc_graphs   : discovered graph names.
+    feature_names : ordered feature names.
+    dataset       : dataset name.
+    n_instances   : number of instances used.
+    top_n         : features to show (sorted by worst mean alignment).
+    save_dir      : optional save directory.
+    """
+    sa_keys   = [(m, g) for m in base_methods for g in disc_graphs if (m, g) in sign_align]
+    sa_labels = [f"{m} ({g})" for m, g in sa_keys]
+    matrix    = np.stack([sign_align[k] for k in sa_keys], axis=1)
+
+    feat_order = np.argsort(matrix.mean(axis=1))
+    top_n      = min(top_n, len(feature_names))
+    top_idx    = feat_order[:top_n]
+
+    fig = go.Figure(go.Heatmap(
+        z=matrix[top_idx], x=sa_labels,
+        y=[feature_names[i] for i in top_idx],
+        colorscale="RdYlGn", zmin=0, zmax=1.0,
+        colorbar=dict(
+            title=dict(text="Sign Align", font=dict(size=11)),
+            tickvals=[0, 0.25, 0.5, 0.75, 1.0],
+            ticktext=["0 (always opp.)", "0.25", "0.5 (random)", "0.75", "1.0 (perfect)"],
+        ),
+        hovertemplate="<b>%{y}</b> — %{x}<br>Sign Align = %{z:.3f}<extra></extra>",
+    ))
+    fig.update_layout(
+        title=dict(
+            text=(
+                f"Sign Alignment vs True Graph — {dataset}<br>"
+                f"<sup>Fraction of instances where sign(φ_discovered) = sign(φ_true).  "
+                f"Sorted by worst mean alignment.  N={n_instances} instances.</sup>"
+            ),
+            font=dict(size=13),
+        ),
+        height=max(420, 18 * top_n + 120), width=760,
+        yaxis=dict(tickfont=dict(size=9)),
+        xaxis=dict(tickfont=dict(size=9), tickangle=-25),
+        margin=dict(l=80, r=80, t=90, b=80),
+    )
+    fig.show()
+    _save_fig(fig, save_dir, f"sign_alignment_heatmap_{dataset}.png")
+    return fig
+
+
+def plot_sign_alignment_bar(
+    df_sa:         "pd.DataFrame",
+    sign_align:    dict,
+    method_colors: dict,
+    dataset:       str,
+    save_dir=None,
+) -> "go.Figure":
+    """
+    Bar chart of overall sign alignment per method × graph.
+
+    Parameters
+    ----------
+    df_sa         : DataFrame with columns [Method, Graph, MeanAlign, label].
+    sign_align    : (method, graph) → np.ndarray (needed for annotation).
+    method_colors : method short-name → hex colour.
+    dataset       : dataset name.
+    save_dir      : optional save directory.
+    """
+    fig = px.bar(
+        df_sa, x="label", y="MeanAlign", color="Method", facet_col="Graph",
+        barmode="group",
+        color_discrete_map={
+            "Asymmetric": method_colors.get("Asymmetric",  "#2166ac"),
+            "Causal":     method_colors.get("Causal",      "#4dac26"),
+            "Flow":       method_colors.get("ShapleyFlow",  "#d01c8b"),
+        },
+        range_y=[0, 1.05],
+        title=(
+            f"Overall Sign Alignment vs True Graph — {dataset}<br>"
+            f"<sup>Mean across all features of per-feature sign agreement rate.  "
+            f"1.0 = all signs agree with True-graph attributions.</sup>"
+        ),
+        labels={"MeanAlign": "Mean Sign Alignment", "label": ""},
+        height=380, width=700,
+    )
+    fig.add_hline(y=0.5, line=dict(color="gray",  width=1, dash="dot"),
+                  annotation_text="random (0.5)", annotation_font_size=9)
+    fig.add_hline(y=1.0, line=dict(color="green", width=1, dash="dot"))
+    fig.update_layout(showlegend=True, xaxis_tickangle=-20, margin=dict(t=90, b=80))
+    fig.show()
+    _save_fig(fig, save_dir, f"sign_alignment_bar_{dataset}.png")
+    return fig
+
+
+def plot_tga_heatmap(
+    tga_data:      dict,
+    feature_names: list,
+    base_methods:  list,
+    disc_graphs:   list,
+    dataset:       str,
+    n_instances:   int,
+    top_n:         int = 40,
+    save_dir=None,
+) -> "go.Figure":
+    """
+    Feature-level magnitude TGA heat-map vs True DAG.
+
+    Parameters
+    ----------
+    tga_data      : (method, graph) → 1-D np.ndarray of signed TGA per feature.
+    feature_names : ordered feature names.
+    base_methods  : ordered method list.
+    disc_graphs   : discovered graph names.
+    dataset       : dataset name.
+    n_instances   : number of instances used (for subtitle).
+    top_n         : features to show.
+    save_dir      : optional save directory.
+    """
+    tga_keys   = [(m, g) for m in base_methods for g in disc_graphs if (m, g) in tga_data]
+    tga_labels = [f"{m} ({g})" for m, g in tga_keys]
+    matrix     = np.stack([tga_data[k] for k in tga_keys], axis=1)
+    abs_max    = float(np.max(np.abs(matrix)))
+
+    sort_idx   = np.argsort(np.abs(matrix).mean(axis=1))[::-1]
+    top_n      = min(top_n, len(feature_names))
+    top_idx    = sort_idx[:top_n]
+
+    fig = go.Figure(go.Heatmap(
+        z=matrix[top_idx].T,
+        x=[feature_names[i] for i in top_idx],
+        y=tga_labels,
+        colorscale="RdBu", zmid=0,
+        zmin=-abs_max, zmax=abs_max,
+        colorbar=dict(title=dict(text="TGA", font=dict(size=11))),
+        hovertemplate="<b>%{y}</b> — %{x}<br>TGA = %{z:.4f}<extra></extra>",
+    ))
+    fig.update_layout(
+        title=dict(
+            text=(
+                f"Feature-Level Magnitude TGA vs True DAG — {dataset}<br>"
+                f"<sup>TGA = mean_i(|φ(disc)|−|φ(true)|).  "
+                f"Red = disc overestimates True;  Blue = underestimates;  White ≈ 0 = agrees.  "
+                f"Top {top_n} features sorted by mean |TGA| descending.  N={n_instances} instances.</sup>"
+            ),
+            font=dict(size=13),
+        ),
+        height=310, width=max(800, 20 * top_n + 300),
+        xaxis=dict(tickfont=dict(size=8), tickangle=-45, side="bottom"),
+        yaxis=dict(tickfont=dict(size=10)),
+        margin=dict(l=130, r=80, t=85, b=110),
+    )
+    fig.show()
+    _save_fig(fig, save_dir, f"tga_heatmap_{dataset}.png")
+    return fig
+
+
+def plot_tga_bar(
+    df_tga:        "pd.DataFrame",
+    method_colors: dict,
+    dataset:       str,
+    save_dir=None,
+) -> "go.Figure":
+    """
+    Bar chart of overall magnitude TGA (mean signed deviation) per method × graph.
+
+    Parameters
+    ----------
+    df_tga        : DataFrame with columns [Method, Graph, MeanTGA, label].
+    method_colors : method short-name → hex colour.
+    dataset       : dataset name.
+    save_dir      : optional save directory.
+    """
+    fig = px.bar(
+        df_tga, x="label", y="MeanTGA", color="Method", facet_col="Graph",
+        barmode="group",
+        color_discrete_map={
+            "Asymmetric": method_colors.get("Asymmetric",  "#2166ac"),
+            "Causal":     method_colors.get("Causal",      "#4dac26"),
+            "Flow":       method_colors.get("ShapleyFlow",  "#d01c8b"),
+        },
+        title=(
+            f"Overall Magnitude TGA vs True DAG — {dataset}<br>"
+            f"<sup>Mean signed difference: positive = disc overestimates True; "
+            f"negative = underestimates; near 0 = magnitudes match.</sup>"
+        ),
+        labels={"MeanTGA": "Mean TGA", "label": ""},
+        height=380, width=700,
+    )
+    fig.add_hline(y=0, line=dict(color="gray", width=1.5, dash="dot"))
+    fig.update_layout(showlegend=True, xaxis_tickangle=-20, margin=dict(t=90, b=80))
+    fig.show()
+    _save_fig(fig, save_dir, f"tga_bar_{dataset}.png")
+    return fig
+
+
+def plot_summary_table(
+    df_summary:      "pd.DataFrame",
+    dataset:         str,
+    n_shap:          int,
+    n_true_instances: int,
+    random_baseline: float,
+    tga_data:        dict,
+    k_summary:       int = 20,
+    save_dir=None,
+) -> "go.Figure":
+    """
+    Aggregated method recommendation summary table.
+
+    Parameters
+    ----------
+    df_summary       : DataFrame with one row per method.
+    dataset          : dataset name.
+    n_shap           : number of SHAP instances.
+    n_true_instances : number of true-graph instances.
+    random_baseline  : fraction of features that are true Y-parents.
+    tga_data         : TGA dict (used only to determine label suffix).
+    k_summary        : K used for Jaccard and Precision@K columns (default 20).
+    save_dir         : optional save directory.
+    """
+    k = k_summary
+    _sss = "SSS" in df_summary.columns and df_summary["SSS"].notna().any()
+    cols = [
+        ("Method",              "Method"),
+        ("GSS",                 "GSS\n(PC↔LiNGAM) ↓"),
+    ]
+    if _sss:
+        cols.append(("SSS", "SSS\n(PC↔LiNGAM) ↑"))
+    cols += [
+        ("rho_pc",              "ρ(PC–Traditional) ↑"),
+        ("rho_lg",              "ρ(LiNGAM–Traditional) ↑"),
+        (f"J{k}_pc",            f"J{k}\n(PC–Traditional) ↑"),
+        (f"J{k}_lg",            f"J{k}\n(LiNGAM–Traditional) ↑"),
+        (f"PP{k}_pc",           f"P@{k}\n(PC) ↑"),
+        (f"PP{k}_lg",           f"P@{k}\n(LiNGAM) ↑"),
+        ("TGA_pc",              "TGA\n(PC→True) ↓"),
+        ("TGA_lg",              "TGA\n(LiNGAM→True) ↓"),
+    ]
+    # Keep only columns that exist in df_summary
+    cols = [(ck, ch) for ck, ch in cols if ck in df_summary.columns]
+    col_keys    = [c[0] for c in cols]
+    col_headers = [c[1] for c in cols]
+
+    LOWER_BETTER  = {"GSS", "TGA_pc", "TGA_lg"}
+    HIGHER_BETTER = {"SSS", "rho_pc", "rho_lg",
+                     f"J{k}_pc", f"J{k}_lg", f"PP{k}_pc", f"PP{k}_lg"}
+
+    def fmt(v):
+        if isinstance(v, str):  return v
+        if isinstance(v, float) and np.isnan(v): return "—"
+        return f"{v:.3f}"
+
+    n_rows = len(df_summary)
+    cell_vals   = []
+    cell_colors = []
+    for key in col_keys:
+        vals    = df_summary[key].tolist()
+        fmtd    = [fmt(v) for v in vals]
+        cell_vals.append(fmtd)
+        numeric     = [v if (not isinstance(v, str) and not (isinstance(v, float) and np.isnan(v))) else None for v in vals]
+        causal_vals = [(i, v) for i, v in enumerate(numeric) if v is not None and i > 0]
+        best_i = None
+        if causal_vals:
+            if key in LOWER_BETTER:
+                best_i = min(causal_vals, key=lambda x: x[1])[0]
+            elif key in HIGHER_BETTER:
+                best_i = max(causal_vals, key=lambda x: x[1])[0]
+        row_colors = []
+        for i in range(n_rows):
+            if i == 0:
+                row_colors.append("#eaf4fb")
+            elif i == best_i:
+                row_colors.append("#d5f5e3")
+            else:
+                row_colors.append("#f8f9fa" if i % 2 == 0 else "white")
+        cell_colors.append(row_colors)
+
+    tga_note = f"N_true={n_true_instances}" if tga_data else "TGA needs Section 10.1"
+
+    fig = go.Figure(go.Table(
+        header=dict(
+            values=[f"<b>{h}</b>" for h in col_headers],
+            fill_color="#2c3e50",
+            font=dict(color="white", size=10),
+            align="center", height=52,
+        ),
+        cells=dict(
+            values=cell_vals, fill_color=cell_colors,
+            align="center", height=40, font=dict(size=13),
+        ),
+    ))
+    fig.update_layout(
+        title=dict(
+            text=(
+                f"Graph Sensitivity — Method Recommendation Summary — {dataset}<br>"
+                f"<sup>Blue = Traditional (reference).  Green = best causal method per column.  "
+                f"↓ lower better  ↑ higher better.  "
+                f"GSS/Spearman/Jaccard: n={n_shap} instances.  {tga_note}.  "
+                f"P@{k} random baseline = {random_baseline:.2f}</sup>"
+            ),
+            font=dict(size=13),
+        ),
+        height=340, width=1300,
+        margin=dict(l=10, r=10, t=85, b=10),
+    )
+    fig.show()
+    _save_fig(fig, save_dir, f"summary_table_{dataset}.png")
+    return fig
+
+
+def plot_adjacency_comparison(
+    true_adj_xx:         "np.ndarray",
+    pc_train_adj_xx:     "np.ndarray",
+    lingam_train_adj_xx: "np.ndarray",
+    feature_names:       list,
+    dataset:             str,
+    save_dir=None,
+):
+    """
+    Side-by-side heat-maps of True, PC, and LiNGAM X→X adjacency matrices.
+
+    Parameters
+    ----------
+    true_adj_xx         : n×n ground-truth X→X adjacency.
+    pc_train_adj_xx     : n×n PC discovered X→X adjacency.
+    lingam_train_adj_xx : n×n LiNGAM discovered X→X adjacency.
+    feature_names       : ordered list of feature names.
+    dataset             : dataset name.
+    save_dir            : optional save directory.
+    """
+    n = len(feature_names)
+    fig, axes = plt.subplots(1, 3, figsize=(15, 4.5))
+    for ax, mat, title, cmap in [
+        (axes[0], true_adj_xx,         "True X→X",    "Blues"),
+        (axes[1], pc_train_adj_xx,     "PC X→X",      "Oranges"),
+        (axes[2], lingam_train_adj_xx, "LiNGAM X→X",  "Greens"),
+    ]:
+        im = ax.imshow(mat, cmap=cmap, vmin=0, vmax=1, aspect="auto")
+        ax.set_xticks(range(n))
+        ax.set_xticklabels(feature_names, rotation=45, ha="right", fontsize=7)
+        ax.set_yticks(range(n))
+        ax.set_yticklabels(feature_names, fontsize=7)
+        ax.set_title(f"{title}\n({int(mat.sum())} edges)", fontsize=10, fontweight="bold")
+        plt.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
+
+    plt.suptitle(
+        f"Adjacency matrix comparison (X-only block) — {dataset}\nadj[i,j]=1 means edge i→j",
+        fontweight="bold", fontsize=11,
+    )
+    plt.tight_layout()
+    _save_fig(fig, save_dir, f"adjacency_comparison_{dataset}.png")
+    plt.show()
     return fig
