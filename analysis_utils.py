@@ -16,6 +16,7 @@ Usage from a notebook in notebooks/:
         edge_recovery, flow_graph_stats, parse_pipeline_timing,
         build_dag_graph, make_dag_pos, draw_dag, PROX_PALETTE,
         make_shap_scatter_figure, make_instance_shap_figure,
+        plot_shap_scatter_pc_vs_lingam, plot_instance_shap_pc_vs_lingam,
         DEFAULT_METHOD_COLORS,
     )
 
@@ -742,7 +743,7 @@ def make_shap_scatter_figure(
 
     vertical_spacing   = max(0.005, min(0.06, 0.25 / max(n_rows - 1, 1)))
     horizontal_spacing = 0.06
-    cell_h = max(120, 3000 // n_rows)
+    cell_h = 220  # fixed per-row height so fewer rows don't stretch the subplots
 
     subplot_titles = [
         col_labels[ci] if ri == 0 else ""
@@ -855,6 +856,9 @@ def make_instance_shap_figure(
     feat_labels_r = feature_labels[::-1]
     feat_idx_r    = feature_idx[::-1]
 
+    # Collect per-subplot x-ranges so we can add label padding afterwards
+    subplot_xranges: dict[tuple[int, int], tuple[float, float]] = {}
+
     for ri, inst in enumerate(instance_idx):
         for ci, method in enumerate(methods):
             if method not in shap_data:
@@ -867,6 +871,10 @@ def make_instance_shap_figure(
                     x=vals, y=feat_labels_r, orientation="h",
                     marker=dict(color=colors, line=dict(width=0)),
                     showlegend=False,
+                    text=[f"{v:.3f}" for v in vals],
+                    textposition="outside",
+                    textfont=dict(size=7),
+                    constraintext="none",
                     hovertemplate=(
                         f"<b>Instance {inst}</b><br>%{{y}}: %{{x:.4f}}<extra></extra>"
                     ),
@@ -878,6 +886,7 @@ def make_instance_shap_figure(
                 line=dict(color="rgba(80,80,80,0.40)", width=1, dash="dot"),
                 row=ri + 1, col=ci + 1,
             )
+            subplot_xranges[(ri, ci)] = (float(vals.min()), float(vals.max()))
 
         fig.update_yaxes(
             title_text=f"#{inst}", title_font=dict(size=9),
@@ -891,6 +900,16 @@ def make_instance_shap_figure(
                 showticklabels=(ri == n_rows - 1),
                 tickfont=dict(size=8), row=ri + 1, col=ci,
             )
+
+    # Apply padded x-axis ranges so outside text labels are never clipped.
+    # Padding = 30 % of the span on each side, with a minimum absolute buffer.
+    for (ri, ci), (xmin, xmax) in subplot_xranges.items():
+        span = xmax - xmin if xmax != xmin else max(abs(xmax), 1e-6)
+        pad  = max(0.30 * span, 0.05 * max(abs(xmin), abs(xmax), 1e-6))
+        fig.update_xaxes(
+            range=[xmin - pad, xmax + pad],
+            row=ri + 1, col=ci + 1,
+        )
 
     fig.update_layout(
         title=dict(text=title, font=dict(size=14)),
@@ -1041,3 +1060,195 @@ def parse_pipeline_timing(
         f"{total_min:.1f} min  ({total_min/60:.2f} h)" if total_min else "—"
     )
     return pd.DataFrame(rows), total_str
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 7. Comparison plot helpers (Scratch | PC | LiNGAM | True DAG)
+# ─────────────────────────────────────────────────────────────────────────────
+
+def plot_shap_scatter_pc_vs_lingam(
+    shap_data: dict,
+    feature_names: list,
+    scratch_rank: np.ndarray,
+    top_features: list,
+    x_test: np.ndarray,
+    pc_edges: int,
+    lingam_edges: int,
+    dataset: str,
+    n_top_features: int,
+    method: str = "Asymmetric",
+    features: list | None = None,
+    colors: dict | None = None,
+):
+    """
+    SHAP scatter plot (feature value vs SHAP) for ONE method across all graph sources.
+
+    Produces a grid where:
+      • Rows    : selected features
+      • Columns : Traditional (no graph) | <method> (PC) | <method> (LiNGAM) | <method> (True DAG)
+
+    Parameters
+    ----------
+    shap_data : dict
+        Mapping of method key → SHAP array (n_instances × n_features).
+    feature_names : list of str
+        Full list of feature names.
+    scratch_rank : np.ndarray
+        Feature indices sorted by descending mean |SHAP| for Scratch.
+    top_features : list of str
+        Pre-computed top-N feature names (used as default when features=None).
+    x_test : np.ndarray
+        Feature matrix for test instances (n_instances × n_features).
+    pc_edges : int
+        Number of edges in the PC discovered graph.
+    lingam_edges : int
+        Number of edges in the LiNGAM discovered graph.
+    dataset : str
+        Dataset name used in the plot title.
+    n_top_features : int
+        Number of top features to show when features=None.
+    method : str
+        Which Shapley method to compare. One of "Asymmetric", "Causal", "Flow".
+    features : list of str, optional
+        Specific feature names to display. Defaults to top-N by Scratch.
+    colors : dict, optional
+        Method colour mapping. Defaults to DEFAULT_METHOD_COLORS.
+
+    Examples
+    --------
+    >>> plot_shap_scatter_pc_vs_lingam(shap_data, feature_names, scratch_rank,
+    ...     top_features, x_test, pc_edges, lingam_edges, dataset, n_top_features)
+    >>> plot_shap_scatter_pc_vs_lingam(..., method="Causal", features=["X33", "X7"])
+    """
+    valid_methods = ["Asymmetric", "Causal", "Flow"]
+    if method not in valid_methods:
+        raise ValueError(f"method must be one of {valid_methods}, got '{method}'")
+
+    pc_key     = f"{method} (PC)"
+    lingam_key = f"{method} (LiNGAM)"
+    true_key   = f"{method} (True)"
+
+    for key in [pc_key, lingam_key]:
+        if key not in shap_data:
+            raise KeyError(f"'{key}' not found in shap_data. Available: {list(shap_data)}")
+    if "Scratch" not in shap_data:
+        raise KeyError("'Scratch' not found in shap_data.")
+
+    methods_list = ["Scratch", pc_key, lingam_key]
+    col_labels   = ["Traditional (no graph)", f"{method} (PC)", f"{method} (LiNGAM)"]
+    if true_key in shap_data:
+        methods_list.append(true_key)
+        col_labels.append(f"{method} (True DAG)")
+
+    feat_idx, feat_labels = resolve_features(feature_names, scratch_rank, top_features, features)
+    title_tag = f"Top {n_top_features}" if features is None else f"{len(feat_labels)}"
+
+    fig = make_shap_scatter_figure(
+        methods        = methods_list,
+        col_labels     = col_labels,
+        feature_idx    = feat_idx,
+        feature_labels = feat_labels,
+        x_test         = x_test,
+        shap_data      = shap_data,
+        title          = (
+            f"SHAP Scatter — {method}: Traditional | PC ({pc_edges} edges) | "
+            f"LiNGAM ({lingam_edges} edges) | True DAG — "
+            f"{title_tag} Features — {dataset}"
+        ),
+        colors         = colors or DEFAULT_METHOD_COLORS,
+    )
+    fig.show()
+    return fig
+
+
+def plot_instance_shap_pc_vs_lingam(
+    shap_data: dict,
+    feature_names: list,
+    scratch_rank: np.ndarray,
+    top_features: list,
+    instance_idx: list,
+    pc_edges: int,
+    lingam_edges: int,
+    dataset: str,
+    n_top_features: int,
+    method: str = "Asymmetric",
+    features: list | None = None,
+):
+    """
+    Instance-level SHAP bar charts for ONE method, comparing all graph sources.
+
+    Produces a figure with four columns per instance:
+      • Col 1 : Traditional (no graph, graph-free baseline)
+      • Col 2 : <method> (PC)
+      • Col 3 : <method> (LiNGAM)
+      • Col 4 : <method> (True DAG)
+
+    Parameters
+    ----------
+    shap_data : dict
+        Mapping of method key → SHAP array (n_instances × n_features).
+    feature_names : list of str
+        Full list of feature names.
+    scratch_rank : np.ndarray
+        Feature indices sorted by descending mean |SHAP| for Scratch.
+    top_features : list of str
+        Pre-computed top-N feature names (used as default when features=None).
+    instance_idx : list of int
+        Row indices into the SHAP arrays to display.
+    pc_edges : int
+        Number of edges in the PC discovered graph.
+    lingam_edges : int
+        Number of edges in the LiNGAM discovered graph.
+    dataset : str
+        Dataset name used in the plot title.
+    n_top_features : int
+        Number of top features to show when features=None.
+    method : str
+        Which Shapley method to compare. One of "Asymmetric", "Causal", "Flow".
+    features : list of str, optional
+        Specific feature names to display. Defaults to top-N by Scratch.
+
+    Examples
+    --------
+    >>> plot_instance_shap_pc_vs_lingam(shap_data, feature_names, scratch_rank,
+    ...     top_features, instance_idx, pc_edges, lingam_edges, dataset, n_top_features)
+    >>> plot_instance_shap_pc_vs_lingam(..., method="Causal", features=["X33", "X7"])
+    """
+    valid_methods = ["Asymmetric", "Causal", "Flow"]
+    if method not in valid_methods:
+        raise ValueError(f"method must be one of {valid_methods}, got '{method}'")
+
+    pc_key     = f"{method} (PC)"
+    lingam_key = f"{method} (LiNGAM)"
+    true_key   = f"{method} (True)"
+
+    for key in [pc_key, lingam_key]:
+        if key not in shap_data:
+            raise KeyError(f"'{key}' not found in shap_data. Available: {list(shap_data)}")
+    if "Scratch" not in shap_data:
+        raise KeyError("'Scratch' not found in shap_data.")
+
+    methods_list = ["Scratch", pc_key, lingam_key]
+    col_labels   = ["Traditional (no graph)", f"{method} (PC)", f"{method} (LiNGAM)"]
+    if true_key in shap_data:
+        methods_list.append(true_key)
+        col_labels.append(f"{method} (True DAG)")
+
+    feat_idx, feat_labels = resolve_features(feature_names, scratch_rank, top_features, features)
+    title_tag = f"Top {n_top_features}" if features is None else f"{len(feat_labels)}"
+
+    fig = make_instance_shap_figure(
+        methods        = methods_list,
+        col_labels     = col_labels,
+        feature_idx    = feat_idx,
+        feature_labels = feat_labels,
+        instance_idx   = instance_idx,
+        shap_data      = shap_data,
+        title          = (
+            f"Instance-Level SHAP — {method}: Traditional | PC ({pc_edges} edges) | "
+            f"LiNGAM ({lingam_edges} edges) | True DAG — "
+            f"{title_tag} Features — {dataset}"
+        ),
+    )
+    fig.show()
+    return fig
