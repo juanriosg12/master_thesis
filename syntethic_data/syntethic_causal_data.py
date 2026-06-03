@@ -43,24 +43,66 @@ class SyntheticCausalSystem:
             return values - mean_val  # Just center if std is too small
 
     def _create_dag_structure(self) -> np.ndarray:
+        """Generate a random DAG with uniformly distributed causal order.
 
-        adjacency = np.zeros((self.n_features,self.n_features))
+        Step 1: Build an upper-triangular skeleton (Erdős–Rényi on n*(n-1)/2
+        candidate edges) — this guarantees acyclicity for the canonical
+        ordering 0 < 1 < … < n-1.
 
-        for i in range(self.n_features):
-            for j in range(i +1, self.n_features):
+        Step 2: Apply a random permutation P to both rows and columns.  The
+        resulting adjacency A' = P A P^T represents the same DAG under a new
+        (random) variable labelling, so edges are no longer confined to the
+        upper triangle of the index-ordered matrix.
+        """
+        n = self.n_features
+
+        # --- Step 1: upper-triangular skeleton ---
+        skeleton = np.zeros((n, n))
+        for i in range(n):
+            for j in range(i + 1, n):
                 if np.random.random() < self.edge_probability:
-                    adjacency[i,j] = 1
-        
-        # Make sure at least some edges exist
+                    skeleton[i, j] = 1
 
-        if adjacency.sum() == 0: 
-            # Add a few randome edges
-            for _ in range(min(self.min_num_connected_edges, self.n_features-1)):
-                i = np.random.randint(0,self.n_features - 1)
-                j = np.random.randint(i+1,self.n_features)
-                adjacency[i,j] = 1
+        # Fallback: guarantee at least min_num_connected_edges
+        if skeleton.sum() == 0:
+            for _ in range(min(self.min_num_connected_edges, n - 1)):
+                i = np.random.randint(0, n - 1)
+                j = np.random.randint(i + 1, n)
+                skeleton[i, j] = 1
+
+        # --- Step 2: apply random permutation to node labels ---
+        perm = np.random.permutation(n)           # e.g. [3, 0, 7, 1, …]
+        adjacency = skeleton[np.ix_(perm, perm)]  # permute rows AND columns
+
+        # Store the topological order so generate_* methods can use it.
+        # perm[k] = original node index of the k-th node in causal order, so
+        # iterating nodes in the order given by np.argsort(perm) traverses
+        # them from sources to sinks in the permuted graph.
+        self._topo_order = np.argsort(perm).tolist()  # topo order in permuted indices
 
         return adjacency
+
+    def _topological_order(self, adjacency: np.ndarray) -> list:
+        """Return node indices in topological order using Kahn's algorithm.
+
+        Works for any DAG; serves as a fallback when _topo_order is not
+        available (e.g. if adjacency was supplied externally).
+        """
+        n = adjacency.shape[0]
+        in_deg = adjacency.sum(axis=0).astype(int)  # column sum = in-degree
+        queue = [i for i in range(n) if in_deg[i] == 0]
+        order = []
+        while queue:
+            node = queue.pop(0)
+            order.append(node)
+            for child in range(n):
+                if adjacency[node, child]:
+                    in_deg[child] -= 1
+                    if in_deg[child] == 0:
+                        queue.append(child)
+        if len(order) != n:  # cycle guard (should never happen for a DAG)
+            return list(range(n))
+        return order
     
     def _add_confounders(self, n_confounders: int =5)->List[Tuple[int,List[int]]]:
 
@@ -206,7 +248,10 @@ class SyntheticCausalSystem:
                         data[:, node] += coef * (np.exp(confounder / 2) - 1)
 
         # Generate data following the causal structure with non-linear functions
-        for j in range(self.n_features):
+        # Iterate in topological order so parents are always computed first
+        topo = getattr(self, '_topo_order', None) or self._topological_order(self.adjacency_matrix)
+
+        for j in topo:
             parents = np.where(self.adjacency_matrix[:,j] == 1)[0]
 
             for parent in parents:
@@ -345,8 +390,10 @@ class SyntheticCausalSystem:
                 coef = np.random.uniform(0.3, 0.8) * np.random.choice([-1, 1])
                 edge_params[(parent, child)] = ('nonlinear', func_type, coef)
         
-        # Iterate through features (children) in topological order, like linear/nonlinear systems
-        for j in range(self.n_features):
+        # Iterate through features (children) in topological order so parents are computed first
+        topo = getattr(self, '_topo_order', None) or self._topological_order(self.adjacency_matrix)
+
+        for j in topo:
             # Find all parents of this child
             parents = np.where(self.adjacency_matrix[:, j] == 1)[0]
             

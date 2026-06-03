@@ -68,9 +68,9 @@ from utils.utils import visualize_comparison, visualize_causal_graph, plot_shapl
 # Experimental parameters
 N_FEATURES = 50
 N_SAMPLES = 1000
-Y_PARENTS_RATIO = 0.5
+Y_PARENTS_RATIO = 0.3    # reduced from 0.5 to match Sachs-level Y connectivity (30%)
 NOISE_STD = 0.5
-EDGE_PROBABILITY = 0.2
+EDGE_PROBABILITY = 0.07  # reduced from 0.20 → ~85 X-X edges, ~1.7 edges/node (matches Sachs density)
 MIN_CONNECTED_EDGES = 2
 RANDOM_STATE = 42
 
@@ -95,8 +95,8 @@ CAUSAL_DIR = DATA_DIR / 'causal'
 EXPLAINABILITY_DIR = DATA_DIR / 'explainability'
 MODELS_DIR = BASE_DIR / 'models'
 LOGS_DIR = BASE_DIR / 'logs'
-# TARGET_DATASETS = ["mixed_conf_f50_s1000_p50", "mixed_no_conf_f50_s1000_p50"]
-TARGET_DATASETS = ["mixed_no_conf_f50_s1000_p50","linear_conf_f50_s1000_p50"]
+# TARGET_DATASETS = ["mixed_conf_f50_s1000_p30", "mixed_no_conf_f50_s1000_p30"]
+TARGET_DATASETS = ["linear_no_conf_f50_s1000_p30","linear_conf_f50_s1000_p30"]
 # Create directories
 for directory in [SYNTHETIC_DIR, PROCESSED_DIR, CAUSAL_DIR, EXPLAINABILITY_DIR, MODELS_DIR, LOGS_DIR]:
     directory.mkdir(parents=True, exist_ok=True)

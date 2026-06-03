@@ -178,16 +178,32 @@ $$v_\text{do}(S) = \mathbb{E}\bigl[f(X) \mid \mathrm{do}(X_S = x_S)\bigr]$$
 The $\mathrm{do}(\cdot)$ operator cuts all incoming edges to variables in $S$,
 removing confounding effects and isolating direct causal contributions.
 
+### Component Formation
+
+Before any sampling, features are grouped into **components** based on the
+confounder list `discovered_conf` passed by the causal discovery step:
+
+* Each detected confounder pair $(X_i, X_j)$ forms a **joint component** —
+  a single node in the component DAG that contains both features.
+* Every feature that is not part of any confounder pair is a **singleton
+  component** (a component of size 1).
+
+> **Current experiment state:** FCI confounder detection has been disabled
+> (see pipeline §5.5).  `discovered_conf = []` is always passed, so every
+> feature becomes its own singleton component.  The component DAG is therefore
+> identical to the full feature DAG, and the outer permutation draws a uniform
+> random linear extension of the 50-feature DAG directly.
+
 ### Outer Loop: Random Component Topological Ordering
 
-Features are grouped into **components** before sampling permutations:
+A random topological ordering is drawn over the **component DAG** using the
+same Kahn-style sampler as Asymmetric Shapley.
 
-* Each confounder pair $(X_i, X_j)$ (a bidirected edge) forms a joint component.
-* All remaining features are singleton components.
-* A random topological ordering is drawn over the **component DAG** using the
-  same Kahn-style sampler as Asymmetric Shapley.
-* Within a confounded (multi-feature) component, features are shuffled randomly.
-* The result is a flat feature list respecting the causal partial order.
+* If a component contains multiple (confounded) features, they are shuffled
+  randomly within the component after it is placed in the ordering.
+* With `discovered_conf = []` every component is a singleton, so no
+  within-component shuffling ever occurs.
+* The result is a flat feature ordering that respects the causal partial order.
 
 ### Inner Loop: Post-Interventional Sampling
 
@@ -225,6 +241,18 @@ $$\mu_{A|B} = \mu_A + \Sigma_{AB}\,\Sigma_{BB}^{-1}(x_B - \mu_B), \qquad
 \Sigma_{A|B} = \Sigma_{AA} - \Sigma_{AB}\,\Sigma_{BB}^{-1}\,\Sigma_{BA}$$
 
 with $\mu$ and $\Sigma$ estimated from the background data.
+
+**Scalar sampling shortcut (active in the current experiment):**
+When a component is a singleton (`len(target_features) == 1`), the code
+branches to:
+
+```python
+rng.normal(conditional_mean[0], np.sqrt(conditional_cov[0, 0]))
+```
+
+instead of `rng.multivariate_normal`.  With `discovered_conf = []` every
+component is a singleton, so the scalar path is always taken and the more
+expensive multivariate path is never reached.
 
 ### Pseudocode
 

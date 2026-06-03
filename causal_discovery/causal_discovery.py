@@ -6,7 +6,17 @@ import warnings
 
 # Import causal discovery algorithms from causal-learn
 from causallearn.search.ConstraintBased.PC import pc
-from causallearn.search.ConstraintBased.FCI import fci
+# NOTE: FCI was removed from the pipeline.  In experiments with 50 features and
+# 800 training samples, FCI detected 16-65 bidirected edges per dataset with
+# 0.000 precision and 0.000 recall against the true confounder pairs.  Every
+# detected pair was a false positive, and no true pair was ever recovered.
+# Passing these spurious pairs to CausalShapley merged unrelated features into
+# confounded components, broke the component DAG, and switched the inner sampler
+# to independence mode for pairs that are not actually confounded — making
+# CausalShapley *worse* than running it without any confounder information.
+# Decision: always pass discovered_conf=[] to CausalShapley.  Each feature
+# remains its own single-node component; the component DAG equals the feature
+# DAG; sampling is fully correct without the overhead of a second algorithm.
 from causallearn.search.ScoreBased.GES import ges
 from causallearn.utils.cit import fisherz, kci, chisq
 from causallearn.search.FCMBased.lingam import DirectLiNGAM
@@ -348,26 +358,10 @@ class PCWithFCI(CausalDiscoveryMethod):
             print(f"PC algorithm failed: {str(e)}")
             adjacency_pc = np.zeros((n_features, n_features))
 
-        # Run FCI for confounder detection
-        print(" Running FCI algorithm for confounder detection...")
-
-        try:
-            self.fci_result, edges = fci(
-                data_array,
-                alpha=self.alpha,
-                indep_test=indep_test_func,
-                stable=True
-            )
-
-            # Extract confounders from FCI result
-            fci_graph = self.fci_result
-            confounders = self._detect_confounders_from_graph(fci_graph, feature_names)
-
-            print(f"FCI detected {len(confounders)} potential confounders pairs")
-        
-        except Exception as e:
-            print(f"FCI algorithm failed: {str(e)}")
-            confounders = []
+        # FCI confounder detection was removed (see module-level comment).
+        # CausalShapley receives an empty list; every feature forms its own
+        # single-node component and sampling is correct without FCI.
+        confounders = []
 
         # Build full adjacency (X + Y), adding Y edges based on model + sinks
         full_adjacency = self._build_full_adjacency(adjacency_pc, feature_names, model)
@@ -477,28 +471,10 @@ class LiNGAMWithFCI(CausalDiscoveryMethod):
                 print(f"ICA-LiNGAM also failed: {str(e2)}")
                 adjacency_binary = np.zeros((n_features, n_features))
         
-        # Run FCI algorithm for confounder detection
-        print("Running FCI algorithm for confounder detection...")
-
-        indep_test_func = self._get_independence_test()
-
-        try:
-            self.fci_result, edges = fci(
-                data_array,
-                alpha=self.alpha,
-                indep_test=indep_test_func,
-                stable=True
-            )
-
-            # Extract confounders from FCI result
-            fci_graph = self.fci_result
-            confounders = self._detect_confounders_from_graph(fci_graph, feature_names)
-
-            print(f"FCI detected {len(confounders)} potential confounders pairs")
-        
-        except Exception as e:
-            print(f"FCI algorithm failed: {str(e)}")
-            confounders = []
+        # FCI confounder detection was removed (see module-level comment).
+        # CausalShapley receives an empty list; every feature forms its own
+        # single-node component and sampling is correct without FCI.
+        confounders = []
 
         # Build full adjacency (X + Y), adding Y edges based on model + sinks
         full_adjacency = self._build_full_adjacency(adjacency_binary, feature_names, model)
