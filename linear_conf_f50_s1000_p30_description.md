@@ -103,6 +103,15 @@ Training uses an internal 80/20 validation split with **early stopping** (20 rou
 | MAE | 1.3566 |
 | RMSE | 1.7157 |
 
+**Target Y range (test set, 200 observations):**
+
+| Statistic | Value |
+|---|---|
+| Min | −17.94 |
+| Max | 15.80 |
+| Mean | −0.47 |
+| Std | 5.44 |
+
 The high R² (0.90) reflects the linear structure. Compared to the `p50/conf` variant (R² = 0.91), performance is nearly identical — the sparser graph produces less cumulative signal amplification along deep causal chains, but the 5 hidden confounders still inject extra exploitable variance through indirect paths.
 
 ---

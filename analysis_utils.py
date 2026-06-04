@@ -197,14 +197,12 @@ def compute_tga(
     reference:    str = "True",
 ) -> tuple[dict[tuple[str, str], np.ndarray], dict[str, set[int]]]:
     """
-    Signed magnitude difference between discovered-graph and reference attributions.
+    Absolute magnitude difference between discovered-graph and reference attributions.
 
-    TGA(method, graph, feature) = mean_i ( |φ(disc,i,f)| − |φ(ref,i,f)| )
+    TGA(method, graph, feature) = mean_i ||φ(disc,i,f)| − |φ(ref,i,f)||
 
-    No outer absolute and no normalisation.  The sign encodes direction:
-      positive → discovered graph over-estimates the reference magnitude;
-      negative → discovered graph under-estimates the reference magnitude;
-      near 0   → discovered graph and reference agree in magnitude.
+    Absolute value ensures that when averaging across features, positive and negative
+    deviations do not cancel out, giving a true measure of overall alignment.
 
     Reference is resolved the same way as in ``compute_sign_alignment``.
 
@@ -219,7 +217,7 @@ def compute_tga(
 
     Returns
     -------
-    tga_data       : dict mapping (method, graph) → ndarray (n_features,) in (-∞, +∞)
+    tga_data       : dict mapping (method, graph) → ndarray (n_features,) in [0, +∞)
     zero_feat_sets : dict mapping method → empty set (kept for API compatibility)
     """
     tga_data:       dict[tuple[str, str], np.ndarray] = {}
@@ -232,13 +230,13 @@ def compute_tga(
             continue
         phi_ref = shap_data[ref_key]
         abs_ref = np.abs(phi_ref)
-        zero_feat_sets[meth] = set()  # no NaN features — signed metric, no division
+        zero_feat_sets[meth] = set()  # no NaN features — absolute metric, no division
         for g in disc_graphs:
             disc_key = f"{meth} ({g})"
             if disc_key not in shap_data:
                 continue
             phi_disc = shap_data[disc_key]
-            diff     = (np.abs(phi_disc) - abs_ref).mean(axis=0)  # signed, per feature
+            diff     = np.abs(np.abs(phi_disc) - abs_ref).mean(axis=0)  # absolute, per feature
             tga_data[(meth, g)] = diff
     return tga_data, zero_feat_sets
 
@@ -316,16 +314,12 @@ def compute_gss(
     base_methods: list[str],
 ) -> dict[str, np.ndarray]:
     """
-    Per-feature signed magnitude difference between PC and LiNGAM outputs.
+    Per-feature absolute magnitude difference between PC and LiNGAM outputs.
 
-    d_f(m) = mean_i ( |φ^PC_{i,f}| − |φ^LiNGAM_{i,f}| )
+    d_f(m) = mean_i |φ^PC_{i,f}| − |φ^LiNGAM_{i,f}||
 
-    No outer absolute and no normalisation.  The sign encodes direction:
-      positive → PC assigns higher mean absolute importance than LiNGAM;
-      negative → LiNGAM assigns higher mean absolute importance;
-      near 0   → both graphs agree on magnitude for that feature.
-
-    Averaging d_f over features gives the overall directional bias of a method.
+    Absolute value ensures that when averaging across features, positive and negative
+    deviations do not cancel out, giving a true measure of overall graph sensitivity.
 
     Parameters
     ----------
@@ -334,8 +328,8 @@ def compute_gss(
 
     Returns
     -------
-    gss : dict mapping method → ndarray (n_features,) in (-∞, +∞)
-          Near 0 = PC and LiNGAM agree; positive = PC > LiNGAM; negative = LiNGAM > PC.
+    gss : dict mapping method → ndarray (n_features,) in [0, +∞)
+          Near 0 = PC and LiNGAM agree; higher = larger magnitude difference.
     """
     gss: dict[str, np.ndarray] = {}
     for meth in base_methods:
@@ -343,7 +337,7 @@ def compute_gss(
         lg_key = f"{meth} (LiNGAM)"
         if pc_key not in shap_data or lg_key not in shap_data:
             continue
-        gss[meth] = (np.abs(shap_data[pc_key]) - np.abs(shap_data[lg_key])).mean(axis=0)
+        gss[meth] = np.abs(np.abs(shap_data[pc_key]) - np.abs(shap_data[lg_key])).mean(axis=0)
     return gss
 
 
@@ -1640,18 +1634,18 @@ def plot_gss_heatmap(
     save_dir      : optional directory to save the figure.
     """
     gss_matrix = np.stack([gss_feat[m] for m in base_methods if m in gss_feat], axis=1)
-    feat_order  = np.argsort(np.abs(gss_matrix).mean(axis=1))[::-1]
+    feat_order  = np.argsort(gss_matrix.mean(axis=1))[::-1]  # GSS is now absolute, no need for abs()
     top_n       = min(top_n, len(feature_names))
     top_idx     = feat_order[:top_n]
     gss_z_T     = gss_matrix[top_idx].T
-    abs_max     = float(np.nanmax(np.abs(gss_matrix)))
+    max_val     = float(np.nanmax(gss_matrix))
     labels      = [m for m in base_methods if m in gss_feat]
 
     fig = go.Figure(go.Heatmap(
         z=gss_z_T, y=labels,
         x=[feature_names[i] for i in top_idx],
-        colorscale="RdBu", zmid=0,
-        zmin=-abs_max, zmax=abs_max,
+        colorscale="Blues",
+        zmin=0, zmax=max_val,
         colorbar=dict(title=dict(text="GSS", font=dict(size=11))),
         hovertemplate="<b>%{y}</b> — %{x}<br>GSS = %{z:.4f}<extra></extra>",
     ))
@@ -1659,9 +1653,9 @@ def plot_gss_heatmap(
         title=dict(
             text=(
                 f"Feature-Level Graph Sensitivity Score — PC vs LiNGAM — {dataset}<br>"
-                f"<sup>GSS = mean_i(|φ(PC)|−|φ(LiNGAM)|).  "
-                f"Red = PC assigns higher importance;  Blue = LiNGAM;  White ≈ 0 = agree.  "
-                f"Top {top_n} features sorted by mean |GSS| descending.</sup>"
+                f"<sup>GSS = mean_i ||φ(PC)| − |φ(LiNGAM)||.  "
+                f"Higher = larger magnitude difference between PC and LiNGAM.  "
+                f"Top {top_n} features sorted by mean GSS descending.</sup>"
             ),
             font=dict(size=13),
         ),
@@ -1678,7 +1672,6 @@ def plot_gss_heatmap(
 def plot_gss_delta_box(
     feat_delta:    dict,
     feature_names: list,
-    scratch_rank:  "np.ndarray",
     method_colors: dict,
     dataset:       str,
     n_top_features: int,
@@ -1691,21 +1684,25 @@ def plot_gss_delta_box(
     ----------
     feat_delta     : method → (n_instances, n_features) array of |φ(PC)| − |φ(LiNGAM)|.
     feature_names  : ordered list of feature names.
-    scratch_rank   : top-N feature indices sorted by Scratch importance.
     method_colors  : method short-name → hex colour.
     dataset        : dataset name.
     n_top_features : N shown in the title.
     save_dir       : optional save directory.
     """
+    # Compute GSS-based ranking: mean absolute delta across all methods and instances
+    all_deltas = np.stack([arr for arr in feat_delta.values()], axis=0)  # (n_methods, n_instances, n_features)
+    mean_abs_gss = np.abs(all_deltas).mean(axis=(0, 1))  # (n_features,)
+    gss_rank = np.argsort(mean_abs_gss)[::-1][:n_top_features]  # Top N features by GSS
+    
     rows = []
     for label, arr in feat_delta.items():
-        for fi in scratch_rank:
+        for fi in gss_rank:
             for v in arr[:, fi]:
                 rows.append(dict(Feature=feature_names[fi], Method=label, Delta=float(v)))
     df = pd.DataFrame(rows)
     df["Feature"] = pd.Categorical(
         df["Feature"],
-        categories=[feature_names[i] for i in scratch_rank], ordered=True,
+        categories=[feature_names[i] for i in gss_rank], ordered=True,
     )
     fig = px.box(
         df, x="Feature", y="Delta", color="Method",
@@ -1717,7 +1714,7 @@ def plot_gss_delta_box(
         points="outliers",
         title=(
             f"Per-Instance Importance Magnitude Delta |φ(PC)| − |φ(LiNGAM)| — "
-            f"Top {n_top_features} Features by Traditional — {dataset}<br>"
+            f"Top {n_top_features} Features by Highest GSS — {dataset}<br>"
             f"<sup>Positive = PC assigns higher importance; negative = LiNGAM.  "
             f"Tight boxes = consistent effect; wide = instance-specific sensitivity.</sup>"
         ),
@@ -2121,9 +2118,9 @@ def plot_tga_heatmap(
     tga_keys   = [(m, g) for m in base_methods for g in disc_graphs if (m, g) in tga_data]
     tga_labels = [f"{m} ({g})" for m, g in tga_keys]
     matrix     = np.stack([tga_data[k] for k in tga_keys], axis=1)
-    abs_max    = float(np.max(np.abs(matrix)))
+    max_val    = float(np.max(matrix))
 
-    sort_idx   = np.argsort(np.abs(matrix).mean(axis=1))[::-1]
+    sort_idx   = np.argsort(matrix.mean(axis=1))[::-1]  # TGA is now absolute, no need for abs()
     top_n      = min(top_n, len(feature_names))
     top_idx    = sort_idx[:top_n]
 
@@ -2131,8 +2128,8 @@ def plot_tga_heatmap(
         z=matrix[top_idx].T,
         x=[feature_names[i] for i in top_idx],
         y=tga_labels,
-        colorscale="RdBu", zmid=0,
-        zmin=-abs_max, zmax=abs_max,
+        colorscale="Blues",
+        zmin=0, zmax=max_val,
         colorbar=dict(title=dict(text="TGA", font=dict(size=11))),
         hovertemplate="<b>%{y}</b> — %{x}<br>TGA = %{z:.4f}<extra></extra>",
     ))
@@ -2140,9 +2137,9 @@ def plot_tga_heatmap(
         title=dict(
             text=(
                 f"Feature-Level Magnitude TGA vs True DAG — {dataset}<br>"
-                f"<sup>TGA = mean_i(|φ(disc)|−|φ(true)|).  "
-                f"Red = disc overestimates True;  Blue = underestimates;  White ≈ 0 = agrees.  "
-                f"Top {top_n} features sorted by mean |TGA| descending.  N={n_instances} instances.</sup>"
+                f"<sup>TGA = mean_i ||φ(disc)| − |φ(true)||.  "
+                f"Higher = larger magnitude difference from True DAG.  "
+                f"Top {top_n} features sorted by mean TGA descending.  N={n_instances} instances.</sup>"
             ),
             font=dict(size=13),
         ),

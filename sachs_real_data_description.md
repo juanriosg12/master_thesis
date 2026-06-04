@@ -41,6 +41,15 @@ measured in fluorescence units. Minimum value is 1.0 across all variables.
 | `jnk` | 73.3 | 215.7 | 18.4 | 4,740 | JNK kinase |
 | **`akt`** (Y) | **81.2** | **137.8** | **37.2** | **3,555** | **Akt kinase (target)** |
 
+**Target Y range (test set, 1,494 observations, raw scale):**
+
+| Statistic | Value |
+|---|---|
+| Min | 1.67 |
+| Max | 3,555.00 |
+| Mean | 80.73 |
+| Std | 156.66 |
+
 ---
 
 ## 3. Preprocessing Pipeline
