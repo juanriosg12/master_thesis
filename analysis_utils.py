@@ -17,6 +17,7 @@ Usage from a notebook in notebooks/:
         build_dag_graph, make_dag_pos, draw_dag, PROX_PALETTE,
         make_shap_scatter_figure, make_instance_shap_figure,
         plot_shap_scatter_pc_vs_lingam, plot_instance_shap_pc_vs_lingam,
+        plot_dag_highlight_3panel,
         DEFAULT_METHOD_COLORS,
     )
 
@@ -1613,6 +1614,145 @@ def plot_dag_highlight_true(
     return fig
 
 
+def plot_dag_highlight_3panel(
+    G_pc, pos_pc, td_pc, src_pc, y_pc, ml_pc,
+    G_lingam, pos_lingam, td_lingam, src_lingam, y_lingam, ml_lingam,
+    G_true, pos_true, td_true, src_true, y_true, ml_true,
+    feature_name: str,
+    feature_names_list: list,
+    dataset: str,
+    figsize=(26, 10),
+    save_dir=None,
+):
+    """
+    Draw PC, LiNGAM, and True DAGs side by side with one feature node highlighted.
+
+    Parameters
+    ----------
+    feature_name       : Name of the node to highlight, e.g. ``"pip3"``.
+    feature_names_list : Ordered list of all node names.
+    dataset            : Dataset name for the title.
+    figsize            : Figure size.
+    save_dir           : Optional directory to save the figure.
+    """
+    fig, axes = plt.subplots(1, 3, figsize=figsize)
+    fig.patch.set_facecolor("#f0f0f0")
+
+    draw_dag_highlight(
+        axes[0], G_pc, pos_pc, td_pc, src_pc, y_pc, ml_pc,
+        title=f"PC Graph — {dataset}  ·  highlight: {feature_name}",
+        highlight_name=feature_name,
+        names=feature_names_list,
+    )
+    draw_dag_highlight(
+        axes[1], G_lingam, pos_lingam, td_lingam, src_lingam, y_lingam, ml_lingam,
+        title=f"LiNGAM Graph — {dataset}  ·  highlight: {feature_name}",
+        highlight_name=feature_name,
+        names=feature_names_list,
+    )
+    draw_dag_highlight(
+        axes[2], G_true, pos_true, td_true, src_true, y_true, ml_true,
+        title=f"True Graph — {dataset}  ·  highlight: {feature_name}",
+        highlight_name=feature_name,
+        names=feature_names_list,
+    )
+    fig.suptitle(
+        f"DAG Node Highlight — {feature_name} — {dataset}\n"
+        f"Blue = incoming edges (parents of {feature_name})  ·  "
+        f"Orange-red = outgoing edges (children of {feature_name})",
+        fontsize=13, fontweight="bold", y=0.99,
+    )
+    plt.tight_layout(rect=[0, 0.02, 1, 0.97])
+    _save_fig(fig, save_dir, f"dag_highlight_3panel_{feature_name}_{dataset}.png")
+    plt.show()
+    return fig
+
+
+def plot_gss_sss_scatter(
+    df_gss:        "pd.DataFrame",
+    df_sss:        "pd.DataFrame",
+    method_colors: dict,
+    dataset:       str,
+    height:        int  = 420,
+    width:         int  = 560,
+    save_dir=None,
+) -> "go.Figure":
+    """
+    Scatter plot of |GSS| (x) vs 1 − SSS (y) per method.
+
+    Both axes are instability measures (≥ 0); lower-left = most stable.
+
+    Parameters
+    ----------
+    df_gss        : DataFrame with columns [Method, MeanGSS].
+    df_sss        : DataFrame with columns [Method, MeanSSS].
+    method_colors : method name → hex colour.
+    dataset       : dataset label for the title.
+    height, width : figure dimensions.
+    save_dir      : optional directory to save the figure.
+
+    Returns
+    -------
+    go.Figure
+    """
+    df_cross = df_gss[["Method", "MeanGSS"]].merge(
+        df_sss[["Method", "MeanSSS"]], on="Method"
+    )
+    df_cross["SignFlipRate"] = 1 - df_cross["MeanSSS"]
+
+    fig = go.Figure()
+    for _, row in df_cross.iterrows():
+        meth = row["Method"]
+        fig.add_trace(go.Scatter(
+            x    = [row["MeanGSS"]],
+            y    = [row["SignFlipRate"]],
+            mode = "markers+text",
+            name = meth,
+            text = [meth],
+            textposition = "top center",
+            marker = dict(
+                color  = method_colors.get(meth, "#888888"),
+                symbol = "circle",
+                size   = 14,
+                line   = dict(width=1.2, color="white"),
+            ),
+            hovertemplate=(
+                f"<b>{meth}</b><br>"
+                "|GSS|: %{x:.4f}<br>"
+                "1−SSS: %{y:.3f}<extra></extra>"
+            ),
+        ))
+
+    x_max = df_cross["MeanGSS"].max() * 1.35
+    y_max = df_cross["SignFlipRate"].max() * 1.35
+
+    fig.update_layout(
+        title=dict(
+            text=(
+                f"|GSS| vs Sign Disagreement Rate (1 − SSS) — {dataset}<br>"
+                "<sup>Lower-left = most stable; both axes are instability measures (≥ 0)</sup>"
+            ),
+            font=dict(size=12),
+        ),
+        xaxis=dict(
+            title="|GSS| — Absolute Magnitude Difference (PC vs LiNGAM)",
+            range=[0, x_max],
+            zeroline=False,
+        ),
+        yaxis=dict(
+            title="1 − SSS — Sign Disagreement Rate",
+            range=[0, y_max],
+            zeroline=False,
+        ),
+        height=height, width=width,
+        showlegend=False,
+        margin=dict(l=70, r=30, t=80, b=60),
+    )
+    fig.show()
+    _save_fig(fig, save_dir, f"gss_sss_scatter_{dataset}.png")
+    return fig
+
+
 def plot_gss_heatmap(
     gss_feat:      dict,
     feature_names: list,
@@ -2160,7 +2300,7 @@ def plot_tga_bar(
     save_dir=None,
 ) -> "go.Figure":
     """
-    Bar chart of overall magnitude TGA (mean signed deviation) per method × graph.
+    Bar chart of overall magnitude TGA (absolute deviation) per method × graph.
 
     Parameters
     ----------
@@ -2179,14 +2319,16 @@ def plot_tga_bar(
         },
         title=(
             f"Overall Magnitude TGA vs True DAG — {dataset}<br>"
-            f"<sup>Mean signed difference: positive = disc overestimates True; "
-            f"negative = underestimates; near 0 = magnitudes match.</sup>"
+            f"<sup>Mean absolute magnitude difference from True DAG attributions.  "
+            f"Lower = better alignment with the True graph.</sup>"
         ),
-        labels={"MeanTGA": "Mean TGA", "label": ""},
+        labels={"MeanTGA": "Mean |TGA|", "label": ""},
         height=380, width=700,
     )
-    fig.add_hline(y=0, line=dict(color="gray", width=1.5, dash="dot"))
-    fig.update_layout(showlegend=True, xaxis_tickangle=-20, margin=dict(t=90, b=80))
+    fig.update_layout(
+        showlegend=True, xaxis_tickangle=-20, margin=dict(t=90, b=80),
+        yaxis=dict(rangemode="tozero"),
+    )
     fig.show()
     _save_fig(fig, save_dir, f"tga_bar_{dataset}.png")
     return fig
