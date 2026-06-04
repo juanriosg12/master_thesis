@@ -17,7 +17,7 @@ Usage from a notebook in notebooks/:
         build_dag_graph, make_dag_pos, draw_dag, PROX_PALETTE,
         make_shap_scatter_figure, make_instance_shap_figure,
         plot_shap_scatter_pc_vs_lingam, plot_instance_shap_pc_vs_lingam,
-        plot_dag_highlight_3panel,
+        plot_dag_highlight_3panel, plot_gss_sss_scatter, plot_tga_sa_scatter,
         DEFAULT_METHOD_COLORS,
     )
 
@@ -1750,6 +1750,147 @@ def plot_gss_sss_scatter(
     )
     fig.show()
     _save_fig(fig, save_dir, f"gss_sss_scatter_{dataset}.png")
+    return fig
+
+
+def plot_tga_sa_scatter(
+    df_sa:         "pd.DataFrame",
+    df_tga:        "pd.DataFrame",
+    method_colors: dict,
+    dataset:       str,
+    reference:     str = "True",
+    height:        int = 480,
+    width:         int = 660,
+    save_dir=None,
+) -> "go.Figure":
+    """
+    Scatter plot of TGA (x) vs 1 − Sign Alignment (y) per method and graph.
+
+    Parameters
+    ----------
+    df_sa         : DataFrame with columns [Dataset, Method, Graph, MeanSignAlign].
+    df_tga        : DataFrame with columns [Dataset, Method, Graph, MeanTGA].
+    method_colors : method name → hex colour.
+    dataset       : dataset label for the title.
+    reference     : "True" or "Traditional" — determines title and axis labels.
+    height, width : figure dimensions.
+    save_dir      : optional directory to save the figure.
+
+    Returns
+    -------
+    go.Figure
+    """
+    GRAPH_MARKERS = {"PC": "circle", "LiNGAM": "diamond", "True": "square"}
+    
+    # Merge dataframes - handle both single and multi-dataset cases
+    has_dataset = "Dataset" in df_sa.columns
+    if has_dataset:
+        merge_cols = ["Dataset", "Method", "Graph"]
+        sa_cols = ["Dataset", "Method", "Graph", "MeanSignAlign"]
+        tga_cols = ["Dataset", "Method", "Graph", "MeanTGA"]
+    else:
+        merge_cols = ["Method", "Graph"]
+        sa_cols = ["Method", "Graph", "MeanSignAlign"]
+        tga_cols = ["Method", "Graph", "MeanTGA"]
+    
+    df_summary = df_sa[sa_cols].merge(df_tga[tga_cols], on=merge_cols)
+    
+    fig = go.Figure()
+    SEEN_METHODS = set()
+    
+    for _, row in df_summary.iterrows():
+        meth = row["Method"]
+        g    = row["Graph"]
+        ds   = row.get("Dataset", dataset)  # Use dataset param if no Dataset column
+        show_meth = meth not in SEEN_METHODS
+        SEEN_METHODS.add(meth)
+        
+        sign_disagree = 1 - row["MeanSignAlign"]
+        
+        # Build hover template conditionally
+        if has_dataset:
+            hover_text = (
+                f"<b>{meth}</b> — {g}<br>"
+                f"Dataset: {ds}<br>"
+                "TGA: %{x:.4f}<br>"
+                "Sign disagreement (1−align): %{y:.3f}<extra></extra>"
+            )
+        else:
+            hover_text = (
+                f"<b>{meth}</b> — {g}<br>"
+                "TGA: %{x:.4f}<br>"
+                "Sign disagreement (1−align): %{y:.3f}<extra></extra>"
+            )
+        
+        fig.add_trace(go.Scatter(
+            x    = [row["MeanTGA"]],
+            y    = [sign_disagree],
+            mode = "markers",
+            name = meth,
+            legendgroup = meth,
+            showlegend  = show_meth,
+            marker = dict(
+                color  = method_colors.get(meth, "#888888"),
+                symbol = GRAPH_MARKERS.get(g, "circle"),
+                size   = 11,
+                line   = dict(width=1.0, color="white"),
+            ),
+            hovertemplate=hover_text,
+        ))
+    
+    # Graph shape legend
+    for g_label, symbol in GRAPH_MARKERS.items():
+        fig.add_trace(go.Scatter(
+            x=[None], y=[None], mode="markers",
+            name=g_label,
+            legendgroup=f"graph_{g_label}",
+            showlegend=True,
+            marker=dict(color="gray", symbol=symbol, size=11),
+        ))
+    
+    # Reference-specific configuration
+    if reference == "True":
+        title_text = (
+            f"True-Graph Alignment Summary — {dataset}<br>"
+            "<sup>Colour = method, Shape = graph | "
+            "Lower disagreement + TGA near 0 = closer to True oracle</sup>"
+        )
+        x_title = "Magnitude TGA vs True DAG"
+        x_range = None  # auto
+    else:  # Traditional
+        title_text = (
+            f"Traditional Baseline Alignment Summary — {dataset}<br>"
+            "<sup>Colour = method, Shape = graph | "
+            "Lower-left = closer to Traditional baseline</sup>"
+        )
+        x_title = "Absolute TGA vs Traditional"
+        x_max = df_summary["MeanTGA"].max() * 1.2
+        x_range = [0, x_max]
+    
+    fig.update_layout(
+        title=dict(
+            text=title_text,
+            font=dict(size=12),
+        ),
+        xaxis=dict(
+            title=x_title,
+            range=x_range,
+            zeroline=(reference == "True"),
+            zerolinewidth=1.5 if reference == "True" else 1,
+            zerolinecolor="gray" if reference == "True" else None,
+        ),
+        yaxis=dict(
+            title="1 − Sign Alignment (sign disagreement rate)",
+            range=[0, 0.5],
+        ),
+        height=height, width=width,
+        legend=dict(x=1.02, y=1, xanchor="left", font=dict(size=11)),
+        margin=dict(l=70, r=180, t=90, b=70),
+    )
+    
+    fig.show()
+    ref_label = reference.lower()
+    _save_fig(fig, save_dir, f"tga_sa_scatter_{ref_label}_{dataset}.png")
     return fig
 
 
