@@ -245,8 +245,8 @@ def plot_instance_distributions(ctx, method="Causal", graph="PC", reference="Tru
     ax.set_yticklabels([feature_names[j] for j in order])
     ax.axvline(0, ls="--", c="k", lw=0.8)
     ax.set_xlabel(rf"per-instance TGA contribution  $|\phi_{{{graph}}}| - |\phi_{{{reference}}}|$")
-    ax.set_title(f"{method} ({graph}) vs {reference} — instance distribution behind TGA\n"
-                 "crimson ◆ = reported per-feature TGA")
+    ax.set_title(f"{method} ({graph}) vs ({reference}) — instance distribution behind TGA\n"
+                 "Median ◆ = reported per-feature TGA")
     fig.tight_layout()
     out = _save(fig, ctx, f"instance_tga_{method}_{graph}_vs_{reference}", plots_dir)
     if not show:
