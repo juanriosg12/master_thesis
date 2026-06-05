@@ -25,6 +25,16 @@ IMPORTANT — metric definitions and scope
       - opposite discovered graph, same method (PC<->LiNGAM) -> GSS
   We never use True-vs-Scratch (oracle vs baseline) — that is out of scope.
 
+Output organization
+-------------------
+Method-specific plots are saved in subdirectories by method:
+    plots_dir/dataset/asymmetric/instance_tga_Asymmetric_PC_vs_LiNGAM.png
+    plots_dir/dataset/causal/instance_tga_Causal_PC_vs_LiNGAM.png
+    plots_dir/dataset/flow/instance_tga_Flow_PC_vs_LiNGAM.png
+
+Dataset-level comparison plots (showing all methods) remain at the top level:
+    plots_dir/dataset/mass_budget.png
+
 Usage
 -----
     import assessment_extras as ax
@@ -200,8 +210,15 @@ def _spearman(x, y):
     return float(np.corrcoef(rx, ry)[0, 1])
 
 
-def _save(fig, ctx, name, plots_dir):
+def _save(fig, ctx, name, plots_dir, method=None):
+    """Save figure to plots_dir/dataset[/method]/name.png.
+    
+    If method is provided, creates a method-specific subdirectory (e.g., /asymmetric/).
+    """
     out_dir = Path(plots_dir) / ctx["dataset"]
+    if method:
+        # Create method-specific subdirectory (lowercase)
+        out_dir = out_dir / method.lower()
     out_dir.mkdir(parents=True, exist_ok=True)
     out = out_dir / f"{name}.png"
     fig.savefig(out, dpi=130, bbox_inches="tight")
@@ -248,7 +265,7 @@ def plot_instance_distributions(ctx, method="Causal", graph="PC", reference="Tru
     ax.set_title(f"{method} ({graph}) vs ({reference}) — instance distribution behind TGA\n"
                  "Median ◆ = reported per-feature TGA")
     fig.tight_layout()
-    out = _save(fig, ctx, f"instance_tga_{method}_{graph}_vs_{reference}", plots_dir)
+    out = _save(fig, ctx, f"instance_tga_{method}_{graph}_vs_{reference}", plots_dir, method=method)
     if not show:
         plt.close(fig)
     return out
@@ -287,7 +304,7 @@ def plot_mass_budget(ctx, plots_dir=DEFAULT_PLOTS_DIR, show=False):
                  "bars = graph (PC / LiNGAM / True); dashed = Scratch (×1.0)")
     ax.legend(title="graph")
     fig.tight_layout()
-    out = _save(fig, ctx, "mass_budget", plots_dir)
+    out = _save(fig, ctx, "mass_budget", plots_dir, method=None)  # Dataset-level comparison
     if not show:
         plt.close(fig)
     return out
@@ -304,6 +321,10 @@ def run_all(dataset, model=DEFAULT_MODEL, plots_dir=DEFAULT_PLOTS_DIR):
         plot_instance_distributions(ctx, method="Flow", graph="PC", reference="LiNGAM"),
         plot_instance_distributions(ctx, method="Asymmetric", graph="PC", reference="Traditional"),
         plot_instance_distributions(ctx, method="Asymmetric", graph="LiNGAM", reference="Traditional"),
+        plot_instance_distributions(ctx, method="Causal", graph="PC", reference="Traditional"),
+        plot_instance_distributions(ctx, method="Causal", graph="LiNGAM", reference="Traditional"),
+        plot_instance_distributions(ctx, method="Flow", graph="PC", reference="Traditional"),
+        plot_instance_distributions(ctx, method="Flow", graph="LiNGAM", reference="Traditional"),
         plot_mass_budget(ctx, plots_dir=plots_dir),
     ]
     return [str(o) for o in outs if o is not None]

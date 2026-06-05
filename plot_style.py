@@ -106,9 +106,32 @@ def style_title(ax_or_fig, title, subtitle=None):
         ax_or_fig.suptitle(title, fontweight="bold")
 
 
-def savefig(fig, plots_dir, dataset, filename):
-    """Save under <plots_dir>/<dataset>/<filename> and return the path."""
+def savefig(fig, plots_dir, dataset, filename, method=None):
+    """Save figure to <plots_dir>/<dataset>[/<method>]/<filename> and return the path.
+    
+    Parameters
+    ----------
+    fig : matplotlib.figure.Figure
+        The figure to save.
+    plots_dir : str or Path
+        Base plots directory.
+    dataset : str
+        Dataset name for subdirectory.
+    filename : str
+        Output filename (e.g., 'plot.png').
+    method : str, optional
+        If provided, creates a method-specific subdirectory (e.g., 'asymmetric').
+        Method name is lowercased for directory name.
+    
+    Returns
+    -------
+    Path
+        Path to the saved figure.
+    """
     out_dir = Path(plots_dir) / dataset
+    if method:
+        # Create method-specific subdirectory (lowercase)
+        out_dir = out_dir / method.lower()
     out_dir.mkdir(parents=True, exist_ok=True)
     dest = out_dir / filename
     fig.savefig(str(dest))

@@ -21,7 +21,7 @@ opposite graph.
 
 Figures
 -------
-Feature level   : plot_gss_delta_box, plot_sss_heatmap
+Feature level   : plot_gss_delta_box, plot_gss_heatmap, plot_sss_heatmap
 Disc vs ref     : plot_sign_alignment_heatmap(reference=...), plot_tga_heatmap(reference=...)
 Structure       : plot_adjacency_comparison
 Method level    : plot_gss_sss_scatter, plot_tga_sa_scatter(reference=...)
@@ -219,6 +219,28 @@ def plot_gss_delta_box(ctx, n_top_features=15, plots_dir=DEFAULT_PLOTS_DIR, show
                    f"Top {len(rank)} features by GSS · positive = PC higher · tight box = consistent across instances")
     fig.tight_layout()
     out = savefig(fig, plots_dir, ctx["dataset"], f"gss_delta_box_{ctx['dataset']}.png")
+    plt.show() if show else plt.close(fig)
+    return out
+
+
+def plot_gss_heatmap(ctx, top_n=40, plots_dir=DEFAULT_PLOTS_DIR, show=False):
+    """Feature × method Graph Sensitivity Score heatmap (PC vs LiNGAM). Sequential (cividis):
+    brighter = larger magnitude difference between PC and LiNGAM graphs."""
+    gss = gss_feature_dict(ctx)
+    if not gss:
+        return None
+    names = feature_names(ctx)
+    labels = [m for m in ORDER if m in gss]
+    mat = np.stack([gss[m] for m in labels], axis=1)                 # (F, M)
+    top = np.argsort(mat.mean(axis=1))[::-1][:min(top_n, len(names))]
+    Z = mat[top].T                                                   # (M, n_top)
+    fig, ax_ = plt.subplots(figsize=(max(8, 0.22 * len(top) + 2), 1.0 * len(labels) + 1.8))
+    _heatmap(ax_, Z, labels, [names[i] for i in top], SEQ_CMAP, 0, float(mat.max()), "GSS",
+             annotate=len(top) <= 14)
+    st.style_title(ax_, f"Feature-level graph sensitivity — PC vs LiNGAM — {ctx['dataset']}",
+                   f"GSS = mean_i ||φ(PC)|−|φ(LiNGAM)|| · top {len(top)} features by mean GSS")
+    fig.tight_layout()
+    out = savefig(fig, plots_dir, ctx["dataset"], f"gss_heatmap_{ctx['dataset']}.png")
     plt.show() if show else plt.close(fig)
     return out
 
@@ -473,6 +495,7 @@ def export_method_level_metrics(ctx, plots_dir=DEFAULT_PLOTS_DIR):
 def run_all(ctx, plots_dir=DEFAULT_PLOTS_DIR):
     outs = [
         plot_gss_delta_box(ctx, plots_dir=plots_dir),
+        plot_gss_heatmap(ctx, plots_dir=plots_dir),
         plot_sss_heatmap(ctx, plots_dir=plots_dir),
         plot_sign_alignment_heatmap(ctx, reference="True", plots_dir=plots_dir),
         plot_sign_alignment_heatmap(ctx, reference="Traditional", plots_dir=plots_dir),
