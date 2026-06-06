@@ -112,8 +112,8 @@ def _load_feature_names(dataset, F):
     return [f"X{i}" for i in range(F)]
 
 
-def _load_output_range(dataset: str, model: str = DEFAULT_MODEL) -> float | None:
-    """Load saved model + test split, run predictions, return output range (max - min)."""
+def _load_output_std(dataset: str, model: str = DEFAULT_MODEL) -> float | None:
+    """Load saved model + test split, run predictions, return prediction std."""
     model_path = MODELS_DIR / f"{dataset}_{model}.pkl"
     test_path = PROCESSED_DIR / f"{dataset}_test.parquet"
     if not model_path.exists() or not test_path.exists():
@@ -126,7 +126,7 @@ def _load_output_range(dataset: str, model: str = DEFAULT_MODEL) -> float | None
     if selected_features is not None:
         X = X[selected_features]
     preds = lgbm_model.predict(X)
-    return float(np.ptp(preds))
+    return float(preds.std())
 
 
 def load_context(dataset: str, model: str = DEFAULT_MODEL) -> dict:
@@ -144,9 +144,9 @@ def load_context(dataset: str, model: str = DEFAULT_MODEL) -> dict:
 
     struct = _graph_struct(dataset, F)
     feature_names = _load_feature_names(dataset, F)
-    output_range = _load_output_range(dataset, model)
+    output_std = _load_output_std(dataset, model)
     return dict(dataset=dataset, model=model, F=F, shap=shap, struct=struct,
-                feature_names=feature_names, output_range=output_range)
+                feature_names=feature_names, output_std=output_std)
 
 
 def _graph_struct(dataset, F):
@@ -198,13 +198,13 @@ def tga_instance(ctx, method, graph, reference="True"):
 
 
 def tga_feature(ctx, method, graph, reference="True"):
-    """(F,) per-feature TGA = RMS over instances, normalised by model output range."""
+    """(F,) per-feature TGA = RMS over instances, normalised by model prediction std."""
     inst = tga_instance(ctx, method, graph, reference)
     if inst is None:
         return None
     feat = np.sqrt(np.mean(np.square(inst), axis=0))
-    output_range = ctx.get("output_range")
-    return feat / output_range if output_range else feat
+    output_std = ctx.get("output_std")
+    return feat / output_std if output_std else feat
 
 
 def gss_instance(ctx, method):
@@ -214,13 +214,13 @@ def gss_instance(ctx, method):
 
 
 def gss_feature(ctx, method):
-    """(F,) per-feature GSS = RMS over instances, normalised by model output range."""
+    """(F,) per-feature GSS = RMS over instances, normalised by model prediction std."""
     inst = gss_instance(ctx, method)
     if inst is None:
         return None
     feat = np.sqrt(np.mean(np.square(inst), axis=0))
-    output_range = ctx.get("output_range")
-    return feat / output_range if output_range else feat
+    output_std = ctx.get("output_std")
+    return feat / output_std if output_std else feat
 
 
 def global_tga(ctx, method, graph, reference="True"):

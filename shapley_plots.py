@@ -13,16 +13,16 @@ style/palette defined in ``plot_style.py``, so every plot — here and in
 Metric definitions are inherited from ``assessment_extras`` (refined):
     tga_instance(method, graph, ref) = |phi_disc| - |phi_ref|           (signed, per instance)
     tga_feature                       = sqrt( mean_i tga_instance² )     (RMS over instances)
-                                        / output_range                    (÷ model pred range)
+                                        / output_std                      (÷ model pred std)
     global TGA                        = mean_f( tga_feature )
     gss_instance(method)              = |phi_PC| - |phi_LiNGAM|          (signed, per instance)
     gss_feature                       = sqrt( mean_i gss_instance² )     (RMS over instances)
-                                        / output_range                    (÷ model pred range)
+                                        / output_std                      (÷ model pred std)
     global GSS                        = mean_f( gss_feature )
 
     RMS aggregation handles sparsity better than mean(|diff|): large deviations in a
     minority of instances are not washed out by near-zero ones.  Dividing by
-    ``output_range`` (model prediction max − min on test set) makes both metrics
+    ``output_std`` (std of model predictions on test set) makes both metrics
     dimensionless and directly comparable across datasets with different target scales.
 
 Scope: subject = discovered graph (PC/LiNGAM); references = True / Traditional(Scratch) /
@@ -87,9 +87,9 @@ def gss_feature_dict(ctx):
     """method -> (F,) per-feature GSS.
 
     Each value is the RMS of the per-instance signed magnitude difference
-    (|φ_PC| − |φ_LiNGAM|), divided by the model output range:
+    (|φ_PC| − |φ_LiNGAM|), divided by the model prediction std:
 
-        GSS(m, f) = sqrt(mean_i(|φ^PC_{i,f}| − |φ^LiNGAM_{i,f}|)²) / output_range
+        GSS(m, f) = sqrt(mean_i(|φ^PC_{i,f}| − |φ^LiNGAM_{i,f}|)²) / output_std
     """
     return {m: gss_feature(ctx, m) for m in _methods_present(ctx, ["PC", "LiNGAM"])}
 
@@ -131,9 +131,9 @@ def tga_feature_dict(ctx, reference="True"):
     """(method, graph) -> (F,) per-feature TGA vs reference.
 
     Each value is the RMS of the per-instance signed magnitude difference
-    (|φ_disc| − |φ_ref|), divided by the model output range:
+    (|φ_disc| − |φ_ref|), divided by the model prediction std:
 
-        TGA(m, g, f) = sqrt(mean_i(|φ^disc_{i,f}| − |φ^ref_{i,f}|)²) / output_range
+        TGA(m, g, f) = sqrt(mean_i(|φ^disc_{i,f}| − |φ^ref_{i,f}|)²) / output_std
     """
     ref = REF_TOKEN[reference]
     out = {}
@@ -189,7 +189,7 @@ def _heatmap(ax_, Z, row_labels, col_labels, cmap, vmin, vmax, cbar_label,
             for j in range(Z.shape[1]):
                 v = Z[i, j]
                 if not np.isnan(v):
-                    ax_.text(j, i, f"{v:.2f}", ha="center", va="center", fontsize=6,
+                    ax_.text(j, i, f"{v:.1f}%", ha="center", va="center", fontsize=6,
                              color="white" if (v - vmin) / (vmax - vmin + 1e-9) > 0.55 else "black")
     cbar = ax_.figure.colorbar(im, ax=ax_, fraction=0.025, pad=0.02)
     cbar.set_label(cbar_label, fontsize=9)
@@ -252,14 +252,14 @@ def plot_gss_heatmap(ctx, top_n=40, plots_dir=DEFAULT_PLOTS_DIR, show=False):
         return None
     names = feature_names(ctx)
     labels = [m for m in ORDER if m in gss]
-    mat = np.stack([gss[m] for m in labels], axis=1)                 # (F, M)
+    mat = np.stack([gss[m] for m in labels], axis=1) * 100           # (F, M) → %
     top = np.argsort(mat.mean(axis=1))[::-1][:min(top_n, len(names))]
     Z = mat[top].T                                                   # (M, n_top)
     fig, ax_ = plt.subplots(figsize=(max(8, 0.22 * len(top) + 2), 1.0 * len(labels) + 1.8))
-    _heatmap(ax_, Z, labels, [names[i] for i in top], SEQ_CMAP, 0, float(mat.max()), "GSS",
+    _heatmap(ax_, Z, labels, [names[i] for i in top], SEQ_CMAP, 0, float(mat.max()), "GSS (%)",
              annotate=len(top) <= 14)
     st.style_title(ax_, f"Feature-level graph sensitivity — PC vs LiNGAM — {ctx['dataset']}",
-                   f"GSS = RMS_i(|φ(PC)|−|φ(LiNGAM)|) / output_range · top {len(top)} features by mean GSS")
+                   f"GSS = RMS_i(|φ(PC)|−|φ(LiNGAM)|) / output_std · top {len(top)} features by mean GSS")
     fig.tight_layout()
     out = savefig(fig, plots_dir, ctx["dataset"], f"gss_heatmap_{ctx['dataset']}.png")
     plt.show() if show else plt.close(fig)
@@ -274,15 +274,15 @@ def plot_sss_heatmap(ctx, top_n=40, plots_dir=DEFAULT_PLOTS_DIR, show=False):
         return None
     names = feature_names(ctx)
     labels = [m for m in ORDER if m in sss]
-    mat = np.stack([sss[m] for m in labels], axis=1)                 # (F, M)
+    mat = np.stack([sss[m] for m in labels], axis=1) * 100           # (F, M) → %
     top = np.argsort(np.nanmean(mat, axis=1))[:min(top_n, len(names))]
     Z = mat[top].T                                                   # (M, n_top)
     fig, ax_ = plt.subplots(figsize=(max(8, 0.22 * len(top) + 2), 1.0 * len(labels) + 1.8))
-    _heatmap(ax_, Z, labels, [names[i] for i in top], DIV_CMAP, 0, 1, "SSS",
+    _heatmap(ax_, Z, labels, [names[i] for i in top], DIV_CMAP, 0, 100, "SSS (%)",
              annotate=len(top) <= 14,
-             cbar_ticks=[0, 0.5, 1], cbar_ticklabels=["0 flips", "0.5", "1 agrees"])
+             cbar_ticks=[0, 50, 100], cbar_ticklabels=["0 % (flips)", "50 %", "100 % (agrees)"])
     st.style_title(ax_, f"Feature-level sign stability — PC vs LiNGAM — {ctx['dataset']}",
-                   f"Fraction of instances with matching SHAP sign · top {len(top)} most-unstable features")
+                   f"% of instances with matching SHAP sign · top {len(top)} most-unstable features")
     fig.tight_layout()
     out = savefig(fig, plots_dir, ctx["dataset"], f"sss_heatmap_{ctx['dataset']}.png")
     plt.show() if show else plt.close(fig)
@@ -302,15 +302,15 @@ def plot_sign_alignment_heatmap(ctx, reference="True", top_n=40,
     names = feature_names(ctx)
     keys = [(m, g) for m in ORDER for g in DISC_GRAPHS if (m, g) in sa]
     labels = [f"{m} ({g})" for m, g in keys]
-    mat = np.stack([sa[k] for k in keys], axis=1)                   # (F, K)
+    mat = np.stack([sa[k] for k in keys], axis=1) * 100             # (F, K) → %
     top = np.argsort(np.nanmean(mat, axis=1))[:min(top_n, len(names))]
     Z = mat[top].T                                                  # (K, n_top)
     fig, ax_ = plt.subplots(figsize=(max(8, 0.22 * len(top) + 2), 0.55 * len(labels) + 1.8))
-    _heatmap(ax_, Z, labels, [names[i] for i in top], DIV_CMAP, 0, 1, "Sign align",
+    _heatmap(ax_, Z, labels, [names[i] for i in top], DIV_CMAP, 0, 100, "Sign align (%)",
              annotate=len(top) <= 14,
-             cbar_ticks=[0, 0.5, 1], cbar_ticklabels=["0 opp.", "0.5", "1 match"])
+             cbar_ticks=[0, 50, 100], cbar_ticklabels=["0 % (opp.)", "50 %", "100 % (match)"])
     st.style_title(ax_, f"Sign alignment vs {reference} — {ctx['dataset']}",
-                   f"sign(φ_disc)=sign(φ_{reference}) per instance · sorted by worst mean alignment")
+                   f"% of instances where sign(φ_disc)=sign(φ_{reference}) · sorted by worst mean alignment")
     fig.tight_layout()
     out = savefig(fig, plots_dir, ctx["dataset"],
                   f"sign_alignment_heatmap_{reference.lower()}_{ctx['dataset']}.png")
@@ -327,14 +327,14 @@ def plot_tga_heatmap(ctx, reference="True", top_n=40, plots_dir=DEFAULT_PLOTS_DI
     names = feature_names(ctx)
     keys = [(m, g) for m in ORDER for g in DISC_GRAPHS if (m, g) in tga]
     labels = [f"{m} ({g})" for m, g in keys]
-    mat = np.stack([tga[k] for k in keys], axis=1)                  # (F, K)
+    mat = np.stack([tga[k] for k in keys], axis=1) * 100            # (F, K) → %
     top = np.argsort(mat.mean(axis=1))[::-1][:min(top_n, len(names))]
     Z = mat[top].T                                                 # (K, n_top)
     fig, ax_ = plt.subplots(figsize=(max(8, 0.22 * len(top) + 2), 0.55 * len(labels) + 1.8))
-    _heatmap(ax_, Z, labels, [names[i] for i in top], SEQ_CMAP, 0, float(mat.max()), "TGA",
+    _heatmap(ax_, Z, labels, [names[i] for i in top], SEQ_CMAP, 0, float(mat.max()), "TGA (%)",
              annotate=len(top) <= 14)
     st.style_title(ax_, f"Feature-level magnitude TGA vs {reference} — {ctx['dataset']}",
-                   f"TGA = RMS_i(|φ(disc)|−|φ({reference})|) / output_range · top {len(top)} features by mean TGA")
+                   f"TGA = RMS_i(|φ(disc)|−|φ({reference})|) / output_std · top {len(top)} features by mean TGA")
     fig.tight_layout()
     out = savefig(fig, plots_dir, ctx["dataset"],
                   f"tga_heatmap_{reference.lower()}_{ctx['dataset']}.png")
@@ -551,7 +551,7 @@ def plot_gss_sss_scatter(ctx, plots_dir=DEFAULT_PLOTS_DIR, show=False):
     """Per-method global GSS (x) vs sign-disagreement 1−SSS (y). Both are PC↔LiNGAM instability
     measures (≥0); lower-left = most robust to the discovery algorithm.
 
-    Global GSS = mean_f( RMS_i(|φ(PC)|−|φ(LiNGAM)|) / output_range ).
+    Global GSS = mean_f( RMS_i(|φ(PC)|−|φ(LiNGAM)|) / output_std ).
     """
     gss, sss = gss_feature_dict(ctx), sss_feature_dict(ctx)
     methods = [m for m in ORDER if m in gss and m in sss]
@@ -559,14 +559,16 @@ def plot_gss_sss_scatter(ctx, plots_dir=DEFAULT_PLOTS_DIR, show=False):
         return None
     fig, ax_ = plt.subplots(figsize=(6, 5))
     for m in methods:
-        x = float(np.abs(gss[m]).mean())
-        y = 1 - float(np.nanmean(sss[m]))
+        x = float(np.abs(gss[m]).mean()) * 100
+        y = (1 - float(np.nanmean(sss[m]))) * 100
         ax_.scatter(x, y, s=150, color=METHOD_COLORS[m], edgecolor="white", lw=1.2, zorder=3)
         ax_.annotate(m, (x, y), textcoords="offset points", xytext=(0, 10),
                      ha="center", fontsize=10, color=METHOD_COLORS[m], fontweight="bold")
     ax_.set_xlim(left=0); ax_.set_ylim(bottom=0)
-    ax_.set_xlabel("GSS — RMS magnitude difference (PC vs LiNGAM) / output_range")
-    ax_.set_ylabel("1 − SSS — sign disagreement rate")
+    ax_.xaxis.set_major_formatter(plt.FuncFormatter(lambda v, _: f"{v:.0f} %"))
+    ax_.yaxis.set_major_formatter(plt.FuncFormatter(lambda v, _: f"{v:.0f} %"))
+    ax_.set_xlabel("GSS — RMS magnitude difference (PC vs LiNGAM) / output_std [%]")
+    ax_.set_ylabel("1 − SSS — sign disagreement rate [%]")
     st.style_title(ax_, f"Graph-discovery instability — {ctx['dataset']}",
                    "Lower-left = most stable across PC / LiNGAM (both axes ≥ 0)")
     fig.tight_layout()
@@ -579,7 +581,7 @@ def plot_tga_sa_scatter(ctx, reference="True", plots_dir=DEFAULT_PLOTS_DIR, show
     """Per (method, graph): global TGA (x) vs sign-disagreement 1−SA (y) vs the reference.
     Colour = method, marker = graph. Lower-left / TGA→0 = closer to the reference.
 
-    Global TGA = mean_f( RMS_i(|φ(disc)|−|φ(ref)|) / output_range ).
+    Global TGA = mean_f( RMS_i(|φ(disc)|−|φ(ref)|) / output_std ).
     """
     tga, sa = tga_feature_dict(ctx, reference), sign_alignment_dict(ctx, reference)
     keys = [(m, g) for m in ORDER for g in DISC_GRAPHS if (m, g) in tga and (m, g) in sa]
@@ -587,13 +589,15 @@ def plot_tga_sa_scatter(ctx, reference="True", plots_dir=DEFAULT_PLOTS_DIR, show
         return None
     fig, ax_ = plt.subplots(figsize=(6.6, 5))
     for m, g in keys:
-        x = float(np.abs(tga[(m, g)]).mean())
-        y = 1 - float(np.nanmean(sa[(m, g)]))
+        x = float(np.abs(tga[(m, g)]).mean()) * 100
+        y = (1 - float(np.nanmean(sa[(m, g)]))) * 100
         ax_.scatter(x, y, s=130, color=METHOD_COLORS[m], marker=GRAPH_MARKERS.get(g, "o"),
                     edgecolor="white", lw=1.1, zorder=3)
-    ax_.set_xlim(left=0); ax_.set_ylim(0, 0.5)
-    ax_.set_xlabel(f"TGA vs {reference} — RMS magnitude difference / output_range")
-    ax_.set_ylabel("1 − Sign Alignment")
+    ax_.set_xlim(left=0); ax_.set_ylim(0, 50)
+    ax_.xaxis.set_major_formatter(plt.FuncFormatter(lambda v, _: f"{v:.0f} %"))
+    ax_.yaxis.set_major_formatter(plt.FuncFormatter(lambda v, _: f"{v:.0f} %"))
+    ax_.set_xlabel(f"TGA vs {reference} — RMS magnitude difference / output_std [%]")
+    ax_.set_ylabel("1 − Sign Alignment [%]") 
     method_handles = [Line2D([0], [0], marker="o", ls="", color=METHOD_COLORS[m],
                              markersize=10, label=m) for m in ORDER if any(k[0] == m for k in keys)]
     graph_handles = [Line2D([0], [0], marker=GRAPH_MARKERS[g], ls="", color="#666666",
@@ -616,15 +620,15 @@ def plot_tga_sa_scatter(ctx, reference="True", plots_dir=DEFAULT_PLOTS_DIR, show
 def gss_sss_table(ctx):
     """Per Shapley method: global GSS and SSS (the coordinates of the GSS–SSS scatter).
 
-    GSS = mean_f( RMS_i(|φ(PC)|−|φ(LiNGAM)|) / output_range ).
+    GSS = mean_f( RMS_i(|φ(PC)|−|φ(LiNGAM)|) / output_std ).
     """
     gss, sss = gss_feature_dict(ctx), sss_feature_dict(ctx)
     rows = []
     for m in ORDER:
         if m in gss and m in sss:
-            s = float(np.nanmean(sss[m]))
-            rows.append(dict(Method=m, GSS=float(np.abs(gss[m]).mean()),
-                             SSS=s, SignDisagree=1 - s))
+            s = float(np.nanmean(sss[m])) * 100
+            rows.append(dict(Method=m, GSS_pct=float(np.abs(gss[m]).mean()) * 100,
+                             SSS_pct=s, SignDisagree_pct=100 - s))
     return rows
 
 
@@ -632,21 +636,21 @@ def tga_sa_table(ctx, reference="True"):
     """Per (Shapley method, discovered graph): global TGA and Sign Alignment vs the reference
     (the coordinates of the TGA–SA scatter).
 
-    TGA = mean_f( RMS_i(|φ(disc)|−|φ(ref)|) / output_range ).
+    TGA = mean_f( RMS_i(|φ(disc)|−|φ(ref)|) / output_std ).
     """
     tga, sa = tga_feature_dict(ctx, reference), sign_alignment_dict(ctx, reference)
     rows = []
     for m in ORDER:
         for g in DISC_GRAPHS:
             if (m, g) in tga and (m, g) in sa:
-                a = float(np.nanmean(sa[(m, g)]))
+                a = float(np.nanmean(sa[(m, g)])) * 100
                 rows.append(dict(Method=m, Graph=g, Reference=reference,
-                                 TGA=float(np.abs(tga[(m, g)]).mean()),
-                                 SignAlign=a, SignDisagree=1 - a))
+                                 TGA_pct=float(np.abs(tga[(m, g)]).mean()) * 100,
+                                 SignAlign_pct=a, SignDisagree_pct=100 - a))
     return rows
 
 
-def _md_table(rows, floatfmt="{:.4f}"):
+def _md_table(rows, floatfmt="{:.2f} %"):
     if not rows:
         return "_(no data)_\n"
     cols = list(rows[0])
@@ -665,19 +669,19 @@ def export_method_level_metrics(ctx, plots_dir=DEFAULT_PLOTS_DIR):
     ds = ctx["dataset"]
     parts = [f"# Method-level group metrics — {ds}\n",
              "Scalar summaries behind the method-level scatter plots. Magnitude metrics "
-             "(GSS, TGA) are the mean over features of the per-feature RMS / output_range metric; "
-             "sign metrics (SSS, Sign Alignment) are the mean over features.\n",
+             "(GSS, TGA) are the mean over features of the per-feature RMS / output_std metric expressed as a %; "
+             "sign metrics (SSS, Sign Alignment) are the mean over features expressed as a %.\n",
              "## Graph-discovery instability — GSS vs SSS (per Shapley method)",
-             "`GSS` = RMS_i(|φ(PC)|−|φ(LiNGAM)|)/output_range per feature, averaged over features; "
-             "`SSS` = sign agreement PC vs LiNGAM; `SignDisagree` = 1 − SSS (the scatter's y-axis).\n",
+             "`GSS` = RMS_i(|φ(PC)|−|φ(LiNGAM)|)/output_std per feature × 100, averaged over features; "
+             "`SSS` = % of instances with matching sign PC vs LiNGAM; `SignDisagree` = 100 − SSS (the scatter's y-axis).\n",
              _md_table(gss_sss_table(ctx))]
     for ref in ("True", "Traditional"):
         rows = tga_sa_table(ctx, ref)
         if rows:
             parts += [f"\n## Alignment to {ref} — TGA vs Sign Alignment "
                       f"(per Shapley method × discovered graph)",
-                      f"`TGA` = RMS_i(|φ(disc)|−|φ({ref})|)/output_range per feature, averaged over features; "
-                      f"`SignAlign` = sign agreement vs {ref}; `SignDisagree` = 1 − SignAlign (the scatter's y-axis).\n",
+                      f"`TGA` = RMS_i(|φ(disc)|−|φ({ref})|)/output_std per feature × 100, averaged over features; "
+                      f"`SignAlign` = % of instances with matching sign vs {ref}; `SignDisagree` = 100 − SignAlign (the scatter's y-axis).\n",
                       _md_table(rows)]
     out_dir = Path(plots_dir) / ds
     out_dir.mkdir(parents=True, exist_ok=True)

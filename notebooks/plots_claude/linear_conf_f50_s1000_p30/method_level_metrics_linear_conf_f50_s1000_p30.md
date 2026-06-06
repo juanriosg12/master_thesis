@@ -1,38 +1,38 @@
 # Method-level group metrics — linear_conf_f50_s1000_p30
 
-Scalar summaries behind the method-level scatter plots. Magnitude metrics (GSS, TGA) are the mean over features of the per-feature RMS / output_range metric; sign metrics (SSS, Sign Alignment) are the mean over features.
+Scalar summaries behind the method-level scatter plots. Magnitude metrics (GSS, TGA) are the mean over features of the per-feature RMS / output_std metric expressed as a %; sign metrics (SSS, Sign Alignment) are the mean over features expressed as a %.
 
 ## Graph-discovery instability — GSS vs SSS (per Shapley method)
-`GSS` = RMS_i(|φ(PC)|−|φ(LiNGAM)|)/output_range per feature, averaged over features; `SSS` = sign agreement PC vs LiNGAM; `SignDisagree` = 1 − SSS (the scatter's y-axis).
+`GSS` = RMS_i(|φ(PC)|−|φ(LiNGAM)|)/output_std per feature × 100, averaged over features; `SSS` = % of instances with matching sign PC vs LiNGAM; `SignDisagree` = 100 − SSS (the scatter's y-axis).
 
-| Method | GSS | SSS | SignDisagree |
+| Method | GSS_pct | SSS_pct | SignDisagree_pct |
 | --- | --- | --- | --- |
-| Asymmetric | 0.0019 | 0.9407 | 0.0593 |
-| Causal | 0.0129 | 0.6206 | 0.3794 |
-| Flow | 0.0110 | 0.8673 | 0.1327 |
+| Asymmetric | 1.07 % | 94.07 % | 5.93 % |
+| Causal | 7.15 % | 62.06 % | 37.94 % |
+| Flow | 6.06 % | 86.73 % | 13.27 % |
 
 
 ## Alignment to True — TGA vs Sign Alignment (per Shapley method × discovered graph)
-`TGA` = RMS_i(|φ(disc)|−|φ(True)|)/output_range per feature, averaged over features; `SignAlign` = sign agreement vs True; `SignDisagree` = 1 − SignAlign (the scatter's y-axis).
+`TGA` = RMS_i(|φ(disc)|−|φ(True)|)/output_std per feature × 100, averaged over features; `SignAlign` = % of instances with matching sign vs True; `SignDisagree` = 100 − SignAlign (the scatter's y-axis).
 
-| Method | Graph | Reference | TGA | SignAlign | SignDisagree |
+| Method | Graph | Reference | TGA_pct | SignAlign_pct | SignDisagree_pct |
 | --- | --- | --- | --- | --- | --- |
-| Asymmetric | PC | True | 0.0018 | 0.9412 | 0.0588 |
-| Asymmetric | LiNGAM | True | 0.0014 | 0.9370 | 0.0630 |
-| Causal | PC | True | 0.0096 | 0.6840 | 0.3160 |
-| Causal | LiNGAM | True | 0.0137 | 0.6254 | 0.3746 |
-| Flow | PC | True | 0.0133 | 0.5774 | 0.4226 |
-| Flow | LiNGAM | True | 0.0146 | 0.5509 | 0.4491 |
+| Asymmetric | PC | True | 1.02 % | 94.12 % | 5.88 % |
+| Asymmetric | LiNGAM | True | 0.79 % | 93.70 % | 6.30 % |
+| Causal | PC | True | 5.32 % | 68.40 % | 31.60 % |
+| Causal | LiNGAM | True | 7.57 % | 62.54 % | 37.46 % |
+| Flow | PC | True | 7.34 % | 57.74 % | 42.26 % |
+| Flow | LiNGAM | True | 8.06 % | 55.09 % | 44.91 % |
 
 
 ## Alignment to Traditional — TGA vs Sign Alignment (per Shapley method × discovered graph)
-`TGA` = RMS_i(|φ(disc)|−|φ(Traditional)|)/output_range per feature, averaged over features; `SignAlign` = sign agreement vs Traditional; `SignDisagree` = 1 − SignAlign (the scatter's y-axis).
+`TGA` = RMS_i(|φ(disc)|−|φ(Traditional)|)/output_std per feature × 100, averaged over features; `SignAlign` = % of instances with matching sign vs Traditional; `SignDisagree` = 100 − SignAlign (the scatter's y-axis).
 
-| Method | Graph | Reference | TGA | SignAlign | SignDisagree |
+| Method | Graph | Reference | TGA_pct | SignAlign_pct | SignDisagree_pct |
 | --- | --- | --- | --- | --- | --- |
-| Asymmetric | PC | Traditional | 0.0012 | 0.9492 | 0.0508 |
-| Asymmetric | LiNGAM | Traditional | 0.0016 | 0.9424 | 0.0576 |
-| Causal | PC | Traditional | 0.0115 | 0.6470 | 0.3530 |
-| Causal | LiNGAM | Traditional | 0.0106 | 0.6608 | 0.3392 |
-| Flow | PC | Traditional | 0.0120 | 0.6342 | 0.3658 |
-| Flow | LiNGAM | Traditional | 0.0120 | 0.6232 | 0.3768 |
+| Asymmetric | PC | Traditional | 0.68 % | 94.92 % | 5.08 % |
+| Asymmetric | LiNGAM | Traditional | 0.86 % | 94.24 % | 5.76 % |
+| Causal | PC | Traditional | 6.39 % | 64.70 % | 35.30 % |
+| Causal | LiNGAM | Traditional | 5.84 % | 66.08 % | 33.92 % |
+| Flow | PC | Traditional | 6.62 % | 63.42 % | 36.58 % |
+| Flow | LiNGAM | Traditional | 6.61 % | 62.32 % | 37.68 % |

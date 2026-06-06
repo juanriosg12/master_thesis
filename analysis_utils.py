@@ -196,19 +196,19 @@ def compute_tga(
     base_methods: list[str],
     disc_graphs:  list[str],
     reference:    str   = "True",
-    output_range: float | None = None,
+    output_std: float | None = None,
 ) -> tuple[dict[tuple[str, str], np.ndarray], dict[str, set[int]]]:
     """
     RMS magnitude difference between discovered-graph and reference attributions,
-    normalised by model output range.
+    normalised by model prediction std.
 
     TGA(method, graph, feature) = sqrt( mean_i (|φ(disc,i,f)| − |φ(ref,i,f)|)² )
-                                   ÷ output_range
+                                   ÷ output_std
 
     RMS aggregation (instead of mean of abs) handles sparsity better: large
     deviations in a minority of instances are not washed out by near-zero ones.
-    Dividing by output_range makes the metric dimensionless and comparable
-    across datasets with different target scales.
+    Dividing by output_std (std of model predictions on test set) makes the metric
+    dimensionless and comparable across datasets with different target scales.
 
     Reference is resolved the same way as in ``compute_sign_alignment``.
 
@@ -220,7 +220,7 @@ def compute_tga(
     disc_graphs   : graphs to evaluate.
     reference     : reference variant. Default ``"True"``. Pass ``"Scratch"``
                     for graph-free baseline alignment.
-    output_range  : model prediction range (max − min on test set). When provided
+    output_std    : std of model predictions on test set. When provided
                     the per-feature RMS is divided by this value.
 
     Returns
@@ -246,8 +246,8 @@ def compute_tga(
             phi_disc = shap_data[disc_key]
             diff     = np.abs(phi_disc) - abs_ref          # signed per-instance diff
             feat_rms = np.sqrt(np.mean(np.square(diff), axis=0))  # RMS over instances
-            if output_range:
-                feat_rms = feat_rms / output_range
+            if output_std:
+                feat_rms = feat_rms / output_std
             tga_data[(meth, g)] = feat_rms
     return tga_data, zero_feat_sets
 
@@ -323,25 +323,26 @@ def edge_recovery(
 def compute_gss(
     shap_data:    dict[str, np.ndarray],
     base_methods: list[str],
-    output_range: float | None = None,
+    output_std: float | None = None,
 ) -> dict[str, np.ndarray]:
     """
     Per-feature RMS magnitude difference between PC and LiNGAM outputs,
-    normalised by model output range.
+    normalised by model prediction std.
 
     GSS(method, feature) = sqrt( mean_i (|φ^PC_{i,f}| − |φ^LiNGAM_{i,f}|)² )
-                           ÷ output_range
+                           ÷ output_std
 
     RMS aggregation handles sparsity better than mean(|diff|): large per-instance
-    deviations dominate rather than being averaged away. Dividing by output_range
-    makes the metric dimensionless and comparable across datasets.
+    deviations dominate rather than being averaged away. Dividing by output_std
+    (std of model predictions on test set) makes the metric dimensionless and
+    comparable across datasets.
 
     Parameters
     ----------
-    shap_data    : dict with keys like ``"{method} (PC)"`` and ``"{method} (LiNGAM)"``.
+    shap_data  : dict with keys like ``"{method} (PC)"`` and ``"{method} (LiNGAM)"``.
     base_methods : list of method names.
-    output_range : model prediction range (max − min on test set). When provided
-                   the per-feature RMS is divided by this value.
+    output_std : std of model predictions on test set. When provided
+                 the per-feature RMS is divided by this value.
 
     Returns
     -------
@@ -356,8 +357,8 @@ def compute_gss(
             continue
         diff     = np.abs(shap_data[pc_key]) - np.abs(shap_data[lg_key])  # signed
         feat_rms = np.sqrt(np.mean(np.square(diff), axis=0))
-        if output_range:
-            feat_rms = feat_rms / output_range
+        if output_std:
+            feat_rms = feat_rms / output_std
         gss[meth] = feat_rms
     return gss
 
