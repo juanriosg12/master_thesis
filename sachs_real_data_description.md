@@ -15,7 +15,7 @@ benchmarks for causal discovery because a consensus reference DAG is available
 | Variables | 11 protein/lipid concentrations |
 | Target Y | `akt` (Akt kinase — downstream node in PI3K and PKA signalling pathways) |
 | X features | 10: `raf`, `mek`, `plc`, `pip2`, `pip3`, `erk`, `pka`, `pkc`, `p38`, `jnk` |
-| True DAG (X→X edges) | 16 directed edges |
+| True DAG (X→X edges) | 17 directed edges |
 | True DAG (X→Y edges) | 3 (`pip3→akt`, `pka→akt`, `erk→akt`) |
 | True DAG (total) | **19 directed edges** |
 | Train / Test split | 80 / 20 → **5,972 train / 1,494 test** (seed 42) |
@@ -90,17 +90,17 @@ The consensus reference graph from the original paper encodes the known signalli
 relationships among the 11 proteins. After removing `akt` (target Y), the
 reference has:
 
-**X→X edges (16):**
+**X→X edges (17):**
 
 | From | To | Pathway |
 |---|---|---|
 | raf | mek | MAPK cascade |
 | mek | erk | MAPK cascade |
 | plc | pip2 | PIP metabolism |
-| plc | pip3 | PIP metabolism |
 | plc | pkc | PKC activation |
 | pip2 | pkc | PKC activation |
 | pip3 | plc | PIP feedback |
+| pip3 | pip2 | PIP metabolism |
 | pka | raf | PKA regulation |
 | pka | mek | PKA regulation |
 | pka | erk | PKA regulation |
@@ -108,6 +108,7 @@ reference has:
 | pka | jnk | PKA regulation |
 | pkc | raf | PKC regulation |
 | pkc | mek | PKC regulation |
+| pkc | pka | PKC→PKA feedback |
 | pkc | p38 | PKC regulation |
 | pkc | jnk | PKC regulation |
 
@@ -165,24 +166,24 @@ is fixed by the pipeline heuristic and does not test discovery quality.
 
 ### 6.2 X→X Edges Only (actual causal structure recovered)
 
-PC and LiNGAM only discover **X→X edges**. The X→X block has **16 true edges**.
+PC and LiNGAM only discover **X→X edges**. The X→X block has **17 true edges**.
 
 | Algorithm | TP | FP | FN | Precision | Recall | F1 | SHD | Edges found |
 |---|---|---|---|---|---|---|---|---|
-| **LiNGAM** | 6 | 20 | 10 | **0.231** | **0.375** | **0.286** | 30 | 26 |
-| **PC** | 3 | 16 | 13 | 0.158 | 0.188 | 0.171 | 29 | 19 |
+| **LiNGAM** | 7 | 19 | 10 | **0.269** | **0.412** | **0.326** | 29 | 26 |
+| **PC** | 3 | 16 | 14 | 0.158 | 0.176 | 0.167 | 30 | 19 |
 
 **Reading the results:**
 
-- **LiNGAM** recovers more true X→X edges (recall = 0.375) but at the cost of
-  many false positives (20 spurious edges out of 26 reported). The linear
+- **LiNGAM** recovers more true X→X edges (recall = 0.412) but at the cost of
+  many false positives (19 spurious edges out of 26 reported). The linear
   non-Gaussian signal is present in the log-transformed data, but the multiple
   overlapping biological pathways and intervention-induced non-stationarity create
-  false associations. F1 = 0.286.
+  false associations. F1 = 0.326.
 
-- **PC** is again the more conservative algorithm (only 19 edges reported vs. 16
+- **PC** is again the more conservative algorithm (only 19 edges reported vs. 17
   true), but with very low precision (0.158): only 3 of its 19 reported X→X edges
-  are correct. F1 = 0.171. The Fisher-z test at $\alpha = 0.05$ struggles with
+  are correct. F1 = 0.167. The Fisher-z test at $\alpha = 0.05$ struggles with
   the non-linear, non-Gaussian residuals that persist even after log-transform.
 
 - Both algorithms perform **substantially worse** on this real dataset than on

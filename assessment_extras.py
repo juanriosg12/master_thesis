@@ -52,6 +52,8 @@ from pathlib import Path
 import json
 
 import numpy as np
+import pandas as pd
+import joblib
 import matplotlib
 
 matplotlib.use("Agg")
@@ -63,6 +65,8 @@ import matplotlib.pyplot as plt
 BASE_DIR = Path(__file__).resolve().parent
 EXPLAIN_DIR = BASE_DIR / "data" / "explainability"
 CAUSAL_DIR = BASE_DIR / "data" / "causal"
+MODELS_DIR = BASE_DIR / "models"
+PROCESSED_DIR = BASE_DIR / "data" / "processed"
 DEFAULT_PLOTS_DIR = BASE_DIR / "notebooks" / "plots_claude"
 
 DEFAULT_MODEL = "lgbm"
@@ -108,6 +112,23 @@ def _load_feature_names(dataset, F):
     return [f"X{i}" for i in range(F)]
 
 
+def _load_output_range(dataset: str, model: str = DEFAULT_MODEL) -> float | None:
+    """Load saved model + test split, run predictions, return output range (max - min)."""
+    model_path = MODELS_DIR / f"{dataset}_{model}.pkl"
+    test_path = PROCESSED_DIR / f"{dataset}_test.parquet"
+    if not model_path.exists() or not test_path.exists():
+        return None
+    model_data = joblib.load(model_path)
+    lgbm_model = model_data["model"]
+    selected_features = model_data.get("selected_features")
+    df = pd.read_parquet(test_path)
+    X = df.drop(columns=["Y"], errors="ignore")
+    if selected_features is not None:
+        X = X[selected_features]
+    preds = lgbm_model.predict(X)
+    return float(np.ptp(preds))
+
+
 def load_context(dataset: str, model: str = DEFAULT_MODEL) -> dict:
     scratch = _load_npy(dataset, model, "scratch")
     if scratch is None:
@@ -123,7 +144,9 @@ def load_context(dataset: str, model: str = DEFAULT_MODEL) -> dict:
 
     struct = _graph_struct(dataset, F)
     feature_names = _load_feature_names(dataset, F)
-    return dict(dataset=dataset, model=model, F=F, shap=shap, struct=struct, feature_names=feature_names)
+    output_range = _load_output_range(dataset, model)
+    return dict(dataset=dataset, model=model, F=F, shap=shap, struct=struct,
+                feature_names=feature_names, output_range=output_range)
 
 
 def _graph_struct(dataset, F):
@@ -175,9 +198,13 @@ def tga_instance(ctx, method, graph, reference="True"):
 
 
 def tga_feature(ctx, method, graph, reference="True"):
-    """(F,) per-feature TGA = mean over instances. Matches compute_tga."""
+    """(F,) per-feature TGA = RMS over instances, normalised by model output range."""
     inst = tga_instance(ctx, method, graph, reference)
-    return None if inst is None else np.abs(inst).mean(0)
+    if inst is None:
+        return None
+    feat = np.sqrt(np.mean(np.square(inst), axis=0))
+    output_range = ctx.get("output_range")
+    return feat / output_range if output_range else feat
 
 
 def gss_instance(ctx, method):
@@ -187,19 +214,23 @@ def gss_instance(ctx, method):
 
 
 def gss_feature(ctx, method):
-    """(F,) per-feature GSS = mean_i | |phi_PC| - |phi_LiNGAM| |. Matches compute_gss."""
+    """(F,) per-feature GSS = RMS over instances, normalised by model output range."""
     inst = gss_instance(ctx, method)
-    return None if inst is None else np.abs(inst).mean(0)
+    if inst is None:
+        return None
+    feat = np.sqrt(np.mean(np.square(inst), axis=0))
+    output_range = ctx.get("output_range")
+    return feat / output_range if output_range else feat
 
 
 def global_tga(ctx, method, graph, reference="True"):
-    """Scalar global TGA = absolute average of the per-feature TGA."""
+    """Scalar global TGA = mean of normalised per-feature TGA."""
     feat = tga_feature(ctx, method, graph, reference)
     return None if feat is None else float(np.abs(feat).mean())
 
 
 def global_gss(ctx, method):
-    """Scalar global GSS = absolute average of the per-feature GSS."""
+    """Scalar global GSS = mean of normalised per-feature GSS."""
     feat = gss_feature(ctx, method)
     return None if feat is None else float(np.abs(feat).mean())
 
@@ -325,6 +356,12 @@ def run_all(dataset, model=DEFAULT_MODEL, plots_dir=DEFAULT_PLOTS_DIR):
         plot_instance_distributions(ctx, method="Causal", graph="LiNGAM", reference="Traditional"),
         plot_instance_distributions(ctx, method="Flow", graph="PC", reference="Traditional"),
         plot_instance_distributions(ctx, method="Flow", graph="LiNGAM", reference="Traditional"),
+        plot_instance_distributions(ctx, method="Asymmetric", graph="PC", reference="True"),
+        plot_instance_distributions(ctx, method="Asymmetric", graph="LiNGAM", reference="True"),
+        plot_instance_distributions(ctx, method="Causal", graph="PC", reference="True"),
+        plot_instance_distributions(ctx, method="Causal", graph="LiNGAM", reference="True"),
+        plot_instance_distributions(ctx, method="Flow", graph="PC", reference="True"),
+        plot_instance_distributions(ctx, method="Flow", graph="LiNGAM", reference="True"),
         plot_mass_budget(ctx, plots_dir=plots_dir),
     ]
     return [str(o) for o in outs if o is not None]

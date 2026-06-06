@@ -11,10 +11,19 @@ style/palette defined in ``plot_style.py``, so every plot — here and in
 ``assessment_extras.py`` — looks the same.
 
 Metric definitions are inherited from ``assessment_extras`` (refined):
-    tga_instance(method, graph, ref) = |phi_disc| - |phi_ref|     (signed, per instance)
-    tga_feature                       = mean_i | tga_instance |     (absolute average)
-    global TGA                        = mean_f | tga_feature |
-    gss_*                             = same logic, PC subject, LiNGAM reference
+    tga_instance(method, graph, ref) = |phi_disc| - |phi_ref|           (signed, per instance)
+    tga_feature                       = sqrt( mean_i tga_instance² )     (RMS over instances)
+                                        / output_range                    (÷ model pred range)
+    global TGA                        = mean_f( tga_feature )
+    gss_instance(method)              = |phi_PC| - |phi_LiNGAM|          (signed, per instance)
+    gss_feature                       = sqrt( mean_i gss_instance² )     (RMS over instances)
+                                        / output_range                    (÷ model pred range)
+    global GSS                        = mean_f( gss_feature )
+
+    RMS aggregation handles sparsity better than mean(|diff|): large deviations in a
+    minority of instances are not washed out by near-zero ones.  Dividing by
+    ``output_range`` (model prediction max − min on test set) makes both metrics
+    dimensionless and directly comparable across datasets with different target scales.
 
 Scope: subject = discovered graph (PC/LiNGAM); references = True / Traditional(Scratch) /
 opposite graph.
@@ -75,7 +84,13 @@ def gss_delta_dict(ctx):
 
 
 def gss_feature_dict(ctx):
-    """method -> (F,) per-feature GSS."""
+    """method -> (F,) per-feature GSS.
+
+    Each value is the RMS of the per-instance signed magnitude difference
+    (|φ_PC| − |φ_LiNGAM|), divided by the model output range:
+
+        GSS(m, f) = sqrt(mean_i(|φ^PC_{i,f}| − |φ^LiNGAM_{i,f}|)²) / output_range
+    """
     return {m: gss_feature(ctx, m) for m in _methods_present(ctx, ["PC", "LiNGAM"])}
 
 
@@ -113,7 +128,13 @@ def sign_alignment_dict(ctx, reference="True"):
 
 
 def tga_feature_dict(ctx, reference="True"):
-    """(method, graph) -> (F,) per-feature TGA vs reference."""
+    """(method, graph) -> (F,) per-feature TGA vs reference.
+
+    Each value is the RMS of the per-instance signed magnitude difference
+    (|φ_disc| − |φ_ref|), divided by the model output range:
+
+        TGA(m, g, f) = sqrt(mean_i(|φ^disc_{i,f}| − |φ^ref_{i,f}|)²) / output_range
+    """
     ref = REF_TOKEN[reference]
     out = {}
     for m in ORDER:
@@ -225,7 +246,7 @@ def plot_gss_delta_box(ctx, n_top_features=15, plots_dir=DEFAULT_PLOTS_DIR, show
 
 def plot_gss_heatmap(ctx, top_n=40, plots_dir=DEFAULT_PLOTS_DIR, show=False):
     """Feature × method Graph Sensitivity Score heatmap (PC vs LiNGAM). Sequential (cividis):
-    brighter = larger magnitude difference between PC and LiNGAM graphs."""
+    brighter = larger RMS magnitude difference between PC and LiNGAM, normalised by output range."""
     gss = gss_feature_dict(ctx)
     if not gss:
         return None
@@ -238,7 +259,7 @@ def plot_gss_heatmap(ctx, top_n=40, plots_dir=DEFAULT_PLOTS_DIR, show=False):
     _heatmap(ax_, Z, labels, [names[i] for i in top], SEQ_CMAP, 0, float(mat.max()), "GSS",
              annotate=len(top) <= 14)
     st.style_title(ax_, f"Feature-level graph sensitivity — PC vs LiNGAM — {ctx['dataset']}",
-                   f"GSS = mean_i ||φ(PC)|−|φ(LiNGAM)|| · top {len(top)} features by mean GSS")
+                   f"GSS = RMS_i(|φ(PC)|−|φ(LiNGAM)|) / output_range · top {len(top)} features by mean GSS")
     fig.tight_layout()
     out = savefig(fig, plots_dir, ctx["dataset"], f"gss_heatmap_{ctx['dataset']}.png")
     plt.show() if show else plt.close(fig)
@@ -299,7 +320,7 @@ def plot_sign_alignment_heatmap(ctx, reference="True", top_n=40,
 
 def plot_tga_heatmap(ctx, reference="True", top_n=40, plots_dir=DEFAULT_PLOTS_DIR, show=False):
     """Feature × (method, graph) magnitude-TGA heatmap vs the reference. Sequential (cividis):
-    brighter = larger magnitude difference from the reference."""
+    brighter = larger RMS magnitude difference from the reference, normalised by output range."""
     tga = tga_feature_dict(ctx, reference)
     if not tga:
         return None
@@ -313,7 +334,7 @@ def plot_tga_heatmap(ctx, reference="True", top_n=40, plots_dir=DEFAULT_PLOTS_DI
     _heatmap(ax_, Z, labels, [names[i] for i in top], SEQ_CMAP, 0, float(mat.max()), "TGA",
              annotate=len(top) <= 14)
     st.style_title(ax_, f"Feature-level magnitude TGA vs {reference} — {ctx['dataset']}",
-                   f"TGA = mean_i ||φ(disc)|−|φ({reference})|| · top {len(top)} features by mean TGA")
+                   f"TGA = RMS_i(|φ(disc)|−|φ({reference})|) / output_range · top {len(top)} features by mean TGA")
     fig.tight_layout()
     out = savefig(fig, plots_dir, ctx["dataset"],
                   f"tga_heatmap_{reference.lower()}_{ctx['dataset']}.png")
@@ -360,11 +381,178 @@ def plot_adjacency_comparison(ctx, plots_dir=DEFAULT_PLOTS_DIR, show=False):
 
 
 # ============================================================================= #
+# CROSS-DATASET COMPARISON
+# ============================================================================= #
+
+def _r2_for_dataset(dataset, base_dir):
+    """Load LGBM R² from a saved metrics JSON; load the saved model and score if absent."""
+    metrics_path = base_dir / "models" / f"{dataset}_metrics.json"
+    if metrics_path.exists():
+        with open(metrics_path) as _f:
+            return json.load(_f)["lgbm"]["r2"]
+    # Fallback: load saved model and score on saved test parquet (no retraining)
+    try:
+        import sys as _sys
+        import pandas as _pd
+        from sklearn.metrics import r2_score as _r2
+        _sys.path.insert(0, str(base_dir))
+        from predictive_models.predictive_models import LGBMRegressor as _LGBM
+        _model_path = base_dir / "models" / f"{dataset}_lgbm"
+        _m = _LGBM.load(str(_model_path))
+        _te = _pd.read_parquet(base_dir / "data" / "processed" / f"{dataset}_test.parquet")
+        return float(_r2(_te["Y"], _m.predict(_te.drop(columns=["Y"]))))
+    except Exception as _e:
+        print(f"[warn] could not compute R² for {dataset}: {_e}")
+        return float("nan")
+
+
+def _xonly_f1_for_dataset(dataset, causal_dir, synth_dir):
+    """Return (pc_f1, lingam_f1) using X-only adjacency (Y node excluded)."""
+    try:
+        pc_xx = np.load(causal_dir / f"{dataset}_pc_train_adjacency.npy")
+        lg_xx = np.load(causal_dir / f"{dataset}_lingam_train_adjacency.npy")
+    except FileNotFoundError:
+        return float("nan"), float("nan")
+    n = pc_xx.shape[0]
+    # True reference: prefer raw synthetic adjacency first (n+1 × n+1 with Y at index n),
+    # then fall back to true_full_adjacency (e.g. for Sachs, already saved as full adj).
+    synth_path = synth_dir / f"{dataset}_adjacency.npy"
+    full_path  = causal_dir / f"{dataset}_true_full_adjacency.npy"
+    if synth_path.exists():
+        true_xx = np.load(synth_path)[:n, :n]
+    elif full_path.exists():
+        true_xx = np.load(full_path)[:n, :n]
+    else:
+        return float("nan"), float("nan")
+
+    def _f1(ref, disc):
+        r = (ref != 0).astype(int);  d = (disc != 0).astype(int)
+        tp = int((r & d).sum());  fp = int(((d == 1) & (r == 0)).sum())
+        fn = int(((r == 1) & (d == 0)).sum())
+        pr = tp / (tp + fp) if (tp + fp) > 0 else 0.0
+        rc = tp / (tp + fn) if (tp + fn) > 0 else 0.0
+        return 2 * pr * rc / (pr + rc) if (pr + rc) > 0 else 0.0
+
+    return _f1(true_xx, pc_xx), _f1(true_xx, lg_xx)
+
+
+def plot_discovery_vs_r2(
+    datasets=None,
+    plots_dir=DEFAULT_PLOTS_DIR,
+    show=False,
+):
+    """
+    Dual-axis chart: causal discovery F1 (PC vs LiNGAM, X-only edges) on the
+    left y-axis and LGBM test R² on the right y-axis. X-axis = dataset group.
+
+    Integrates ``discovery_vs_r2_plot.py`` into the centralised plotting module.
+    F1 is computed on X→X edges only (Y node excluded from both reference and
+    discovered graphs) so the score reflects true causal structure recovery.
+
+    Parameters
+    ----------
+    datasets : list of (dataset_name, display_label), optional
+        Defaults to the synthetic-linear-confounded + Sachs pair used in the
+        thesis::
+
+            [("linear_conf_f50_s1000_p30", "Synthetic\\n(Linear, Confounded)"),
+             ("sachs", "Sachs")]
+
+    plots_dir : str or Path
+        Output root. Saved to ``plots_dir/cross_dataset/discovery_vs_r2.png``.
+    show : bool
+        Call ``plt.show()`` if True.
+    """
+    if datasets is None:
+        datasets = [
+            ("linear_conf_f50_s1000_p30", "Synthetic\n(Linear, Confounded)"),
+            ("sachs",                       "Sachs"),
+        ]
+
+    # Derive project root from the already-imported CAUSAL_DIR
+    # CAUSAL_DIR = <root>/data/causal  ->  .parent.parent = <root>
+    base_dir   = CAUSAL_DIR.parent.parent
+    causal_dir = CAUSAL_DIR
+    synth_dir  = base_dir / "data" / "synthetic"
+
+    labels, f1_pc_list, f1_lg_list, r2_list = [], [], [], []
+    for ds, label in datasets:
+        pc_f1, lg_f1 = _xonly_f1_for_dataset(ds, causal_dir, synth_dir)
+        r2 = _r2_for_dataset(ds, base_dir)
+        labels.append(label)
+        f1_pc_list.append(pc_f1)
+        f1_lg_list.append(lg_f1)
+        r2_list.append(r2)
+        print(f"  {ds}: PC F1={pc_f1:.3f}  LiNGAM F1={lg_f1:.3f}  R²={r2:.4f}")
+
+    x = np.arange(len(labels))
+    width, offset = 0.28, 0.15
+    PC_COLOR     = "#1f77b4"
+    LINGAM_COLOR = "#ff7f0e"
+    R2_COLOR     = "#2ca02c"
+
+    fig, ax1 = plt.subplots(figsize=(8, 5))
+    ax2 = ax1.twinx()
+
+    bars_pc = ax1.bar(x - offset, f1_pc_list, width,
+                      color=PC_COLOR, alpha=0.85, zorder=3)
+    bars_lg = ax1.bar(x + offset, f1_lg_list, width,
+                      color=LINGAM_COLOR, alpha=0.85, zorder=3)
+    (line_r2,) = ax2.plot(x, r2_list, color=R2_COLOR, marker="D",
+                          markersize=9, linewidth=2.0, linestyle="--",
+                          label="LGBM R²", zorder=4)
+
+    ax1.set_ylabel("F1 Score (causal discovery, X-only edges)", fontsize=11)
+    ax2.set_ylabel("R² (LGBM test performance)", fontsize=11, color=R2_COLOR)
+    ax2.tick_params(axis="y", labelcolor=R2_COLOR)
+    ax1.set_xticks(x)
+    ax1.set_xticklabels(labels, fontsize=11)
+    ax1.set_ylim(0, 1.05)
+    ax2.set_ylim(0, 1.05)
+    ax1.set_xlim(-0.6, len(labels) - 0.4)
+
+    for bar, val in zip(bars_pc, f1_pc_list):
+        ax1.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + 0.02,
+                 f"{val:.2f}", ha="center", va="bottom", fontsize=9,
+                 color=PC_COLOR, fontweight="bold")
+    for bar, val in zip(bars_lg, f1_lg_list):
+        ax1.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + 0.02,
+                 f"{val:.2f}", ha="center", va="bottom", fontsize=9,
+                 color=LINGAM_COLOR, fontweight="bold")
+    for xi, val in zip(x, r2_list):
+        if not np.isnan(val):
+            ax2.text(xi + 0.07, val + 0.02, f"{val:.2f}",
+                     ha="left", va="bottom", fontsize=9,
+                     color=R2_COLOR, fontweight="bold")
+
+    ax1.yaxis.grid(True, linestyle="--", alpha=0.4, zorder=0)
+    ax1.set_axisbelow(True)
+
+    legend_handles = [
+        Patch(color=PC_COLOR,     alpha=0.85, label="PC F1"),
+        Patch(color=LINGAM_COLOR, alpha=0.85, label="LiNGAM F1"),
+        line_r2,
+    ]
+    ax1.legend(handles=legend_handles, loc="upper left", fontsize=10, framealpha=0.9)
+
+    st.style_title(ax1,
+                   "Causal Discovery F1 vs Model R²",
+                   "X-only edges (Y excluded) · left axis = F1 · right axis = R²")
+    fig.tight_layout()
+    out = savefig(fig, plots_dir, "cross_dataset", "discovery_vs_r2.png")
+    plt.show() if show else plt.close(fig)
+    return out
+
+
+# ============================================================================= #
 # METHOD LEVEL
 # ============================================================================= #
 def plot_gss_sss_scatter(ctx, plots_dir=DEFAULT_PLOTS_DIR, show=False):
-    """Per-method |GSS| (x) vs sign-disagreement 1−SSS (y). Both are PC↔LiNGAM instability
-    measures (≥0); lower-left = most robust to the discovery algorithm."""
+    """Per-method global GSS (x) vs sign-disagreement 1−SSS (y). Both are PC↔LiNGAM instability
+    measures (≥0); lower-left = most robust to the discovery algorithm.
+
+    Global GSS = mean_f( RMS_i(|φ(PC)|−|φ(LiNGAM)|) / output_range ).
+    """
     gss, sss = gss_feature_dict(ctx), sss_feature_dict(ctx)
     methods = [m for m in ORDER if m in gss and m in sss]
     if not methods:
@@ -377,7 +565,7 @@ def plot_gss_sss_scatter(ctx, plots_dir=DEFAULT_PLOTS_DIR, show=False):
         ax_.annotate(m, (x, y), textcoords="offset points", xytext=(0, 10),
                      ha="center", fontsize=10, color=METHOD_COLORS[m], fontweight="bold")
     ax_.set_xlim(left=0); ax_.set_ylim(bottom=0)
-    ax_.set_xlabel("|GSS| — magnitude difference (PC vs LiNGAM)")
+    ax_.set_xlabel("GSS — RMS magnitude difference (PC vs LiNGAM) / output_range")
     ax_.set_ylabel("1 − SSS — sign disagreement rate")
     st.style_title(ax_, f"Graph-discovery instability — {ctx['dataset']}",
                    "Lower-left = most stable across PC / LiNGAM (both axes ≥ 0)")
@@ -389,7 +577,10 @@ def plot_gss_sss_scatter(ctx, plots_dir=DEFAULT_PLOTS_DIR, show=False):
 
 def plot_tga_sa_scatter(ctx, reference="True", plots_dir=DEFAULT_PLOTS_DIR, show=False):
     """Per (method, graph): global TGA (x) vs sign-disagreement 1−SA (y) vs the reference.
-    Colour = method, marker = graph. Lower-left / TGA→0 = closer to the reference."""
+    Colour = method, marker = graph. Lower-left / TGA→0 = closer to the reference.
+
+    Global TGA = mean_f( RMS_i(|φ(disc)|−|φ(ref)|) / output_range ).
+    """
     tga, sa = tga_feature_dict(ctx, reference), sign_alignment_dict(ctx, reference)
     keys = [(m, g) for m in ORDER for g in DISC_GRAPHS if (m, g) in tga and (m, g) in sa]
     if not keys:
@@ -401,7 +592,7 @@ def plot_tga_sa_scatter(ctx, reference="True", plots_dir=DEFAULT_PLOTS_DIR, show
         ax_.scatter(x, y, s=130, color=METHOD_COLORS[m], marker=GRAPH_MARKERS.get(g, "o"),
                     edgecolor="white", lw=1.1, zorder=3)
     ax_.set_xlim(left=0); ax_.set_ylim(0, 0.5)
-    ax_.set_xlabel(f"magnitude TGA vs {reference}")
+    ax_.set_xlabel(f"TGA vs {reference} — RMS magnitude difference / output_range")
     ax_.set_ylabel("1 − Sign Alignment")
     method_handles = [Line2D([0], [0], marker="o", ls="", color=METHOD_COLORS[m],
                              markersize=10, label=m) for m in ORDER if any(k[0] == m for k in keys)]
@@ -423,7 +614,10 @@ def plot_tga_sa_scatter(ctx, reference="True", plots_dir=DEFAULT_PLOTS_DIR, show
 # GROUP-METRIC EXPORT (markdown tables behind the method-level scatters)
 # ============================================================================= #
 def gss_sss_table(ctx):
-    """Per Shapley method: global |GSS| and SSS (the coordinates of the GSS–SSS scatter)."""
+    """Per Shapley method: global GSS and SSS (the coordinates of the GSS–SSS scatter).
+
+    GSS = mean_f( RMS_i(|φ(PC)|−|φ(LiNGAM)|) / output_range ).
+    """
     gss, sss = gss_feature_dict(ctx), sss_feature_dict(ctx)
     rows = []
     for m in ORDER:
@@ -436,7 +630,10 @@ def gss_sss_table(ctx):
 
 def tga_sa_table(ctx, reference="True"):
     """Per (Shapley method, discovered graph): global TGA and Sign Alignment vs the reference
-    (the coordinates of the TGA–SA scatter)."""
+    (the coordinates of the TGA–SA scatter).
+
+    TGA = mean_f( RMS_i(|φ(disc)|−|φ(ref)|) / output_range ).
+    """
     tga, sa = tga_feature_dict(ctx, reference), sign_alignment_dict(ctx, reference)
     rows = []
     for m in ORDER:
@@ -468,19 +665,19 @@ def export_method_level_metrics(ctx, plots_dir=DEFAULT_PLOTS_DIR):
     ds = ctx["dataset"]
     parts = [f"# Method-level group metrics — {ds}\n",
              "Scalar summaries behind the method-level scatter plots. Magnitude metrics "
-             "(GSS, TGA) are the absolute average of the per-feature metric; sign metrics "
-             "(SSS, Sign Alignment) are the mean over features.\n",
+             "(GSS, TGA) are the mean over features of the per-feature RMS / output_range metric; "
+             "sign metrics (SSS, Sign Alignment) are the mean over features.\n",
              "## Graph-discovery instability — GSS vs SSS (per Shapley method)",
-             "`|GSS|` = magnitude difference PC vs LiNGAM; `SSS` = sign agreement PC vs LiNGAM; "
-             "`SignDisagree` = 1 − SSS (the scatter's y-axis).\n",
+             "`GSS` = RMS_i(|φ(PC)|−|φ(LiNGAM)|)/output_range per feature, averaged over features; "
+             "`SSS` = sign agreement PC vs LiNGAM; `SignDisagree` = 1 − SSS (the scatter's y-axis).\n",
              _md_table(gss_sss_table(ctx))]
     for ref in ("True", "Traditional"):
         rows = tga_sa_table(ctx, ref)
         if rows:
             parts += [f"\n## Alignment to {ref} — TGA vs Sign Alignment "
                       f"(per Shapley method × discovered graph)",
-                      f"`TGA` = magnitude difference vs {ref}; `SignAlign` = sign agreement vs "
-                      f"{ref}; `SignDisagree` = 1 − SignAlign (the scatter's y-axis).\n",
+                      f"`TGA` = RMS_i(|φ(disc)|−|φ({ref})|)/output_range per feature, averaged over features; "
+                      f"`SignAlign` = sign agreement vs {ref}; `SignDisagree` = 1 − SignAlign (the scatter's y-axis).\n",
                       _md_table(rows)]
     out_dir = Path(plots_dir) / ds
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -521,3 +718,10 @@ if __name__ == "__main__":
                 print("     ", m)
         except Exception as e:
             print(f"[skip] {ds}: {type(e).__name__}: {e}")
+
+    # Cross-dataset comparison (always runs regardless of argv)
+    try:
+        out = plot_discovery_vs_r2()
+        print(f"[ok] cross_dataset: {out}")
+    except Exception as e:
+        print(f"[skip] cross_dataset: {type(e).__name__}: {e}")
