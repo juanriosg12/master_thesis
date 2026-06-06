@@ -1,9 +1,9 @@
 # Method-level group metrics — linear_conf_f50_s1000_p30
 
-Scalar summaries behind the method-level scatter plots. Magnitude metrics (GSS, TGA) are the mean over features of the per-feature RMS / output_std metric expressed as a %; sign metrics (SSS, Sign Alignment) are the mean over features expressed as a %.
+Scalar summaries behind the method-level scatter plots, using the standardised metric names: **Magnitude Divergence ΔM** (column `GSS_pct`/`TGA_pct`) = mean over features of the per-feature RMS(|φ_subject|−|φ_ref|)/model-output std, in %; **Sign Disagreement D** (column `SignDisagree_pct`) = mean over features of the % of instances whose sign disagrees with the reference. Reference subscripts: disc = PC↔LiNGAM, oracle = True/consensus DAG, base = Traditional.
 
-## Graph-discovery instability — GSS vs SSS (per Shapley method)
-`GSS` = RMS_i(|φ(PC)|−|φ(LiNGAM)|)/output_std per feature × 100, averaged over features; `SSS` = % of instances with matching sign PC vs LiNGAM; `SignDisagree` = 100 − SSS (the scatter's y-axis).
+## Cross-discovery instability — ΔM_disc vs D_disc (per Shapley method)
+`GSS_pct` = ΔM_disc = RMS_i(|φ(PC)|−|φ(LiNGAM)|)/model-output std per feature × 100, averaged over features; `SSS_pct` = % of instances with matching sign PC vs LiNGAM; `SignDisagree_pct` = D_disc = 100 − SSS (the scatter's y-axis).
 
 | Method | GSS_pct | SSS_pct | SignDisagree_pct |
 | --- | --- | --- | --- |
@@ -12,8 +12,8 @@ Scalar summaries behind the method-level scatter plots. Magnitude metrics (GSS, 
 | Flow | 6.06 % | 86.73 % | 13.27 % |
 
 
-## Alignment to True — TGA vs Sign Alignment (per Shapley method × discovered graph)
-`TGA` = RMS_i(|φ(disc)|−|φ(True)|)/output_std per feature × 100, averaged over features; `SignAlign` = % of instances with matching sign vs True; `SignDisagree` = 100 − SignAlign (the scatter's y-axis).
+## Alignment to True — ΔM_oracle vs D_oracle (per Shapley method × discovered graph)
+`TGA_pct` = ΔM_oracle = RMS_i(|φ(disc)|−|φ(True)|)/model-output std per feature × 100, averaged over features; `SignAlign_pct` = % of instances with matching sign vs True; `SignDisagree_pct` = D_oracle = 100 − SignAlign (the scatter's y-axis).
 
 | Method | Graph | Reference | TGA_pct | SignAlign_pct | SignDisagree_pct |
 | --- | --- | --- | --- | --- | --- |
@@ -22,11 +22,11 @@ Scalar summaries behind the method-level scatter plots. Magnitude metrics (GSS, 
 | Causal | PC | True | 5.32 % | 68.40 % | 31.60 % |
 | Causal | LiNGAM | True | 7.57 % | 62.54 % | 37.46 % |
 | Flow | PC | True | 7.34 % | 57.74 % | 42.26 % |
-| Flow | LiNGAM | True | 8.06 % | 55.09 % | 44.91 % |
+| Flow | LiNGAM | True | 8.07 % | 55.09 % | 44.91 % |
 
 
-## Alignment to Traditional — TGA vs Sign Alignment (per Shapley method × discovered graph)
-`TGA` = RMS_i(|φ(disc)|−|φ(Traditional)|)/output_std per feature × 100, averaged over features; `SignAlign` = % of instances with matching sign vs Traditional; `SignDisagree` = 100 − SignAlign (the scatter's y-axis).
+## Alignment to Traditional — ΔM_base vs D_base (per Shapley method × discovered graph)
+`TGA_pct` = ΔM_base = RMS_i(|φ(disc)|−|φ(Traditional)|)/model-output std per feature × 100, averaged over features; `SignAlign_pct` = % of instances with matching sign vs Traditional; `SignDisagree_pct` = D_base = 100 − SignAlign (the scatter's y-axis).
 
 | Method | Graph | Reference | TGA_pct | SignAlign_pct | SignDisagree_pct |
 | --- | --- | --- | --- | --- | --- |
