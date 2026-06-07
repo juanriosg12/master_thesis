@@ -179,23 +179,26 @@ The baseline discards all causal information. All features are treated symmetric
 
 The coalition value v(S) = E[f(X) | X_S = x_S] is estimated by the COALITION_VALUE subroutine (Appendix A.1), which overwrites the coalition columns of the background matrix with the instance's real values and averages the model output, and which is reused unchanged by Asymmetric Shapley.
 
-```
-ALGORITHM  Traditional Shapley (Monte Carlo)
-INPUT : instance x, model f, background data D, number of permutations T
-OUTPUT: attribution vector phi in R^n
-
-phi      <- zeros(n)
-baseline <- mean( f(D) )                  # v(empty): all features marginalised
-FOR t = 1 ... T:
-    pi     <- random_permutation(1 ... n) # unconstrained uniform ordering
-    S      <- empty,  v_prev <- baseline
-    FOR i in pi:                          # add features one at a time
-        S      <- S union {i}
-        v_curr <- COALITION_VALUE(x, S, f, D)
-        phi[i] <- phi[i] + (v_curr - v_prev)
-        v_prev <- v_curr
-RETURN phi / T
-```
+<div style="border:1px solid #2c4a6e;border-top:3px solid #2c4a6e;margin:1.6em 0;font-family:'Courier New',Courier,monospace;font-size:0.875em;overflow:hidden;">
+<div style="padding:0.4em 1em;border-bottom:1px solid #2c4a6e;background:#eef2f7;font-family:Georgia,serif;font-size:1em;"><strong>Algorithm 1</strong>&ensp;Traditional Shapley (Monte Carlo)</div>
+<table style="width:100%;border-collapse:collapse;line-height:1.55;background:#fff;">
+<tr><td style="text-align:right;padding:0.07em 0.6em 0.07em 0;color:#bbb;font-size:0.82em;border-right:1px solid #e6e6e6;vertical-align:top;user-select:none;white-space:nowrap;">1:</td><td style="padding:0.07em 0 0.07em 0.9em;"><b>INPUT :</b> instance x, model f, background data D, number of permutations T</td></tr>
+<tr><td style="text-align:right;padding:0.07em 0.6em 0.07em 0;color:#bbb;font-size:0.82em;border-right:1px solid #e6e6e6;vertical-align:top;user-select:none;white-space:nowrap;">2:</td><td style="padding:0.07em 0 0.07em 0.9em;"><b>OUTPUT:</b> attribution vector phi in R^n</td></tr>
+<tr style="height:0.45em;"><td></td><td></td></tr>
+<tr><td style="text-align:right;padding:0.07em 0.6em 0.07em 0;color:#bbb;font-size:0.82em;border-right:1px solid #e6e6e6;vertical-align:top;user-select:none;white-space:nowrap;">3:</td><td style="padding:0.07em 0 0.07em 0.9em;">phi      &lt;- zeros(n)</td></tr>
+<tr><td style="text-align:right;padding:0.07em 0.6em 0.07em 0;color:#bbb;font-size:0.82em;border-right:1px solid #e6e6e6;vertical-align:top;user-select:none;white-space:nowrap;">4:</td><td style="padding:0.07em 0 0.07em 0.9em;">baseline &lt;- mean( f(D) )&ensp;<span style="color:#777;font-style:italic;">&#9655;&thinsp;v(empty): all features marginalised</span></td></tr>
+<tr><td style="text-align:right;padding:0.07em 0.6em 0.07em 0;color:#bbb;font-size:0.82em;border-right:1px solid #e6e6e6;vertical-align:top;user-select:none;white-space:nowrap;">5:</td><td style="padding:0.07em 0 0.07em 0.9em;"><b>FOR</b> t = 1 ... T:</td></tr>
+<tr><td style="text-align:right;padding:0.07em 0.6em 0.07em 0;color:#bbb;font-size:0.82em;border-right:1px solid #e6e6e6;vertical-align:top;user-select:none;white-space:nowrap;">6:</td><td style="padding:0.07em 0 0.07em 0.9em;">&nbsp;&nbsp;&nbsp;&nbsp;pi     &lt;- random_permutation(1 ... n) # unconstrained uniform ordering</td></tr>
+<tr><td style="text-align:right;padding:0.07em 0.6em 0.07em 0;color:#bbb;font-size:0.82em;border-right:1px solid #e6e6e6;vertical-align:top;user-select:none;white-space:nowrap;">7:</td><td style="padding:0.07em 0 0.07em 0.9em;">&nbsp;&nbsp;&nbsp;&nbsp;S      &lt;- empty,  v_prev &lt;- baseline</td></tr>
+<tr><td style="text-align:right;padding:0.07em 0.6em 0.07em 0;color:#bbb;font-size:0.82em;border-right:1px solid #e6e6e6;vertical-align:top;user-select:none;white-space:nowrap;">8:</td><td style="padding:0.07em 0 0.07em 0.9em;">&nbsp;&nbsp;&nbsp;&nbsp;<b>FOR</b> i in pi:&ensp;<span style="color:#777;font-style:italic;">&#9655;&thinsp;add features one at a time</span></td></tr>
+<tr><td style="text-align:right;padding:0.07em 0.6em 0.07em 0;color:#bbb;font-size:0.82em;border-right:1px solid #e6e6e6;vertical-align:top;user-select:none;white-space:nowrap;">9:</td><td style="padding:0.07em 0 0.07em 0.9em;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;S      &lt;- S union {i}</td></tr>
+<tr><td style="text-align:right;padding:0.07em 0.6em 0.07em 0;color:#bbb;font-size:0.82em;border-right:1px solid #e6e6e6;vertical-align:top;user-select:none;white-space:nowrap;">10:</td><td style="padding:0.07em 0 0.07em 0.9em;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;v_curr &lt;- COALITION_VALUE(x, S, f, D)</td></tr>
+<tr><td style="text-align:right;padding:0.07em 0.6em 0.07em 0;color:#bbb;font-size:0.82em;border-right:1px solid #e6e6e6;vertical-align:top;user-select:none;white-space:nowrap;">11:</td><td style="padding:0.07em 0 0.07em 0.9em;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;phi[i] &lt;- phi[i] + (v_curr - v_prev)</td></tr>
+<tr><td style="text-align:right;padding:0.07em 0.6em 0.07em 0;color:#bbb;font-size:0.82em;border-right:1px solid #e6e6e6;vertical-align:top;user-select:none;white-space:nowrap;">12:</td><td style="padding:0.07em 0 0.07em 0.9em;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;v_prev &lt;- v_curr</td></tr>
+<tr><td style="text-align:right;padding:0.07em 0.6em 0.07em 0;color:#bbb;font-size:0.82em;border-right:1px solid #e6e6e6;vertical-align:top;user-select:none;white-space:nowrap;">13:</td><td style="padding:0.07em 0 0.07em 0.9em;"><b>RETURN</b> phi / T</td></tr>
+</table>
+<div style="border-top:1px solid #2c4a6e;"></div>
+</div>
 
 The graph is never consulted, which is the defining property of the method. The cost is O(T * n * |D|) model rows evaluated per instance.
 
@@ -203,23 +206,26 @@ The graph is never consulted, which is the defining property of the method. The 
 
 The Asymmetric Shapley implementation retains the same observational coalition value as Traditional Shapley but replaces the uniform random permutation with a randomized Kahn topological sort that draws uniformly from the linear extensions of the feature DAG (the SAMPLE_TOPOLOGICAL_ORDERING subroutine, Appendix A.2). The modification is exclusively in the permutation space; the coalition values are computed identically through COALITION_VALUE. The children lists and initial in-degrees are precomputed once over the X-only subgraph, since Y is never a player; if the feature DAG contains a cycle the constraints are disabled and the method reduces to Traditional Shapley.
 
-```
-ALGORITHM  Asymmetric Shapley
-INPUT : instance x, model f, background data D, feature DAG G, permutations T
-OUTPUT: attribution vector phi in R^n
-
-PRECOMPUTE children[], in_degree[] from the X-only edges of G  (Appendix A.2)
-phi      <- zeros(n),  baseline <- mean( f(D) )
-FOR t = 1 ... T:
-    pi     <- SAMPLE_TOPOLOGICAL_ORDERING()   # ancestors precede descendants
-    S      <- empty,  v_prev <- baseline
-    FOR i in pi:
-        S      <- S union {i}
-        v_curr <- COALITION_VALUE(x, S, f, D) # SAME value fn as Traditional
-        phi[i] <- phi[i] + (v_curr - v_prev)
-        v_prev <- v_curr
-RETURN phi / T
-```
+<div style="border:1px solid #2c4a6e;border-top:3px solid #2c4a6e;margin:1.6em 0;font-family:'Courier New',Courier,monospace;font-size:0.875em;overflow:hidden;">
+<div style="padding:0.4em 1em;border-bottom:1px solid #2c4a6e;background:#eef2f7;font-family:Georgia,serif;font-size:1em;"><strong>Algorithm 2</strong>&ensp;Asymmetric Shapley</div>
+<table style="width:100%;border-collapse:collapse;line-height:1.55;background:#fff;">
+<tr><td style="text-align:right;padding:0.07em 0.6em 0.07em 0;color:#bbb;font-size:0.82em;border-right:1px solid #e6e6e6;vertical-align:top;user-select:none;white-space:nowrap;">1:</td><td style="padding:0.07em 0 0.07em 0.9em;"><b>INPUT :</b> instance x, model f, background data D, feature DAG G, permutations T</td></tr>
+<tr><td style="text-align:right;padding:0.07em 0.6em 0.07em 0;color:#bbb;font-size:0.82em;border-right:1px solid #e6e6e6;vertical-align:top;user-select:none;white-space:nowrap;">2:</td><td style="padding:0.07em 0 0.07em 0.9em;"><b>OUTPUT:</b> attribution vector phi in R^n</td></tr>
+<tr style="height:0.45em;"><td></td><td></td></tr>
+<tr><td style="text-align:right;padding:0.07em 0.6em 0.07em 0;color:#bbb;font-size:0.82em;border-right:1px solid #e6e6e6;vertical-align:top;user-select:none;white-space:nowrap;">3:</td><td style="padding:0.07em 0 0.07em 0.9em;"><b>PRECOMPUTE</b> children[], in_degree[] from the X-only edges of G  (Appendix A.2)</td></tr>
+<tr><td style="text-align:right;padding:0.07em 0.6em 0.07em 0;color:#bbb;font-size:0.82em;border-right:1px solid #e6e6e6;vertical-align:top;user-select:none;white-space:nowrap;">4:</td><td style="padding:0.07em 0 0.07em 0.9em;">phi      &lt;- zeros(n),  baseline &lt;- mean( f(D) )</td></tr>
+<tr><td style="text-align:right;padding:0.07em 0.6em 0.07em 0;color:#bbb;font-size:0.82em;border-right:1px solid #e6e6e6;vertical-align:top;user-select:none;white-space:nowrap;">5:</td><td style="padding:0.07em 0 0.07em 0.9em;"><b>FOR</b> t = 1 ... T:</td></tr>
+<tr><td style="text-align:right;padding:0.07em 0.6em 0.07em 0;color:#bbb;font-size:0.82em;border-right:1px solid #e6e6e6;vertical-align:top;user-select:none;white-space:nowrap;">6:</td><td style="padding:0.07em 0 0.07em 0.9em;">&nbsp;&nbsp;&nbsp;&nbsp;pi     &lt;- SAMPLE_TOPOLOGICAL_ORDERING()&ensp;<span style="color:#777;font-style:italic;">&#9655;&thinsp;ancestors precede descendants</span></td></tr>
+<tr><td style="text-align:right;padding:0.07em 0.6em 0.07em 0;color:#bbb;font-size:0.82em;border-right:1px solid #e6e6e6;vertical-align:top;user-select:none;white-space:nowrap;">7:</td><td style="padding:0.07em 0 0.07em 0.9em;">&nbsp;&nbsp;&nbsp;&nbsp;S      &lt;- empty,  v_prev &lt;- baseline</td></tr>
+<tr><td style="text-align:right;padding:0.07em 0.6em 0.07em 0;color:#bbb;font-size:0.82em;border-right:1px solid #e6e6e6;vertical-align:top;user-select:none;white-space:nowrap;">8:</td><td style="padding:0.07em 0 0.07em 0.9em;">&nbsp;&nbsp;&nbsp;&nbsp;<b>FOR</b> i in pi:</td></tr>
+<tr><td style="text-align:right;padding:0.07em 0.6em 0.07em 0;color:#bbb;font-size:0.82em;border-right:1px solid #e6e6e6;vertical-align:top;user-select:none;white-space:nowrap;">9:</td><td style="padding:0.07em 0 0.07em 0.9em;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;S      &lt;- S union {i}</td></tr>
+<tr><td style="text-align:right;padding:0.07em 0.6em 0.07em 0;color:#bbb;font-size:0.82em;border-right:1px solid #e6e6e6;vertical-align:top;user-select:none;white-space:nowrap;">10:</td><td style="padding:0.07em 0 0.07em 0.9em;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;v_curr &lt;- COALITION_VALUE(x, S, f, D) # SAME value fn as Traditional</td></tr>
+<tr><td style="text-align:right;padding:0.07em 0.6em 0.07em 0;color:#bbb;font-size:0.82em;border-right:1px solid #e6e6e6;vertical-align:top;user-select:none;white-space:nowrap;">11:</td><td style="padding:0.07em 0 0.07em 0.9em;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;phi[i] &lt;- phi[i] + (v_curr - v_prev)</td></tr>
+<tr><td style="text-align:right;padding:0.07em 0.6em 0.07em 0;color:#bbb;font-size:0.82em;border-right:1px solid #e6e6e6;vertical-align:top;user-select:none;white-space:nowrap;">12:</td><td style="padding:0.07em 0 0.07em 0.9em;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;v_prev &lt;- v_curr</td></tr>
+<tr><td style="text-align:right;padding:0.07em 0.6em 0.07em 0;color:#bbb;font-size:0.82em;border-right:1px solid #e6e6e6;vertical-align:top;user-select:none;white-space:nowrap;">13:</td><td style="padding:0.07em 0 0.07em 0.9em;"><b>RETURN</b> phi / T</td></tr>
+</table>
+<div style="border-top:1px solid #2c4a6e;"></div>
+</div>
 
 The cost is the same order as Traditional Shapley; the topological sampler adds only O(n) per permutation. The graph is consulted solely to build the ordering structures at initialization, and the value function never sees it.
 
@@ -227,28 +233,31 @@ The cost is the same order as Traditional Shapley; the topological sampler adds 
 
 Causal Shapley replaces the observational coalition value with post-interventional sampling that approximates Pearl's do-operator, v_do(S) = E[f(X) | do(X_S = x_S)]. The method has two nested levels of stochasticity that must be kept distinct: an outer loop that draws a fresh uniform linear extension of the component DAG for each Shapley trial, and an inner loop that, for each coalition, estimates the interventional value from M draws of the post-interventional distribution while traversing components in a fixed deterministic topological order so that each node's parents are resolved before the node itself. Each draw fixes the intervened features and fills in the remaining features from their parents using the closed-form conditional Gaussian of the background data; inside a confounded component the missing features are drawn independently given their parents (which destroys the spurious within-component correlation), while in an ordinary component they are drawn jointly given the parents and any fixed siblings. In this pipeline the confounder list is empty, so every feature is its own component, the outer ordering reduces to a uniform linear extension of the full feature DAG, and the inner sampler always takes the univariate-Gaussian branch. The experiments use T = 100 outer permutations and M = 10 inner samples.
 
-```
-ALGORITHM  Causal Shapley (post-interventional)
-INPUT : instance x, model f, background data D, feature adjacency A (X only),
-        confounder list, outer permutations T, inner samples M
-OUTPUT: attribution vector phi in R^n
-
-INIT: components, confounded[], parents[] <- BUILD_COMPONENTS(A, confounder list)
-      mu <- mean(D);  Sigma <- cov(D) + epsilon*I        # epsilon for stability
-phi      <- zeros(n),  baseline <- mean( f(D) )
-FOR t = 1 ... T:                                         # OUTER: re-randomised
-    pi     <- SAMPLE_COMPONENT_TOPOLOGICAL_ORDERING(), then expand to features
-    S      <- empty,  v_prev <- baseline
-    FOR i in pi:
-        S      <- S union {i}
-        v_curr <- 0                                      # INNER: estimate v_do
-        FOR m = 1 ... M:
-            v_curr <- v_curr + f( POST_INTERVENTIONAL_SAMPLE(x, S, ...) )
-        v_curr <- v_curr / M
-        phi[i] <- phi[i] + (v_curr - v_prev)
-        v_prev <- v_curr
-RETURN phi / T
-```
+<div style="border:1px solid #2c4a6e;border-top:3px solid #2c4a6e;margin:1.6em 0;font-family:'Courier New',Courier,monospace;font-size:0.875em;overflow:hidden;">
+<div style="padding:0.4em 1em;border-bottom:1px solid #2c4a6e;background:#eef2f7;font-family:Georgia,serif;font-size:1em;"><strong>Algorithm 3</strong>&ensp;Causal Shapley (post-interventional)</div>
+<table style="width:100%;border-collapse:collapse;line-height:1.55;background:#fff;">
+<tr><td style="text-align:right;padding:0.07em 0.6em 0.07em 0;color:#bbb;font-size:0.82em;border-right:1px solid #e6e6e6;vertical-align:top;user-select:none;white-space:nowrap;">1:</td><td style="padding:0.07em 0 0.07em 0.9em;"><b>INPUT :</b> instance x, model f, background data D, feature adjacency A (X only),</td></tr>
+<tr><td style="text-align:right;padding:0.07em 0.6em 0.07em 0;color:#bbb;font-size:0.82em;border-right:1px solid #e6e6e6;vertical-align:top;user-select:none;white-space:nowrap;">2:</td><td style="padding:0.07em 0 0.07em 0.9em;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;confounder list, outer permutations T, inner samples M</td></tr>
+<tr><td style="text-align:right;padding:0.07em 0.6em 0.07em 0;color:#bbb;font-size:0.82em;border-right:1px solid #e6e6e6;vertical-align:top;user-select:none;white-space:nowrap;">3:</td><td style="padding:0.07em 0 0.07em 0.9em;"><b>OUTPUT:</b> attribution vector phi in R^n</td></tr>
+<tr style="height:0.45em;"><td></td><td></td></tr>
+<tr><td style="text-align:right;padding:0.07em 0.6em 0.07em 0;color:#bbb;font-size:0.82em;border-right:1px solid #e6e6e6;vertical-align:top;user-select:none;white-space:nowrap;">4:</td><td style="padding:0.07em 0 0.07em 0.9em;"><b>INIT:</b> components, confounded[], parents[] &lt;- BUILD_COMPONENTS(A, confounder list)</td></tr>
+<tr><td style="text-align:right;padding:0.07em 0.6em 0.07em 0;color:#bbb;font-size:0.82em;border-right:1px solid #e6e6e6;vertical-align:top;user-select:none;white-space:nowrap;">5:</td><td style="padding:0.07em 0 0.07em 0.9em;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;mu &lt;- mean(D);  Sigma &lt;- cov(D) + epsilon*I&ensp;<span style="color:#777;font-style:italic;">&#9655;&thinsp;epsilon for stability</span></td></tr>
+<tr><td style="text-align:right;padding:0.07em 0.6em 0.07em 0;color:#bbb;font-size:0.82em;border-right:1px solid #e6e6e6;vertical-align:top;user-select:none;white-space:nowrap;">6:</td><td style="padding:0.07em 0 0.07em 0.9em;">phi      &lt;- zeros(n),  baseline &lt;- mean( f(D) )</td></tr>
+<tr><td style="text-align:right;padding:0.07em 0.6em 0.07em 0;color:#bbb;font-size:0.82em;border-right:1px solid #e6e6e6;vertical-align:top;user-select:none;white-space:nowrap;">7:</td><td style="padding:0.07em 0 0.07em 0.9em;"><b>FOR</b> t = 1 ... T:&ensp;<span style="color:#777;font-style:italic;">&#9655;&thinsp;OUTER: re-randomised</span></td></tr>
+<tr><td style="text-align:right;padding:0.07em 0.6em 0.07em 0;color:#bbb;font-size:0.82em;border-right:1px solid #e6e6e6;vertical-align:top;user-select:none;white-space:nowrap;">8:</td><td style="padding:0.07em 0 0.07em 0.9em;">&nbsp;&nbsp;&nbsp;&nbsp;pi     &lt;- SAMPLE_COMPONENT_TOPOLOGICAL_ORDERING(), then expand to features</td></tr>
+<tr><td style="text-align:right;padding:0.07em 0.6em 0.07em 0;color:#bbb;font-size:0.82em;border-right:1px solid #e6e6e6;vertical-align:top;user-select:none;white-space:nowrap;">9:</td><td style="padding:0.07em 0 0.07em 0.9em;">&nbsp;&nbsp;&nbsp;&nbsp;S      &lt;- empty,  v_prev &lt;- baseline</td></tr>
+<tr><td style="text-align:right;padding:0.07em 0.6em 0.07em 0;color:#bbb;font-size:0.82em;border-right:1px solid #e6e6e6;vertical-align:top;user-select:none;white-space:nowrap;">10:</td><td style="padding:0.07em 0 0.07em 0.9em;">&nbsp;&nbsp;&nbsp;&nbsp;<b>FOR</b> i in pi:</td></tr>
+<tr><td style="text-align:right;padding:0.07em 0.6em 0.07em 0;color:#bbb;font-size:0.82em;border-right:1px solid #e6e6e6;vertical-align:top;user-select:none;white-space:nowrap;">11:</td><td style="padding:0.07em 0 0.07em 0.9em;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;S      &lt;- S union {i}</td></tr>
+<tr><td style="text-align:right;padding:0.07em 0.6em 0.07em 0;color:#bbb;font-size:0.82em;border-right:1px solid #e6e6e6;vertical-align:top;user-select:none;white-space:nowrap;">12:</td><td style="padding:0.07em 0 0.07em 0.9em;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;v_curr &lt;- 0&ensp;<span style="color:#777;font-style:italic;">&#9655;&thinsp;INNER: estimate v_do</span></td></tr>
+<tr><td style="text-align:right;padding:0.07em 0.6em 0.07em 0;color:#bbb;font-size:0.82em;border-right:1px solid #e6e6e6;vertical-align:top;user-select:none;white-space:nowrap;">13:</td><td style="padding:0.07em 0 0.07em 0.9em;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>FOR</b> m = 1 ... M:</td></tr>
+<tr><td style="text-align:right;padding:0.07em 0.6em 0.07em 0;color:#bbb;font-size:0.82em;border-right:1px solid #e6e6e6;vertical-align:top;user-select:none;white-space:nowrap;">14:</td><td style="padding:0.07em 0 0.07em 0.9em;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;v_curr &lt;- v_curr + f( POST_INTERVENTIONAL_SAMPLE(x, S, ...) )</td></tr>
+<tr><td style="text-align:right;padding:0.07em 0.6em 0.07em 0;color:#bbb;font-size:0.82em;border-right:1px solid #e6e6e6;vertical-align:top;user-select:none;white-space:nowrap;">15:</td><td style="padding:0.07em 0 0.07em 0.9em;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;v_curr &lt;- v_curr / M</td></tr>
+<tr><td style="text-align:right;padding:0.07em 0.6em 0.07em 0;color:#bbb;font-size:0.82em;border-right:1px solid #e6e6e6;vertical-align:top;user-select:none;white-space:nowrap;">16:</td><td style="padding:0.07em 0 0.07em 0.9em;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;phi[i] &lt;- phi[i] + (v_curr - v_prev)</td></tr>
+<tr><td style="text-align:right;padding:0.07em 0.6em 0.07em 0;color:#bbb;font-size:0.82em;border-right:1px solid #e6e6e6;vertical-align:top;user-select:none;white-space:nowrap;">17:</td><td style="padding:0.07em 0 0.07em 0.9em;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;v_prev &lt;- v_curr</td></tr>
+<tr><td style="text-align:right;padding:0.07em 0.6em 0.07em 0;color:#bbb;font-size:0.82em;border-right:1px solid #e6e6e6;vertical-align:top;user-select:none;white-space:nowrap;">18:</td><td style="padding:0.07em 0 0.07em 0.9em;"><b>RETURN</b> phi / T</td></tr>
+</table>
+<div style="border-top:1px solid #2c4a6e;"></div>
+</div>
 
 The POST_INTERVENTIONAL_SAMPLE subroutine that draws a single sample from P(X | do(X_S = x_S)), together with the closed-form conditional-Gaussian draw it relies on, is given in Appendix A.3.
 
@@ -258,29 +267,32 @@ The cost is O(T * n * M) model evaluations, markedly heavier than Traditional or
 
 Shapley Flow treats directed edges as the players of the cooperative game, permuting the full edge set rather than the feature set. In each of T = 100 trials all edges ($X \to X$ and $X \to Y$) are randomly permuted and activated sequentially, and the system value is evaluated after each activation. The node-value assignment is binary: a node takes its foreground value if it is a source with an active outgoing edge, or if it has an active incoming edge, or if its direct edge to Y is active; otherwise it takes its background value, and Y is always dropped before the model is evaluated. No intermediate model calls are made between X features; the model is evaluated only on the complete node-value vector at each edge addition. Node-level attributions are recovered by summing each node's outgoing edge credits, and by construction the credits satisfy efficiency, summing to f(x_fg) - f(x_bg). The $X \to Y$ augmentation of Section 3.3.3 is essential here, as it guarantees every feature has a direct route to accumulate edge credit.
 
-```
-ALGORITHM  Shapley Flow (uniform edge-permutation)
-INPUT : foreground instance x_fg, background row x_bg,
-        graph adjacency (n+1 nodes incl. Y), target index Y, trials T
-OUTPUT: node attribution vector phi in R^n  (Y excluded)
-
-E           <- list of all directed edges (u -> v) in the graph
-edge_credit <- { e : 0.0  for e in E }
-FOR t = 1 ... T:
-    perm   <- random_permutation(E)          # unconstrained over ALL edges
-    v_prev <- SYSTEM_VALUE(empty, x_fg, x_bg)    # = f(x_bg)
-    active <- [ ]
-    FOR e in perm:
-        active.append(e)
-        v_curr         <- SYSTEM_VALUE(active, x_fg, x_bg)
-        edge_credit[e] <- edge_credit[e] + (v_curr - v_prev)
-        v_prev         <- v_curr
-FOR e in E: edge_credit[e] <- edge_credit[e] / T
-phi <- zeros(n)                              # aggregate edges -> features
-FOR each edge (u -> v) in E:
-    IF u != Y: phi[u] <- phi[u] + edge_credit[(u -> v)]
-RETURN phi
-```
+<div style="border:1px solid #2c4a6e;border-top:3px solid #2c4a6e;margin:1.6em 0;font-family:'Courier New',Courier,monospace;font-size:0.875em;overflow:hidden;">
+<div style="padding:0.4em 1em;border-bottom:1px solid #2c4a6e;background:#eef2f7;font-family:Georgia,serif;font-size:1em;"><strong>Algorithm 4</strong>&ensp;Shapley Flow (uniform edge-permutation)</div>
+<table style="width:100%;border-collapse:collapse;line-height:1.55;background:#fff;">
+<tr><td style="text-align:right;padding:0.07em 0.6em 0.07em 0;color:#bbb;font-size:0.82em;border-right:1px solid #e6e6e6;vertical-align:top;user-select:none;white-space:nowrap;">1:</td><td style="padding:0.07em 0 0.07em 0.9em;"><b>INPUT :</b> foreground instance x_fg, background row x_bg,</td></tr>
+<tr><td style="text-align:right;padding:0.07em 0.6em 0.07em 0;color:#bbb;font-size:0.82em;border-right:1px solid #e6e6e6;vertical-align:top;user-select:none;white-space:nowrap;">2:</td><td style="padding:0.07em 0 0.07em 0.9em;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;graph adjacency (n+1 nodes incl. Y), target index Y, trials T</td></tr>
+<tr><td style="text-align:right;padding:0.07em 0.6em 0.07em 0;color:#bbb;font-size:0.82em;border-right:1px solid #e6e6e6;vertical-align:top;user-select:none;white-space:nowrap;">3:</td><td style="padding:0.07em 0 0.07em 0.9em;"><b>OUTPUT:</b> node attribution vector phi in R^n  (Y excluded)</td></tr>
+<tr style="height:0.45em;"><td></td><td></td></tr>
+<tr><td style="text-align:right;padding:0.07em 0.6em 0.07em 0;color:#bbb;font-size:0.82em;border-right:1px solid #e6e6e6;vertical-align:top;user-select:none;white-space:nowrap;">4:</td><td style="padding:0.07em 0 0.07em 0.9em;">E           &lt;- list of all directed edges (u -&gt; v) in the graph</td></tr>
+<tr><td style="text-align:right;padding:0.07em 0.6em 0.07em 0;color:#bbb;font-size:0.82em;border-right:1px solid #e6e6e6;vertical-align:top;user-select:none;white-space:nowrap;">5:</td><td style="padding:0.07em 0 0.07em 0.9em;">edge_credit &lt;- { e : 0.0  for e in E }</td></tr>
+<tr><td style="text-align:right;padding:0.07em 0.6em 0.07em 0;color:#bbb;font-size:0.82em;border-right:1px solid #e6e6e6;vertical-align:top;user-select:none;white-space:nowrap;">6:</td><td style="padding:0.07em 0 0.07em 0.9em;"><b>FOR</b> t = 1 ... T:</td></tr>
+<tr><td style="text-align:right;padding:0.07em 0.6em 0.07em 0;color:#bbb;font-size:0.82em;border-right:1px solid #e6e6e6;vertical-align:top;user-select:none;white-space:nowrap;">7:</td><td style="padding:0.07em 0 0.07em 0.9em;">&nbsp;&nbsp;&nbsp;&nbsp;perm   &lt;- random_permutation(E)&ensp;<span style="color:#777;font-style:italic;">&#9655;&thinsp;unconstrained over ALL edges</span></td></tr>
+<tr><td style="text-align:right;padding:0.07em 0.6em 0.07em 0;color:#bbb;font-size:0.82em;border-right:1px solid #e6e6e6;vertical-align:top;user-select:none;white-space:nowrap;">8:</td><td style="padding:0.07em 0 0.07em 0.9em;">&nbsp;&nbsp;&nbsp;&nbsp;v_prev &lt;- SYSTEM_VALUE(empty, x_fg, x_bg)&ensp;<span style="color:#777;font-style:italic;">&#9655;&thinsp;= f(x_bg)</span></td></tr>
+<tr><td style="text-align:right;padding:0.07em 0.6em 0.07em 0;color:#bbb;font-size:0.82em;border-right:1px solid #e6e6e6;vertical-align:top;user-select:none;white-space:nowrap;">9:</td><td style="padding:0.07em 0 0.07em 0.9em;">&nbsp;&nbsp;&nbsp;&nbsp;active &lt;- [ ]</td></tr>
+<tr><td style="text-align:right;padding:0.07em 0.6em 0.07em 0;color:#bbb;font-size:0.82em;border-right:1px solid #e6e6e6;vertical-align:top;user-select:none;white-space:nowrap;">10:</td><td style="padding:0.07em 0 0.07em 0.9em;">&nbsp;&nbsp;&nbsp;&nbsp;<b>FOR</b> e in perm:</td></tr>
+<tr><td style="text-align:right;padding:0.07em 0.6em 0.07em 0;color:#bbb;font-size:0.82em;border-right:1px solid #e6e6e6;vertical-align:top;user-select:none;white-space:nowrap;">11:</td><td style="padding:0.07em 0 0.07em 0.9em;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;active.append(e)</td></tr>
+<tr><td style="text-align:right;padding:0.07em 0.6em 0.07em 0;color:#bbb;font-size:0.82em;border-right:1px solid #e6e6e6;vertical-align:top;user-select:none;white-space:nowrap;">12:</td><td style="padding:0.07em 0 0.07em 0.9em;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;v_curr         &lt;- SYSTEM_VALUE(active, x_fg, x_bg)</td></tr>
+<tr><td style="text-align:right;padding:0.07em 0.6em 0.07em 0;color:#bbb;font-size:0.82em;border-right:1px solid #e6e6e6;vertical-align:top;user-select:none;white-space:nowrap;">13:</td><td style="padding:0.07em 0 0.07em 0.9em;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;edge_credit[e] &lt;- edge_credit[e] + (v_curr - v_prev)</td></tr>
+<tr><td style="text-align:right;padding:0.07em 0.6em 0.07em 0;color:#bbb;font-size:0.82em;border-right:1px solid #e6e6e6;vertical-align:top;user-select:none;white-space:nowrap;">14:</td><td style="padding:0.07em 0 0.07em 0.9em;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;v_prev         &lt;- v_curr</td></tr>
+<tr><td style="text-align:right;padding:0.07em 0.6em 0.07em 0;color:#bbb;font-size:0.82em;border-right:1px solid #e6e6e6;vertical-align:top;user-select:none;white-space:nowrap;">15:</td><td style="padding:0.07em 0 0.07em 0.9em;"><b>FOR</b> e in E: edge_credit[e] &lt;- edge_credit[e] / T</td></tr>
+<tr><td style="text-align:right;padding:0.07em 0.6em 0.07em 0;color:#bbb;font-size:0.82em;border-right:1px solid #e6e6e6;vertical-align:top;user-select:none;white-space:nowrap;">16:</td><td style="padding:0.07em 0 0.07em 0.9em;">phi &lt;- zeros(n)&ensp;<span style="color:#777;font-style:italic;">&#9655;&thinsp;aggregate edges -&gt; features</span></td></tr>
+<tr><td style="text-align:right;padding:0.07em 0.6em 0.07em 0;color:#bbb;font-size:0.82em;border-right:1px solid #e6e6e6;vertical-align:top;user-select:none;white-space:nowrap;">17:</td><td style="padding:0.07em 0 0.07em 0.9em;"><b>FOR</b> each edge (u -&gt; v) in E:</td></tr>
+<tr><td style="text-align:right;padding:0.07em 0.6em 0.07em 0;color:#bbb;font-size:0.82em;border-right:1px solid #e6e6e6;vertical-align:top;user-select:none;white-space:nowrap;">18:</td><td style="padding:0.07em 0 0.07em 0.9em;">&nbsp;&nbsp;&nbsp;&nbsp;<b>IF</b> u != Y: phi[u] &lt;- phi[u] + edge_credit[(u -&gt; v)]</td></tr>
+<tr><td style="text-align:right;padding:0.07em 0.6em 0.07em 0;color:#bbb;font-size:0.82em;border-right:1px solid #e6e6e6;vertical-align:top;user-select:none;white-space:nowrap;">19:</td><td style="padding:0.07em 0 0.07em 0.9em;"><b>RETURN</b> phi</td></tr>
+</table>
+<div style="border-top:1px solid #2c4a6e;"></div>
+</div>
 
 The SYSTEM_VALUE subroutine that maps a set of active edges to a model prediction, by assigning each node its foreground or background value under the activation rule, is given in Appendix A.4.
 
@@ -835,84 +847,104 @@ This appendix collects the helper subroutines invoked by the algorithm blocks of
 
 Both Traditional Shapley (Section 3.4.1) and Asymmetric Shapley (Section 3.4.2) estimate the observational coalition value v(S) = E[f(X) | X_S = x_S] with the same subroutine. Features in the coalition S take the instance's real values; the remaining features are filled in from each background row, and the model output is averaged over the background.
 
-```
-COALITION_VALUE(x, S, f, D):              # v(S) = E[f(X) | X_S = x_S]
-    samples <- copy(D)                    # one row per background instance
-    FOR each feature j in S:
-        samples[:, j] <- x[j]             # overwrite column j with the real value
-    RETURN mean( f(samples) )             # average prediction over the background
-```
+<div style="border:1px solid #555;border-top:3px solid #555;margin:1.6em 0;font-family:'Courier New',Courier,monospace;font-size:0.875em;overflow:hidden;">
+<div style="padding:0.4em 1em;border-bottom:1px solid #555;background:#f3f3f3;font-family:Georgia,serif;font-size:1em;"><strong>Subroutine A.1</strong>&ensp;COALITION_VALUE  —  v(S) = E[f(X) | X_S = x_S]</div>
+<table style="width:100%;border-collapse:collapse;line-height:1.55;background:#fff;">
+<tr><td style="text-align:right;padding:0.07em 0.6em 0.07em 0;color:#bbb;font-size:0.82em;border-right:1px solid #e6e6e6;vertical-align:top;user-select:none;white-space:nowrap;">1:</td><td style="padding:0.07em 0 0.07em 0.9em;">COALITION_VALUE(x, S, f, D):</td></tr>
+<tr><td style="text-align:right;padding:0.07em 0.6em 0.07em 0;color:#bbb;font-size:0.82em;border-right:1px solid #e6e6e6;vertical-align:top;user-select:none;white-space:nowrap;">2:</td><td style="padding:0.07em 0 0.07em 0.9em;">&nbsp;&nbsp;&nbsp;&nbsp;samples &lt;- copy(D)&ensp;<span style="color:#777;font-style:italic;">&#9655;&thinsp;one row per background instance</span></td></tr>
+<tr><td style="text-align:right;padding:0.07em 0.6em 0.07em 0;color:#bbb;font-size:0.82em;border-right:1px solid #e6e6e6;vertical-align:top;user-select:none;white-space:nowrap;">3:</td><td style="padding:0.07em 0 0.07em 0.9em;">&nbsp;&nbsp;&nbsp;&nbsp;<b>FOR</b> each feature j in S:</td></tr>
+<tr><td style="text-align:right;padding:0.07em 0.6em 0.07em 0;color:#bbb;font-size:0.82em;border-right:1px solid #e6e6e6;vertical-align:top;user-select:none;white-space:nowrap;">4:</td><td style="padding:0.07em 0 0.07em 0.9em;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;samples[:, j] &lt;- x[j]&ensp;<span style="color:#777;font-style:italic;">&#9655;&thinsp;overwrite column j with the real value</span></td></tr>
+<tr><td style="text-align:right;padding:0.07em 0.6em 0.07em 0;color:#bbb;font-size:0.82em;border-right:1px solid #e6e6e6;vertical-align:top;user-select:none;white-space:nowrap;">5:</td><td style="padding:0.07em 0 0.07em 0.9em;">&nbsp;&nbsp;&nbsp;&nbsp;<b>RETURN</b> mean( f(samples) )&ensp;<span style="color:#777;font-style:italic;">&#9655;&thinsp;average prediction over the background</span></td></tr>
+</table>
+<div style="border-top:1px solid #555;"></div>
+</div>
 
 ## A.2 Uniform Random Topological Ordering (Asymmetric and Causal Shapley)
 
 Asymmetric Shapley (Section 3.4.2) and the outer loop of Causal Shapley (Section 3.4.3) both draw a uniform random linear extension of a DAG with a randomized Kahn algorithm. It maintains a pool of "ready" nodes whose ancestors have all been placed and selects one uniformly at each step, which samples uniformly over the linear extensions and runs in O(n) per ordering. The children lists and initial in-degrees are precomputed once over the relevant DAG (the X-only feature subgraph for Asymmetric, the component DAG for Causal; Y is excluded, as it is never a player). For Asymmetric the procedure operates on features; for Causal it operates on components, whose ordering is then expanded to features.
 
-```
-PRECOMPUTE (once):  children[], in_degree[] from the DAG edges (Y excluded)
-    # if the feature DAG contains a cycle, disable constraints
-    #   -> the method reduces to Traditional Shapley
-
-SAMPLE_TOPOLOGICAL_ORDERING(children, in_degree):
-    deg   <- copy(in_degree)
-    ready <- [ i : deg[i] == 0 ]          # source nodes
-    order <- [ ]
-    WHILE ready not empty:
-        k    <- uniform_random_index(ready)
-        node <- ready[k];  ready[k] <- ready[last];  ready.pop()   # O(1) swap-remove
-        order.append(node)
-        FOR child in children[node]:
-            deg[child] <- deg[child] - 1
-            IF deg[child] == 0: ready.append(child)
-    RETURN order                          # a uniform linear extension
-```
+<div style="border:1px solid #555;border-top:3px solid #555;margin:1.6em 0;font-family:'Courier New',Courier,monospace;font-size:0.875em;overflow:hidden;">
+<div style="padding:0.4em 1em;border-bottom:1px solid #555;background:#f3f3f3;font-family:Georgia,serif;font-size:1em;"><strong>Subroutine A.2</strong>&ensp;SAMPLE_TOPOLOGICAL_ORDERING  —  uniform random linear extension (Kahn)</div>
+<table style="width:100%;border-collapse:collapse;line-height:1.55;background:#fff;">
+<tr><td style="text-align:right;padding:0.07em 0.6em 0.07em 0;color:#bbb;font-size:0.82em;border-right:1px solid #e6e6e6;vertical-align:top;user-select:none;white-space:nowrap;">1:</td><td style="padding:0.07em 0 0.07em 0.9em;"><b>PRECOMPUTE</b> (once):  children[], in_degree[] from the DAG edges (Y excluded)</td></tr>
+<tr><td style="text-align:right;padding:0.07em 0.6em 0.07em 0;color:#bbb;font-size:0.82em;border-right:1px solid #e6e6e6;vertical-align:top;user-select:none;white-space:nowrap;">2:</td><td style="padding:0.07em 0 0.07em 0.9em;">&nbsp;&nbsp;&nbsp;&nbsp;&ensp;<span style="color:#777;font-style:italic;">&#9655;&thinsp;if the feature DAG contains a cycle, disable constraints</span></td></tr>
+<tr><td style="text-align:right;padding:0.07em 0.6em 0.07em 0;color:#bbb;font-size:0.82em;border-right:1px solid #e6e6e6;vertical-align:top;user-select:none;white-space:nowrap;">3:</td><td style="padding:0.07em 0 0.07em 0.9em;">&nbsp;&nbsp;&nbsp;&nbsp;&ensp;<span style="color:#777;font-style:italic;">&#9655;&thinsp;-&gt; the method reduces to Traditional Shapley</span></td></tr>
+<tr style="height:0.45em;"><td></td><td></td></tr>
+<tr><td style="text-align:right;padding:0.07em 0.6em 0.07em 0;color:#bbb;font-size:0.82em;border-right:1px solid #e6e6e6;vertical-align:top;user-select:none;white-space:nowrap;">4:</td><td style="padding:0.07em 0 0.07em 0.9em;">SAMPLE_TOPOLOGICAL_ORDERING(children, in_degree):</td></tr>
+<tr><td style="text-align:right;padding:0.07em 0.6em 0.07em 0;color:#bbb;font-size:0.82em;border-right:1px solid #e6e6e6;vertical-align:top;user-select:none;white-space:nowrap;">5:</td><td style="padding:0.07em 0 0.07em 0.9em;">&nbsp;&nbsp;&nbsp;&nbsp;deg   &lt;- copy(in_degree)</td></tr>
+<tr><td style="text-align:right;padding:0.07em 0.6em 0.07em 0;color:#bbb;font-size:0.82em;border-right:1px solid #e6e6e6;vertical-align:top;user-select:none;white-space:nowrap;">6:</td><td style="padding:0.07em 0 0.07em 0.9em;">&nbsp;&nbsp;&nbsp;&nbsp;ready &lt;- [ i : deg[i] == 0 ]&ensp;<span style="color:#777;font-style:italic;">&#9655;&thinsp;source nodes</span></td></tr>
+<tr><td style="text-align:right;padding:0.07em 0.6em 0.07em 0;color:#bbb;font-size:0.82em;border-right:1px solid #e6e6e6;vertical-align:top;user-select:none;white-space:nowrap;">7:</td><td style="padding:0.07em 0 0.07em 0.9em;">&nbsp;&nbsp;&nbsp;&nbsp;order &lt;- [ ]</td></tr>
+<tr><td style="text-align:right;padding:0.07em 0.6em 0.07em 0;color:#bbb;font-size:0.82em;border-right:1px solid #e6e6e6;vertical-align:top;user-select:none;white-space:nowrap;">8:</td><td style="padding:0.07em 0 0.07em 0.9em;">&nbsp;&nbsp;&nbsp;&nbsp;<b>WHILE</b> ready not empty:</td></tr>
+<tr><td style="text-align:right;padding:0.07em 0.6em 0.07em 0;color:#bbb;font-size:0.82em;border-right:1px solid #e6e6e6;vertical-align:top;user-select:none;white-space:nowrap;">9:</td><td style="padding:0.07em 0 0.07em 0.9em;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;k    &lt;- uniform_random_index(ready)</td></tr>
+<tr><td style="text-align:right;padding:0.07em 0.6em 0.07em 0;color:#bbb;font-size:0.82em;border-right:1px solid #e6e6e6;vertical-align:top;user-select:none;white-space:nowrap;">10:</td><td style="padding:0.07em 0 0.07em 0.9em;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;node &lt;- ready[k];  ready[k] &lt;- ready[last];  ready.pop()&ensp;<span style="color:#777;font-style:italic;">&#9655;&thinsp;O(1) swap-remove</span></td></tr>
+<tr><td style="text-align:right;padding:0.07em 0.6em 0.07em 0;color:#bbb;font-size:0.82em;border-right:1px solid #e6e6e6;vertical-align:top;user-select:none;white-space:nowrap;">11:</td><td style="padding:0.07em 0 0.07em 0.9em;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;order.append(node)</td></tr>
+<tr><td style="text-align:right;padding:0.07em 0.6em 0.07em 0;color:#bbb;font-size:0.82em;border-right:1px solid #e6e6e6;vertical-align:top;user-select:none;white-space:nowrap;">12:</td><td style="padding:0.07em 0 0.07em 0.9em;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>FOR</b> child in children[node]:</td></tr>
+<tr><td style="text-align:right;padding:0.07em 0.6em 0.07em 0;color:#bbb;font-size:0.82em;border-right:1px solid #e6e6e6;vertical-align:top;user-select:none;white-space:nowrap;">13:</td><td style="padding:0.07em 0 0.07em 0.9em;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;deg[child] &lt;- deg[child] - 1</td></tr>
+<tr><td style="text-align:right;padding:0.07em 0.6em 0.07em 0;color:#bbb;font-size:0.82em;border-right:1px solid #e6e6e6;vertical-align:top;user-select:none;white-space:nowrap;">14:</td><td style="padding:0.07em 0 0.07em 0.9em;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>IF</b> deg[child] == 0: ready.append(child)</td></tr>
+<tr><td style="text-align:right;padding:0.07em 0.6em 0.07em 0;color:#bbb;font-size:0.82em;border-right:1px solid #e6e6e6;vertical-align:top;user-select:none;white-space:nowrap;">15:</td><td style="padding:0.07em 0 0.07em 0.9em;">&nbsp;&nbsp;&nbsp;&nbsp;<b>RETURN</b> order&ensp;<span style="color:#777;font-style:italic;">&#9655;&thinsp;a uniform linear extension</span></td></tr>
+</table>
+<div style="border-top:1px solid #555;"></div>
+</div>
 
 ## A.3 Post-Interventional Sampling (Causal Shapley)
 
 The inner loop of Causal Shapley (Section 3.4.3) draws each sample from the post-interventional distribution P(X | do(X_S = x_S)) with the subroutine below. The intervened features are fixed to their instance values, and the remaining features are filled in component by component in a fixed topological order so that parents are resolved before children. Inside a confounded component the missing features are drawn independently given their parents, which destroys the spurious within-component correlation; in an ordinary component they are drawn jointly given the parents and any fixed siblings.
 
-```
-POST_INTERVENTIONAL_SAMPLE(x, S, components, confounded[], parents[], mu, Sigma):
-    sample <- zeros(n);  FOR j in S: sample[j] <- x[j]   # fix the interventions
-    FOR each component C in FIXED topological order:
-        missing <- C \ S
-        IF missing is empty: CONTINUE
-        IF confounded[C]:                                # intervention breaks ties
-            FOR j in missing:                            # -> draw INDEPENDENTLY
-                sample[j] <- GAUSSIAN_CONDITIONAL(target={j}, cond=parents[C])
-        ELSE:                                            # ordinary dependence
-            fixed <- C intersect S                       # -> draw JOINTLY, given
-            sample[missing] <- GAUSSIAN_CONDITIONAL(      #    parents AND siblings
-                target=missing, cond = parents[C] union fixed)
-    RETURN sample
-```
+<div style="border:1px solid #555;border-top:3px solid #555;margin:1.6em 0;font-family:'Courier New',Courier,monospace;font-size:0.875em;overflow:hidden;">
+<div style="padding:0.4em 1em;border-bottom:1px solid #555;background:#f3f3f3;font-family:Georgia,serif;font-size:1em;"><strong>Subroutine A.3</strong>&ensp;POST_INTERVENTIONAL_SAMPLE  —  draw from P(X | do(X_S = x_S))</div>
+<table style="width:100%;border-collapse:collapse;line-height:1.55;background:#fff;">
+<tr><td style="text-align:right;padding:0.07em 0.6em 0.07em 0;color:#bbb;font-size:0.82em;border-right:1px solid #e6e6e6;vertical-align:top;user-select:none;white-space:nowrap;">1:</td><td style="padding:0.07em 0 0.07em 0.9em;">POST_INTERVENTIONAL_SAMPLE(x, S, components, confounded[], parents[], mu, Sigma):</td></tr>
+<tr><td style="text-align:right;padding:0.07em 0.6em 0.07em 0;color:#bbb;font-size:0.82em;border-right:1px solid #e6e6e6;vertical-align:top;user-select:none;white-space:nowrap;">2:</td><td style="padding:0.07em 0 0.07em 0.9em;">&nbsp;&nbsp;&nbsp;&nbsp;sample &lt;- zeros(n);  FOR j in S: sample[j] &lt;- x[j]&ensp;<span style="color:#777;font-style:italic;">&#9655;&thinsp;fix the interventions</span></td></tr>
+<tr><td style="text-align:right;padding:0.07em 0.6em 0.07em 0;color:#bbb;font-size:0.82em;border-right:1px solid #e6e6e6;vertical-align:top;user-select:none;white-space:nowrap;">3:</td><td style="padding:0.07em 0 0.07em 0.9em;">&nbsp;&nbsp;&nbsp;&nbsp;<b>FOR</b> each component C in FIXED topological order:</td></tr>
+<tr><td style="text-align:right;padding:0.07em 0.6em 0.07em 0;color:#bbb;font-size:0.82em;border-right:1px solid #e6e6e6;vertical-align:top;user-select:none;white-space:nowrap;">4:</td><td style="padding:0.07em 0 0.07em 0.9em;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;missing &lt;- C \ S</td></tr>
+<tr><td style="text-align:right;padding:0.07em 0.6em 0.07em 0;color:#bbb;font-size:0.82em;border-right:1px solid #e6e6e6;vertical-align:top;user-select:none;white-space:nowrap;">5:</td><td style="padding:0.07em 0 0.07em 0.9em;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>IF</b> missing is empty: CONTINUE</td></tr>
+<tr><td style="text-align:right;padding:0.07em 0.6em 0.07em 0;color:#bbb;font-size:0.82em;border-right:1px solid #e6e6e6;vertical-align:top;user-select:none;white-space:nowrap;">6:</td><td style="padding:0.07em 0 0.07em 0.9em;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>IF</b> confounded[C]:&ensp;<span style="color:#777;font-style:italic;">&#9655;&thinsp;intervention breaks ties</span></td></tr>
+<tr><td style="text-align:right;padding:0.07em 0.6em 0.07em 0;color:#bbb;font-size:0.82em;border-right:1px solid #e6e6e6;vertical-align:top;user-select:none;white-space:nowrap;">7:</td><td style="padding:0.07em 0 0.07em 0.9em;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>FOR</b> j in missing:&ensp;<span style="color:#777;font-style:italic;">&#9655;&thinsp;-&gt; draw INDEPENDENTLY</span></td></tr>
+<tr><td style="text-align:right;padding:0.07em 0.6em 0.07em 0;color:#bbb;font-size:0.82em;border-right:1px solid #e6e6e6;vertical-align:top;user-select:none;white-space:nowrap;">8:</td><td style="padding:0.07em 0 0.07em 0.9em;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sample[j] &lt;- GAUSSIAN_CONDITIONAL(target={j}, cond=parents[C])</td></tr>
+<tr><td style="text-align:right;padding:0.07em 0.6em 0.07em 0;color:#bbb;font-size:0.82em;border-right:1px solid #e6e6e6;vertical-align:top;user-select:none;white-space:nowrap;">9:</td><td style="padding:0.07em 0 0.07em 0.9em;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>ELSE:</b>&ensp;<span style="color:#777;font-style:italic;">&#9655;&thinsp;ordinary dependence</span></td></tr>
+<tr><td style="text-align:right;padding:0.07em 0.6em 0.07em 0;color:#bbb;font-size:0.82em;border-right:1px solid #e6e6e6;vertical-align:top;user-select:none;white-space:nowrap;">10:</td><td style="padding:0.07em 0 0.07em 0.9em;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fixed &lt;- C intersect S&ensp;<span style="color:#777;font-style:italic;">&#9655;&thinsp;-&gt; draw JOINTLY, given</span></td></tr>
+<tr><td style="text-align:right;padding:0.07em 0.6em 0.07em 0;color:#bbb;font-size:0.82em;border-right:1px solid #e6e6e6;vertical-align:top;user-select:none;white-space:nowrap;">11:</td><td style="padding:0.07em 0 0.07em 0.9em;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sample[missing] &lt;- GAUSSIAN_CONDITIONAL(&ensp;<span style="color:#777;font-style:italic;">&#9655;&thinsp;parents AND siblings</span></td></tr>
+<tr><td style="text-align:right;padding:0.07em 0.6em 0.07em 0;color:#bbb;font-size:0.82em;border-right:1px solid #e6e6e6;vertical-align:top;user-select:none;white-space:nowrap;">12:</td><td style="padding:0.07em 0 0.07em 0.9em;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;target=missing, cond = parents[C] union fixed)</td></tr>
+<tr><td style="text-align:right;padding:0.07em 0.6em 0.07em 0;color:#bbb;font-size:0.82em;border-right:1px solid #e6e6e6;vertical-align:top;user-select:none;white-space:nowrap;">13:</td><td style="padding:0.07em 0 0.07em 0.9em;">&nbsp;&nbsp;&nbsp;&nbsp;<b>RETURN</b> sample</td></tr>
+</table>
+<div style="border-top:1px solid #555;"></div>
+</div>
 
 The conditional draws use the closed-form Gaussian expression under a multivariate-Gaussian approximation of the background data, X ~ N(mu, Sigma). A singular conditioning matrix falls back to the conditional mean, and the univariate branch is used whenever a single feature is sampled (the only case exercised in this thesis, since the confounder list is empty).
 
-```
-GAUSSIAN_CONDITIONAL(target A, cond B, vals b):
-    IF B is empty:
-        RETURN draw from N( mu_A , Sigma_AA )            # marginal
-    Sigma_BB_inv <- pseudo_inverse( Sigma_BB )
-    mu_cond      <- mu_A + Sigma_AB * Sigma_BB_inv * (b - mu_B)
-    Sigma_cond   <- Sigma_AA - Sigma_AB * Sigma_BB_inv * Sigma_BA
-    Sigma_cond   <- symmetrise(Sigma_cond); nudge eigenvalues >= epsilon
-    RETURN draw from N( mu_cond , Sigma_cond )           # scalar branch if |A| = 1
-```
+<div style="border:1px solid #555;border-top:3px solid #555;margin:1.6em 0;font-family:'Courier New',Courier,monospace;font-size:0.875em;overflow:hidden;">
+<div style="padding:0.4em 1em;border-bottom:1px solid #555;background:#f3f3f3;font-family:Georgia,serif;font-size:1em;"><strong>Subroutine A.3</strong>&ensp;GAUSSIAN_CONDITIONAL  —  closed-form conditional Gaussian draw</div>
+<table style="width:100%;border-collapse:collapse;line-height:1.55;background:#fff;">
+<tr><td style="text-align:right;padding:0.07em 0.6em 0.07em 0;color:#bbb;font-size:0.82em;border-right:1px solid #e6e6e6;vertical-align:top;user-select:none;white-space:nowrap;">1:</td><td style="padding:0.07em 0 0.07em 0.9em;">GAUSSIAN_CONDITIONAL(target A, cond B, vals b):</td></tr>
+<tr><td style="text-align:right;padding:0.07em 0.6em 0.07em 0;color:#bbb;font-size:0.82em;border-right:1px solid #e6e6e6;vertical-align:top;user-select:none;white-space:nowrap;">2:</td><td style="padding:0.07em 0 0.07em 0.9em;">&nbsp;&nbsp;&nbsp;&nbsp;<b>IF</b> B is empty:</td></tr>
+<tr><td style="text-align:right;padding:0.07em 0.6em 0.07em 0;color:#bbb;font-size:0.82em;border-right:1px solid #e6e6e6;vertical-align:top;user-select:none;white-space:nowrap;">3:</td><td style="padding:0.07em 0 0.07em 0.9em;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>RETURN</b> draw from N( mu_A , Sigma_AA )&ensp;<span style="color:#777;font-style:italic;">&#9655;&thinsp;marginal</span></td></tr>
+<tr><td style="text-align:right;padding:0.07em 0.6em 0.07em 0;color:#bbb;font-size:0.82em;border-right:1px solid #e6e6e6;vertical-align:top;user-select:none;white-space:nowrap;">4:</td><td style="padding:0.07em 0 0.07em 0.9em;">&nbsp;&nbsp;&nbsp;&nbsp;Sigma_BB_inv &lt;- pseudo_inverse( Sigma_BB )</td></tr>
+<tr><td style="text-align:right;padding:0.07em 0.6em 0.07em 0;color:#bbb;font-size:0.82em;border-right:1px solid #e6e6e6;vertical-align:top;user-select:none;white-space:nowrap;">5:</td><td style="padding:0.07em 0 0.07em 0.9em;">&nbsp;&nbsp;&nbsp;&nbsp;mu_cond      &lt;- mu_A + Sigma_AB * Sigma_BB_inv * (b - mu_B)</td></tr>
+<tr><td style="text-align:right;padding:0.07em 0.6em 0.07em 0;color:#bbb;font-size:0.82em;border-right:1px solid #e6e6e6;vertical-align:top;user-select:none;white-space:nowrap;">6:</td><td style="padding:0.07em 0 0.07em 0.9em;">&nbsp;&nbsp;&nbsp;&nbsp;Sigma_cond   &lt;- Sigma_AA - Sigma_AB * Sigma_BB_inv * Sigma_BA</td></tr>
+<tr><td style="text-align:right;padding:0.07em 0.6em 0.07em 0;color:#bbb;font-size:0.82em;border-right:1px solid #e6e6e6;vertical-align:top;user-select:none;white-space:nowrap;">7:</td><td style="padding:0.07em 0 0.07em 0.9em;">&nbsp;&nbsp;&nbsp;&nbsp;Sigma_cond   &lt;- symmetrise(Sigma_cond); nudge eigenvalues &gt;= epsilon</td></tr>
+<tr><td style="text-align:right;padding:0.07em 0.6em 0.07em 0;color:#bbb;font-size:0.82em;border-right:1px solid #e6e6e6;vertical-align:top;user-select:none;white-space:nowrap;">8:</td><td style="padding:0.07em 0 0.07em 0.9em;">&nbsp;&nbsp;&nbsp;&nbsp;<b>RETURN</b> draw from N( mu_cond , Sigma_cond )&ensp;<span style="color:#777;font-style:italic;">&#9655;&thinsp;scalar branch if |A| = 1</span></td></tr>
+</table>
+<div style="border-top:1px solid #555;"></div>
+</div>
 
 ## A.4 System Value (Shapley Flow)
 
 Shapley Flow (Section 3.4.4) evaluates the model on a set of active edges with the subroutine below. Each node is assigned its foreground or background value according to the activation rule, Y is stripped before the model is evaluated, and the empty edge set returns f(x_bg) while the full edge set returns f(x_fg).
 
-```
-SYSTEM_VALUE(active_edges, x_fg, x_bg):
-    FOR each node i in the graph:
-        IF i is a source AND has an active outgoing edge:  val[i] <- x_fg[i]
-        ELSE IF i has an active incoming edge:             val[i] <- x_fg[i]
-        ELSE IF edge (i -> Y) is active:                   val[i] <- x_fg[i]
-        ELSE:                                              val[i] <- x_bg[i]
-    drop Y from val                          # Y is never an input to f
-    RETURN f(val)
-```
+<div style="border:1px solid #555;border-top:3px solid #555;margin:1.6em 0;font-family:'Courier New',Courier,monospace;font-size:0.875em;overflow:hidden;">
+<div style="padding:0.4em 1em;border-bottom:1px solid #555;background:#f3f3f3;font-family:Georgia,serif;font-size:1em;"><strong>Subroutine A.4</strong>&ensp;SYSTEM_VALUE  —  binary foreground/background activation</div>
+<table style="width:100%;border-collapse:collapse;line-height:1.55;background:#fff;">
+<tr><td style="text-align:right;padding:0.07em 0.6em 0.07em 0;color:#bbb;font-size:0.82em;border-right:1px solid #e6e6e6;vertical-align:top;user-select:none;white-space:nowrap;">1:</td><td style="padding:0.07em 0 0.07em 0.9em;">SYSTEM_VALUE(active_edges, x_fg, x_bg):</td></tr>
+<tr><td style="text-align:right;padding:0.07em 0.6em 0.07em 0;color:#bbb;font-size:0.82em;border-right:1px solid #e6e6e6;vertical-align:top;user-select:none;white-space:nowrap;">2:</td><td style="padding:0.07em 0 0.07em 0.9em;">&nbsp;&nbsp;&nbsp;&nbsp;<b>FOR</b> each node i in the graph:</td></tr>
+<tr><td style="text-align:right;padding:0.07em 0.6em 0.07em 0;color:#bbb;font-size:0.82em;border-right:1px solid #e6e6e6;vertical-align:top;user-select:none;white-space:nowrap;">3:</td><td style="padding:0.07em 0 0.07em 0.9em;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>IF</b> i is a source AND has an active outgoing edge:  val[i] &lt;- x_fg[i]</td></tr>
+<tr><td style="text-align:right;padding:0.07em 0.6em 0.07em 0;color:#bbb;font-size:0.82em;border-right:1px solid #e6e6e6;vertical-align:top;user-select:none;white-space:nowrap;">4:</td><td style="padding:0.07em 0 0.07em 0.9em;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>ELSE IF</b> i has an active incoming edge:             val[i] &lt;- x_fg[i]</td></tr>
+<tr><td style="text-align:right;padding:0.07em 0.6em 0.07em 0;color:#bbb;font-size:0.82em;border-right:1px solid #e6e6e6;vertical-align:top;user-select:none;white-space:nowrap;">5:</td><td style="padding:0.07em 0 0.07em 0.9em;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>ELSE IF</b> edge (i -&gt; Y) is active:                   val[i] &lt;- x_fg[i]</td></tr>
+<tr><td style="text-align:right;padding:0.07em 0.6em 0.07em 0;color:#bbb;font-size:0.82em;border-right:1px solid #e6e6e6;vertical-align:top;user-select:none;white-space:nowrap;">6:</td><td style="padding:0.07em 0 0.07em 0.9em;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>ELSE:</b>                                              val[i] &lt;- x_bg[i]</td></tr>
+<tr><td style="text-align:right;padding:0.07em 0.6em 0.07em 0;color:#bbb;font-size:0.82em;border-right:1px solid #e6e6e6;vertical-align:top;user-select:none;white-space:nowrap;">7:</td><td style="padding:0.07em 0 0.07em 0.9em;">&nbsp;&nbsp;&nbsp;&nbsp;drop Y from val&ensp;<span style="color:#777;font-style:italic;">&#9655;&thinsp;Y is never an input to f</span></td></tr>
+<tr><td style="text-align:right;padding:0.07em 0.6em 0.07em 0;color:#bbb;font-size:0.82em;border-right:1px solid #e6e6e6;vertical-align:top;user-select:none;white-space:nowrap;">8:</td><td style="padding:0.07em 0 0.07em 0.9em;">&nbsp;&nbsp;&nbsp;&nbsp;<b>RETURN</b> f(val)</td></tr>
+</table>
+<div style="border-top:1px solid #555;"></div>
+</div>
 
 # References
 
