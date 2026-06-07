@@ -105,7 +105,9 @@ The DAG plays a more central role here than in either ASV or CSV, because its ed
 
 The proposed experimental pipeline to help practitioners navigate scenarios where measured systems contain underlying causal connections or highly correlated features, the proposed experimental pipeline is outlined below. Within this framework, two distinct datasets are evaluated across multiple structure-aware Shapley methods. The resulting variations in feature attributions are measured along two primary dimensions: magnitude deviation and sign disagreement—both of which are critical for ensuring the reliability of local explanations.
 
+![Experimental pipeline overview](figures/experimental_pipeline_diagram.png)
 
+***Figure 3.0: Overview of the experimental pipeline.*** End-to-end flow from data generation and causal discovery through Shapley computation to evaluation, illustrating how the two datasets, three graph sources, and three structure-aware methods feed into the magnitude and sign metrics.
 
 ## 3.1 Data Synthesis and Target Datasets
 
