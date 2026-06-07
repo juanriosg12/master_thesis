@@ -366,9 +366,12 @@ On the real-world Sachs dataset, the performance hierarchy reverses: LiNGAM outp
 
 Each combination of structure-aware Shapley method and discovered graph is compared against Traditional Shapley, the reference here being the graph-free baseline (Tag base). The two metrics of Section 3.5 are reported throughout: Magnitude Divergence $\Delta M_{\text{base}}$ and Sign Disagreement $D_{\text{base}}$, both at the global level. $\Delta M_{\text{base}}$ is a percent of the model-output standard deviation $\hat\sigma$, so a value of 0.05 means the typical attribution moved by 5% of $\hat\sigma$; $D_{\text{base}}$ is the fraction of attributions whose direction flips relative to the baseline.
 
+<div style="display:flex; gap:2em; flex-wrap:wrap;">
+<div style="flex:1; min-width:300px;">
+
 ***Table 4.1: Baseline Deviation -- Linear-Conf Synthetic Dataset. $\Delta M_{\text{base}}$ in % of model-output std; $D_{\text{base}}$ in % of attributions.***
 
-| **Method** | **Graph** | **Sign Disagreement $D_{\text{base}}$** | **Magnitude Divergence $\Delta M_{\text{base}}$** |
+| **Method** | **Graph** | **$D_{\text{base}}$** | **$\Delta M_{\text{base}}$** |
 | --- | --- | --- | --- |
 | Asymmetric | PC | 5.08% | 0.68% |
 | Asymmetric | LiNGAM | 5.76% | 0.86% |
@@ -377,9 +380,12 @@ Each combination of structure-aware Shapley method and discovered graph is compa
 | Flow | PC | 36.58% | 6.62% |
 | Flow | LiNGAM | 37.68% | 6.61% |
 
+</div>
+<div style="flex:1; min-width:300px;">
+
 ***Table 4.2: Baseline Deviation -- Sachs Cell Signaling Dataset. $\Delta M_{\text{base}}$ in % of model-output std; $D_{\text{base}}$ in % of attributions.***
 
-| **Method** | **Graph** | **Sign Disagreement $D_{\text{base}}$** | **Magnitude Divergence $\Delta M_{\text{base}}$** |
+| **Method** | **Graph** | **$D_{\text{base}}$** | **$\Delta M_{\text{base}}$** |
 | --- | --- | --- | --- |
 | Asymmetric | PC | 16.80% | 5.08% |
 | Asymmetric | LiNGAM | 17.00% | 4.41% |
@@ -388,15 +394,27 @@ Each combination of structure-aware Shapley method and discovered graph is compa
 | Flow | PC | 40.20% | 12.68% |
 | Flow | LiNGAM | 41.50% | 14.13% |
 
+</div>
+</div>
+
 The two metrics are read jointly in Figures 4.3 and 4.4, which place each method-graph configuration on the magnitude axis ($\Delta M_{\text{base}}$, horizontal) against the sign axis ($D_{\text{base}}$, vertical). A configuration in the lower-left corner deviates little from the graph-free baseline on both axes; movement up and to the right marks growing departure in direction and magnitude respectively.
+
+<div style="display:flex; gap:2em; flex-wrap:wrap; align-items:flex-start;">
+<div style="flex:1; min-width:300px;">
 
 ![Alignment to Traditional on the synthetic dataset](figures/tga_sa_scatter_traditional_linear_conf_f50_s1000_p30.png)
 
 ***Figure 4.3: Magnitude versus sign deviation from Traditional Shapley on the synthetic linear-confounded dataset.*** Colour encodes method and marker shape encodes the discovery algorithm. Asymmetric Shapley clusters tightly in the lower-left corner under both graphs, while Causal and Flow sit far to the upper-right, deviating strongly on both axes regardless of which graph supplies the structure.
 
+</div>
+<div style="flex:1; min-width:300px;">
+
 ![Alignment to Traditional on the Sachs dataset](figures/tga_sa_scatter_traditional_sachs.png)
 
 ***Figure 4.4: Magnitude versus sign deviation from Traditional Shapley on the Sachs dataset ($\Delta M_{\text{base}}$ in % of model-output std).*** The same lower-left clustering of Asymmetric Shapley holds, but both axes spread wider than on synthetic and the PC/LiNGAM markers separate more visibly for Causal and Flow, the early signal of the discovery-algorithm sensitivity examined in Section 4.4.
+
+</div>
+</div>
 
 ### 4.2.1 Asymmetric Shapley -- High Robustness to Graph Injection
 
@@ -420,21 +438,33 @@ Read per feature, the signed instance-level gap again has a structural meaning, 
 
 The feature-level magnitude deviations summarized by the global $\Delta M_{\text{base}}$ are shown in full in Figures 4.5 and 4.6, which lay out the per-feature $\Delta M_{\text{base}}$ against Traditional Shapley for the top features of each dataset across all six method-graph combinations. The heatmaps make the method hierarchy visually immediate: the two Asymmetric rows are almost uniformly pale, while the Causal and Flow rows darken sharply on the highest-importance features (X24, X33, X47 on synthetic; erk, pka on Sachs), confirming that the magnitude shift concentrates on a small set of dominant features and is driven by the interventional and edge-routing methods rather than by Asymmetric.
 
+<div style="display:flex; gap:2em; flex-wrap:wrap; align-items:flex-start;">
+<div style="flex:1; min-width:300px;">
+
 ![Feature-level TGA vs Traditional, synthetic dataset](figures/tga_heatmap_traditional_linear_conf_f50_s1000_p30.png)
 
 ***Figure 4.5: Feature-level Magnitude Divergence $\Delta M_{\text{base}}$ vs. Traditional Shapley, synthetic dataset (top 40 features by mean $\Delta M_{\text{base}}$, in % of model-output std).*** Rows are method-graph combinations; columns are features. The Asymmetric rows are near-zero throughout, while Causal and Flow concentrate their largest deviations on X24, X33 and X47.
+
+</div>
+<div style="flex:1; min-width:300px;">
 
 ![Feature-level TGA vs Traditional, Sachs dataset](figures/tga_heatmap_traditional_sachs.png)
 
 ***Figure 4.6: Feature-level Magnitude Divergence $\Delta M_{\text{base}}$ vs. Traditional Shapley, Sachs dataset (top 10 features by mean $\Delta M_{\text{base}}$, in % of model-output std).*** The deviation concentrates on erk and pka, with Flow under PC producing the single largest feature-level shift (erk, 57.9% of $\hat\sigma$).
 
+</div>
+</div>
+
 ## 4.3 True-Graph Causal Alignment
 
 The oracle-alignment analysis measures how closely each combination of structure-aware Shapley method and discovered graph recovers the attributions that would be obtained with the oracle graph as input. On the synthetic track the oracle is the True DAG; on Sachs it is the consensus reference DAG, which plays the same role. Tables 4.3 and 4.4 report $\Delta M_{\text{oracle}}$ and $D_{\text{oracle}}$ for each track, and Figures 4.7 and 4.8 place every configuration on the magnitude axis ($\Delta M_{\text{oracle}}$) against the sign axis ($D_{\text{oracle}}$), where the lower-left corner marks the closest recovery of the oracle attributions.
 
+<div style="display:flex; gap:2em; flex-wrap:wrap; align-items:flex-start;">
+<div style="flex:1; min-width:300px;">
+
 ***Table 4.3: Oracle Alignment -- Linear-Conf Synthetic Dataset. $\Delta M_{\text{oracle}}$ in % of model-output std; $D_{\text{oracle}}$ in % of attributions.***
 
-| **Method** | **Graph** | **Sign Disagreement $D_{\text{oracle}}$** | **Magnitude Divergence $\Delta M_{\text{oracle}}$** |
+| **Method** | **Graph** | $D_{\text{oracle}}$ | $\Delta M_{\text{oracle}}$ |
 | --- | --- | --- | --- |
 | Asymmetric | PC | 5.88% | 1.02% |
 | Asymmetric | LiNGAM | 6.30% | 0.79% |
@@ -443,9 +473,12 @@ The oracle-alignment analysis measures how closely each combination of structure
 | Flow | PC | 42.26% | 7.34% |
 | Flow | LiNGAM | 44.91% | 8.06% |
 
+</div>
+<div style="flex:1; min-width:300px;">
+
 ***Table 4.4: Oracle Alignment -- Sachs Cell Signaling Dataset (oracle = consensus DAG). $\Delta M_{\text{oracle}}$ in % of model-output std; $D_{\text{oracle}}$ in % of attributions.***
 
-| **Method** | **Graph** | **Sign Disagreement $D_{\text{oracle}}$** | **Magnitude Divergence $\Delta M_{\text{oracle}}$** |
+| **Method** | **Graph** | $D_{\text{oracle}}$ | $\Delta M_{\text{oracle}}$ |
 | --- | --- | --- | --- |
 | Asymmetric | PC | 24.20% | 9.16% |
 | Asymmetric | LiNGAM | 23.40% | 2.84% |
@@ -454,13 +487,25 @@ The oracle-alignment analysis measures how closely each combination of structure
 | Flow | PC | 28.36% | 15.52% |
 | Flow | LiNGAM | 23.81% | 8.12% |
 
+</div>
+</div>
+
+<div style="display:flex; gap:2em; flex-wrap:wrap; align-items:flex-start;">
+<div style="flex:1; min-width:300px;">
+
 ![Alignment to True on the synthetic dataset](figures/tga_sa_scatter_true_linear_conf_f50_s1000_p30.png)
 
 ***Figure 4.7: Magnitude versus sign deviation from the True DAG oracle, synthetic dataset.*** Colour encodes method, marker shape encodes the discovery algorithm. Asymmetric Shapley sits in the lower-left corner under both graphs, recovering the oracle attributions almost exactly, while Causal and Flow sit far up and to the right.
 
+</div>
+<div style="flex:1; min-width:300px;">
+
 ![Alignment to True on the Sachs dataset](figures/tga_sa_scatter_true_sachs.png)
 
 ***Figure 4.8: Magnitude versus sign deviation from the consensus DAG oracle, Sachs dataset ($\Delta M_{\text{oracle}}$ in % of model-output std).*** The lower-left ordering is less clean than on the synthetic track: Asymmetric still aligns best on magnitude, but the sign axis compresses the three methods together and the PC/LiNGAM markers separate widely on magnitude.
+
+</div>
+</div>
 
 ### 4.3.1 Asymmetric Shapley -- Near-Perfect Oracle Fidelity
 
@@ -480,41 +525,68 @@ The Sachs track qualifies this synthetic picture in two ways. First, the CSV ord
 
 The feature-level breakdown of these oracle deviations is shown in Figures 4.9 and 4.10. As with the Traditional-reference heatmaps, the Asymmetric rows stay pale across nearly all features while Causal and Flow darken on the dominant ones, but two details stand out. On synthetic, Flow under PC produces the single darkest cell on X33, the feature isolated as a spurious root by PC's edge reversals (examined in Section 4.5). On Sachs, Flow under PC reaches a feature-level $\Delta M_{\text{oracle}}$ of 49.2% of $\hat\sigma$ on erk, the protein whose parent links PC deletes, again concentrating the worst oracle deviation on a single mis-oriented node.
 
+<div style="display:flex; gap:2em; flex-wrap:wrap; align-items:flex-start;">
+<div style="flex:1; min-width:300px;">
+
 ![Feature-level TGA vs True, synthetic dataset](figures/tga_heatmap_true_linear_conf_f50_s1000_p30.png)
 
 ***Figure 4.9: Feature-level Magnitude Divergence $\Delta M_{\text{oracle}}$ vs. the True DAG oracle, synthetic dataset (top 40 features by mean $\Delta M_{\text{oracle}}$, in % of model-output std).*** Asymmetric rows are near-zero; Causal and Flow concentrate their oracle deviations on X24, X33, X47 and X6.
+
+</div>
+<div style="flex:1; min-width:300px;">
 
 ![Feature-level TGA vs True, Sachs dataset](figures/tga_heatmap_true_sachs.png)
 
 ***Figure 4.10: Feature-level Magnitude Divergence $\Delta M_{\text{oracle}}$ vs. the consensus DAG oracle, Sachs dataset (top 10 features by mean $\Delta M_{\text{oracle}}$, in % of model-output std).*** Flow under PC produces the largest single deviation on erk (49.2% of $\hat\sigma$), the protein PC isolates by deleting its parent links.
 
+</div>
+</div>
+
 ## 4.4 Discovery Algorithm Sensitivity Analysis
 
 Tables 4.5 and 4.6 quantify how much the choice between PC and LiNGAM affects the final attributions for each Shapley method, reporting the cross-discovery Magnitude Divergence $\Delta M_{\text{disc}}$ (magnitude difference between the PC and LiNGAM variants) and Sign Disagreement $D_{\text{disc}}$ (the rate at which the two variants disagree on attribution sign). Both use the opposite discovered graph as the reference. Figures 4.11 and 4.12 plot the two quantities against each other; the lower-left corner marks a method whose attributions are stable across the choice of discovery algorithm on both axes.
 
+<div style="display:flex; gap:2em; flex-wrap:wrap; align-items:flex-start;">
+<div style="flex:1; min-width:300px;">
+
 ***Table 4.5: PC vs. LiNGAM Sensitivity -- Linear-Conf Synthetic Dataset. $\Delta M_{\text{disc}}$ in % of model-output std; $D_{\text{disc}}$ in % of attributions.***
 
-| **Method** | **Magnitude Divergence $\Delta M_{\text{disc}}$** | **Sign Disagreement $D_{\text{disc}}$** |
+| **Method** | $\Delta M_{\text{disc}}$ | $D_{\text{disc}}$ |
 | --- | --- | --- |
 | Asymmetric | 1.07% | 5.93% |
 | Causal | 7.15% | 37.94% |
 | Flow | 6.06% | 13.27% |
 
+</div>
+<div style="flex:1; min-width:300px;">
+
 ***Table 4.6: PC vs. LiNGAM Sensitivity -- Sachs Cell Signaling Dataset. $\Delta M_{\text{disc}}$ in % of model-output std; $D_{\text{disc}}$ in % of attributions.***
 
-| **Method** | **Magnitude Divergence $\Delta M_{\text{disc}}$** | **Sign Disagreement $D_{\text{disc}}$** |
+| **Method** | $\Delta M_{\text{disc}}$ | $D_{\text{disc}}$ |
 | --- | --- | --- |
 | Asymmetric | 8.46% | 18.60% |
 | Causal | 10.11% | 31.80% |
 | Flow | 14.92% | 21.88% |
 
+</div>
+</div>
+
+<div style="display:flex; gap:2em; flex-wrap:wrap; align-items:flex-start;">
+<div style="flex:1; min-width:300px;">
+
 ![Graph-discovery instability on the synthetic dataset](figures/gss_sss_scatter_linear_conf_f50_s1000_p30.png)
 
 ***Figure 4.11: Graph-discovery instability, synthetic dataset.*** Each point is one Shapley method, positioned by its Magnitude Divergence ($\Delta M_{\text{disc}}$, horizontal) and Sign Disagreement ($D_{\text{disc}}$, vertical) between the PC and LiNGAM variants. Asymmetric sits in the lower-left (stable on both axes), Causal in the upper-right (unstable on both), and Flow in between, magnitude-sensitive but comparatively sign-stable.
 
+</div>
+<div style="flex:1; min-width:300px;">
+
 ![Graph-discovery instability on the Sachs dataset](figures/gss_sss_scatter_sachs.png)
 
 ***Figure 4.12: Graph-discovery instability, Sachs dataset ($\Delta M_{\text{disc}}$ in % of model-output std).*** The same ordering holds, with both axes wider than on synthetic; Causal remains the most sign-unstable while Flow carries the largest magnitude difference between graphs.
+
+</div>
+</div>
 
 ### 4.4.1 Asymmetric Shapley -- Minimal Sensitivity on Synthetic
 
@@ -528,13 +600,22 @@ CSV and Shapley Flow are substantially more sensitive to discovery algorithm cho
 
 On the Sachs dataset, the magnitude instability escalates: CSV's $\Delta M_{\text{disc}}$ = 10.11% and Flow's $\Delta M_{\text{disc}}$ = 14.92% of $\hat\sigma$ mean that choosing LiNGAM over PC moves CSV and Flow attributions by more than a tenth of the model-output standard deviation, so the discovery algorithm becomes a dominant source of attribution variance. The sign-disagreement rates converge somewhat (CSV $D_{\text{disc}}$ = 31.80%, Flow 21.88%), with CSV remaining the most sign-unstable method on both tracks. The feature-level heatmaps in Figures 4.13 and 4.14 show that this instability is again carried by a few features: on synthetic $\Delta M_{\text{disc}}$ concentrates on X33 and X47, and on Sachs almost entirely on erk and pka, the same dominant nodes that drive every other comparison in this chapter.
 
+<div style="display:flex; gap:2em; flex-wrap:wrap; align-items:flex-start;">
+<div style="flex:1; min-width:300px;">
+
 ![Feature-level GSS, synthetic dataset](figures/gss_heatmap_linear_conf_f50_s1000_p30.png)
 
 ***Figure 4.13: Feature-level cross-discovery Magnitude Divergence $\Delta M_{\text{disc}}$ (PC vs. LiNGAM), synthetic dataset (top 40 features by mean $\Delta M_{\text{disc}}$, in % of model-output std).*** The Asymmetric row is near-zero; Causal and Flow concentrate their PC-vs-LiNGAM magnitude differences on X33 and X47, with Flow producing the single darkest cell on X33.
 
+</div>
+<div style="flex:1; min-width:300px;">
+
 ![Feature-level GSS, Sachs dataset](figures/gss_heatmap_sachs.png)
 
 ***Figure 4.14: Feature-level cross-discovery Magnitude Divergence $\Delta M_{\text{disc}}$ (PC vs. LiNGAM), Sachs dataset (top 10 features by mean $\Delta M_{\text{disc}}$, in % of model-output std).*** The sensitivity concentrates on erk and pka across all three methods, with Flow reaching a feature-level $\Delta M_{\text{disc}}$ of 57.5% of $\hat\sigma$ on erk.
+
+</div>
+</div>
 
 ## 4.5 Granular Case Studies
 
@@ -544,33 +625,60 @@ Three archetypal error mechanisms illustrate the micro-level behavior observed a
 
 Interventional frameworks (CSV) and edge-routing models (Flow) over-inflate the attribution of any node that a discovered graph misrepresents as a high-degree root source. The clearest synthetic case is X24, a true direct parent of Y with 3 incoming and 4 outgoing edges in the True DAG (Figure 4.15). Both PC and LiNGAM strip its true parents and add spurious children (Figure 4.16), recasting it as an apparent high out-degree source; this inflates its interventional parent set under CSV and its outgoing-edge credit under Flow, so it absorbs compounded attribution from paths that do not exist in the true graph.
 
+<div style="display:flex; gap:2em; flex-wrap:wrap; align-items:flex-start;">
+<div style="flex:1; min-width:300px;">
+
 ![True DAG neighbourhood of X24](figures/dag_highlight_true_X24_linear_conf_f50_s1000_p30.png)
 
 ***Figure 4.15: True-DAG neighbourhood of X24, synthetic dataset.*** Blue edges are incoming (parents), orange-red edges are outgoing (children). X24 is a true direct parent of Y with 3 parents and 4 children.
+
+</div>
+<div style="flex:1; min-width:300px;">
 
 ![Discovered neighbourhoods of X24 under PC and LiNGAM](figures/dag_highlight_X24_linear_conf_f50_s1000_p30.png)
 
 ***Figure 4.16: Discovered neighbourhoods of X24 under PC (left) and LiNGAM (right).*** Both graphs strip X24's true incoming edges and add spurious outgoing ones (6 out-edges under PC, 14 under LiNGAM, 0 in-edges in both), recasting a mid-graph node as an apparent root source.
 
+</div>
+</div>
+
 X47 shows the complementary pattern driven by edge reversal. In the True DAG it has 3 incoming and 1 outgoing edge. LiNGAM reverses its incoming edges and isolates it as an apparent root source, which causes Flow to inflate its attribution well above the oracle (feature-level $\Delta M_{\text{oracle}}$ = 41.2% of $\hat\sigma$). PC, by contrast, recovers X47's incoming edges essentially correctly, and its feature-level $\Delta M_{\text{oracle}}$ is far lower (8.6%). This split is visible in the Flow SHAP scatter (Figure 4.18): the X47 magnitudes under Flow+PC track Flow+True closely, while Flow+LiNGAM is widely inflated.
+
+<div style="display:flex; gap:2em; flex-wrap:wrap; align-items:flex-start;">
+<div style="flex:1; min-width:300px;">
 
 ![DAG neighbourhoods of X47](figures/dag_highlight_X47_linear_conf_f50_s1000_p30.png)
 
 ***Figure 4.17: Discovered neighbourhoods of X47 under PC (left) and LiNGAM (right).*** PC recovers X47's incoming edges accurately (depth 2, 3 in-edges), whereas LiNGAM reverses them, leaving X47 as a 0-in / 5-out apparent source.
 
+</div>
+<div style="flex:1; min-width:300px;">
+
 ![Flow SHAP scatter for top features including X47](figures/tga_true_feats_scatter.png)
 
 ***Figure 4.18: Shapley Flow SHAP scatter (value vs. feature value) for X24, X33, X6 and X47, under Traditional, PC, LiNGAM and the True DAG, synthetic dataset.*** For X47, the Flow+PC and Flow+True columns show closely matching magnitudes, while Flow+LiNGAM is visibly inflated, the scatter-level signature of the reversal-induced root-source overloading.
 
+</div>
+</div>
+
 The same mechanism appears on Sachs through protein pka, a dominant predictor and near-root source (1 incoming, 6 outgoing edges in the consensus DAG; Figure 4.20). LiNGAM keeps it almost correct — a pure root with 7 outgoing edges — giving an Asymmetric $\Delta M_{\text{oracle}}$ of just 6.4% of $\hat\sigma$, whereas PC reverses several outgoing edges into a 3-in/3-out node, and that mis-orientation cascades downstream to raise pka's Asymmetric $\Delta M_{\text{oracle}}$ to 25.0%. The asymmetry carries to Flow, where Flow+LiNGAM tracks the oracle but Flow+PC underestimates pka's explainability.
+
+<div style="display:flex; gap:2em; flex-wrap:wrap; align-items:flex-start;">
+<div style="flex:1; min-width:300px;">
 
 ![Discovered neighbourhoods of pka under PC and LiNGAM](figures/dag_highlight_pka_sachs.png)
 
 ***Figure 4.19: Discovered neighbourhoods of pka under PC (left) and LiNGAM (right), Sachs dataset.*** PC gives pka 3 incoming and 3 outgoing edges, reversing several true outgoing links, while LiNGAM keeps it a pure root with 7 outgoing edges and none incoming, much closer to the consensus structure.
 
+</div>
+<div style="flex:1; min-width:300px;">
+
 ![Consensus-DAG neighbourhood of pka](figures/dag_highlight_true_pka_sachs.png)
 
 ***Figure 4.20: Consensus-DAG neighbourhood of pka, Sachs dataset.*** pka is a near-root source with 1 incoming and 6 outgoing edges; the PC reversal that adds spurious incoming edges is what drives its $\Delta M_{\text{oracle}}$ from 6.4% of $\hat\sigma$ (LiNGAM) up to 25.0% (PC).
+
+</div>
+</div>
 
 ### 4.5.2 Directed Edge Inversion and Causal Credit Transfer
 
@@ -580,35 +688,62 @@ This mechanism showcases the attribution penalty that occurs when a discovery al
 
 ***Figure 4.21: Discovered neighbourhoods of X21 under PC (left) and LiNGAM (right).*** The X21-X47 link is oriented differently across graphs; under the configuration that places X21 upstream of X47, X21 absorbs credit that belongs to X47.
 
+<div style="display:flex; gap:2em; flex-wrap:wrap; align-items:flex-start;">
+<div style="flex:1; min-width:300px;">
+
 ![Per-feature TGA for X21 and X47 under Causal](figures/tga_true_causal_x21_x47.png)
 
 ***Figure 4.22: Causal Shapley SHAP scatter for X21 and X47 across Traditional, PC, LiNGAM and the True DAG, synthetic dataset.*** Under the graph that reverses X21-X47, X21 acquires non-trivial attribution despite having no true relation to Y, while X47's attribution is suppressed relative to the oracle.
+
+</div>
+<div style="flex:1; min-width:300px;">
 
 ![Per-feature TGA for X21 and X47 under Flow](figures/tga_true_flow_x21_x47.png)
 
 ***Figure 4.23: Shapley Flow SHAP scatter for X21 and X47 across the same four configurations.*** The same credit transfer appears under Flow's edge-routing mechanism, confirming that the inversion penalty is not specific to the interventional method.
 
+</div>
+</div>
+
 ### 4.5.3 Confounded Subordination and Boundary Isolation
 
 Synthetic feature X6 is a true intermediate channel with 3 parents and 4 children. Under LiNGAM its parent set is inflated by roughly eight false incoming links (in-degree 8 in the LiNGAM graph against 3 in the True DAG), and under CSV these false parents generate an overly constrained post-interventional distribution for X6, yielding a feature-level $\Delta M_{\text{oracle}}$ of 28.1% of $\hat\sigma$, among the highest in the synthetic confounded track. X6 is a clean illustration of LiNGAM's poor precision and recall translating directly into attribution error: because the discovery algorithm attributes far more incoming connections to the node than truly exist, the interventional conditioning set is contaminated, and the discovery-quality failure becomes a Causal Shapley failure. This makes the precision and recall of the discovery step a direct and visible factor in CSV's reliability.
+
+<div style="display:flex; gap:2em; flex-wrap:wrap; align-items:flex-start;">
+<div style="flex:1; min-width:300px;">
 
 ![True and discovered neighbourhoods of X6](figures/dag_highlight_X6_linear_conf_f50_s1000_p30.png)
 
 ***Figure 4.24: Discovered neighbourhoods of X6 under PC (left) and LiNGAM (right).*** LiNGAM inflates X6's in-degree to 8 against a true value of 3 (Figure 4.25), the over-connection that contaminates its interventional parent set under Causal Shapley.
 
+</div>
+<div style="flex:1; min-width:300px;">
+
 ![True DAG neighbourhood of X6](figures/dag_highlight_true_X6_linear_conf_f50_s1000_p30.png)
 
 ***Figure 4.25: True-DAG neighbourhood of X6, synthetic dataset.*** X6 is a genuine intermediate node with 3 incoming and 4 outgoing edges.
 
+</div>
+</div>
+
 On the Sachs dataset, protein erk is a downstream node that in the consensus DAG receives inputs from pka and mek. PC discovers a markedly different configuration, removing erk's parent links and isolating it as an apparent root node with several outgoing edges. Under Shapley Flow this isolation assigns erk a disproportionately large attribution, because with no incoming edges and many outgoing ones it accumulates outgoing-edge credit that the true structure would have distributed to its parents (feature-level $\Delta M_{\text{oracle}}$ = 49.2% of $\hat\sigma$ for Flow+PC, the largest in the real-data experiment).
+
+<div style="display:flex; gap:2em; flex-wrap:wrap; align-items:flex-start;">
+<div style="flex:1; min-width:300px;">
 
 ![Discovered and true neighbourhoods of erk](figures/dag_highlight_erk_sachs.png)
 
 ***Figure 4.26: Discovered neighbourhoods of erk under PC (left) and LiNGAM (right), Sachs dataset.*** PC removes erk's true incoming edges from pka and mek and leaves it with outgoing edges only, recasting a downstream node as a boundary source.
 
+</div>
+<div style="flex:1; min-width:300px;">
+
 ![True-DAG neighbourhood of erk](figures/dag_highlight_true_erk_sachs.png)
 
 ***Figure 4.27: Consensus-DAG neighbourhood of erk, Sachs dataset.*** In the reference structure erk is downstream, receiving incoming edges; its single largest Flow deviation arises precisely when those incoming edges are deleted.
+
+</div>
+</div>
 
 # 5. Conclusion
 
