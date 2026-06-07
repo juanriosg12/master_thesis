@@ -491,19 +491,21 @@ Read per feature, the signed instance-level gap again has a structural meaning, 
 
 The oracle-alignment analysis measures how closely each combination of structure-aware Shapley method and discovered graph recovers the attributions that would be obtained with the oracle graph as input. On the synthetic track the oracle is the True DAG; on Sachs it is the consensus reference DAG, which plays the same role. Tables 4.3 and 4.4 report $\Delta M_{\text{oracle}}$ and $D_{\text{oracle}}$ for each track, and Figures 4.9 and 4.10 place every configuration on the magnitude axis ($\Delta M_{\text{oracle}}$) against the sign axis ($D_{\text{oracle}}$), where the lower-left corner marks the closest recovery of the oracle attributions.
 
+A clear pattern emerges across both tracks, the algorithm that achieves better causal discovery accuracy consistently produces smaller oracle deviation, which could sound logical, but we will see that even in noisy scenarios it have big difference. On the synthetic dataset the margin is modest, Causal Shapley under PC (F1 = 0.567) reaches $D_{\text{oracle}}$ = 31.60% and $\Delta M_{\text{oracle}}$ = 5.32%, versus 37.46% and 7.57% under LiNGAM (F1 = 0.250), yet the direction is unambiguous, with PC (the stronger discovery algorithm on this track) occupying the lower-left region of the scatter plot in every method. The effect is more striking on Sachs, where neither algorithm scores well in absolute discovery terms but LiNGAM outperforms PC on this dataset (F1 = 0.326 vs. 0.167): Asymmetric Shapley under LiNGAM achieves $\Delta M_{\text{oracle}}$ = 2.84% versus 9.16% under PC, and Shapley Flow drops from 15.52% to 8.12% when switching from PC to LiNGAM. This demonstrates that imperfect graph discovery does not disqualify structure-aware methods: even with a noisy discovered graph, the better of the two candidate algorithms closes a substantial portion of the gap to the oracle. Among the three methods, Asymmetric Shapley is the least penalised by graph misspecification, at least in the magnitude divergence, its oracle deviation remains low regardless of which discovered graph is supplied, making it the safest choice when discovery quality cannot be guaranteed.
+
 <div style="display:flex; gap:2em; flex-wrap:wrap; align-items:flex-start;">
 <div style="flex:1; min-width:300px;">
 
 ![Alignment to True on the synthetic dataset](figures/tga_sa_scatter_true_linear_conf_f50_s1000_p30.png)
 
-***Figure 4.9: Magnitude versus sign deviation from the True DAG oracle, synthetic dataset.*** Colour encodes method, marker shape encodes the discovery algorithm. Asymmetric Shapley sits in the lower-left corner under both graphs, recovering the oracle attributions almost exactly, while Causal and Flow sit far up and to the right.
+***Figure 4.9: Magnitude versus sign deviation from the True DAG oracle, synthetic dataset.*** Asymmetric Shapley sits in the lower-left corner under both graphs, recovering the oracle attributions almost exactly, while Causal and Flow sit far up and to the right.
 
 </div>
 <div style="flex:1; min-width:300px;">
 
 ![Alignment to True on the Sachs dataset](figures/tga_sa_scatter_true_sachs.png)
 
-***Figure 4.10: Magnitude versus sign deviation from the consensus DAG oracle, Sachs dataset ($\Delta M_{\text{oracle}}$ in % of model-output std).*** The lower-left ordering is less clean than on the synthetic track: Asymmetric still aligns best on magnitude, but the sign axis compresses the three methods together and the PC/LiNGAM markers separate widely on magnitude.
+***Figure 4.10: Magnitude versus sign deviation from the consensus DAG oracle, Sachs dataset ($\Delta M_{\text{oracle}}$).*** The lower-left ordering is less clean than on the synthetic track: Asymmetric still aligns best on magnitude, but the sign axis compresses the three methods together and the PC/LiNGAM markers separate widely on magnitude.
 
 </div>
 </div>
@@ -511,7 +513,7 @@ The oracle-alignment analysis measures how closely each combination of structure
 <div style="display:flex; gap:2em; flex-wrap:wrap; align-items:flex-start;">
 <div style="flex:1; min-width:300px;">
 
-***Table 4.3: Oracle Alignment -- Linear-Conf Synthetic Dataset. $\Delta M_{\text{oracle}}$ in % of model-output std; $D_{\text{oracle}}$ in % of attributions.***
+***Table 4.3: Oracle Alignment -- Linear-Conf Synthetic Dataset. $\Delta M_{\text{oracle}}$; $D_{\text{oracle}}$ in % of attributions.***
 
 | **Method** | **Graph** | $D_{\text{oracle}}$ | $\Delta M_{\text{oracle}}$ |
 | --- | --- | --- | --- |
@@ -525,7 +527,7 @@ The oracle-alignment analysis measures how closely each combination of structure
 </div>
 <div style="flex:1; min-width:300px;">
 
-***Table 4.4: Oracle Alignment -- Sachs Cell Signaling Dataset (oracle = consensus DAG). $\Delta M_{\text{oracle}}$ in % of model-output std; $D_{\text{oracle}}$ in % of attributions.***
+***Table 4.4: Oracle Alignment -- Sachs Cell Signaling Dataset (oracle = consensus DAG). $\Delta M_{\text{oracle}}$; $D_{\text{oracle}}$ in % of attributions.***
 
 | **Method** | **Graph** | $D_{\text{oracle}}$ | $\Delta M_{\text{oracle}}$ |
 | --- | --- | --- | --- |
@@ -576,17 +578,17 @@ The corresponding per-feature Sign Disagreement $D_{\text{oracle}}$ is shown in 
 </div>
 </div>
 
-### 4.3.1 Asymmetric Shapley -- Near-Perfect Oracle Fidelity
+### 4.3.1 Asymmetric Shapley,  Near-Perfect Oracle Fidelity
 
 On the synthetic dataset ASV achieves the highest alignment with the True DAG oracle: $D_{\text{oracle}}$ = 5.88% (PC) and 6.30% (LiNGAM), with $\Delta M_{\text{oracle}}$ = 1.02% and 0.79% of $\hat\sigma$ respectively. Despite LiNGAM injecting 81 false-positive edges, the additional ordering constraints introduced by these edges minimally affect the attribution magnitudes. In a 50-node sparse system, the true and discovered graphs share most of their valid topological orderings, producing nearly identical attributions regardless of graph source.
 
 On Sachs the picture is the same in relative terms but coarser in absolute terms: ASV again has the lowest sign disagreement ($D_{\text{oracle}}$ = 23.40-24.26%) and the lowest magnitude deviation, with LiNGAM in particular reaching $\Delta M_{\text{oracle}}$ = 2.84% of $\hat\sigma$ against the consensus oracle, the closest oracle recovery of any configuration on the real track. The larger sign-disagreement floor (~24%, versus ~6% on synthetic) reflects the compact 10-node network, where each discovery error constrains a larger fraction of the available orderings.
 
-Notably, the quality of the discovered graph confers no directional advantage here. Inspecting the instance-level gap against the oracle feature by feature, the distributions are centred close to zero with high variance under both PC and LiNGAM, with no feature showing a systematic tendency to align with or oppose the True DAG attributions. The much higher F1 of PC on synthetic (0.567 vs. 0.250) does not translate into visibly better oracle alignment for ASV than LiNGAM, and on Sachs the more accurate LiNGAM graph (F1 0.326 vs. PC's 0.167) is only marginally closer. Because ASV's averaging is insensitive to all but the orderings a graph forbids, and the discovered graphs forbid few, the recovered attributions are essentially the same whichever graph is supplied, regardless of its discovery accuracy.
+Notably, graph quality plays a different role depending on the axis. On the sign side, the quality of the discovered graph does not give ASV a clear advantage: the distributions of instance-level gaps are centred close to zero with high variance under both PC and LiNGAM, with no feature showing a systematic tendency to align with or oppose the True DAG attributions, and the $D_{\text{oracle}}$ values are essentially tied between the two graphs on both datasets. On the magnitude side, however, the better graph does help: on Sachs the more accurate LiNGAM graph (F1 = 0.326 vs. PC's F1 = 0.167) achieves $\Delta M_{\text{oracle}}$ = 2.84% against 9.16% for PC, a threefold reduction. Because ASV's averaging is insensitive to all but the orderings a graph forbids, and the discovered graphs forbid few, directional recovery is stable regardless of graph quality, but the smaller set of forbidden orderings under the more accurate graph does reduce the magnitude perturbation.
 
-### 4.3.2 Causal and Flow -- Compounding Error Under Imprecise Graphs
+### 4.3.2 Causal and Flow, Compounding Error Under Imprecise Graphs
 
-CSV and Shapley Flow show substantial vulnerability to graph prior distortion. For CSV, LiNGAM's 81 false-positive edges inject spurious parent relationships into the interventional conditioning procedure. Each false parent link causes CSV to compute post-interventional distributions that do not correspond to any real causal mechanism, misrouting attribution credit. On synthetic this yields $D_{\text{oracle}}$ = 37.46% and $\Delta M_{\text{oracle}}$ = 7.57% of $\hat\sigma$ for CSV+LiNGAM; PC's more conservative graph reduces but does not eliminate the distortion ($D_{\text{oracle}}$ = 31.60%, $\Delta M_{\text{oracle}}$ = 5.32%).
+CSV and Shapley Flow show substantial vulnerability to graph prior distortion. For CSV, LiNGAM's 81 false-positive edges inject spurious parent relationships into the interventional conditioning procedure. Each false parent link causes CSV to compute post-interventional distributions that do not correspond to any real causal mechanism, misrouting attribution credit. On synthetic this yields $D_{\text{oracle}}$ = 37.46% and $\Delta M_{\text{oracle}}$ = 7.57% of $\hat\sigma$ for CSV + LiNGAM; PC's more conservative graph reduces but does not eliminate the distortion ($D_{\text{oracle}}$ = 31.60%, $\Delta M_{\text{oracle}}$ = 5.32%).
 
 Shapley Flow shows the largest sign disagreement with the oracle on synthetic: $D_{\text{oracle}}$ = 42.26-44.91%, meaning close to half of all attributions point in the wrong direction relative to the True DAG. PC's under-connected graph removes pathways along which credit should flow, and LiNGAM's over-connected graph creates excessive edge competition. $\Delta M_{\text{oracle}}$ = 7.34-8.06% of $\hat\sigma$ confirms that the magnitude scale is also substantially distorted in both cases.
 
@@ -608,7 +610,7 @@ Tables 4.5 and 4.6 quantify how much the choice between PC and LiNGAM affects th
 
 ![Graph-discovery instability on the Sachs dataset](figures/gss_sss_scatter_sachs.png)
 
-***Figure 4.16: Graph-discovery instability, Sachs dataset ($\Delta M_{\text{disc}}$ in % of model-output std).*** The same ordering holds, with both axes wider than on synthetic; Causal remains the most sign-unstable while Flow carries the largest magnitude difference between graphs.
+***Figure 4.16: Graph-discovery instability, Sachs dataset ($\Delta M_{\text{disc}}$).*** The same ordering holds, with both axes wider than on synthetic; Causal remains the most sign-unstable while Flow carries the largest magnitude difference between graphs.
 
 </div>
 </div>
@@ -616,7 +618,7 @@ Tables 4.5 and 4.6 quantify how much the choice between PC and LiNGAM affects th
 <div style="display:flex; gap:2em; flex-wrap:wrap; align-items:flex-start;">
 <div style="flex:1; min-width:300px;">
 
-***Table 4.5: PC vs. LiNGAM Sensitivity -- Linear-Conf Synthetic Dataset. $\Delta M_{\text{disc}}$ in % of model-output std; $D_{\text{disc}}$ in % of attributions.***
+***Table 4.5: PC vs. LiNGAM Sensitivity -- Linear-Conf Synthetic Dataset. $\Delta M_{\text{disc}}$; $D_{\text{disc}}$ in % of attributions.***
 
 | **Method** | $\Delta M_{\text{disc}}$ | $D_{\text{disc}}$ |
 | --- | --- | --- |
@@ -627,7 +629,7 @@ Tables 4.5 and 4.6 quantify how much the choice between PC and LiNGAM affects th
 </div>
 <div style="flex:1; min-width:300px;">
 
-***Table 4.6: PC vs. LiNGAM Sensitivity -- Sachs Cell Signaling Dataset. $\Delta M_{\text{disc}}$ in % of model-output std; $D_{\text{disc}}$ in % of attributions.***
+***Table 4.6: PC vs. LiNGAM Sensitivity -- Sachs Cell Signaling Dataset. $\Delta M_{\text{disc}}$; $D_{\text{disc}}$ in % of attributions.***
 
 | **Method** | $\Delta M_{\text{disc}}$ | $D_{\text{disc}}$ |
 | --- | --- | --- |
@@ -729,7 +731,7 @@ X47 shows the complementary pattern driven by edge reversal. In the True DAG it 
 </div>
 </div>
 
-The same mechanism appears on Sachs through protein pka, a dominant predictor and near-root source (1 incoming, 6 outgoing edges in the consensus DAG; Figure 4.26). LiNGAM keeps it almost correct — a pure root with 7 outgoing edges — giving an Asymmetric $\Delta M_{\text{oracle}}$ of just 6.4% of $\hat\sigma$, whereas PC reverses several outgoing edges into a 3-in/3-out node, and that mis-orientation cascades downstream to raise pka's Asymmetric $\Delta M_{\text{oracle}}$ to 25.0%. The asymmetry carries to Flow, where Flow+LiNGAM tracks the oracle but Flow+PC underestimates pka's explainability.
+The same mechanism appears on Sachs through protein pka, a dominant predictor and near-root source (1 incoming, 6 outgoing edges in the consensus DAG; Figure 4.26). LiNGAM keeps it almost correct, a pure root with 7 outgoing edges — giving an Asymmetric $\Delta M_{\text{oracle}}$ of just 6.4% of $\hat\sigma$, whereas PC reverses several outgoing edges into a 3-in/3-out node, and that mis-orientation cascades downstream to raise pka's Asymmetric $\Delta M_{\text{oracle}}$ to 25.0%. The asymmetry carries to Flow, where Flow+LiNGAM tracks the oracle but Flow+PC underestimates pka's explainability.
 
 <div style="display:flex; gap:2em; flex-wrap:wrap; align-items:flex-start;">
 <div style="flex:1; min-width:300px;">
