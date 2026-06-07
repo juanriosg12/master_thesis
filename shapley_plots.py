@@ -250,7 +250,7 @@ def plot_gss_delta_box(ctx, n_top_features=15, plots_dir=DEFAULT_PLOTS_DIR, show
     return out
 
 
-def plot_gss_heatmap(ctx, top_n=40, plots_dir=DEFAULT_PLOTS_DIR, show=False):
+def plot_gss_heatmap(ctx, top_n=10, plots_dir=DEFAULT_PLOTS_DIR, show=False):
     """Feature × method Graph Sensitivity Score heatmap (PC vs LiNGAM). Sequential (cividis):
     brighter = larger RMS magnitude difference between PC and LiNGAM, normalised by output range."""
     gss = gss_feature_dict(ctx)
@@ -264,7 +264,7 @@ def plot_gss_heatmap(ctx, top_n=40, plots_dir=DEFAULT_PLOTS_DIR, show=False):
     fig, ax_ = plt.subplots(figsize=(max(8, 0.22 * len(top) + 2), 1.0 * len(labels) + 1.8))
     _heatmap(ax_, Z, labels, [names[i] for i in top], SEQ_CMAP, 0, float(mat.max()),
              "ΔM_disc  (% of model-output std)", annotate=len(top) <= 14)
-    st.style_title(ax_, f"Feature-level Magnitude Divergence — PC vs LiNGAM — {ctx['dataset']}",
+    st.style_title(ax_, f"Feature-level Magnitude Divergence — PC vs LiNGAM\n{ctx['dataset']}",
                    f"ΔM_disc = RMS_i(|φ(PC)|−|φ(LiNGAM)|) / model-output std · top {len(top)} features by mean ΔM_disc")
     fig.tight_layout()
     out = savefig(fig, plots_dir, ctx["dataset"], f"gss_heatmap_{ctx['dataset']}.png")
@@ -272,7 +272,7 @@ def plot_gss_heatmap(ctx, top_n=40, plots_dir=DEFAULT_PLOTS_DIR, show=False):
     return out
 
 
-def plot_sss_heatmap(ctx, top_n=40, plots_dir=DEFAULT_PLOTS_DIR, show=False):
+def plot_sss_heatmap(ctx, top_n=10, plots_dir=DEFAULT_PLOTS_DIR, show=False):
     """Feature × method Sign Disagreement heatmap (PC vs LiNGAM). Dark orange = signs flip
     across the two discovered graphs, white = stable. Sequential from 0 (OK) upward."""
     sss = sss_feature_dict(ctx)
@@ -287,8 +287,8 @@ def plot_sss_heatmap(ctx, top_n=40, plots_dir=DEFAULT_PLOTS_DIR, show=False):
     fig, ax_ = plt.subplots(figsize=(max(8, 0.22 * len(top) + 2), 1.0 * len(labels) + 1.8))
     _heatmap(ax_, Z, labels, [names[i] for i in top], DISAGREE_CMAP, 0, float(dis_mat.max()),
              "D_disc  (Sign Disagreement, %)", annotate=len(top) <= 14)
-    st.style_title(ax_, f"Feature-level Sign Disagreement — PC vs LiNGAM — {ctx['dataset']}",
-                   f"colour = % of instances where sign(φ_PC) ≠ sign(φ_LiNGAM) · top {len(top)} most-unstable features · white = stable")
+    st.style_title(ax_, f"Feature-level Sign Disagreement — PC vs LiNGAM\n{ctx['dataset']}",
+                   f"top {len(top)} most-unstable features · white = stable")
     fig.tight_layout()
     out = savefig(fig, plots_dir, ctx["dataset"], f"sss_heatmap_{ctx['dataset']}.png")
     plt.show() if show else plt.close(fig)
@@ -298,7 +298,7 @@ def plot_sss_heatmap(ctx, top_n=40, plots_dir=DEFAULT_PLOTS_DIR, show=False):
 # ============================================================================= #
 # DISCOVERED (PC, LiNGAM) vs REFERENCE (True / Traditional)
 # ============================================================================= #
-def plot_sign_alignment_heatmap(ctx, reference="True", top_n=40,
+def plot_sign_alignment_heatmap(ctx, reference="True", top_n=10,
                                 plots_dir=DEFAULT_PLOTS_DIR, show=False):
     """Feature × (method, graph) sign-disagreement heatmap vs the reference. Dark orange =
     sign opposes reference, white = agrees. Sequential from 0 (OK) upward."""
@@ -316,8 +316,8 @@ def plot_sign_alignment_heatmap(ctx, reference="True", top_n=40,
     sub, disp = REF_DISPLAY.get(reference, ("ref", reference))
     _heatmap(ax_, Z, labels, [names[i] for i in top], DISAGREE_CMAP, 0, float(dis_mat.max()),
              f"Sign Disagreement  (%, vs {disp})", annotate=len(top) <= 14)
-    st.style_title(ax_, f"Sign Disagreement vs {disp} — {ctx['dataset']}",
-                   f"colour = % of instances where sign(φ_disc) ≠ sign(φ_{disp}) · sorted by highest D_{sub} · white = agrees with reference")
+    st.style_title(ax_, f"Sign Disagreement vs {disp}\n{ctx['dataset']}",
+                   f"sorted by highest D_{sub} · white = agrees with reference")
     fig.tight_layout()
     out = savefig(fig, plots_dir, ctx["dataset"],
                   f"sign_alignment_heatmap_{reference.lower()}_{ctx['dataset']}.png")
@@ -325,7 +325,7 @@ def plot_sign_alignment_heatmap(ctx, reference="True", top_n=40,
     return out
 
 
-def plot_tga_heatmap(ctx, reference="True", top_n=40, plots_dir=DEFAULT_PLOTS_DIR, show=False):
+def plot_tga_heatmap(ctx, reference="True", top_n=10, plots_dir=DEFAULT_PLOTS_DIR, show=False):
     """Feature × (method, graph) magnitude-TGA heatmap vs the reference. Sequential (cividis):
     brighter = larger RMS magnitude difference from the reference, normalised by output range."""
     tga = tga_feature_dict(ctx, reference)
@@ -341,7 +341,7 @@ def plot_tga_heatmap(ctx, reference="True", top_n=40, plots_dir=DEFAULT_PLOTS_DI
     fig, ax_ = plt.subplots(figsize=(max(8, 0.22 * len(top) + 2), 0.55 * len(labels) + 1.8))
     _heatmap(ax_, Z, labels, [names[i] for i in top], SEQ_CMAP, 0, float(mat.max()),
              f"ΔM_{sub}  (% of model-output std)", annotate=len(top) <= 14)
-    st.style_title(ax_, f"Feature-level Magnitude Divergence vs {disp} — {ctx['dataset']}",
+    st.style_title(ax_, f"Feature-level Magnitude Divergence vs {disp}\n{ctx['dataset']}",
                    f"ΔM_{sub} = RMS_i(|φ(disc)|−|φ({disp})|) / model-output std · top {len(top)} features by mean ΔM_{sub}")
     fig.tight_layout()
     out = savefig(fig, plots_dir, ctx["dataset"],
@@ -572,7 +572,8 @@ def plot_gss_sss_scatter(ctx, plots_dir=DEFAULT_PLOTS_DIR, show=False):
         ax_.scatter(x, y, s=150, color=METHOD_COLORS[m], edgecolor="white", lw=1.2, zorder=3)
         ax_.annotate(m, (x, y), textcoords="offset points", xytext=(0, 10),
                      ha="center", fontsize=10, color=METHOD_COLORS[m], fontweight="bold")
-    ax_.set_xlim(left=0); ax_.set_ylim(bottom=0)
+    ax_.set_xlim(left=0)
+    ax_.set_ylim(bottom=0, top=ax_.get_ylim()[1] * 1.15)
     ax_.xaxis.set_major_formatter(plt.FuncFormatter(lambda v, _: f"{v:.0f} %"))
     ax_.yaxis.set_major_formatter(plt.FuncFormatter(lambda v, _: f"{v:.0f} %"))
     ax_.set_xlabel("Magnitude Divergence (PC vs LiNGAM) [% of model-output std]")
@@ -615,7 +616,7 @@ def plot_tga_sa_scatter(ctx, reference="True", plots_dir=DEFAULT_PLOTS_DIR, show
     ax_.add_artist(leg1)
     ax_.legend(handles=graph_handles, title="Graph", loc="lower right")
     st.style_title(ax_, f"Alignment to {disp} — {ctx['dataset']}",
-                   "Colour = method · marker = graph · lower-left = closer to reference")
+                   f"Lower-left = closer to {disp} (both axes ≥ 0)")
     fig.tight_layout()
     out = savefig(fig, plots_dir, ctx["dataset"],
                   f"tga_sa_scatter_{reference.lower()}_{ctx['dataset']}.png")

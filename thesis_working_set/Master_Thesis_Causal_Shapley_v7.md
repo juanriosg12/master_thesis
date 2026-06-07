@@ -380,7 +380,7 @@ The two metrics are read jointly in Figures 4.3 and 4.4, which place each method
 
 ![Alignment to Traditional on the Sachs dataset](figures/tga_sa_scatter_traditional_sachs.png)
 
-***Figure 4.4: Magnitude versus sign deviation from Traditional Shapley on the Sachs dataset ($\Delta M_{\text{base}}$ in % of model-output std).*** The same lower-left clustering of Asymmetric Shapley holds, but both axes spread wider than on synthetic and the PC/LiNGAM markers separate more visibly for Causal and Flow, the early signal of the discovery-algorithm sensitivity examined in Section 4.4.
+***Figure 4.4: Magnitude versus sign deviation from Traditional Shapley on the Sachs dataset.*** The same lower-left clustering of Asymmetric Shapley holds, but both axes spread wider than on synthetic and the PC/LiNGAM markers separate more visibly for Causal and Flow, the early signal of the discovery-algorithm sensitivity examined in Section 4.4.
 
 </div>
 </div>
