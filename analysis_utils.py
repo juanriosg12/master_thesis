@@ -10,10 +10,11 @@ Usage from a notebook in notebooks/:
     sys.path.insert(0, str(Path("..").resolve()))
     from analysis_utils import (
         resolve_features,
-        mean_abs_shap, top_k_jaccard,
-        compute_sign_agreement, compute_sign_alignment, compute_tga, compute_sss,
+        mean_abs_shap,
+        compute_sign_alignment, compute_tga, compute_sss,
         compute_gss, top_k_features, rank_shift_top_k,
-        edge_recovery, flow_graph_stats, parse_pipeline_timing,
+        edge_recovery, compute_node_accuracy, get_node_accuracy,
+        flow_graph_stats, parse_pipeline_timing,
         build_dag_graph, make_dag_pos, draw_dag, PROX_PALETTE,
         make_shap_scatter_figure, make_instance_shap_figure,
         plot_shap_scatter_pc_vs_lingam, plot_instance_shap_pc_vs_lingam,
@@ -24,7 +25,7 @@ Usage from a notebook in notebooks/:
 Sections:
   1. Constants (colour palettes)
   2. Feature helpers
-  3. Metric helpers (sign agreement, sign alignment, TGA, SSS, edge recovery, Jaccard)
+  3. Metric helpers (sign alignment, TGA, SSS, edge recovery)
      Note: compute_sign_alignment and compute_tga accept a ``reference`` kwarg
      (default ``"True"``). Pass ``"Scratch"`` to compare vs the graph-free baseline.
   3b. Per-feature diagnostic helpers (compute_gss, top_k_features, rank_shift_top_k)
@@ -41,6 +42,7 @@ from pathlib import Path
 from typing import Any
 
 import matplotlib.patches as mpatches
+from matplotlib.lines import Line2D
 import matplotlib.pyplot as plt
 import networkx as nx
 import numpy as np
@@ -63,6 +65,20 @@ DEFAULT_METHOD_COLORS: dict[str, str] = {
     "Asymmetric":  "#2166ac",
     "Causal":      "#4dac26",
     "ShapleyFlow": "#d01c8b",
+}
+
+# Full-key colours used by the two-method comparison plots
+_DEFAULT_COLORS: dict[str, str] = {
+    "Scratch":              "#636363",
+    "Asymmetric (PC)":      "#2166ac",
+    "Causal (PC)":          "#4dac26",
+    "Flow (PC)":            "#d01c8b",
+    "Asymmetric (LiNGAM)": "#b2182b",
+    "Causal (LiNGAM)":     "#1a9850",
+    "Flow (LiNGAM)":       "#f46d43",
+    "Asymmetric (True)":   "#74add1",
+    "Causal (True)":       "#a6d96a",
+    "Flow (True)":         "#fdae61",
 }
 
 
@@ -108,37 +124,6 @@ def resolve_features(
 def mean_abs_shap(shap_data: dict[str, np.ndarray], key: str) -> np.ndarray:
     """Return mean |SHAP| per feature for one method. Shape: (n_features,)."""
     return np.abs(shap_data[key]).mean(axis=0)
-
-
-def top_k_jaccard(arr1: np.ndarray, arr2: np.ndarray, k: int) -> float:
-    """Jaccard overlap of the top-k indices of arr1 and arr2."""
-    s1 = set(np.argsort(arr1)[-k:])
-    s2 = set(np.argsort(arr2)[-k:])
-    return len(s1 & s2) / len(s1 | s2)
-
-
-def compute_sign_agreement(
-    method_list: list[str],
-    shap_data:   dict[str, np.ndarray],
-    feat_idx:    np.ndarray,
-) -> tuple[np.ndarray | None, list[str]]:
-    """
-    For each (instance i, feature f): max(n_pos, n_neg) / n_methods.
-
-    Returns
-    -------
-    agreement : ndarray (n_instances, n_feats) in [0.5, 1.0], or None if < 2 methods.
-    available : list of method names actually used.
-    """
-    available = [m for m in method_list if m in shap_data]
-    if len(available) < 2:
-        return None, available
-    stack     = np.stack([shap_data[m][:, feat_idx] for m in available], axis=0)
-    n_methods = stack.shape[0]
-    signs     = np.sign(stack)
-    n_pos     = (signs > 0).sum(axis=0)
-    n_neg     = (signs < 0).sum(axis=0)
-    return np.maximum(n_pos, n_neg) / n_methods, available
 
 
 def compute_sign_alignment(
@@ -314,6 +299,194 @@ def edge_recovery(
     rec  = tp / len(true_edges) if true_edges  else 0.0
     f1   = 2 * prec * rec / (prec + rec) if (prec + rec) > 0 else 0.0
     return prec, rec, f1
+
+
+def compute_node_accuracy(
+    true_adj: np.ndarray,
+    disc_adj: np.ndarray,
+    feature_names: list[str],
+) -> pd.DataFrame:
+    """Per-node edge-recovery metrics comparing a discovered graph against the true graph.
+
+    For every node the X-only block of both adjacency matrices is inspected and
+    three edge sets are evaluated independently:
+
+    * **incoming** — edges *into* the node (parents in the DAG)
+    * **outgoing** — edges *from* the node (children in the DAG)
+    * **overall**  — union of both directions
+
+    For each of the three sets the function reports:
+
+    * ``precision`` — of the edges predicted for this node, how many are correct?
+    * ``recall``    — of the true edges for this node, how many were found?
+    * ``f1``        — harmonic mean of precision and recall
+
+    Parameters
+    ----------
+    true_adj : np.ndarray, shape (N, N)
+        Adjacency matrix of the ground-truth graph.  ``true_adj[i, j] != 0``
+        means edge i → j exists.  Can be the full (features + Y) matrix; only
+        the first ``len(feature_names)`` rows/columns are used.
+    disc_adj : np.ndarray, shape (N, N)
+        Adjacency matrix of the discovered graph (PC or LiNGAM), same layout.
+    feature_names : list[str]
+        Names of the X features (length n ≤ N).  Rows/columns beyond this are
+        ignored so that Y-related edges do not contaminate node-level scores.
+
+    Returns
+    -------
+    pd.DataFrame
+        One row per feature, columns:
+        ``feature``,
+        ``in_prec``, ``in_rec``, ``in_f1``,
+        ``out_prec``, ``out_rec``, ``out_f1``,
+        ``overall_prec``, ``overall_rec``, ``overall_f1``.
+    """
+    n = len(feature_names)
+    t = (true_adj[:n, :n] != 0).astype(int)
+    d = (disc_adj[:n, :n] != 0).astype(int)
+
+    def _prf(true_set, pred_set):
+        """Precision / recall / F1 for one node direction.
+
+        Precision:
+        - ``pred_set`` empty AND ``true_set`` empty  → 1.0  (correctly predicted nothing)
+        - ``pred_set`` empty AND ``true_set`` non-empty → NaN (made no predictions at all)
+        - ``pred_set`` non-empty → tp / len(pred_set)
+
+        Recall:
+        - ``true_set`` empty → NaN (nothing to recall — source/sink node)
+        - ``true_set`` non-empty, ``pred_set`` empty → 0.0  (missed all true edges)
+        - both non-empty → tp / len(true_set)
+
+        F1: NaN when either P or R is NaN.
+        """
+        tp   = len(true_set & pred_set)
+        if not pred_set:
+            prec = 1.0 if not true_set else float("nan")
+        else:
+            prec = tp / len(pred_set)
+        if not true_set:
+            rec = float("nan")
+        elif not pred_set:
+            rec = 0.0          # true edges exist but none were predicted
+        else:
+            rec = tp / len(true_set)
+        if prec != prec or rec != rec:   # either is NaN
+            f1 = float("nan")
+        else:
+            f1 = 2 * prec * rec / (prec + rec) if (prec + rec) > 0 else 0.0
+        return prec, rec, f1
+
+    rows = []
+    for i, feat in enumerate(feature_names):
+        # incoming: edges j → i  (column i, rows 0..n-1)
+        true_in  = {j for j in range(n) if t[j, i]}
+        pred_in  = {j for j in range(n) if d[j, i]}
+        # outgoing: edges i → j  (row i, cols 0..n-1)
+        true_out = {j for j in range(n) if t[i, j]}
+        pred_out = {j for j in range(n) if d[i, j]}
+        # overall: both directions as (src, dst) pairs
+        true_all = {(j, i) for j in true_in}  | {(i, j) for j in true_out}
+        pred_all = {(j, i) for j in pred_in}  | {(i, j) for j in pred_out}
+
+        in_p,  in_r,  in_f  = _prf(true_in,  pred_in)
+        out_p, out_r, out_f = _prf(true_out, pred_out)
+        ov_p,  ov_r,  ov_f  = _prf(true_all, pred_all)
+
+        rows.append({
+            "feature":      feat,
+            "in_prec":      in_p,  "in_rec":      in_r,  "in_f1":      in_f,
+            "out_prec":     out_p, "out_rec":     out_r, "out_f1":     out_f,
+            "overall_prec": ov_p,  "overall_rec": ov_r,  "overall_f1": ov_f,
+            # raw counts for transparency
+            "true_in":  len(true_in),  "pred_in":  len(pred_in),
+            "true_out": len(true_out), "pred_out": len(pred_out),
+        })
+    return pd.DataFrame(rows)
+
+
+def get_node_accuracy(
+    feature_names_query: "str | list[str] | None",
+    precomputed: "dict[str, pd.DataFrame]",
+    verbose: bool = True,
+) -> pd.DataFrame:
+    """Query pre-computed node accuracy results for one or more features.
+
+    Merges DataFrames produced by ``compute_node_accuracy`` (one per graph) into
+    a single table so you can compare PC and LiNGAM side by side.  No adjacency
+    matrices are needed here — compute them once with ``compute_node_accuracy``
+    and pass the results in.
+
+    Parameters
+    ----------
+    feature_names_query : str, list of str, ``"*"``, or ``None``
+        Feature name(s) to retrieve, e.g. ``"X3"`` or ``["X3", "X10"]``.
+        Pass ``"*"`` or ``None`` to return all features.
+    precomputed : dict[str, pd.DataFrame]
+        Pre-computed DataFrames keyed by graph name, e.g.
+        ``{"PC": node_acc_pc, "LiNGAM": node_acc_lingam}``
+        where each value is the output of ``compute_node_accuracy(...)``.
+    verbose : bool
+        Print a formatted summary table.
+
+    Returns
+    -------
+    pd.DataFrame
+        Columns: ``graph``, ``feature``, ``in_prec``, ``in_rec``, ``in_f1``,
+        ``out_prec``, ``out_rec``, ``out_f1``, ``overall_prec``, ``overall_rec``,
+        ``overall_f1``, ``true_in``, ``pred_in``, ``true_out``, ``pred_out``.
+
+    Examples
+    --------
+    >>> node_acc_pc     = compute_node_accuracy(true_adj_xx, pc_adj,     feature_names)
+    >>> node_acc_lingam = compute_node_accuracy(true_adj_xx, lingam_adj, feature_names)
+    >>> get_node_accuracy("X3",          {"PC": node_acc_pc, "LiNGAM": node_acc_lingam})
+    >>> get_node_accuracy(["X3", "X10"], {"PC": node_acc_pc})
+    >>> get_node_accuracy("*",           {"PC": node_acc_pc, "LiNGAM": node_acc_lingam})
+    """
+    # Derive valid feature names from the first precomputed DataFrame
+    if not precomputed:
+        raise ValueError("precomputed dict is empty.")
+    all_features = list(next(iter(precomputed.values()))["feature"])
+
+    # Normalise query
+    if feature_names_query is None or feature_names_query == "*":
+        query = all_features
+    elif isinstance(feature_names_query, str):
+        query = [feature_names_query]
+    else:
+        query = list(feature_names_query)
+
+    unknown = [f for f in query if f not in all_features]
+    if unknown:
+        raise ValueError(f"Feature(s) not found in precomputed results: {unknown}")
+
+    frames = []
+    for graph_name, df in precomputed.items():
+        subset = df[df["feature"].isin(query)].copy()
+        subset.insert(0, "graph", graph_name)
+        frames.append(subset)
+
+    result = (
+        pd.concat(frames, ignore_index=True)
+        .sort_values(["feature", "graph"])
+        .reset_index(drop=True)
+    )
+
+    if verbose:
+        display_cols = [
+            "graph", "feature",
+            "in_prec", "in_rec", "in_f1",
+            "out_prec", "out_rec", "out_f1",
+            "overall_prec", "overall_rec", "overall_f1",
+        ]
+        with pd.option_context("display.float_format", "{:.3f}".format,
+                               "display.max_columns", 20,
+                               "display.width", 140):
+            print(result[display_cols].to_string(index=False))
+
+    return result
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -638,8 +811,6 @@ def draw_dag_highlight(
     highlight_name : name of the node to highlight, e.g. "X0".
     names          : ordered list of all node names (same order as adjacency matrix).
     """
-    from matplotlib.lines import Line2D
-
     if highlight_name not in names:
         raise ValueError(f"highlight_name '{highlight_name}' not found in names.")
     h_idx = names.index(highlight_name)
@@ -780,19 +951,22 @@ def make_shap_scatter_figure(
         if ann.text:
             ann.update(font=dict(size=11, color="#2c3e50"))
 
+    _colors = {**(colors or {})}  # caller overrides first, then _DEFAULT_COLORS, then grey
+
     for ri, (fi, feat) in enumerate(zip(feature_idx, feature_labels)):
         x_vals = x_test[:, fi]
         for ci, method in enumerate(methods):
             if method not in shap_data:
                 continue
             shap_vals = shap_data[method][:, fi]
+            _col = _colors.get(method, _DEFAULT_COLORS.get(method, "#636363"))
 
             fig.add_trace(
                 go.Scatter(
                     x=x_vals, y=shap_vals, mode="markers",
                     marker=dict(
-                        size=4, color=x_vals, colorscale="Viridis",
-                        showscale=False, opacity=0.7, line=dict(width=0),
+                        size=7, color=_col,
+                        opacity=0.65, line=dict(width=0),
                     ),
                     name=method, showlegend=False,
                     hovertemplate=(
@@ -1689,6 +1863,218 @@ def plot_dag_highlight_3panel(
     return fig
 
 
+# ─────────────────────────────────────────────────────────────────────────────
+# Focused ego-network plot  (replaces plot_dag_highlight + plot_dag_highlight_true)
+# ─────────────────────────────────────────────────────────────────────────────
+
+def _draw_ego_panel(
+    ax,
+    G: "nx.DiGraph",
+    h_idx:      int,
+    y_idx:      int,
+    names:      list,
+    topo_depth: dict,
+    graph_label: str,
+    title_color: str,
+    bg_color:    str,
+) -> None:
+    """Internal: draw one focused ego-network panel showing only parents → focal → children."""
+    parents  = sorted([u for u, v in G.edges() if v == h_idx])
+    children = sorted([v for u, v in G.edges() if u == h_idx])
+    n_p, n_c = len(parents), len(children)
+
+    def _ys(n):
+        return [(i + 0.5) / n for i in range(n)] if n else [0.5]
+
+    pos = {h_idx: (1.0, 0.5)}
+    for p, y in zip(parents,  _ys(n_p)): pos[p] = (0.0, y)
+    for c, y in zip(children, _ys(n_c)): pos[c] = (2.0, y)
+
+    # Build minimal subgraph (only edges incident to focal)
+    H = nx.DiGraph()
+    H.add_nodes_from([h_idx] + parents + children)
+    H.add_edges_from([(p, h_idx) for p in parents])
+    H.add_edges_from([(h_idx, c) for c in children])
+    node_list = list(H.nodes())
+
+    # Semantic colours (consistent across all three panels)
+    C_FOCAL  = "#1C2833"   # dark slate — focal node
+    C_PARENT = "#D4E6F1"   # light blue — parents (incoming)
+    C_CHILD  = "#FAD7A0"   # light peach — children (outgoing)
+    C_Y      = "#F5CCD4"   # light pink — Y target node
+    C_IN     = "#1B4F72"   # deep navy — incoming arrows + parent borders
+    C_OUT    = "#7E5109"   # dark amber — outgoing arrows + child borders
+
+    nc = [C_FOCAL if nd == h_idx else (C_Y if nd == y_idx else (C_PARENT if nd in parents else C_CHILD)) for nd in node_list]
+    ne = ["#0a0a0a" if nd == h_idx else ("#C0392B" if nd == y_idx else (C_IN if nd in parents else C_OUT)) for nd in node_list]
+    ns = [2200 if nd == h_idx else 1200 for nd in node_list]
+
+    # Panel background
+    ax.set_facecolor(bg_color)
+
+    # Draw edges first (nodes render on top)
+    in_edges  = [(p, h_idx) for p in parents]
+    out_edges = [(h_idx, c) for c in children]
+    ekw = dict(ax=ax, arrows=True, arrowstyle="-|>", arrowsize=18,
+               connectionstyle="arc3,rad=0.04", nodelist=node_list, node_size=ns)
+    if in_edges:
+        nx.draw_networkx_edges(H, pos, edgelist=in_edges,  edge_color=C_IN,  width=2.0, **ekw)
+    if out_edges:
+        nx.draw_networkx_edges(H, pos, edgelist=out_edges, edge_color=C_OUT, width=2.0, **ekw)
+
+    # Nodes
+    nx.draw_networkx_nodes(H, pos, nodelist=node_list, ax=ax,
+                           node_color=nc, node_size=ns,
+                           edgecolors=ne, linewidths=1.8, alpha=0.96)
+
+    # Labels (drawn manually for full control over size/colour)
+    for nd in node_list:
+        x, y = pos[nd]
+        ax.text(x, y, names[nd], ha="center", va="center", zorder=5,
+                fontsize=(10 if nd == h_idx else 8.5),
+                fontweight=("bold" if nd == h_idx else "normal"),
+                color=("white" if nd == h_idx else "#2C3E50"))
+
+    # Column headers + direction indicators
+    ax.set_xlim(-0.55, 2.55)
+    ax.set_ylim(-0.20, 1.22)
+    hdr_y = 1.15
+
+    if n_p > 0:
+        ax.text(0.0, hdr_y, f"parents  ({n_p})",
+                ha="center", va="bottom", fontsize=8, color=C_IN, fontweight="semibold")
+        ax.text(0.5, hdr_y - 0.02, "← incoming",
+                ha="center", va="bottom", fontsize=7, color=C_IN, fontstyle="italic")
+    else:
+        ax.text(0.0, hdr_y, "source node",
+                ha="center", va="bottom", fontsize=7.5, color="#999", fontstyle="italic")
+
+    if n_c > 0:
+        ax.text(2.0, hdr_y, f"children  ({n_c})",
+                ha="center", va="bottom", fontsize=8, color=C_OUT, fontweight="semibold")
+        ax.text(1.5, hdr_y - 0.02, "outgoing →",
+                ha="center", va="bottom", fontsize=7, color=C_OUT, fontstyle="italic")
+    else:
+        ax.text(2.0, hdr_y, "no children",
+                ha="center", va="bottom", fontsize=7.5, color="#999", fontstyle="italic")
+
+    # Stats footer
+    depth_h  = topo_depth.get(h_idx, "?")
+    src_note = "  · source" if n_p == 0 else ""
+    y_note   = "  · direct parent of Y" if y_idx in children else ""
+    ax.text(1.0, -0.16, f"depth {depth_h}{src_note}{y_note}",
+            ha="center", va="top", fontsize=7.5, color="#666666")
+
+    ax.set_title(f"{graph_label}  graph", fontsize=11, fontweight="bold",
+                 color=title_color, pad=10)
+    ax.axis("off")
+
+
+def plot_node_neighborhood(
+    feature_name: str,
+    G_pc,     td_pc,     src_pc,     y_pc,     pc_names,
+    G_true,   td_true,   src_true,   y_true,   true_names,
+    G_lingam, td_lingam, src_lingam, y_lingam, lingam_names,
+    dataset:  str,
+    figsize:  tuple = (18, 6),
+    save_dir  = None,
+) -> "plt.Figure":
+    """Focused 3-panel neighbourhood plot: PC | True | LiNGAM.
+
+    Unlike :func:`plot_dag_highlight` (which dims the full graph and shows all
+    nodes), this function draws **only** the focal node together with its direct
+    parents (incoming edges) and direct children (outgoing edges) for each graph.
+    The result is a compact, paper-ready figure optimised for qualitative analysis.
+
+    Replaces both :func:`plot_dag_highlight` and :func:`plot_dag_highlight_true`.
+
+    Visual encoding
+    ---------------
+    * **Dark slate** circle  — focal node
+    * **Light blue** circles — parent nodes  (incoming causal drivers)
+    * **Light peach** circles— child nodes   (outgoing causal targets)
+    * **Light pink** circle  — Y (prediction target), wherever it appears
+    * **Navy** arrows        — incoming edges  (parent → focal)
+    * **Amber** arrows       — outgoing edges  (focal → child)
+    * Panel title colour identifies the graph:
+      sky-blue = PC, dark gray = True, orange = LiNGAM
+
+    Parameters
+    ----------
+    feature_name : str
+        Name of the focal node, e.g. ``"X10"``.
+    G_pc / td_pc / ... : outputs of :func:`build_dag_graph` + :func:`make_dag_pos`
+        for the PC, True, and LiNGAM graphs respectively.
+    dataset   : dataset name (title + save filename).
+    figsize   : overall figure size.
+    save_dir  : optional directory; if given the figure is saved there.
+
+    Returns
+    -------
+    matplotlib.figure.Figure
+    """
+    try:
+        from plot_style import REFERENCE_COLORS as _RC
+    except ImportError:
+        _RC = {"PC": "#56B4E9", "True": "#000000", "LiNGAM": "#E69F00"}
+
+    TITLE_C = {
+        "PC":     _RC.get("PC",     "#56B4E9"),
+        "True":   "#333333",          # soften black for readability
+        "LiNGAM": _RC.get("LiNGAM", "#E69F00"),
+    }
+    BG_C = {
+        "PC":     "#F0F8FF",   # alice blue
+        "True":   "#FAFAFA",   # near-white
+        "LiNGAM": "#FFFBF0",   # very light amber
+    }
+
+    panels = [
+        (G_pc,     td_pc,     y_pc,     pc_names,     "PC"),
+        (G_true,   td_true,   y_true,   true_names,   "True"),
+        (G_lingam, td_lingam, y_lingam, lingam_names, "LiNGAM"),
+    ]
+
+    fig, axes = plt.subplots(1, 3, figsize=figsize)
+    fig.patch.set_facecolor("white")
+
+    for ax, (G, td, y_idx, names, gl) in zip(axes, panels):
+        if feature_name not in names:
+            ax.text(0.5, 0.5, f"'{feature_name}'\nnot found in\n{gl} graph",
+                    ha="center", va="center", transform=ax.transAxes,
+                    fontsize=9, color="#888888")
+            ax.axis("off")
+            continue
+        _draw_ego_panel(ax, G, h_idx=names.index(feature_name), y_idx=y_idx,
+                        names=names, topo_depth=td, graph_label=gl,
+                        title_color=TITLE_C[gl], bg_color=BG_C[gl])
+
+    fig.suptitle(
+        f"Causal Neighbourhood — {feature_name}   ·   {dataset}",
+        fontsize=13, fontweight="bold", y=1.03,
+    )
+
+    legend_handles = [
+        mpatches.Patch(facecolor="#1C2833", edgecolor="#0a0a0a",
+                       label=f"{feature_name}  (focal)"),
+        mpatches.Patch(facecolor="#D4E6F1", edgecolor="#1B4F72",
+                       label="Parent  (incoming)"),
+        mpatches.Patch(facecolor="#FAD7A0", edgecolor="#7E5109",
+                       label="Child  (outgoing)"),
+        mpatches.Patch(facecolor="#F5CCD4", edgecolor="#C0392B",
+                       label="Y  (target)"),
+        Line2D([0], [0], color="#1B4F72", linewidth=2.0, label="incoming edge"),
+        Line2D([0], [0], color="#7E5109", linewidth=2.0, label="outgoing edge"),
+    ]
+    fig.legend(handles=legend_handles, loc="lower center", ncol=6,
+               fontsize=8.5, frameon=False, bbox_to_anchor=(0.5, -0.06))
+
+    plt.tight_layout(rect=[0, 0.04, 1, 1.0])
+    _save_fig(fig, save_dir, f"dag_neighborhood_{feature_name}_{dataset}.png")
+    plt.show()
+    return fig
+
+
 def plot_gss_sss_scatter(
     df_gss:        "pd.DataFrame",
     df_sss:        "pd.DataFrame",
@@ -2084,97 +2470,6 @@ def plot_spearman_heatmap(
     return fig
 
 
-def plot_jaccard_bar(
-    df_jacc:       "pd.DataFrame",
-    method_colors: dict,
-    dataset:       str,
-    save_dir=None,
-) -> "go.Figure":
-    """
-    Grouped bar chart of top-K Jaccard overlap vs Traditional baseline.
-
-    Parameters
-    ----------
-    df_jacc       : DataFrame with columns [Method, Graph, K, Jaccard].
-    method_colors : method short-name → hex colour.
-    dataset       : dataset name.
-    save_dir      : optional save directory.
-    """
-    fig = px.bar(
-        df_jacc, x="Graph", y="Jaccard", color="Method", facet_col="K",
-        barmode="group",
-        color_discrete_map={
-            "Asymmetric": method_colors.get("Asymmetric",  "#2166ac"),
-            "Causal":     method_colors.get("Causal",      "#4dac26"),
-            "Flow":       method_colors.get("ShapleyFlow",  "#d01c8b"),
-        },
-        range_y=[0, 1.05],
-        title=(
-            f"Top-K Feature Set Overlap vs Traditional (Jaccard) — {dataset}<br>"
-            f"<sup>Fraction of top-K features shared with Traditional's top-K.  "
-            f"1.0 = method selects the exact same features as the graph-free baseline.</sup>"
-        ),
-        labels={"Jaccard": "Jaccard vs Traditional", "Graph": "Discovered Graph"},
-        height=380, width=900,
-    )
-    fig.add_hline(y=1.0, line=dict(color="gray", width=1, dash="dot"))
-    fig.update_layout(legend_title_text="Method", margin=dict(t=90, b=60))
-    fig.show()
-    _save_fig(fig, save_dir, f"jaccard_bar_{dataset}.png")
-    return fig
-
-
-def plot_parent_precision_bar(
-    df_parent:       "pd.DataFrame",
-    method_colors:   dict,
-    dataset:         str,
-    disc_graphs:     list,
-    random_baseline: float,
-    save_dir=None,
-) -> "go.Figure":
-    """
-    Bar chart of true Y-parent Precision@K.
-
-    Parameters
-    ----------
-    df_parent        : DataFrame with columns [Method, K, Precision].
-    method_colors    : method short-name → hex colour.
-    dataset          : dataset name.
-    disc_graphs      : list of discovered graph names, e.g. ["PC", "LiNGAM"].
-    random_baseline  : fraction of features that are true Y-parents.
-    save_dir         : optional save directory.
-    """
-    fig = px.bar(
-        df_parent, x="Method", y="Precision", color="Method",
-        facet_col="K", barmode="group",
-        color_discrete_map={
-            "Scratch":               method_colors.get("Scratch",    "#636363"),
-            **{f"Asymmetric ({g})": method_colors.get("Asymmetric", "#2166ac") for g in disc_graphs},
-            **{f"Causal ({g})":     method_colors.get("Causal",     "#4dac26") for g in disc_graphs},
-            **{f"Flow ({g})":       method_colors.get("ShapleyFlow","#d01c8b") for g in disc_graphs},
-        },
-        range_y=[0, 1.05],
-        title=(
-            f"True Y-Parent Precision@K — {dataset}<br>"
-            f"<sup>Red dashed = random baseline ({random_baseline:.2f}).</sup>"
-        ),
-        labels={"Precision": "Precision@K (true Y-parents)", "Method": ""},
-        height=440, width=1150,
-    )
-    fig.add_hline(
-        y=random_baseline,
-        line=dict(color="#d62728", width=1.5, dash="dash"),
-        annotation_text=f"random ({random_baseline:.2f})",
-        annotation_position="top right",
-        annotation_font_size=10,
-    )
-    fig.update_layout(showlegend=False, xaxis_tickangle=-30, margin=dict(t=90, b=100))
-    fig.update_xaxes(tickfont=dict(size=9))
-    fig.show()
-    _save_fig(fig, save_dir, f"parent_precision_bar_{dataset}.png")
-    return fig
-
-
 def plot_sss_heatmap(
     sss_feat:      dict,
     feature_names: list,
@@ -2517,7 +2812,6 @@ def plot_summary_table(
     n_true_instances : number of true-graph instances.
     random_baseline  : fraction of features that are true Y-parents.
     tga_data         : TGA dict (used only to determine label suffix).
-    k_summary        : K used for Jaccard and Precision@K columns (default 20).
     save_dir         : optional save directory.
     """
     k = k_summary
@@ -2529,12 +2823,6 @@ def plot_summary_table(
     if _sss:
         cols.append(("SSS", "SSS\n(PC↔LiNGAM) ↑"))
     cols += [
-        ("rho_pc",              "ρ(PC–Traditional) ↑"),
-        ("rho_lg",              "ρ(LiNGAM–Traditional) ↑"),
-        (f"J{k}_pc",            f"J{k}\n(PC–Traditional) ↑"),
-        (f"J{k}_lg",            f"J{k}\n(LiNGAM–Traditional) ↑"),
-        (f"PP{k}_pc",           f"P@{k}\n(PC) ↑"),
-        (f"PP{k}_lg",           f"P@{k}\n(LiNGAM) ↑"),
         ("TGA_pc",              "TGA\n(PC→True) ↓"),
         ("TGA_lg",              "TGA\n(LiNGAM→True) ↓"),
     ]
@@ -2544,8 +2832,7 @@ def plot_summary_table(
     col_headers = [c[1] for c in cols]
 
     LOWER_BETTER  = {"GSS", "TGA_pc", "TGA_lg"}
-    HIGHER_BETTER = {"SSS", "rho_pc", "rho_lg",
-                     f"J{k}_pc", f"J{k}_lg", f"PP{k}_pc", f"PP{k}_lg"}
+    HIGHER_BETTER = {"SSS"}
 
     def fmt(v):
         if isinstance(v, str):  return v
@@ -2597,8 +2884,7 @@ def plot_summary_table(
                 f"Graph Sensitivity — Method Recommendation Summary — {dataset}<br>"
                 f"<sup>Blue = Traditional (reference).  Green = best causal method per column.  "
                 f"↓ lower better  ↑ higher better.  "
-                f"GSS/Spearman/Jaccard: n={n_shap} instances.  {tga_note}.  "
-                f"P@{k} random baseline = {random_baseline:.2f}</sup>"
+                f"n={n_shap} instances.  {tga_note}.</sup>"
             ),
             font=dict(size=13),
         ),
@@ -2652,4 +2938,230 @@ def plot_adjacency_comparison(
     plt.tight_layout()
     _save_fig(fig, save_dir, f"adjacency_comparison_{dataset}.png")
     plt.show()
+    return fig
+
+
+def _safe_name(method: str) -> str:
+    """Turn a method key into a safe filename fragment."""
+    return re.sub(r"[^A-Za-z0-9_-]", "_", method)
+
+
+def plot_shap_vs_feature(
+    shap_data:     dict[str, np.ndarray],
+    feature_names: list[str],
+    x_test:        np.ndarray,
+    method_1:      str,
+    method_2:      str,
+    features:      list[str] | None = None,
+    dataset:       str = "",
+    colors:        dict | None = None,
+    marker_size:   int = 7,
+    opacity:       float = 0.65,
+    save_dir=None,
+) -> go.Figure:
+    """
+    SHAP value vs feature value scatter — two methods overlaid, one row per feature.
+
+    Parameters
+    ----------
+    shap_data     : dict mapping method key → ndarray (n_instances, n_features).
+    feature_names : full ordered list of feature names.
+    x_test        : feature matrix (n_instances, n_features).
+    method_1      : first method key, e.g. ``"Scratch"``.
+    method_2      : second method key, e.g. ``"Flow (PC)"``.
+    features      : feature names to plot.  None = all features.
+    dataset       : dataset name shown in the title.
+    colors        : optional colour overrides ``{method_key: hex_string}``.
+    marker_size   : scatter dot size (default 7).
+    opacity       : scatter dot opacity (default 0.65).
+    save_dir      : Path or str to write the PNG file. None = skip saving.
+
+    Returns
+    -------
+    go.Figure
+    """
+    for key in (method_1, method_2):
+        if key not in shap_data:
+            raise KeyError(f"'{key}' not found in shap_data. Available: {sorted(shap_data)}")
+
+    feat_list = list(features) if features is not None else list(feature_names)
+    feat_idx  = [feature_names.index(f) for f in feat_list]
+    n_rows    = len(feat_list)
+
+    _c = {**_DEFAULT_COLORS, **(colors or {})}
+    c1 = _c.get(method_1, "#1f77b4")
+    c2 = _c.get(method_2, "#ff7f0e")
+    v_spacing = max(0.005, min(0.06, 0.25 / max(n_rows - 1, 1)))
+
+    fig = make_subplots(
+        rows=n_rows, cols=1,
+        shared_xaxes=False, shared_yaxes=False,
+        vertical_spacing=v_spacing,
+    )
+
+    _specs = [(method_1, c1, "circle"), (method_2, c2, "diamond")]
+
+    for ri, (fi, feat) in enumerate(zip(feat_idx, feat_list)):
+        x_vals      = x_test[:, fi]
+        show_legend = ri == 0
+
+        for method, color, symbol in _specs:
+            sv = shap_data[method][:, fi]
+            fig.add_trace(
+                go.Scatter(
+                    x=x_vals, y=sv, mode="markers",
+                    marker=dict(size=marker_size, color=color, symbol=symbol,
+                                opacity=opacity, line=dict(width=0)),
+                    name=method, showlegend=show_legend, legendgroup=method,
+                    hovertemplate=(
+                        f"<b>{feat}</b> — {method}<br>"
+                        "feature value = %{x:.4f}<br>SHAP = %{y:.4f}<extra></extra>"
+                    ),
+                ),
+                row=ri + 1, col=1,
+            )
+
+        x_min, x_max = float(x_vals.min()), float(x_vals.max())
+        fig.add_trace(
+            go.Scatter(x=[x_min, x_max], y=[0, 0], mode="lines",
+                       line=dict(color="gray", width=0.8, dash="dot"),
+                       showlegend=False, hoverinfo="skip"),
+            row=ri + 1, col=1,
+        )
+
+        fig.update_yaxes(title_text=f"SHAP ({feat})", title_font=dict(size=9),
+                         title_standoff=4, row=ri + 1, col=1)
+        fig.update_xaxes(
+            title_text="Feature value" if ri == n_rows - 1 else "",
+            tickfont=dict(size=8), row=ri + 1, col=1,
+        )
+
+    title_line1 = f"SHAP vs Feature Value — {method_1}  ·  {method_2}"
+    title_line2_parts = ([dataset] if dataset else []) + (
+        [f"{len(feat_list)} features"] if len(feat_list) < len(feature_names) else []
+    )
+    title_str = title_line1 + ("<br>" + " — ".join(title_line2_parts) if title_line2_parts else "")
+
+    fig.update_layout(
+        title=dict(text=title_str, font=dict(size=14)),
+        height=380 * n_rows + 80, width=460,
+        margin=dict(l=110, r=60, t=95, b=50),
+        legend=dict(orientation="h", x=0.5, xanchor="center",
+                    y=1.02, yanchor="bottom", font=dict(size=11)),
+    )
+
+    _save_fig(fig, save_dir,
+              f"shap_vs_feature_{_safe_name(method_1)}_vs_{_safe_name(method_2)}_{dataset}.png")
+    fig.show()
+    return fig
+
+
+def plot_shap_vs_instance(
+    shap_data:     dict[str, np.ndarray],
+    feature_names: list[str],
+    method_1:      str,
+    method_2:      str,
+    features:      list[str] | None = None,
+    instance_idx:  list[int] | None = None,
+    dataset:       str = "",
+    colors:        dict | None = None,
+    mode:          str = "markers",
+    marker_size:   int = 7,
+    opacity:       float = 0.70,
+    save_dir=None,
+) -> go.Figure:
+    """
+    SHAP value vs instance index — two methods overlaid, one row per feature.
+
+    Parameters
+    ----------
+    shap_data     : dict mapping method key → ndarray (n_instances, n_features).
+    feature_names : full ordered list of feature names.
+    method_1      : first method key, e.g. ``"Scratch"``.
+    method_2      : second method key, e.g. ``"Flow (PC)"``.
+    features      : feature names to plot.  None = all features.
+    instance_idx  : subset of instance indices to display.  None = all instances.
+    dataset       : dataset name shown in the title.
+    colors        : optional colour overrides ``{method_key: hex_string}``.
+    mode          : plotly scatter mode: ``"markers"``, ``"lines"``, or ``"lines+markers"``.
+    marker_size   : dot / line marker size.
+    opacity       : marker opacity.
+    save_dir      : Path or str to write the PNG file. None = skip saving.
+
+    Returns
+    -------
+    go.Figure
+    """
+    for key in (method_1, method_2):
+        if key not in shap_data:
+            raise KeyError(f"'{key}' not found in shap_data. Available: {sorted(shap_data)}")
+
+    n_total  = shap_data[method_1].shape[0]
+    inst_idx = list(instance_idx) if instance_idx is not None else list(range(n_total))
+
+    feat_list = list(features) if features is not None else list(feature_names)
+    feat_idx  = [feature_names.index(f) for f in feat_list]
+    n_rows    = len(feat_list)
+
+    _c = {**_DEFAULT_COLORS, **(colors or {})}
+    c1 = _c.get(method_1, "#1f77b4")
+    c2 = _c.get(method_2, "#ff7f0e")
+    v_spacing = max(0.005, min(0.06, 0.25 / max(n_rows - 1, 1)))
+    use_lines = "lines" in mode
+
+    _specs = [(method_1, c1, "circle", "solid"), (method_2, c2, "diamond", "dot")]
+
+    fig = make_subplots(
+        rows=n_rows, cols=1,
+        shared_xaxes=True, shared_yaxes=False,
+        vertical_spacing=v_spacing,
+    )
+
+    for ri, (fi, feat) in enumerate(zip(feat_idx, feat_list)):
+        show_legend = ri == 0
+        for method, color, symbol, dash in _specs:
+            sv = shap_data[method][inst_idx, fi]
+            kw: dict = dict(
+                x=inst_idx, y=sv, mode=mode,
+                marker=dict(size=marker_size, color=color, symbol=symbol,
+                            opacity=opacity, line=dict(width=0)),
+                name=method, showlegend=show_legend, legendgroup=method,
+                hovertemplate=(
+                    f"<b>{feat}</b> — {method}<br>"
+                    "instance = %{x}<br>SHAP = %{y:.4f}<extra></extra>"
+                ),
+            )
+            if use_lines:
+                kw["line"] = dict(color=color, width=1.5, dash=dash)
+            fig.add_trace(go.Scatter(**kw), row=ri + 1, col=1)
+
+        fig.add_trace(
+            go.Scatter(x=[inst_idx[0], inst_idx[-1]], y=[0, 0], mode="lines",
+                       line=dict(color="gray", width=0.8, dash="dot"),
+                       showlegend=False, hoverinfo="skip"),
+            row=ri + 1, col=1,
+        )
+        fig.update_yaxes(title_text=f"SHAP ({feat})", title_font=dict(size=9),
+                         title_standoff=4, row=ri + 1, col=1)
+
+    fig.update_xaxes(title_text="Instance index", tickfont=dict(size=8),
+                     row=n_rows, col=1)
+
+    title_line1 = f"SHAP vs Instance — {method_1}  ·  {method_2}"
+    title_line2_parts = ([dataset] if dataset else []) + (
+        [f"n={len(inst_idx)} instances"] if len(inst_idx) < n_total else []
+    )
+    title_str = title_line1 + ("<br>" + " — ".join(title_line2_parts) if title_line2_parts else "")
+
+    fig.update_layout(
+        title=dict(text=title_str, font=dict(size=14)),
+        height=360 * n_rows + 80, width=460,
+        margin=dict(l=110, r=60, t=95, b=50),
+        legend=dict(orientation="h", x=0.5, xanchor="center",
+                    y=1.02, yanchor="bottom", font=dict(size=11)),
+    )
+
+    _save_fig(fig, save_dir,
+              f"shap_vs_instance_{_safe_name(method_1)}_vs_{_safe_name(method_2)}_{dataset}.png")
+    fig.show()
     return fig

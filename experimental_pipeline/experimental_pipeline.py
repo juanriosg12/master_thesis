@@ -44,7 +44,6 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from sklearn.metrics import r2_score
-from scipy.stats import spearmanr
 
 # Add parent directory to path
 sys.path.append('/Users/juanrios/Documents/master_thesis')

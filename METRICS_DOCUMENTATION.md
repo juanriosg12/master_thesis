@@ -98,45 +98,7 @@ $$D^{(m,\mathcal{G},\text{ref})} = \frac{1}{F}\sum_{f=1}^{F} D^{(m,\mathcal{G},\
 
 ---
 
-## 3. Auxiliary Feature-Importance Metrics
-
-These rank- and set-based metrics complement the two primary metrics and are reported in the supporting analyses. They operate on the mean absolute attribution $\bar{\phi}^{(m,\mathcal{G})}_f = \frac{1}{N}\sum_i |\phi^{(m,\mathcal{G})}_{i,f}|$.
-
-### 3.1 Spearman Rank Correlation (ρ)
-
-Whether the feature-importance *ranking* of a configuration agrees with a reference (Scratch) ranking.
-
-$$\rho\!\left(m,\mathcal{G}\right) = \text{Spearman}\!\left(\bar{\phi}^{(m,\mathcal{G})}, \bar{\phi}^{(\text{Scratch})}\right)$$
-
-- **Range:** $[-1,1]$; $\rho=1$ means the graph did not change the importance order.
-
-### 3.2 Top-$K$ Jaccard Overlap
-
-Whether the set of the $K$ most important features matches the reference top-$K$ set.
-
-$$\text{Jaccard}_K\!\left(m,\mathcal{G}\right) = \frac{\left|\mathcal{T}_K^{(m,\mathcal{G})}\cap\mathcal{T}_K^{(\text{Scratch})}\right|}{\left|\mathcal{T}_K^{(m,\mathcal{G})}\cup\mathcal{T}_K^{(\text{Scratch})}\right|}$$
-
-where $\mathcal{T}_K^{(m,\mathcal{G})}=\operatorname*{arg\,top}_K \bar{\phi}^{(m,\mathcal{G})}$. **Range:** $[0,1]$. Evaluated at $K\in\{5,10,20\}$.
-
-### 3.3 True-Parent Precision@$K$
-
-Whether the top-$K$ features are true causal parents of $Y$.
-
-$$\text{Prec@}K\!\left(m,\mathcal{G}\right) = \frac{\left|\mathcal{T}_K^{(m,\mathcal{G})}\cap\text{Pa}(Y)\right|}{K}$$
-
-- **Range:** $[0,1]$; random baseline $=|\text{Pa}(Y)|/F$. Evaluated at $K\in\{5,10,20\}$.
-
-### 3.4 Multi-Method Sign Agreement
-
-How consistently all methods agree on the direction of an attribution for each `(instance, feature)`, independent of graph.
-
-$$\text{Agr}_{i,f} = \frac{\max\!\left(n^+_{i,f}, n^-_{i,f}\right)}{M}$$
-
-where $n^+_{i,f}=\sum_m\mathbf{1}[\phi^{(m)}_{i,f}>0]$, $n^-_{i,f}=\sum_m\mathbf{1}[\phi^{(m)}_{i,f}<0]$, $M$ = number of methods. **Range:** $[0.5,1]$; $1$ = all methods agree on sign.
-
----
-
-## 4. Causal Graph Quality (Edge Recovery)
+## 3. Causal Graph Quality (Edge Recovery)
 
 How well the discovered graph (PC, LiNGAM) recovers the True-DAG edges, using *direction-aware* precision, recall, and F1.
 
@@ -154,12 +116,8 @@ $A$ is the true adjacency matrix, $\hat{A}$ the predicted one. An edge $(u\to v)
 |--------|--------|--------|-------|--------|-----------|---------|
 | Magnitude Divergence | $\Delta M_{\text{base/oracle/disc}}$ | instance / feature / global | $[0,\infty)$ (% of $\hat\sigma$) | **Near 0** | base, oracle, or disc | 1 |
 | Sign Disagreement | $D_{\text{base/oracle/disc}}$ | instance / feature / global | $[0,1]$ | **Near 0** | base, oracle, or disc | 2 |
-| Mean Absolute SHAP | $\bar{\phi}_f$ | feature | $[0,\infty)$ | — | — | 3 |
-| Spearman ρ | $\rho$ | global | $[-1,1]$ | Higher | Scratch | 3.1 |
-| Top-$K$ Jaccard | $\text{Jaccard}_K$ | global | $[0,1]$ | Higher | Scratch | 3.2 |
-| Precision@$K$ | $\text{Prec@}K$ | global | $[0,1]$ | Higher | True parents | 3.3 |
-| Multi-method Agreement | $\text{Agr}_{i,f}$ | instance | $[0.5,1]$ | Higher | — | 3.4 |
-| Edge F1 | $F_1$ | global | $[0,1]$ | Higher | True DAG | 4 |
+| Mean Absolute SHAP | $\bar{\phi}_f$ | feature | $[0,\infty)$ | — | — | — |
+| Edge F1 | $F_1$ | global | $[0,1]$ | Higher | True DAG | 3 |
 
 ---
 
@@ -173,9 +131,7 @@ The two primary metrics are pure functions in `analysis_utils.py`; the distribut
 | `compute_gss(shap_data, base_methods, output_std=...)` | Cross-discovery ΔM_disc (§1) | PC vs LiNGAM, same RMS ÷ `output_std`. |
 | `compute_sign_alignment(shap_data, base_methods, disc_graphs, reference="True")` | Sign agreement; $D = 1 - \text{SA}$ (§2) | `reference` in {"True", "Scratch"}. |
 | `compute_sss(shap_data, base_methods)` | Sign agreement PC vs LiNGAM; $D_{\text{disc}} = 1 - \text{SSS}$ (§2) | — |
-| `mean_abs_shap(shap_data, key)` | Mean Absolute SHAP (§3) | — |
-| `top_k_jaccard(arr1, arr2, k)` | Top-$K$ Jaccard (§3.2) | — |
-| `compute_sign_agreement(method_list, shap_data, feat_idx)` | Multi-method sign agreement (§3.4) | — |
-| `edge_recovery(true_adj, pred_adj)` | Edge precision / recall / F1 (§4) | — |
+| `mean_abs_shap(shap_data, key)` | Mean Absolute SHAP | — |
+| `edge_recovery(true_adj, pred_adj)` | Edge precision / recall / F1 (§3) | — |
 
 `compute_tga` and `compute_sign_alignment` accept a `reference` keyword (default `"True"`). Passing `reference="Scratch"` compares each `(method, graph)` pair against the graph-free Traditional baseline using the identical formula — i.e. the only difference between ΔM_oracle and ΔM_base (and between $D_{\text{oracle}}$ and $D_{\text{base}}$) is the reference array. Pass `output_std` to obtain the normalised (% of $\hat\sigma$) values reported in the thesis; omit it to get raw attribution units.

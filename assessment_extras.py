@@ -235,12 +235,6 @@ def global_gss(ctx, method):
     return None if feat is None else float(np.abs(feat).mean())
 
 
-def _spearman(x, y):
-    rx = np.argsort(np.argsort(x))
-    ry = np.argsort(np.argsort(y))
-    return float(np.corrcoef(rx, ry)[0, 1])
-
-
 def _save(fig, ctx, name, plots_dir, method=None):
     """Save figure to plots_dir/dataset[/method]/name.png.
     

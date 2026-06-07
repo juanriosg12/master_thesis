@@ -17,7 +17,7 @@ Scalar summaries behind the method-level scatter plots, using the standardised m
 
 | Method | Graph | Reference | TGA_pct | SignAlign_pct | SignDisagree_pct |
 | --- | --- | --- | --- | --- | --- |
-| Asymmetric | PC | True | 9.17 % | 75.80 % | 24.20 % |
+| Asymmetric | PC | True | 9.16 % | 75.80 % | 24.20 % |
 | Asymmetric | LiNGAM | True | 2.84 % | 76.60 % | 23.40 % |
 | Causal | PC | True | 9.01 % | 63.70 % | 36.30 % |
 | Causal | LiNGAM | True | 8.31 % | 67.70 % | 32.30 % |

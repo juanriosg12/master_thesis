@@ -22,7 +22,7 @@ Scalar summaries behind the method-level scatter plots, using the standardised m
 | Causal | PC | True | 5.32 % | 68.40 % | 31.60 % |
 | Causal | LiNGAM | True | 7.57 % | 62.54 % | 37.46 % |
 | Flow | PC | True | 7.34 % | 57.74 % | 42.26 % |
-| Flow | LiNGAM | True | 8.07 % | 55.09 % | 44.91 % |
+| Flow | LiNGAM | True | 8.06 % | 55.09 % | 44.91 % |
 
 
 ## Alignment to Traditional — ΔM_base vs D_base (per Shapley method × discovered graph)
