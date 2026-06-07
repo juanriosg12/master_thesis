@@ -340,16 +340,15 @@ $$\Delta M^{\text{ref}} = \frac{1}{N}\sum_{f \in \mathcal{F}} \Delta M^{\text{re
 
 The cross-discovery metrics $\Delta M_{\text{disc}}$ and $D_{\text{disc}}$ are the same constructions with the subject fixed to PC and the reference to LiNGAM.
 
-
 # 4. Results and Empirical Analysis
 
 ## 4.1 Causal Discovery Baseline Performance
 
 ### 4.1.1 Performance on the Confounded Linear System
 
-The 5 hidden confounders introduce spurious correlations that directly violate the causal sufficiency assumption of both estimators. PC exhibits high structural resilience, recovering 40 of 87 true X->X edges with precision 0.741 and only 14 false positives (SHD = 61). Conditional independence tests can partially block confounder-induced association paths through careful conditioning, so PC maintains a structurally conservative graph close to the true sparse structure.
+The 5 hidden confounders introduce spurious correlations that directly violate the causal sufficiency assumption of both estimators. PC exhibits high structural resilience, recovering 40 of 87 true X $\to$ X edges with precision 0.741 and only 14 false positives. Thanks to conditional independence testing evaluates localized relationships, it can partially block extended confounder-induced association paths through careful conditioning on intermediate variables (Spirtes, Glymour, & Scheines, 2000), allowing PC to maintain a structurally conservative graph relatively close to the true sparse structure.
 
-DirectLiNGAM experiences severe structural degradation, reporting 105 edges with only 24 correct and 81 false positives (F1 = 0.250, SHD = 144). The linear non-Gaussian functional model cannot distinguish a direct causal path from a confounder-induced correlation path, producing a densely over-connected graph. This over-discovery creates the central experimental contrast: the same Shapley methods receive fundamentally different structural priors from the two discovery algorithms.
+DirectLiNGAM experiences severe structural degradation, reporting 105 edges with only 24 correct and 81 false positives (F1 = 0.250, SHD = 144). Standard linear non-Gaussian functional models are highly sensitive to unmeasured variables; because latent confounders violate the foundational assumption of mutually independent exogenous noise, the algorithm frequently misinterprets confounder-induced correlations as direct causal pathways (Hoyer et al., 2008; Shimizu et al., 2011). This over-discovery creates the central experimental contrast: the same Shapley methods receive fundamentally different structural priors from the two discovery algorithms.
 
 ![Adjacency comparison on the synthetic linear-confounded dataset](figures/adjacency_comparison_linear_conf_f50_s1000_p30.png)
 
