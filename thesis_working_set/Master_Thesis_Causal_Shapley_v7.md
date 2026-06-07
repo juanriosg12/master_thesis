@@ -37,7 +37,7 @@ Counterfactual explanations provide an intuitive contrastive explainability fram
 
 To satisfy real-world feasibility constraints, explanations must be grounded within a Structural Causal Model (SCM), formally defined as a tuple G := (S, P(epsilon)), where S is a collection of deterministic structural equations of the form x_i = f_i(Pa(x_i), epsilon_i), and P(epsilon) is a joint distribution over independent exogenous noise variables (Pearl, 2009). Full abduction-action-prediction within an SCM is computationally demanding and requires complete structural equation knowledge. Structure-aware Shapley methods circumvent this bottleneck by using the causal graph topology to define conditional distributions for feature imputation, approximating the post-interventional distribution without requiring full structural equation reconstruction.
 
-It is worth noting that the original Shapley Flow formulation (Wang et al., 2021) relies heavily on approximating these structural equations to actively propagate values along graph edges. However, for reproducibility purposes and to avoid strict dependence on a well-calibrated SCM, the implementation adopted in this thesis deliberately replaces full structural-equation evaluation with a lighter binary activation rule (detailed in Section 3.4.4). This approach preserves the framework's core conceptual contribution—attributing credit to directed edges rather than isolated nodes—while ensuring tractable computation that relies solely on the discovered graph topology and trained predictive model.
+It is worth noting that the original Shapley Flow formulation (Wang et al., 2021) relies heavily on approximating these structural equations to actively propagate values along graph edges. However, for reproducibility purposes and to avoid strict dependence on a well-calibrated SCM, the implementation adopted in this thesis deliberately replaces full structural-equation evaluation with a lighter binary activation rule (detailed in Section 3.4.4). This approach preserves the framework's core conceptual contribution, attributing credit to directed edges rather than isolated nodes, while ensuring tractable computation that relies solely on the discovered graph topology and trained predictive model.
 
 ## 2.3 Causal Discovery: Structure Identification
 
@@ -103,7 +103,7 @@ The DAG plays a more central role here than in either ASV or CSV, because its ed
 
 # 3. Experimental Setup and Practical Implementation
 
-The proposed experimental pipeline to help practitioners navigate scenarios where measured systems contain underlying causal connections or highly correlated features, the proposed experimental pipeline is outlined below. Within this framework, two distinct datasets are evaluated across multiple structure-aware Shapley methods. The resulting variations in feature attributions are measured along two primary dimensions: magnitude deviation and sign disagreement—both of which are critical for ensuring the reliability of local explanations.
+The proposed experimental pipeline to help practitioners navigate scenarios where measured systems contain underlying causal connections or highly correlated features, the proposed experimental pipeline is outlined below. Within this framework, two distinct datasets are evaluated across multiple structure-aware Shapley methods. The resulting variations in feature attributions are measured along two primary dimensions: magnitude deviation and sign disagreement, both of which are critical for ensuring the reliability of local explanations.
 
 ![Experimental pipeline overview](figures/experimental_pipeline_diagram.png)
 
@@ -115,7 +115,7 @@ The experimental pipeline employs a synthetic benchmarking framework to generate
 
 Linear System with Confounding (Synthetic): Strictly linear structural equations X_j = Sum_{i in Pa(j)} w_ij * X_i + epsilon_j, with epsilon_j ~ N(0, 0.5) and coefficients drawn from Uniform(0.5, 2.0) with random sign. The graph is Erdos-Renyi with edge probability p = 0.07, yielding 87 X->X edges across 50 features (~1.74 edges per node). Exactly 15 of 50 features are direct causal parents of Y (y_parents_ratio = 0.30). Five hidden confounders each additively influence 2-3 features, violating causal sufficiency for both discovery algorithms. Dataset parameters: N_FEATURES = 50, N_SAMPLES = 1000, random_state = 42.
 
-Sachs Cell Signaling Dataset (Real Data): 7,466 simultaneous measurements of 11 protein concentrations in stimulated human T-cells (Sachs et al., 2005), obtained from the Carnegie Mellon University Philosophy Department causal datasets repository (Scheines, 2024). Akt kinase (akt) is the regression target Y and 10 proteins are input features (raf, mek, plc, pip2, pip3, erk, pka, pkc, p38, jnk). A consensus reference DAG has 17 X->X edges and 3 direct X->Y edges (pip3->akt, pka->akt, erk->akt). Raw concentrations are preprocessed with log1p transformation and StandardScaler fitted on training data only.
+Sachs Cell Signaling Dataset (Real Data): 7,466 simultaneous measurements of 11 protein concentrations in stimulated human T-cells (Sachs et al., 2005), obtained from the Carnegie Mellon University Philosophy Department causal datasets repository (Scheines, 2024). Akt kinase (akt) is the regression target Y and 10 proteins are input features (raf, mek, plc, pip2, pip3, erk, pka, pkc, p38, jnk). A consensus reference DAG has 17 X->X edges and 3 direct X->Y edges (pip3->akt, pka->akt, erk->akt). Raw concentrations are preprocessed in two steps, first log1p transformation is applied to the entire dataset before the train/test split and secondly after splitting, a Standard Scaler is fit exclusively on the training partition and then applied to both train and test sets, bringing all proteins to μ=0, σ=1; this ensures LiNGAM's |coef|<0.10 pruning threshold is scale-consistent across all proteins regardless of raw concentration range, and prevents any information from the test set from leaking into the scaling statistics.
 
 Both datasets use an 80/20 train/test split with random seed 42. The synthetic graph density (~7.1%, 1.74 edges/node) was calibrated to match the Sachs network density, enabling direct comparison between the two experimental tracks.
 
@@ -130,7 +130,7 @@ A LightGBM gradient-boosted tree regressor is fitted to each dataset using Optun
 | Linear-Conf (synthetic) | 0.900 | 1.72 | 1.36 | ≈ -0.47 | 4.71 |
 | Sachs (real data) | 0.679 | 88.78 | 17.82 | ≈ 81.2 (Akt units) | 116.76 (Akt units) |
 
-Beyond accuracy, the evaluation needs one further property of each fitted model: the spread of its predictions. The magnitude metrics defined in Section 3.5 are reported as a fraction of the model's output standard deviation $\hat\sigma$ — the standard deviation of $f(x)$ over the test set — so $\hat\sigma$ is recorded here as a first-class model summary. The two models live on completely different output scales: the synthetic LightGBM predicts a roughly zero-mean target with $\hat\sigma = 4.71$, while the Sachs model predicts raw Akt-kinase activity with $\hat\sigma = 116.76$ around a mean near 81. Reporting attribution shifts in raw units would therefore make the two datasets incomparable. Dividing every magnitude by $\hat\sigma$ removes the scale: a Magnitude Divergence of 0.10 means a shift of 10% of the model's output spread on either dataset, regardless of whether that output is a unitless synthetic target or an Akt concentration. The justification for choosing $\hat\sigma$ specifically — rather than any other normaliser — is given in Section 3.5.3, and follows from the additivity of Shapley values.
+Beyond accuracy, $\hat\sigma$ is recorded as a first-class model summary because all magnitude metrics in Section 3.5 are reported as a fraction of it. The two datasets live on incomparable raw scales ($\hat\sigma = 4.71$ for the synthetic target vs. $\hat\sigma = 116.76$ Akt units for Sachs); dividing by $\hat\sigma$ makes a Magnitude Divergence of 0.10 mean the same thing on both tracks a shift of 10% of the model's explainable output spread. The formal justification for this choice of normaliser is given in Section 3.5.3.
 
 ## 3.3 Causal Discovery Framework
 
@@ -144,21 +144,17 @@ Constraint-based discovery uses causal-learn's pc function with the Fisher-z tes
 
 ### 3.3.3 X->Y Edge Augmentation Rule
 
-Both PC and LiNGAM operate on the X-only feature matrix and therefore produce no edges connecting features to the target variable Y. An explicit augmentation step appends X_i -> Y edges for every feature used by the trained LGBM model (all 50 features, since feature selection is disabled). Sink nodes, i.e., features with no outgoing X->X edges, are also connected to Y to ensure the target remains a valid terminal node.
-
-The primary motivation for this augmentation is that Shapley Flow operates explicitly on directed edges: attribution credit flows from source nodes to Y along active edge sequences. Without a direct X_i -> Y edge, a feature can only accumulate credit via indirect pathways X_i -> ... -> Y, and features not connected to Y via any discovered X->X chain would receive zero attribution. The augmentation guarantees every feature has at least one direct route to Y. Asymmetric Shapley and Causal Shapley do not require this augmentation, but the same rule is applied uniformly across all methods and to the True DAG reference graph, ensuring differences in attribution outcomes reflect method behavior rather than graph topology differences.
+Both PC and LiNGAM operate on the X-only feature matrix and therefore produce no edges to Y. Because Shapley Flow requires at least one direct X_i -> Y edge per feature to accumulate edge credit, an explicit augmentation step appends X_i -> Y edges for every feature in the prediction model. In practice this connects all features to Y, since feature selection is disabled. The same rule is applied uniformly across all methods and to the True DAG reference graph.
 
 ### 3.3.4 Discovery Performance
 
-Figure 3.1 summarizes causal discovery quality (F1 on the X->X edges) against predictive model fit (test-set R2) for both tracks.
+Figure 3.1 summarizes causal discovery quality (F1 on the X->X edges) and predictive model fit (test-set R2) for both datasets.
 
 ![Causal discovery F1 versus model R2 across both datasets](figures/discovery_vs_r2.png)
 
 ***Figure 3.1: Causal discovery F1 (X->X edges) versus LightGBM test R2, synthetic vs. Sachs.*** Bars give PC and LiNGAM F1 on each dataset; the dashed line tracks model R2. The discovery-quality ordering of the two algorithms reverses between tracks even as model fit declines from synthetic to real data.
 
-On the synthetic confounded dataset, PC substantially outperforms LiNGAM (F1: 0.567 vs. 0.250). PC's conditional independence framework provides partial protection against the 5 hidden confounders, recovering 40 of the 87 true X->X edges at precision 0.741 with only 14 false positives. LiNGAM over-discovers 105 edges with 81 false positives because its functional causal model cannot distinguish direct causal paths from confounder-induced correlations.
-
-On the Sachs real dataset the hierarchy reverses: against the 17 true X->X edges of the consensus DAG, LiNGAM reaches F1 = 0.326 (precision 0.269, recall 0.412; 7 true edges among 26 reported) while PC reaches only F1 = 0.167 (precision 0.158, recall 0.176; 3 true edges among 19 reported). Log-transformed protein concentrations retain non-Gaussian properties that LiNGAM can exploit, whereas PC's Fisher-z test loses discriminative power under the non-linear, non-Gaussian residuals that persist after transformation. Both algorithms perform far worse on the real data than the synthetic case despite the larger sample size (5,972 vs. 800 training rows), and PC's raw output required removing two edges to break cycles before it was a valid DAG, confirming that real biological signal violates the estimators' assumptions more severely than the synthetic confounded setting.
+On the synthetic track, PC outperforms LiNGAM (F1: 0.567 vs. 0.250): conditional independence tests partially block confounder-induced associations, while LiNGAM's functional causal model conflates them with direct paths, flooding the graph with 81 false positives. On Sachs the ordering flips (F1: 0.326 vs. 0.167), log-transformed protein concentrations retain non-Gaussian residuals that LiNGAM can exploit, a property that PC's Fisher-z test cannot leverage. Notably, both algorithms perform substantially worse on the real data despite the larger sample size, and PC's output required removing two cycles before it was a valid DAG, a sign that real biological signal is harder to recover than synthetic confounded structure.
 
 ## 3.4 Shapley Computation Settings
 
@@ -229,7 +225,7 @@ The cost is the same order as Traditional Shapley; the topological sampler adds 
 
 ### 3.4.3 Causal Shapley Values
 
-Causal Shapley replaces the observational coalition value with post-interventional sampling that approximates Pearl's do-operator, v_do(S) = E[f(X) | do(X_S = x_S)]. The method has two nested levels of stochasticity that must be kept distinct: an outer loop that draws a fresh uniform linear extension of the component DAG for each Shapley trial, and an inner loop that, for each coalition, estimates the interventional value from M draws of the post-interventional distribution while traversing components in a fixed deterministic topological order so that each node's parents are resolved before the node itself. Each draw fixes the intervened features and fills in the remaining features from their parents using the closed-form conditional Gaussian of the background data; inside a confounded component the missing features are drawn independently given their parents (which destroys the spurious within-component correlation), while in an ordinary component they are drawn jointly given the parents and any fixed siblings. In this pipeline the confounder list is empty, so every feature is its own singleton component, the outer ordering reduces to a uniform linear extension of the full feature DAG, and the inner sampler always takes the univariate-Gaussian branch. The experiments use T = 100 outer permutations and M = 10 inner samples.
+Causal Shapley replaces the observational coalition value with post-interventional sampling that approximates Pearl's do-operator, v_do(S) = E[f(X) | do(X_S = x_S)]. The method has two nested levels of stochasticity that must be kept distinct: an outer loop that draws a fresh uniform linear extension of the component DAG for each Shapley trial, and an inner loop that, for each coalition, estimates the interventional value from M draws of the post-interventional distribution while traversing components in a fixed deterministic topological order so that each node's parents are resolved before the node itself. Each draw fixes the intervened features and fills in the remaining features from their parents using the closed-form conditional Gaussian of the background data; inside a confounded component the missing features are drawn independently given their parents (which destroys the spurious within-component correlation), while in an ordinary component they are drawn jointly given the parents and any fixed siblings. In this pipeline the confounder list is empty, so every feature is its own component, the outer ordering reduces to a uniform linear extension of the full feature DAG, and the inner sampler always takes the univariate-Gaussian branch. The experiments use T = 100 outer permutations and M = 10 inner samples.
 
 ```
 ALGORITHM  Causal Shapley (post-interventional)
@@ -260,7 +256,7 @@ The cost is O(T * n * M) model evaluations, markedly heavier than Traditional or
 
 ### 3.4.4 Shapley Flow
 
-Shapley Flow treats directed edges as the players of the cooperative game, permuting the full edge set rather than the feature set. In each of T = 100 trials all edges (X->X and X->Y) are randomly permuted and activated sequentially, and the system value is evaluated after each activation. The node-value assignment is binary: a node takes its foreground value if it is a source with an active outgoing edge, or if it has an active incoming edge, or if its direct edge to Y is active; otherwise it takes its background value, and Y is always dropped before the model is evaluated. No intermediate model calls are made between X features; the model is evaluated only on the complete node-value vector at each edge addition. Node-level attributions are recovered by summing each node's outgoing edge credits, and by construction the credits satisfy efficiency, summing to f(x_fg) - f(x_bg). The edge ordering is intentionally unconstrained rather than causal-depth ordered: if parent edges always preceded child edges, an intermediate node would already be foreground via its incoming edge by the time its edge into Y fired, driving that marginal to nearly zero; an unconstrained order lets the X->Y edge fire first in about half the trials, capturing the feature's full direct effect. The X->Y augmentation of Section 3.3.3 is essential here, as it guarantees every feature has a direct route to accumulate edge credit.
+Shapley Flow treats directed edges as the players of the cooperative game, permuting the full edge set rather than the feature set. In each of T = 100 trials all edges (X->X and X->Y) are randomly permuted and activated sequentially, and the system value is evaluated after each activation. The node-value assignment is binary: a node takes its foreground value if it is a source with an active outgoing edge, or if it has an active incoming edge, or if its direct edge to Y is active; otherwise it takes its background value, and Y is always dropped before the model is evaluated. No intermediate model calls are made between X features; the model is evaluated only on the complete node-value vector at each edge addition. Node-level attributions are recovered by summing each node's outgoing edge credits, and by construction the credits satisfy efficiency, summing to f(x_fg) - f(x_bg). The X->Y augmentation of Section 3.3.3 is essential here, as it guarantees every feature has a direct route to accumulate edge credit.
 
 ```
 ALGORITHM  Shapley Flow (uniform edge-permutation)
@@ -294,9 +290,9 @@ The cost is T * (|E| + 1) model evaluations per instance (for the synthetic syst
 
 ### 3.5.1 Notation
 
-The following notation is used throughout the evaluation framework. Let N denote the number of input features, F = {1,...,N} the feature index set, and I the set of test instances. Let f: R^N -> R denote the trained predictive model and sigma_hat = std_i f(x_i) the standard deviation of its prediction over the test set; sigma_hat is the natural scale of the quantity the attributions explain, and every magnitude number in this chapter is reported as a fraction of it. Let m index the Shapley method (Traditional, Asymmetric, Causal, Flow) and G the causal graph source (no graph, PC, LiNGAM, True DAG).
+The following notation is used throughout the evaluation framework. Let $N$ be the number of input features, $\mathcal{F} = \{1,\ldots,N\}$ the feature index set, and $\mathcal{I}$ the set of test instances. The trained predictive model is $f: \mathbb{R}^N \to \mathbb{R}$, and $\hat\sigma = \mathrm{std}_{i \in \mathcal{I}}\, f(x_i)$ is the standard deviation of its predictions over the test set, the natural scale of the attribution space, so every magnitude number in this chapter is reported as a fraction of it. Let $m \in \{\text{Traditional, Asymmetric, Causal, Flow}\}$ index the Shapley method and $G \in \{\emptyset, \text{PC}, \text{LiNGAM}, \text{True DAG}\}$ the causal graph source.
 
-The per-instance per-feature attribution is phi^{m,G}_{i,f}: the Shapley value assigned to feature f for instance i by method m using graph G. The subject of every comparison is a discovered-graph result (m, G) with G in {PC, LiNGAM}; it is always compared against one reference configuration, of which there are three: the baseline ref (Traditional Shapley, graph-free), the oracle ref (the True DAG on the synthetic track, the consensus reference DAG on Sachs), and the cross-discovery ref (the same method on the opposite discovered graph, PC <-> LiNGAM).
+The per-instance per-feature attribution $\phi^{m,G}_{i,f}$ is the Shapley value assigned to feature $f \in \mathcal{F}$ for instance $i \in \mathcal{I}$ by method $m$ using graph $G$. Every comparison fixes a subject $(m, G)$ with $G \in \{\text{PC}, \text{LiNGAM}\}$ and contrasts it against one of three reference configurations: the **baseline** ref (Traditional Shapley, $G = \emptyset$), the **oracle** ref (True DAG on synthetic, consensus DAG on Sachs), and the **cross-discovery** ref (same method on the opposite discovered graph, $\text{PC} \leftrightarrow \text{LiNGAM}$).
 
 ### 3.5.2 Two Dimensions, Two Metrics, Three Comparisons
 
@@ -305,11 +301,11 @@ Every comparison in this chapter asks the same two questions of a (method, graph
 * **Magnitude Divergence (ΔM)** — how much the absolute attribution moves relative to the reference, expressed as a fraction of the model-output standard deviation sigma_hat. ΔM >= 0; ΔM = 0.10 means the typical attribution shifted by 10% of sigma_hat.
 * **Sign Disagreement (D)** — the fraction of (instance, feature) attributions that point in the opposite direction to the reference. D in [0, 1]; D = 0 means perfect directional agreement.
 
-The only thing that changes between comparisons is the reference, which we carry as a subscript so the same two names cover all six cells of Table 3.3:
+The only thing that changes between comparisons is the reference, which we carry as a Tag so the same two names cover all six cells of Table 3.3:
 
-* subscript **base** — reference is Traditional Shapley (how far a graph moves attributions away from the graph-free baseline); Section 4.2.
-* subscript **oracle** — reference is the True / consensus DAG (how faithfully a discovered graph recovers the oracle attributions); Section 4.3.
-* subscript **disc** — reference is the opposite discovered graph (how much the choice of discovery algorithm alone perturbs attributions); Section 4.4.
+* Tag **base** — reference is Traditional Shapley (how far a graph moves attributions away from the graph-free baseline); Section 4.2.
+* Tag **oracle** — reference is the True / consensus DAG (how faithfully a discovered graph recovers the oracle attributions); Section 4.3.
+* Tag **disc** — reference is the opposite discovered graph (how much the choice of discovery algorithm alone perturbs attributions); Section 4.4.
 
 ***Table 3.3: Evaluation Metric Framework. Two metrics, two dimensions, three reference comparisons. The acronyms used in earlier drafts map as TGA -> ΔM and GSS -> ΔM_disc (magnitude); 1-SA -> D and 1-SSS -> D_disc (sign).***
 
@@ -320,31 +316,30 @@ The only thing that changes between comparisons is the reference, which we carry
 
 ### 3.5.3 Three Measurement Levels
 
-Both metrics are defined once at the atomic instance level and then lifted to the feature and global levels by fixed aggregation operators, so a single definition serves all three reporting granularities. The level is stated wherever a value is reported; as a convention, tables give the global level, heatmaps the feature level, and violin/scatter plots the instance level.
+Both metrics are defined once at the atomic instance level and then lifted to the feature and global levels by fixed aggregation operators, so a single definition serves all three reporting granularities. The level is stated wherever a value is reported; as a convention, tables give the global level, heatmaps the feature level, and scatter plots the instance level.
 
 **Instance level (signed).** The atomic magnitude quantity is the signed gap between absolute attributions for one (instance, feature):
 
-  delta^{ref}_{i,f} = |phi^{m,G}_{i,f}| - |phi^{ref}_{i,f}|.
+$$\delta^{\text{ref}}_{i,f} = \left|\phi^{m,G}_{i,f}\right| - \left|\phi^{\text{ref}}_{i,f}\right|.$$
 
-This keeps its sign on purpose: a positive value means the discovered graph inflates the feature's local importance relative to the reference, a negative value means it suppresses it. The atomic sign quantity is the disagreement indicator 1[ sign(phi^{m,G}_{i,f}) != sign(phi^{ref}_{i,f}) ], defined only on instances where the reference attribution is non-zero.
+This keeps its sign on purpose: a positive value means the discovered graph inflates the feature's local importance relative to the reference, a negative value means it suppresses it. The atomic sign quantity is the disagreement indicator $\mathbf{1}\!\left[\operatorname{sign}(\phi^{m,G}_{i,f}) \neq \operatorname{sign}(\phi^{\text{ref}}_{i,f})\right]$, defined only on instances where the reference attribution is non-zero.
 
-**Feature level (non-negative).** Per feature, the instance gaps are collapsed by a root-mean-square over instances and normalised by sigma_hat:
+**Feature level (non-negative).** Per feature, the instance gaps are collapsed by a root-mean-square over instances and normalised by $\hat\sigma$:
 
-  ΔM^{ref}_f = sqrt( (1/|I|) * Sum_i (delta^{ref}_{i,f})^2 ) / sigma_hat.
+$$\Delta M^{\text{ref}}_f = \frac{1}{\hat\sigma}\sqrt{\frac{1}{|\mathcal{I}|}\sum_{i \in \mathcal{I}} \left(\delta^{\text{ref}}_{i,f}\right)^2}.$$
 
-The RMS (rather than a plain mean) measures the typical size of the per-instance change without letting positive and negative gaps cancel, and dividing by sigma_hat puts the result on a single interpretable scale — percent of model-output standard deviation — that is comparable across features and across datasets of different raw units.
+The RMS (rather than a plain mean) measures the typical size of the per-instance change without letting positive and negative gaps cancel, and dividing by $\hat\sigma$ puts the result on a single interpretable scale (percentage of model-output standard deviation) that is comparable across features and across datasets of different raw units.
 
-The choice of sigma_hat as that scale is not arbitrary; it is the natural unit of the attribution space itself. By the efficiency (local accuracy) axiom, every Shapley method considered here satisfies Sum_f phi^{m,G}_{i,f} = f(x_i) - E[f(x)], i.e. the attributions for an instance sum to that instance's centred prediction. The attributions therefore live on the same scale as the model output, and the spread of that output, sigma_hat = std_i f(x_i), is the total dispersion the whole SHAP space has to distribute. Normalising a magnitude change by sigma_hat thus expresses it as a fraction of the attribution budget that actually exists, which is why the metric transfers cleanly across models and across systems of different nature: a value of 0.10 means "a tenth of the model's explainable variation" whether the target is a unitless synthetic variable or a raw protein concentration, without any dependence on the units, the number of features, or the magnitude of the predictions.
+The choice of $\hat\sigma$ as that scale is not arbitrary; it is the natural unit of the attribution space itself. By the efficiency axiom, every Shapley method here satisfies $\sum_{f} \phi^{m,G}_{i,f} = f(x_i) - \mathbb{E}[f(x)]$, so the attributions live on the same scale as the model output and $\hat\sigma = \mathrm{std}_{i}\, f(x_i)$ is the total dispersion the whole SHAP space has to distribute. Normalising by $\hat\sigma$ expresses a magnitude change as a fraction of the attribution budget that actually exists, a value of 0.10 means "a tenth of the model's explainable variation" regardless of whether the target is a unitless synthetic variable or a raw protein concentration.
 
-The feature-level sign metric is the disagreement rate D^{ref}_f, the fraction of valid instances whose sign disagrees with the reference.
+The feature-level sign metric is the disagreement rate $D^{\text{ref}}_f$, the fraction of valid instances whose sign disagrees with the reference.
 
 **Global level.** Both feature-level metrics are averaged over features to a single scalar per (method, graph, reference):
 
-  ΔM^{ref} = (1/N) * Sum_f ΔM^{ref}_f,  D^{ref} = (1/N) * Sum_f D^{ref}_f.
+$$\Delta M^{\text{ref}} = \frac{1}{N}\sum_{f \in \mathcal{F}} \Delta M^{\text{ref}}_f, \qquad D^{\text{ref}} = \frac{1}{N}\sum_{f \in \mathcal{F}} D^{\text{ref}}_f.$$
 
-The cross-discovery metrics ΔM_disc and D_disc are the same constructions with the subject fixed to PC and the reference to LiNGAM.
+The cross-discovery metrics $\Delta M_{\text{disc}}$ and $D_{\text{disc}}$ are the same constructions with the subject fixed to PC and the reference to LiNGAM.
 
-This is the main change from earlier versions of this work. Previous drafts aggregated magnitude as a plain mean of absolute per-feature means in the raw attribution units; on the real-data track those numbers were reported in raw Akt units and were not comparable to the synthetic track. The RMS-over-sigma_hat construction above replaces that throughout: the conclusions are unchanged, but feature- and global-level magnitudes now share one meaning — a percent change of the model-output standard deviation — on both datasets. The sign metrics are unaffected; they count directional disagreement exactly as before.
 
 # 4. Results and Empirical Analysis
 
@@ -370,7 +365,7 @@ On the real-world Sachs dataset, the performance hierarchy reverses: LiNGAM outp
 
 ## 4.2 Graph-Free Baseline Deviation Analysis
 
-Each combination of structure-aware Shapley method and discovered graph is compared against Traditional Shapley, the reference here being the graph-free baseline (subscript base). The two metrics of Section 3.5 are reported throughout: Magnitude Divergence ΔM_base and Sign Disagreement D_base, both at the global level. ΔM_base is a percent of the model-output standard deviation sigma_hat, so a value of 0.05 means the typical attribution moved by 5% of sigma_hat; D_base is the fraction of attributions whose direction flips relative to the baseline.
+Each combination of structure-aware Shapley method and discovered graph is compared against Traditional Shapley, the reference here being the graph-free baseline (Tag base). The two metrics of Section 3.5 are reported throughout: Magnitude Divergence ΔM_base and Sign Disagreement D_base, both at the global level. ΔM_base is a percent of the model-output standard deviation sigma_hat, so a value of 0.05 means the typical attribution moved by 5% of sigma_hat; D_base is the fraction of attributions whose direction flips relative to the baseline.
 
 Because magnitudes are now normalised by sigma_hat (Section 3.5.3), the two datasets are directly comparable for the first time — the Sachs numbers are no longer in raw Akt units. Conclusions are unchanged from earlier drafts; only the scale is now shared. Tables 4.1 and 4.2 report ΔM_base and D_base with Traditional Shapley as the reference.
 
