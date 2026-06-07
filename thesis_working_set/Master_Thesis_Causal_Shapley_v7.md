@@ -346,9 +346,9 @@ The cross-discovery metrics $\Delta M_{\text{disc}}$ and $D_{\text{disc}}$ are t
 
 ### 4.1.1 Performance on the Confounded Linear System
 
-The 5 hidden confounders introduce spurious correlations that directly violate the causal sufficiency assumption of both estimators. PC exhibits high structural resilience, recovering 40 of 87 true X $\to$ X edges with precision 0.741 and only 14 false positives. Thanks to conditional independence testing evaluates localized relationships, it can partially block extended confounder-induced association paths through careful conditioning on intermediate variables (Spirtes, Glymour, & Scheines, 2000), allowing PC to maintain a structurally conservative graph relatively close to the true sparse structure.
+The 5 hidden confounders introduce spurious correlations that directly violate the causal sufficiency assumption of both estimators. PC exhibits high structural resilience, recovering 40 of 87 true X $\to$ X edges with precision 0.741 and F1 of 0.567. Thanks to conditional independence testing evaluates localized relationships, it can partially block extended confounder-induced association paths through careful conditioning on intermediate variables (Spirtes, Glymour, & Scheines, 2000), allowing PC to maintain a structurally conservative graph relatively close to the true sparse structure.
 
-DirectLiNGAM experiences severe structural degradation, reporting 105 edges with only 24 correct and 81 false positives (F1 = 0.250, SHD = 144). Standard linear non-Gaussian functional models are highly sensitive to unmeasured variables; because latent confounders violate the foundational assumption of mutually independent exogenous noise, the algorithm frequently misinterprets confounder-induced correlations as direct causal pathways (Hoyer et al., 2008; Shimizu et al., 2011). This over-discovery creates the central experimental contrast: the same Shapley methods receive fundamentally different structural priors from the two discovery algorithms.
+DirectLiNGAM experiences severe structural degradation, reporting 105 edges with only 24 correct and 81 false positives with precision 0.23 and F1 of 0.25. Standard linear non-Gaussian functional models are highly sensitive to unmeasured variables; because latent confounders violate the foundational assumption of mutually independent exogenous noise, the algorithm frequently misinterprets confounder-induced correlations as direct causal pathways (Hoyer et al., 2008; Shimizu et al., 2011). This over-discovery creates the central experimental contrast: the same Shapley methods receive fundamentally different structural priors from the two discovery algorithms.
 
 ![Adjacency comparison on the synthetic linear-confounded dataset](figures/adjacency_comparison_linear_conf_f50_s1000_p30.png)
 
@@ -356,7 +356,7 @@ DirectLiNGAM experiences severe structural degradation, reporting 105 edges with
 
 ### 4.1.2 Performance Reversal on the Sachs Cell Signaling Dataset
 
-On the real-world Sachs dataset, the performance hierarchy reverses: LiNGAM outperforms PC (F1 = 0.326 vs. 0.167). Real intracellular signaling pathways generate joint distributions with strong non-Gaussian marginals even after log1p transformation, a property that LiNGAM's functional causal model exploits. PC's Fisher-z test, which assumes Gaussian residuals, loses discriminative power under this complexity. Both algorithms perform substantially worse on the real dataset than on the synthetic confounded case, despite the much larger sample size (5,972 vs. 800 training rows).
+On the real-world Sachs dataset, the performance hierarchy reverses: LiNGAM outperforms PC (F1 = 0.326 vs. 0.167; precision = 0.269 vs. 0.158). Real intracellular signaling pathways generate joint distributions with strong non-Gaussian marginals even after log1p transformation, a property that LiNGAM's functional causal model is explicitly designed to exploit. Conversely, PC's Fisher-z test assumes linear, multivariate Gaussian residuals. This introduces a known sample-size paradox: while larger sample sizes generally improve causal discovery, providing PC with a massive biological dataset (5,972 training rows compared to 800 in the synthetic side) gives the statistical tests so much power that they become hypersensitive to minor non-Gaussian distributional violations (Glymour et al., 2019; Ramsey et al., 2014). Consequently, PC loses its discriminative thresholding power under this physical complexity, leading to severe under-recovery.
 
 ![Adjacency comparison on the Sachs dataset](figures/adjacency_comparison_sachs.png)
 
@@ -737,11 +737,15 @@ Glymour, C., Zhang, K., & Spirtes, P. (2019). Review of causal discovery methods
 
 Heskes, T., Sijben, E., Bucur, I. G., & Claassen, T. (2020). Causal Shapley values: Exploiting causal knowledge to explain individual predictions of complex models. Advances in Neural Information Processing Systems, 33, 4778-4789.
 
+Hoyer, P. O., Shimizu, S., Kerminen, A. J., & Palviainen, M. (2008). Estimation of causal effects using linear non-Gaussian causal models with hidden variables. *International Journal of Approximate Reasoning*, 49(2), 362-378.
+
 Lundberg, S. M., & Lee, S.-I. (2017). A unified approach to interpreting model predictions. Advances in Neural Information Processing Systems, 30, 4765-4774.
 
 Mahajan, D., Tan, C., & Sharma, A. (2020). Preserving causal constraints in counterfactual explanations for machine learning classifiers. Advances in Neural Information Processing Systems, 33.
 
 Pearl, J. (2009). Causality: Models, reasoning, and inference (2nd ed.). Cambridge University Press.
+
+Ramsey, J. D., Hanson, S. J., & Glymour, C. (2014). Multi-subject search correctly identifies causal connections and most causal directions in the fMRI multisubject network challenge. *NeuroImage*, 100, 362-378.
 
 Sachs, K., Perez, O., Pe'er, D., Lauffenburger, D. A., & Nolan, G. P. (2005). Causal protein-signaling networks derived from multiparameter single-cell data. Science, 308(5721), 523-529. https://doi.org/10.1126/science.1105809
 
