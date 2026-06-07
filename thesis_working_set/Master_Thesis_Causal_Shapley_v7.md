@@ -366,6 +366,25 @@ On the real-world Sachs dataset, the performance hierarchy reverses: LiNGAM outp
 
 Each combination of structure-aware Shapley method and discovered graph is compared against Traditional Shapley, the reference here being the graph-free baseline (Tag base). The two metrics of Section 3.5 are reported throughout: Magnitude Divergence $\Delta M_{\text{base}}$ and Sign Disagreement $D_{\text{base}}$, both at the global level. $\Delta M_{\text{base}}$ is a percent of the model-output standard deviation $\hat\sigma$, so a value of 0.05 means the typical attribution moved by 5% of $\hat\sigma$; $D_{\text{base}}$ is the fraction of attributions whose direction flips relative to the baseline.
 
+The two metrics are read jointly in Figures 4.3 and 4.4, which place each method-graph configuration on the magnitude axis ($\Delta M_{\text{base}}$, horizontal) against the sign axis ($D_{\text{base}}$, vertical). A configuration in the lower-left corner deviates little from the graph-free baseline on both axes; movement up and to the right marks growing departure in direction and magnitude respectively.
+
+<div style="display:flex; gap:2em; flex-wrap:wrap; align-items:flex-start;">
+<div style="flex:1; min-width:300px;">
+
+![Alignment to Traditional on the synthetic dataset](figures/tga_sa_scatter_traditional_linear_conf_f50_s1000_p30.png)
+
+***Figure 4.3: Magnitude versus sign deviation from Traditional Shapley on the synthetic linear-confounded dataset.*** Colour encodes method and marker shape encodes the discovery algorithm. Asymmetric Shapley clusters tightly in the lower-left corner under both graphs, while Causal and Flow sit far to the upper-right, deviating strongly on both axes regardless of which graph supplies the structure.
+
+</div>
+<div style="flex:1; min-width:300px;">
+
+![Alignment to Traditional on the Sachs dataset](figures/tga_sa_scatter_traditional_sachs.png)
+
+***Figure 4.4: Magnitude versus sign deviation from Traditional Shapley on the Sachs dataset ($\Delta M_{\text{base}}$ in % of model-output std).*** The same lower-left clustering of Asymmetric Shapley holds, but both axes spread wider than on synthetic and the PC/LiNGAM markers separate more visibly for Causal and Flow, the early signal of the discovery-algorithm sensitivity examined in Section 4.4.
+
+</div>
+</div>
+
 <div style="display:flex; gap:2em; flex-wrap:wrap;">
 <div style="flex:1; min-width:300px;">
 
@@ -393,25 +412,6 @@ Each combination of structure-aware Shapley method and discovered graph is compa
 | Causal | LiNGAM | 33.10% | 9.31% |
 | Flow | PC | 40.20% | 12.68% |
 | Flow | LiNGAM | 41.50% | 14.13% |
-
-</div>
-</div>
-
-The two metrics are read jointly in Figures 4.3 and 4.4, which place each method-graph configuration on the magnitude axis ($\Delta M_{\text{base}}$, horizontal) against the sign axis ($D_{\text{base}}$, vertical). A configuration in the lower-left corner deviates little from the graph-free baseline on both axes; movement up and to the right marks growing departure in direction and magnitude respectively.
-
-<div style="display:flex; gap:2em; flex-wrap:wrap; align-items:flex-start;">
-<div style="flex:1; min-width:300px;">
-
-![Alignment to Traditional on the synthetic dataset](figures/tga_sa_scatter_traditional_linear_conf_f50_s1000_p30.png)
-
-***Figure 4.3: Magnitude versus sign deviation from Traditional Shapley on the synthetic linear-confounded dataset.*** Colour encodes method and marker shape encodes the discovery algorithm. Asymmetric Shapley clusters tightly in the lower-left corner under both graphs, while Causal and Flow sit far to the upper-right, deviating strongly on both axes regardless of which graph supplies the structure.
-
-</div>
-<div style="flex:1; min-width:300px;">
-
-![Alignment to Traditional on the Sachs dataset](figures/tga_sa_scatter_traditional_sachs.png)
-
-***Figure 4.4: Magnitude versus sign deviation from Traditional Shapley on the Sachs dataset ($\Delta M_{\text{base}}$ in % of model-output std).*** The same lower-left clustering of Asymmetric Shapley holds, but both axes spread wider than on synthetic and the PC/LiNGAM markers separate more visibly for Causal and Flow, the early signal of the discovery-algorithm sensitivity examined in Section 4.4.
 
 </div>
 </div>
@@ -462,6 +462,23 @@ The oracle-alignment analysis measures how closely each combination of structure
 <div style="display:flex; gap:2em; flex-wrap:wrap; align-items:flex-start;">
 <div style="flex:1; min-width:300px;">
 
+![Alignment to True on the synthetic dataset](figures/tga_sa_scatter_true_linear_conf_f50_s1000_p30.png)
+
+***Figure 4.7: Magnitude versus sign deviation from the True DAG oracle, synthetic dataset.*** Colour encodes method, marker shape encodes the discovery algorithm. Asymmetric Shapley sits in the lower-left corner under both graphs, recovering the oracle attributions almost exactly, while Causal and Flow sit far up and to the right.
+
+</div>
+<div style="flex:1; min-width:300px;">
+
+![Alignment to True on the Sachs dataset](figures/tga_sa_scatter_true_sachs.png)
+
+***Figure 4.8: Magnitude versus sign deviation from the consensus DAG oracle, Sachs dataset ($\Delta M_{\text{oracle}}$ in % of model-output std).*** The lower-left ordering is less clean than on the synthetic track: Asymmetric still aligns best on magnitude, but the sign axis compresses the three methods together and the PC/LiNGAM markers separate widely on magnitude.
+
+</div>
+</div>
+
+<div style="display:flex; gap:2em; flex-wrap:wrap; align-items:flex-start;">
+<div style="flex:1; min-width:300px;">
+
 ***Table 4.3: Oracle Alignment -- Linear-Conf Synthetic Dataset. $\Delta M_{\text{oracle}}$ in % of model-output std; $D_{\text{oracle}}$ in % of attributions.***
 
 | **Method** | **Graph** | $D_{\text{oracle}}$ | $\Delta M_{\text{oracle}}$ |
@@ -486,23 +503,6 @@ The oracle-alignment analysis measures how closely each combination of structure
 | Causal | LiNGAM | 32.30% | 8.31% |
 | Flow | PC | 28.36% | 15.52% |
 | Flow | LiNGAM | 23.81% | 8.12% |
-
-</div>
-</div>
-
-<div style="display:flex; gap:2em; flex-wrap:wrap; align-items:flex-start;">
-<div style="flex:1; min-width:300px;">
-
-![Alignment to True on the synthetic dataset](figures/tga_sa_scatter_true_linear_conf_f50_s1000_p30.png)
-
-***Figure 4.7: Magnitude versus sign deviation from the True DAG oracle, synthetic dataset.*** Colour encodes method, marker shape encodes the discovery algorithm. Asymmetric Shapley sits in the lower-left corner under both graphs, recovering the oracle attributions almost exactly, while Causal and Flow sit far up and to the right.
-
-</div>
-<div style="flex:1; min-width:300px;">
-
-![Alignment to True on the Sachs dataset](figures/tga_sa_scatter_true_sachs.png)
-
-***Figure 4.8: Magnitude versus sign deviation from the consensus DAG oracle, Sachs dataset ($\Delta M_{\text{oracle}}$ in % of model-output std).*** The lower-left ordering is less clean than on the synthetic track: Asymmetric still aligns best on magnitude, but the sign axis compresses the three methods together and the PC/LiNGAM markers separate widely on magnitude.
 
 </div>
 </div>
@@ -549,6 +549,23 @@ Tables 4.5 and 4.6 quantify how much the choice between PC and LiNGAM affects th
 <div style="display:flex; gap:2em; flex-wrap:wrap; align-items:flex-start;">
 <div style="flex:1; min-width:300px;">
 
+![Graph-discovery instability on the synthetic dataset](figures/gss_sss_scatter_linear_conf_f50_s1000_p30.png)
+
+***Figure 4.11: Graph-discovery instability, synthetic dataset.*** Each point is one Shapley method, positioned by its Magnitude Divergence ($\Delta M_{\text{disc}}$, horizontal) and Sign Disagreement ($D_{\text{disc}}$, vertical) between the PC and LiNGAM variants. Asymmetric sits in the lower-left (stable on both axes), Causal in the upper-right (unstable on both), and Flow in between, magnitude-sensitive but comparatively sign-stable.
+
+</div>
+<div style="flex:1; min-width:300px;">
+
+![Graph-discovery instability on the Sachs dataset](figures/gss_sss_scatter_sachs.png)
+
+***Figure 4.12: Graph-discovery instability, Sachs dataset ($\Delta M_{\text{disc}}$ in % of model-output std).*** The same ordering holds, with both axes wider than on synthetic; Causal remains the most sign-unstable while Flow carries the largest magnitude difference between graphs.
+
+</div>
+</div>
+
+<div style="display:flex; gap:2em; flex-wrap:wrap; align-items:flex-start;">
+<div style="flex:1; min-width:300px;">
+
 ***Table 4.5: PC vs. LiNGAM Sensitivity -- Linear-Conf Synthetic Dataset. $\Delta M_{\text{disc}}$ in % of model-output std; $D_{\text{disc}}$ in % of attributions.***
 
 | **Method** | $\Delta M_{\text{disc}}$ | $D_{\text{disc}}$ |
@@ -567,23 +584,6 @@ Tables 4.5 and 4.6 quantify how much the choice between PC and LiNGAM affects th
 | Asymmetric | 8.46% | 18.60% |
 | Causal | 10.11% | 31.80% |
 | Flow | 14.92% | 21.88% |
-
-</div>
-</div>
-
-<div style="display:flex; gap:2em; flex-wrap:wrap; align-items:flex-start;">
-<div style="flex:1; min-width:300px;">
-
-![Graph-discovery instability on the synthetic dataset](figures/gss_sss_scatter_linear_conf_f50_s1000_p30.png)
-
-***Figure 4.11: Graph-discovery instability, synthetic dataset.*** Each point is one Shapley method, positioned by its Magnitude Divergence ($\Delta M_{\text{disc}}$, horizontal) and Sign Disagreement ($D_{\text{disc}}$, vertical) between the PC and LiNGAM variants. Asymmetric sits in the lower-left (stable on both axes), Causal in the upper-right (unstable on both), and Flow in between, magnitude-sensitive but comparatively sign-stable.
-
-</div>
-<div style="flex:1; min-width:300px;">
-
-![Graph-discovery instability on the Sachs dataset](figures/gss_sss_scatter_sachs.png)
-
-***Figure 4.12: Graph-discovery instability, Sachs dataset ($\Delta M_{\text{disc}}$ in % of model-output std).*** The same ordering holds, with both axes wider than on synthetic; Causal remains the most sign-unstable while Flow carries the largest magnitude difference between graphs.
 
 </div>
 </div>
