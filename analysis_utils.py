@@ -1931,7 +1931,7 @@ def _draw_ego_panel(
     for nd in node_list:
         x, y = pos[nd]
         ax.text(x, y, names[nd], ha="center", va="center", zorder=5,
-                fontsize=(10 if nd == h_idx else 8.5),
+                fontsize=(13 if nd == h_idx else 11),
                 fontweight=("bold" if nd == h_idx else "normal"),
                 color=("white" if nd == h_idx else "#2C3E50"))
 
@@ -1942,30 +1942,30 @@ def _draw_ego_panel(
 
     if n_p > 0:
         ax.text(0.0, hdr_y, f"parents  ({n_p})",
-                ha="center", va="bottom", fontsize=8, color=C_IN, fontweight="semibold")
+                ha="center", va="bottom", fontsize=10, color=C_IN, fontweight="semibold")
         ax.text(0.5, hdr_y - 0.02, "← incoming",
-                ha="center", va="bottom", fontsize=7, color=C_IN, fontstyle="italic")
+                ha="center", va="bottom", fontsize=9, color=C_IN, fontstyle="italic")
     else:
         ax.text(0.0, hdr_y, "source node",
-                ha="center", va="bottom", fontsize=7.5, color="#999", fontstyle="italic")
+                ha="center", va="bottom", fontsize=9.5, color="#999", fontstyle="italic")
 
     if n_c > 0:
         ax.text(2.0, hdr_y, f"children  ({n_c})",
-                ha="center", va="bottom", fontsize=8, color=C_OUT, fontweight="semibold")
+                ha="center", va="bottom", fontsize=10, color=C_OUT, fontweight="semibold")
         ax.text(1.5, hdr_y - 0.02, "outgoing →",
-                ha="center", va="bottom", fontsize=7, color=C_OUT, fontstyle="italic")
+                ha="center", va="bottom", fontsize=9, color=C_OUT, fontstyle="italic")
     else:
         ax.text(2.0, hdr_y, "no children",
-                ha="center", va="bottom", fontsize=7.5, color="#999", fontstyle="italic")
+                ha="center", va="bottom", fontsize=9.5, color="#999", fontstyle="italic")
 
     # Stats footer
     depth_h  = topo_depth.get(h_idx, "?")
     src_note = "  · source" if n_p == 0 else ""
     y_note   = "  · direct parent of Y" if y_idx in children else ""
     ax.text(1.0, -0.16, f"depth {depth_h}{src_note}{y_note}",
-            ha="center", va="top", fontsize=7.5, color="#666666")
+            ha="center", va="top", fontsize=9.5, color="#666666")
 
-    ax.set_title(f"{graph_label}  graph", fontsize=11, fontweight="bold",
+    ax.set_title(f"{graph_label}  graph", fontsize=13, fontweight="bold",
                  color=title_color, pad=10)
     ax.axis("off")
 
@@ -2042,7 +2042,7 @@ def plot_node_neighborhood(
         if feature_name not in names:
             ax.text(0.5, 0.5, f"'{feature_name}'\nnot found in\n{gl} graph",
                     ha="center", va="center", transform=ax.transAxes,
-                    fontsize=9, color="#888888")
+                    fontsize=11, color="#888888")
             ax.axis("off")
             continue
         _draw_ego_panel(ax, G, h_idx=names.index(feature_name), y_idx=y_idx,
@@ -2051,7 +2051,7 @@ def plot_node_neighborhood(
 
     fig.suptitle(
         f"Causal Neighbourhood — {feature_name}   ·   {dataset}",
-        fontsize=13, fontweight="bold", y=1.03,
+        fontsize=16, fontweight="bold", y=1.03,
     )
 
     legend_handles = [
@@ -2067,7 +2067,7 @@ def plot_node_neighborhood(
         Line2D([0], [0], color="#7E5109", linewidth=2.0, label="outgoing edge"),
     ]
     fig.legend(handles=legend_handles, loc="lower center", ncol=6,
-               fontsize=8.5, frameon=False, bbox_to_anchor=(0.5, -0.06))
+               fontsize=10.5, frameon=False, bbox_to_anchor=(0.5, -0.06))
 
     plt.tight_layout(rect=[0, 0.04, 1, 1.0])
     _save_fig(fig, save_dir, f"dag_neighborhood_{feature_name}_{dataset}.png")

@@ -376,23 +376,25 @@ On the real-world Sachs dataset, the performance hierarchy reverses: LiNGAM outp
 
 ## 4.2 Graph-Free Baseline Deviation Analysis
 
-Each combination of structure-aware Shapley method and discovered graph is compared against Traditional Shapley, the reference here being the graph-free baseline (Tag base). The two metrics of Section 3.5 are reported throughout: Magnitude Divergence $\Delta M_{\text{base}}$ and Sign Disagreement $D_{\text{base}}$, both at the global level. $\Delta M_{\text{base}}$ is a percent of the model-output standard deviation $\hat\sigma$, so a value of 0.05 means the typical attribution moved by 5% of $\hat\sigma$; $D_{\text{base}}$ is the fraction of attributions whose direction flips relative to the baseline.
+Following the metric definitions of Section 3.5, this evaluation block compares each structure-aware method and discovered-graph combination against the Traditional Shapley baseline ($\Delta M_{\text{base}}$, $D_{\text{base}}$) to verify the expected theoretical behaviour of each method and validate that this behaviour holds on real data.
 
-The two metrics are read jointly in Figures 4.3 and 4.4, which place each method-graph configuration on the magnitude axis ($\Delta M_{\text{base}}$, horizontal) against the sign axis ($D_{\text{base}}$, vertical). A configuration in the lower-left corner deviates little from the graph-free baseline on both axes; movement up and to the right marks growing departure in direction and magnitude respectively.
+The theoretical ordering of sensitivity to causal graph injection is given directly by Table 3.2. Asymmetric Shapley is the least conditioned by the graph: it uses the discovered edges only to restrict the permutation space while keeping the observational value function unchanged, so its deviation from the graph-free baseline depends entirely on how many orderings the graph forbids. Causal Shapley is more sensitive: the graph enters the value function itself, driving post-interventional distributions for features outside the coalition via their discovered parent sets, so every false or missing edge corrupts an attribution directly. Shapley Flow is the most sensitive: the discovered edges are the players of the game, and the entire credit-routing mechanism collapses without them, so any graph error propagates across all downstream paths simultaneously.
+
+Two cross-cutting patterns emerge from Tables 4.1–4.2 and are visible immediately in the scatter plots. First, Sign Disagreement $D_{\text{base}}$ is a more pervasive perturbation than Magnitude Divergence $\Delta M_{\text{base}}$: introducing a causal graph flips the direction of a larger share of features attributions than it inflates their absolute size. This is because sign inversions arise whenever a moderate per-feature change crosses zero, a threshold many near-zero attributions sit close to, while large magnitude changes are concentrated in a handful of dominant features. Second, the choice of discovered graph,PC or LiNGAM,matters little for the graph-versus-no-graph contrast: both discovered graphs perturb $\Delta M_{\text{base}}$ and $D_{\text{base}}$ by nearly identical amounts for a given method, so the dominant driver of deviation is the method's structural coupling to any causal graph, not the specific graph supplied.
 
 <div style="display:flex; gap:2em; flex-wrap:wrap; align-items:flex-start;">
 <div style="flex:1; min-width:300px;">
 
 ![Alignment to Traditional on the synthetic dataset](figures/tga_sa_scatter_traditional_linear_conf_f50_s1000_p30.png)
 
-***Figure 4.3: Magnitude versus sign deviation from Traditional Shapley on the synthetic linear-confounded dataset.*** Colour encodes method and marker shape encodes the discovery algorithm. Asymmetric Shapley clusters tightly in the lower-left corner under both graphs, while Causal and Flow sit far to the upper-right, deviating strongly on both axes regardless of which graph supplies the structure.
+***Figure 4.3: Magnitude versus sign deviation from Traditional Shapley on the synthetic linear-confounded dataset.*** Asymmetric Shapley clusters tightly in the lower-left corner under both graphs, while Causal and Flow sit far to the upper-right, deviating strongly on both axes regardless of which graph supplies the structure.
 
 </div>
 <div style="flex:1; min-width:300px;">
 
 ![Alignment to Traditional on the Sachs dataset](figures/tga_sa_scatter_traditional_sachs.png)
 
-***Figure 4.4: Magnitude versus sign deviation from Traditional Shapley on the Sachs dataset.*** The same lower-left clustering of Asymmetric Shapley holds, but both axes spread wider than on synthetic and the PC/LiNGAM markers separate more visibly for Causal and Flow, the early signal of the discovery-algorithm sensitivity examined in Section 4.4.
+***Figure 4.4: Magnitude versus sign deviation from Traditional Shapley on the Sachs dataset.*** The same lower-left clustering of Asymmetric Shapley holds, but both axes spread wider than on synthetic and the PC/LiNGAM markers separate more visibly for Causal and Flow, but still less than 2% apart, the early signal of the discovery-algorithm sensitivity examined in Section 4.4.
 
 </div>
 </div>
@@ -400,7 +402,7 @@ The two metrics are read jointly in Figures 4.3 and 4.4, which place each method
 <div style="display:flex; gap:2em; flex-wrap:wrap;">
 <div style="flex:1; min-width:300px;">
 
-***Table 4.1: Baseline Deviation -- Linear-Conf Synthetic Dataset. $\Delta M_{\text{base}}$ in % of model-output std; $D_{\text{base}}$ in % of attributions.***
+***Table 4.1: Baseline Deviation -- Linear-Conf Synthetic Dataset.***
 
 | **Method** | **Graph** | **$D_{\text{base}}$** | **$\Delta M_{\text{base}}$** |
 | --- | --- | --- | --- |
@@ -414,7 +416,7 @@ The two metrics are read jointly in Figures 4.3 and 4.4, which place each method
 </div>
 <div style="flex:1; min-width:300px;">
 
-***Table 4.2: Baseline Deviation -- Sachs Cell Signaling Dataset. $\Delta M_{\text{base}}$ in % of model-output std; $D_{\text{base}}$ in % of attributions.***
+***Table 4.2: Baseline Deviation -- Sachs Cell Signaling Dataset.***
 
 | **Method** | **Graph** | **$D_{\text{base}}$** | **$\Delta M_{\text{base}}$** |
 | --- | --- | --- | --- |
@@ -428,62 +430,62 @@ The two metrics are read jointly in Figures 4.3 and 4.4, which place each method
 </div>
 </div>
 
-### 4.2.1 Asymmetric Shapley -- High Robustness to Graph Injection
-
-Asymmetric Shapley achieves the closest agreement with the Traditional Shapley baseline across both datasets. On the synthetic track, $D_{\text{base}}$ = 5.08% (PC) and 5.76% (LiNGAM), with $\Delta M_{\text{base}}$ = 0.68% and 0.86% respectively: fewer than 6% of attribution signs change and the magnitude shift is under 1% of $\hat\sigma$. On Sachs the deviation grows to $D_{\text{base}}$ 16.80-17.00% and $\Delta M_{\text{base}}$ 4.41-5.08% of $\hat\sigma$, the larger numbers reflecting the compact 10-node network where each ordering constraint binds a larger share of the graph. In both cases ASV remains the method that perturbs the baseline least.
-
-The reason is structural: ASV changes only the permutation space and leaves the observational value function untouched, so its deviation from Traditional depends solely on how many orderings the graph forbids. The discovered graphs forbid very few — none of the PC or LiNGAM graphs form long directed chains, so most feature pairs stay order-free and the admissible permutations remain close to the full N! set. The averaging therefore runs over almost the same orderings as Traditional and the attributions barely move, least of all on the larger, sparser synthetic graph.
-
-What movement there is concentrates on the handful of features that already dominate Traditional's global importance (taken up in Section 4.5); within a single feature the per-instance gaps delta_{i,f} = |phi_disc| - |phi_Traditional| spread roughly symmetrically about zero, so the shift is local rather than a feature-wide relocation of credit. The higher $D_{\text{base}}$ on Sachs (~17% vs ~5% synthetic) is a property of its skewed importance profile: with importance concentrated in a few proteins and a long tail of near-zero attributions, a small magnitude change easily pushes a fragile attribution across zero and registers as a sign flip.
-
-### 4.2.2 Causal Shapley -- Intermediate Deviation with Interventional Redistribution
-
-Causal Shapley diverges from Traditional Shapley far more than Asymmetric: $D_{\text{base}}$ = 33.92-35.30% and $\Delta M_{\text{base}}$ = 5.84-6.39% on synthetic, with $D_{\text{base}}$ 31.30-33.10% and $\Delta M_{\text{base}}$ 7.83-9.31% of $\hat\sigma$ on Sachs. Replacing observational marginalization with do-distributions redistributes credit away from features that merely correlate with the target toward those whose contribution survives interventional control, changing both the scale and the direction of roughly a third of all attributions.
-
-Because $\Delta M_{\text{base}}$ is magnitude-only, the signed instance-level gap delta_{i,f} = |phi_Causal| - |phi_Traditional| recovers the direction of each change and, with it, a feature's causal role. Source nodes have no parents to condition on and become the targets of the do-intervention, absorbing the credit that interventional sampling strips from their descendants, so they tend to gain magnitude and sit on the positive side. Intermediate nodes are resampled from a parent-conditioned interventional distribution and tend to lose magnitude, sitting on the negative side. This source-versus-intermediate split is visible on both the synthetic and Sachs tracks; the specific features that exemplify it are examined in Section 4.5.
-
-### 4.2.3 Shapley Flow -- High Deviation with Sign Instability
-
-Shapley Flow shows the highest Sign Disagreement on the synthetic dataset ($D_{\text{base}}$ = 36.58-37.68%) and the largest magnitude deviation overall, reaching $\Delta M_{\text{base}}$ = 14.17% of $\hat\sigma$ on Sachs under LiNGAM. The two move together: re-routing credit along edges produces large magnitude shifts, and the larger the magnitude shift the more often it is large enough to carry an attribution across zero and invert its sign. Flow's high magnitude deviation is therefore the direct cause of its high sign instability.
-
-Read per feature, the signed instance-level gap again has a structural meaning, but for Flow the discriminating quantity is the node's balance of incoming to outgoing edges. A node's attribution is the sum of its outgoing edge credits, so a feature with many incoming edges spends its activation propagating its parents' credit forward and tends to lose magnitude (negative side), while a feature with a high outgoing-to-incoming ratio accumulates edge credit and tends to gain it (positive side). On Sachs the per-feature median does not change side between the PC and LiNGAM graphs, so the cleaner signal there is the width of the per-instance spread, with very wide dispersion flagging a likely high incoming-to-outgoing ratio. The features that best illustrate these mechanisms, including cases where a node's edge balance flips between the two discovered graphs, are deferred to Section 4.5.
-
-The feature-level magnitude deviations summarized by the global $\Delta M_{\text{base}}$ are shown in full in Figures 4.5 and 4.6, which lay out the per-feature $\Delta M_{\text{base}}$ against Traditional Shapley for the top features of each dataset across all six method-graph combinations. The heatmaps make the method hierarchy visually immediate: the two Asymmetric rows are almost uniformly pale, while the Causal and Flow rows darken sharply on the highest-importance features (X24, X33, X47 on synthetic; erk, pka on Sachs), confirming that the magnitude shift concentrates on a small set of dominant features and is driven by the interventional and edge-routing methods rather than by Asymmetric.
+The feature-level magnitude deviations summarized by the global $\Delta M_{\text{base}}$ are shown in full in Figures 4.5 and 4.6, which lay out the per-feature $\Delta M_{\text{base}}$ against Traditional Shapley for the top perturbed features of each dataset across all six method-graph combinations. The heatmaps make the method hierarchy visually immediate: the two Asymmetric rows are almost uniformly pale, while the Causal and Flow rows darken sharply on the highest-importance features (X24, X33, X47 on synthetic; erk, pka on Sachs), confirming that the magnitude shift concentrates on a small set of dominant features and is driven by the interventional and edge-routing methods rather than by Asymmetric.
 
 <div style="display:flex; gap:2em; flex-wrap:wrap; align-items:flex-start;">
 <div style="flex:1; min-width:300px;">
 
 ![Feature-level TGA vs Traditional, synthetic dataset](figures/tga_heatmap_traditional_linear_conf_f50_s1000_p30.png)
 
-***Figure 4.5: Feature-level Magnitude Divergence $\Delta M_{\text{base}}$ vs. Traditional Shapley, synthetic dataset (top 40 features by mean $\Delta M_{\text{base}}$, in % of model-output std).*** Rows are method-graph combinations; columns are features. The Asymmetric rows are near-zero throughout, while Causal and Flow concentrate their largest deviations on X24, X33 and X47.
+***Figure 4.5: Feature-level Magnitude Divergence $\Delta M_{\text{base}}$ vs. Traditional Shapley, synthetic dataset (top 10 features by mean $\Delta M_{\text{base}}$).*** Rows are method-graph combinations; columns are features. The Asymmetric rows are near-zero throughout, while Causal and Flow concentrate their largest deviations on X24, X33 and X47.
 
 </div>
 <div style="flex:1; min-width:300px;">
 
 ![Feature-level TGA vs Traditional, Sachs dataset](figures/tga_heatmap_traditional_sachs.png)
 
-***Figure 4.6: Feature-level Magnitude Divergence $\Delta M_{\text{base}}$ vs. Traditional Shapley, Sachs dataset (top 10 features by mean $\Delta M_{\text{base}}$, in % of model-output std).*** The deviation concentrates on erk and pka, with Flow under PC producing the single largest feature-level shift (erk, 57.9% of $\hat\sigma$).
+***Figure 4.6: Feature-level Magnitude Divergence $\Delta M_{\text{base}}$ vs. Traditional Shapley, Sachs dataset (top 10 features by mean $\Delta M_{\text{base}}$).*** The deviation concentrates on erk and pka, with Flow under PC producing the single largest feature-level shift (erk, 57.9% of $\hat\sigma$).
 
 </div>
 </div>
-The directional counterpart to the magnitude heatmaps is shown in Figures 4.7 and 4.8, which report the per-feature Sign Disagreement $D_{\text{base}}$ across the same method-graph combinations. The method hierarchy is the same: Asymmetric rows remain uniformly pale while Causal and Flow concentrate their sign flips on the dominant features, confirming that magnitude inflation and sign inversion co-locate on the same nodes.
+The directional counterpart to the magnitude heatmaps is shown in Figures 4.7 and 4.8, which report the per-feature Sign Disagreement $D_{\text{base}}$ across the same method-graph combinations. The method hierarchy is the same: Asymmetric rows remain uniformly pale, except for plc, which has too many parents in the discovered graph and is therefore highly restricted in the causal ordering, while Causal and Flow concentrate their sign flips on the dominant features, confirming that magnitude inflation and sign inversion co-locate on the same nodes.
 
 <div style="display:flex; gap:2em; flex-wrap:wrap; align-items:flex-start;">
 <div style="flex:1; min-width:300px;">
 
 ![Feature-level sign disagreement vs Traditional, synthetic dataset](figures/sign_alignment_heatmap_traditional_linear_conf_f50_s1000_p30.png)
 
-***Figure 4.7: Feature-level Sign Disagreement $D_{\text{base}}$ vs. Traditional Shapley, synthetic dataset (top 40 features by mean $D_{\text{base}}$).*** Rows are method-graph combinations; columns are features. The Asymmetric rows are near-zero throughout; Causal and Flow show elevated sign-flip rates concentrated on the same dominant features as the magnitude heatmap.
+***Figure 4.7: Feature-level Sign Disagreement $D_{\text{base}}$ vs. Traditional Shapley, synthetic dataset (top 10 features by mean $D_{\text{base}}$).*** Rows are method-graph combinations; columns are features. The Asymmetric rows are near-zero throughout; Causal and Flow show elevated sign-flip rates concentrated on the same dominant features as the magnitude heatmap.
 
 </div>
 <div style="flex:1; min-width:300px;">
 
 ![Feature-level sign disagreement vs Traditional, Sachs dataset](figures/sign_alignment_heatmap_traditional_sachs.png)
 
-***Figure 4.8: Feature-level Sign Disagreement $D_{\text{base}}$ vs. Traditional Shapley, Sachs dataset (top 10 features by mean $D_{\text{base}}$).*** Sign disagreement concentrates on erk and pka, with Flow under LiNGAM producing the highest per-feature sign-flip rate against the graph-free baseline.
+***Figure 4.8: Feature-level Sign Disagreement $D_{\text{base}}$ vs. Traditional Shapley, Sachs dataset (top 10 features by mean $D_{\text{base}}$).*** Sign disagreement concentrates on raf, plc, pkc, with Causal under LiNGAM producing the highest per-feature sign-flip rate against the graph-free baseline.
 
 </div>
 </div>
+
+### 4.2.1 Asymmetric Shapley, High Robustness to Graph Injection
+
+Asymmetric Shapley achieves the closest agreement with the Traditional Shapley baseline across both datasets. On the synthetic track, $D_{\text{base}}$ = 5.08% (PC) and 5.76% (LiNGAM), with $\Delta M_{\text{base}}$ = 0.68% and 0.86% respectively: fewer than 6% of attribution signs change and the magnitude shift is under 1% of $\hat\sigma$. On Sachs the deviation $D_{\text{base}}$ triples (16.80-17.00%), also not bad if compared with the behaviour of Causal Shapley and Shapley flow on synthetic dataset, and $\Delta M_{\text{base}}$ 4.41-5.08% of $\hat\sigma$, the larger numbers reflecting the compact 10-node network where each ordering constraint binds a larger share of the graph. In both cases ASV remains the method that perturbs the baseline least.
+
+The reason is structural, ASV changes only the permutation space and leaves the observational value function untouched, so its deviation from Traditional depends solely on how many orderings the graph forbids. The discovered graphs forbid very few, none of the PC or LiNGAM graphs form long directed chains, so most feature pairs stay order-free and the admissible permutations remain close to the full N! set. The averaging therefore runs over almost the same orderings as Traditional and the attributions barely move, least of all on the larger, sparser synthetic graph.
+
+The higher $D_{\text{base}}$ on Sachs (~17% vs ~5% synthetic) could be related to its skewed importance profile, with attribution mass concentrated in a few proteins and a long tail of near-zero values, even a small magnitude shift easily pushes a fragile attribution across zero and registers as a sign flip.
+
+### 4.2.2 Causal Shapley, Intermediate Deviation with Interventional Redistribution
+
+Causal Shapley diverges from Traditional Shapley far more than Asymmetric with a general sign disagreement $D_{\text{base}}$ around 33.92-35.30% and $\Delta M_{\text{base}}$ around 5.84-6.39% on synthetic, with $D_{\text{base}}$ 31.30-33.10% and $\Delta M_{\text{base}}$ 7.83-9.31% of $\hat\sigma$ on Sachs. Replacing observational marginalization with do-distributions redistributes credit based on the discovered graph, changing the sign of roughly a third of all attributions.
+
+A notable pattern across both datasets is that the features with the highest sign-flip rates are not the ones with the largest magnitude changes. Features such as X10 (synthetic) and raf (Sachs) do not rank among the top features by $\Delta M_{\text{base}}$, they fall outside the highest-perturbation columns in the heatmap, yet they show the highest sign disagreement. The reason is that their Traditional Shapley values sit close to zero; a small interventional redistribution is sufficient to push the attribution across zero and invert its sign. Larger-magnitude features absorb the same redistribution without crossing zero. The specific features that best exemplify the source-versus-intermediate credit shift are examined in Section 4.5.
+
+### 4.2.3 Shapley Flow, High Deviation with Sign Instability
+
+Shapley Flow shows the highest Sign Disagreement on the synthetic dataset ($D_{\text{base}}$ = 36.58-37.68%) and the largest magnitude deviation overall, reaching $\Delta M_{\text{base}}$ = 14.17% of $\hat\sigma$ on Sachs under LiNGAM. The two move together, re-routing credit along edges produces large magnitude shifts, and the larger the magnitude shift the more often it is large enough to carry an attribution across zero and invert its sign. Flow's high magnitude deviation is therefore the direct cause of its high sign instability.
+
+Read per feature, the signed instance-level gap again has a structural meaning, but for Flow the discriminating quantity is the node's balance of incoming to outgoing edges. A node's attribution is the sum of its outgoing edge credits, so a feature with many incoming edges spends its activation propagating its parents' credit forward and tends to lose magnitude (negative side), while a feature with a high outgoing-to-incoming ratio accumulates edge credit and tends to gain it (positive side). The features that best illustrate these mechanisms, including cases where a node's edge balance flips between the two discovered graphs, are deferred to Section 4.5.
 
 ## 4.3 True-Graph Causal Alignment
 
@@ -560,14 +562,14 @@ The feature-level breakdown of these oracle deviations is shown in Figures 4.11 
 
 ![Feature-level TGA vs True, synthetic dataset](figures/tga_heatmap_true_linear_conf_f50_s1000_p30.png)
 
-***Figure 4.11: Feature-level Magnitude Divergence $\Delta M_{\text{oracle}}$ vs. the True DAG oracle, synthetic dataset (top 40 features by mean $\Delta M_{\text{oracle}}$, in % of model-output std).*** Asymmetric rows are near-zero; Causal and Flow concentrate their oracle deviations on X24, X33, X47 and X6.
+***Figure 4.11: Feature-level Magnitude Divergence $\Delta M_{\text{oracle}}$ vs. the True DAG oracle, synthetic dataset (top 10 features by mean $\Delta M_{\text{oracle}}$).*** Asymmetric rows are near-zero; Causal and Flow concentrate their oracle deviations on X24, X33, X47 and X6.
 
 </div>
 <div style="flex:1; min-width:300px;">
 
 ![Feature-level TGA vs True, Sachs dataset](figures/tga_heatmap_true_sachs.png)
 
-***Figure 4.12: Feature-level Magnitude Divergence $\Delta M_{\text{oracle}}$ vs. the consensus DAG oracle, Sachs dataset (top 10 features by mean $\Delta M_{\text{oracle}}$, in % of model-output std).*** Flow under PC produces the largest single deviation on erk (49.2% of $\hat\sigma$), the protein PC isolates by deleting its parent links.
+***Figure 4.12: Feature-level Magnitude Divergence $\Delta M_{\text{oracle}}$ vs. the consensus DAG oracle, Sachs dataset (top 10 features by mean $\Delta M_{\text{oracle}}$).*** Flow under PC produces the largest single deviation on erk (49.2% of $\hat\sigma$), the protein PC isolates by deleting its parent links.
 
 </div>
 </div>
@@ -578,7 +580,7 @@ The corresponding per-feature Sign Disagreement $D_{\text{oracle}}$ is shown in 
 
 ![Feature-level sign disagreement vs True, synthetic dataset](figures/sign_alignment_heatmap_true_linear_conf_f50_s1000_p30.png)
 
-***Figure 4.13: Feature-level Sign Disagreement $D_{\text{oracle}}$ vs. the True DAG oracle, synthetic dataset (top 40 features by mean $D_{\text{oracle}}$).*** Asymmetric rows are near-zero; Causal and Flow show the highest sign disagreement on X24, X33, X47 and X6, the same dominant features that carry the oracle magnitude deviations.
+***Figure 4.13: Feature-level Sign Disagreement $D_{\text{oracle}}$ vs. the True DAG oracle, synthetic dataset (top 10 features by mean $D_{\text{oracle}}$).*** Asymmetric rows are near-zero; Causal and Flow show the highest sign disagreement on X24, X33, X47 and X6, the same dominant features that carry the oracle magnitude deviations.
 
 </div>
 <div style="flex:1; min-width:300px;">
@@ -653,14 +655,14 @@ On the Sachs dataset, the magnitude instability escalates: CSV's $\Delta M_{\tex
 
 ![Feature-level GSS, synthetic dataset](figures/gss_heatmap_linear_conf_f50_s1000_p30.png)
 
-***Figure 4.17: Feature-level cross-discovery Magnitude Divergence $\Delta M_{\text{disc}}$ (PC vs. LiNGAM), synthetic dataset (top 40 features by mean $\Delta M_{\text{disc}}$, in % of model-output std).*** The Asymmetric row is near-zero; Causal and Flow concentrate their PC-vs-LiNGAM magnitude differences on X33 and X47, with Flow producing the single darkest cell on X33.
+***Figure 4.17: Feature-level cross-discovery Magnitude Divergence $\Delta M_{\text{disc}}$ (PC vs. LiNGAM), synthetic dataset (top 10 features by mean $\Delta M_{\text{disc}}$).*** The Asymmetric row is near-zero; Causal and Flow concentrate their PC-vs-LiNGAM magnitude differences on X33 and X47, with Flow producing the single darkest cell on X33.
 
 </div>
 <div style="flex:1; min-width:300px;">
 
 ![Feature-level GSS, Sachs dataset](figures/gss_heatmap_sachs.png)
 
-***Figure 4.18: Feature-level cross-discovery Magnitude Divergence $\Delta M_{\text{disc}}$ (PC vs. LiNGAM), Sachs dataset (top 10 features by mean $\Delta M_{\text{disc}}$, in % of model-output std).*** The sensitivity concentrates on erk and pka across all three methods, with Flow reaching a feature-level $\Delta M_{\text{disc}}$ of 57.5% of $\hat\sigma$ on erk.
+***Figure 4.18: Feature-level cross-discovery Magnitude Divergence $\Delta M_{\text{disc}}$ (PC vs. LiNGAM), Sachs dataset (top 10 features by mean $\Delta M_{\text{disc}}$).*** The sensitivity concentrates on erk and pka across all three methods, with Flow reaching a feature-level $\Delta M_{\text{disc}}$ of 57.5% of $\hat\sigma$ on erk.
 
 </div>
 </div>
@@ -671,7 +673,7 @@ The per-feature Sign Disagreement $D_{\text{disc}}$ between the PC and LiNGAM va
 
 ![Feature-level cross-discovery sign disagreement, synthetic dataset](figures/sss_heatmap_linear_conf_f50_s1000_p30.png)
 
-***Figure 4.19: Feature-level cross-discovery Sign Disagreement $D_{\text{disc}}$ (PC vs. LiNGAM), synthetic dataset (top 40 features by mean $D_{\text{disc}}$).*** The Asymmetric row is near-zero; Causal shows the highest sign instability concentrated on X33 and X47, while Flow's sign instability is moderate compared to its magnitude sensitivity.
+***Figure 4.19: Feature-level cross-discovery Sign Disagreement $D_{\text{disc}}$ (PC vs. LiNGAM), synthetic dataset (top 10 features by mean $D_{\text{disc}}$).*** The Asymmetric row is near-zero; Causal shows the highest sign instability concentrated on X33 and X47, while Flow's sign instability is moderate compared to its magnitude sensitivity.
 
 </div>
 <div style="flex:1; min-width:300px;">
