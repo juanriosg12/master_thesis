@@ -596,14 +596,16 @@ The Sachs track qualifies this synthetic picture in two ways. First, the CSV ord
 
 ## 4.4 Discovery Algorithm Sensitivity Analysis
 
-Tables 4.5 and 4.6 quantify how much the choice between PC and LiNGAM affects the final attributions for each Shapley method, reporting the cross-discovery Magnitude Divergence $\Delta M_{\text{disc}}$ (magnitude difference between the PC and LiNGAM variants) and Sign Disagreement $D_{\text{disc}}$ (the rate at which the two variants disagree on attribution sign). Both use the opposite discovered graph as the reference. Figures 4.15 and 4.16 plot the two quantities against each other; the lower-left corner marks a method whose attributions are stable across the choice of discovery algorithm on both axes.
+This final comparison answers a practical question, if a practitioner runs two discovery algorithms on the same data and feeds each graph into the same Shapley method, how much do the explanations change? The answer is, it depends heavily on the method, and the effect is larger on the sign of attributions than on their magnitude. Asymmetric Shapley consistently shows the lowest sensitivity, it keeps both $\Delta M_{\text{disc}}$ and $D_{\text{disc}}$ well below its counterparts on both datasets. The gap is most visible on the real data, Flow's magnitude divergence between the two graphs ($\Delta M_{\text{disc}}$ = 14.92% of $\hat\sigma$) is nearly double Asymmetric's (8.46%), meaning that choosing Shapley Flow instead of Asymmetric makes the explanation fluctuate by almost twice as much in magnitude depending solely on which discovery algorithm was run. On the sign axis, choosing between Causal Shapley and Asymmetric Shapley for the Sachs dataset determines whether switching from one discovered graph to the other flips 31.80% or 18.60% of attribution signs — Causal disagrees with itself across graphs at almost double the rate of Asymmetric.
+
+Tables 4.5 and 4.6 quantify how much the choice between PC and LiNGAM affects the final attributions for each Shapley method, reporting the cross-discovery Magnitude Divergence $\Delta M_{\text{disc}}$ and Sign Disagreement $D_{\text{disc}}$. Figures 4.15 and 4.16 plot the two quantities against each other; the lower-left corner marks a method whose attributions are stable regardless of which discovery algorithm was used.
 
 <div style="display:flex; gap:2em; flex-wrap:wrap; align-items:flex-start;">
 <div style="flex:1; min-width:300px;">
 
 ![Graph-discovery instability on the synthetic dataset](figures/gss_sss_scatter_linear_conf_f50_s1000_p30.png)
 
-***Figure 4.15: Graph-discovery instability, synthetic dataset.*** Each point is one Shapley method, positioned by its Magnitude Divergence ($\Delta M_{\text{disc}}$, horizontal) and Sign Disagreement ($D_{\text{disc}}$, vertical) between the PC and LiNGAM variants. Asymmetric sits in the lower-left (stable on both axes), Causal in the upper-right (unstable on both), and Flow in between, magnitude-sensitive but comparatively sign-stable.
+***Figure 4.15: Graph-discovery instability, synthetic dataset.*** Asymmetric sits in the lower-left (stable on both axes), Causal in the upper-right (unstable on both), and Flow in between, magnitude-sensitive but comparatively sign-stable.
 
 </div>
 <div style="flex:1; min-width:300px;">
