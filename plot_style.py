@@ -9,11 +9,13 @@ one matplotlib style, so the thesis figures are consistent.
 Design choices (research / print friendly)
 -----------------------------------------
 * Method colours: the **Okabe–Ito** colourblind-safe qualitative palette.
-* Magnitude metrics (TGA, GSS — non-negative): a **perceptually-uniform sequential**
-  colormap (``cividis``), which is colourblind-safe and legible in greyscale print.
-* Direction / agreement metrics (SSS, Sign Alignment — in [0,1], 0.5 = random): a
-  **diverging** colormap (``RdBu``) centred at 0.5, so "matches reference" (high) and
-  "opposes reference" (low) read as opposite hues.
+* Magnitude metrics (TGA, GSS — non-negative): a **sequential blue** colormap
+  (``Blues``), where white = 0 and deeper blue = larger magnitude deviation.
+* Sign-disagreement metrics (D — non-negative): a **sequential light-coral** colormap
+  (white → #F08080), where white = 0 (OK / stable) and deeper coral = higher concern.
+  Coral vs blue visually separates the two metric families at a glance.
+* Direction / agreement metrics kept in ``DIV_CMAP`` (``RdBu``) for any legacy uses
+  that explicitly pass the diverging map.
 * Graphs are encoded by **marker shape** (scatter) or **hatch** (bars), never by colour,
   so colour always means *method*.
 """
@@ -23,6 +25,7 @@ from __future__ import annotations
 from pathlib import Path
 
 import matplotlib.pyplot as plt
+import matplotlib.colors as mcolors
 
 # ----------------------------------------------------------------------------- #
 # palette
@@ -50,8 +53,11 @@ GRAPH_MARKERS = {"PC": "o", "LiNGAM": "D", "True": "s"}
 GRAPH_HATCH = {"PC": "", "LiNGAM": "//", "True": ".."}
 
 # colormaps
-SEQ_CMAP = "Blues"     # magnitude, >= 0 : white (0) -> deep blue (high)
-DIV_CMAP = "RdBu"      # agreement in [0,1], diverging around 0.5
+SEQ_CMAP      = "Blues"    # magnitude (ΔM), >= 0 : white (0) -> deep blue (high)
+DISAGREE_CMAP = mcolors.LinearSegmentedColormap.from_list(
+    "LightCoral", ["#ffffff", "#F08080"]  # white → light coral
+)
+DIV_CMAP      = "RdBu"     # agreement in [0,1], diverging around 0.5
 
 # semantic accents
 C_BASELINE_LINE = "#444444"   # dashed reference / zero lines

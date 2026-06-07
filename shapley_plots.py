@@ -64,7 +64,7 @@ from assessment_extras import (
 import plot_style as st
 from plot_style import (
     METHOD_COLORS, METHOD_ORDER, REFERENCE_COLORS, GRAPH_MARKERS,
-    SEQ_CMAP, DIV_CMAP, savefig,
+    SEQ_CMAP, DISAGREE_CMAP, DIV_CMAP, savefig,
 )
 
 ORDER = METHOD_ORDER                     # ["Asymmetric", "Causal", "Flow"]
@@ -264,7 +264,7 @@ def plot_gss_heatmap(ctx, top_n=40, plots_dir=DEFAULT_PLOTS_DIR, show=False):
     fig, ax_ = plt.subplots(figsize=(max(8, 0.22 * len(top) + 2), 1.0 * len(labels) + 1.8))
     _heatmap(ax_, Z, labels, [names[i] for i in top], SEQ_CMAP, 0, float(mat.max()),
              "ΔM_disc  (% of model-output std)", annotate=len(top) <= 14)
-    st.style_title(ax_, f"Feature-level Magnitude Divergence ΔM_disc — PC vs LiNGAM — {ctx['dataset']}",
+    st.style_title(ax_, f"Feature-level Magnitude Divergence — PC vs LiNGAM — {ctx['dataset']}",
                    f"ΔM_disc = RMS_i(|φ(PC)|−|φ(LiNGAM)|) / model-output std · top {len(top)} features by mean ΔM_disc")
     fig.tight_layout()
     out = savefig(fig, plots_dir, ctx["dataset"], f"gss_heatmap_{ctx['dataset']}.png")
@@ -273,22 +273,22 @@ def plot_gss_heatmap(ctx, top_n=40, plots_dir=DEFAULT_PLOTS_DIR, show=False):
 
 
 def plot_sss_heatmap(ctx, top_n=40, plots_dir=DEFAULT_PLOTS_DIR, show=False):
-    """Feature × method Sign Stability heatmap (PC vs LiNGAM). Blue = signs agree across the
-    two discovered graphs, red = they flip. Diverging around 0.5 (random)."""
+    """Feature × method Sign Disagreement heatmap (PC vs LiNGAM). Dark orange = signs flip
+    across the two discovered graphs, white = stable. Sequential from 0 (OK) upward."""
     sss = sss_feature_dict(ctx)
     if not sss:
         return None
     names = feature_names(ctx)
     labels = [m for m in ORDER if m in sss]
-    mat = np.stack([sss[m] for m in labels], axis=1) * 100           # (F, M) → %
-    top = np.argsort(np.nanmean(mat, axis=1))[:min(top_n, len(names))]
-    Z = mat[top].T                                                   # (M, n_top)
+    mat = np.stack([sss[m] for m in labels], axis=1) * 100           # (F, M) agreement → %
+    dis_mat = 100 - mat                                              # (F, M) disagreement → %
+    top = np.argsort(np.nanmean(dis_mat, axis=1))[::-1][:min(top_n, len(names))]
+    Z = dis_mat[top].T                                               # (M, n_top)
     fig, ax_ = plt.subplots(figsize=(max(8, 0.22 * len(top) + 2), 1.0 * len(labels) + 1.8))
-    _heatmap(ax_, Z, labels, [names[i] for i in top], DIV_CMAP, 0, 100, "Sign agreement (%)  ·  D_disc = 100 − this",
-             annotate=len(top) <= 14,
-             cbar_ticks=[0, 50, 100], cbar_ticklabels=["0 % (flips)", "50 %", "100 % (agrees)"])
-    st.style_title(ax_, f"Feature-level Sign Disagreement D_disc — PC vs LiNGAM — {ctx['dataset']}",
-                   f"colour = % of instances with matching SHAP sign (D_disc = 100 − that) · top {len(top)} most-unstable features")
+    _heatmap(ax_, Z, labels, [names[i] for i in top], DISAGREE_CMAP, 0, float(dis_mat.max()),
+             "D_disc  (Sign Disagreement, %)", annotate=len(top) <= 14)
+    st.style_title(ax_, f"Feature-level Sign Disagreement — PC vs LiNGAM — {ctx['dataset']}",
+                   f"colour = % of instances where sign(φ_PC) ≠ sign(φ_LiNGAM) · top {len(top)} most-unstable features · white = stable")
     fig.tight_layout()
     out = savefig(fig, plots_dir, ctx["dataset"], f"sss_heatmap_{ctx['dataset']}.png")
     plt.show() if show else plt.close(fig)
@@ -300,24 +300,24 @@ def plot_sss_heatmap(ctx, top_n=40, plots_dir=DEFAULT_PLOTS_DIR, show=False):
 # ============================================================================= #
 def plot_sign_alignment_heatmap(ctx, reference="True", top_n=40,
                                 plots_dir=DEFAULT_PLOTS_DIR, show=False):
-    """Feature × (method, graph) sign-alignment heatmap vs the reference. Blue = sign matches
-    reference, red = opposite. Diverging around 0.5."""
+    """Feature × (method, graph) sign-disagreement heatmap vs the reference. Dark orange =
+    sign opposes reference, white = agrees. Sequential from 0 (OK) upward."""
     sa = sign_alignment_dict(ctx, reference)
     if not sa:
         return None
     names = feature_names(ctx)
     keys = [(m, g) for m in ORDER for g in DISC_GRAPHS if (m, g) in sa]
     labels = [f"{m} ({g})" for m, g in keys]
-    mat = np.stack([sa[k] for k in keys], axis=1) * 100             # (F, K) → %
-    top = np.argsort(np.nanmean(mat, axis=1))[:min(top_n, len(names))]
-    Z = mat[top].T                                                  # (K, n_top)
+    mat = np.stack([sa[k] for k in keys], axis=1) * 100             # (F, K) agreement → %
+    dis_mat = 100 - mat                                             # (F, K) disagreement → %
+    top = np.argsort(np.nanmean(dis_mat, axis=1))[::-1][:min(top_n, len(names))]
+    Z = dis_mat[top].T                                             # (K, n_top)
     fig, ax_ = plt.subplots(figsize=(max(8, 0.22 * len(top) + 2), 0.55 * len(labels) + 1.8))
     sub, disp = REF_DISPLAY.get(reference, ("ref", reference))
-    _heatmap(ax_, Z, labels, [names[i] for i in top], DIV_CMAP, 0, 100,
-             f"Sign agreement (%)  ·  D_{sub} = 100 − this", annotate=len(top) <= 14,
-             cbar_ticks=[0, 50, 100], cbar_ticklabels=["0 % (opp.)", "50 %", "100 % (match)"])
-    st.style_title(ax_, f"Sign Disagreement D_{sub} vs {disp} — {ctx['dataset']}",
-                   f"colour = % of instances where sign(φ_disc)=sign(φ_{disp}) (D_{sub} = 100 − that) · sorted by worst mean alignment")
+    _heatmap(ax_, Z, labels, [names[i] for i in top], DISAGREE_CMAP, 0, float(dis_mat.max()),
+             f"Sign Disagreement  (%, vs {disp})", annotate=len(top) <= 14)
+    st.style_title(ax_, f"Sign Disagreement vs {disp} — {ctx['dataset']}",
+                   f"colour = % of instances where sign(φ_disc) ≠ sign(φ_{disp}) · sorted by highest D_{sub} · white = agrees with reference")
     fig.tight_layout()
     out = savefig(fig, plots_dir, ctx["dataset"],
                   f"sign_alignment_heatmap_{reference.lower()}_{ctx['dataset']}.png")
@@ -341,7 +341,7 @@ def plot_tga_heatmap(ctx, reference="True", top_n=40, plots_dir=DEFAULT_PLOTS_DI
     fig, ax_ = plt.subplots(figsize=(max(8, 0.22 * len(top) + 2), 0.55 * len(labels) + 1.8))
     _heatmap(ax_, Z, labels, [names[i] for i in top], SEQ_CMAP, 0, float(mat.max()),
              f"ΔM_{sub}  (% of model-output std)", annotate=len(top) <= 14)
-    st.style_title(ax_, f"Feature-level Magnitude Divergence ΔM_{sub} vs {disp} — {ctx['dataset']}",
+    st.style_title(ax_, f"Feature-level Magnitude Divergence vs {disp} — {ctx['dataset']}",
                    f"ΔM_{sub} = RMS_i(|φ(disc)|−|φ({disp})|) / model-output std · top {len(top)} features by mean ΔM_{sub}")
     fig.tight_layout()
     out = savefig(fig, plots_dir, ctx["dataset"],
@@ -575,8 +575,8 @@ def plot_gss_sss_scatter(ctx, plots_dir=DEFAULT_PLOTS_DIR, show=False):
     ax_.set_xlim(left=0); ax_.set_ylim(bottom=0)
     ax_.xaxis.set_major_formatter(plt.FuncFormatter(lambda v, _: f"{v:.0f} %"))
     ax_.yaxis.set_major_formatter(plt.FuncFormatter(lambda v, _: f"{v:.0f} %"))
-    ax_.set_xlabel("Magnitude Divergence ΔM_disc (PC vs LiNGAM) [% of model-output std]")
-    ax_.set_ylabel("Sign Disagreement D_disc [%]")
+    ax_.set_xlabel("Magnitude Divergence (PC vs LiNGAM) [% of model-output std]")
+    ax_.set_ylabel("Sign Disagreement [%]")
     st.style_title(ax_, f"Graph-discovery instability — {ctx['dataset']}",
                    "Lower-left = most stable across PC / LiNGAM (both axes ≥ 0)")
     fig.tight_layout()
@@ -605,8 +605,8 @@ def plot_tga_sa_scatter(ctx, reference="True", plots_dir=DEFAULT_PLOTS_DIR, show
     ax_.set_xlim(left=0); ax_.set_ylim(0, 50)
     ax_.xaxis.set_major_formatter(plt.FuncFormatter(lambda v, _: f"{v:.0f} %"))
     ax_.yaxis.set_major_formatter(plt.FuncFormatter(lambda v, _: f"{v:.0f} %"))
-    ax_.set_xlabel(f"Magnitude Divergence ΔM_{sub} vs {disp} [% of model-output std]")
-    ax_.set_ylabel(f"Sign Disagreement D_{sub} vs {disp} [%]")
+    ax_.set_xlabel(f"Magnitude Divergence vs {disp} [% of model-output std]")
+    ax_.set_ylabel(f"Sign Disagreement vs {disp} [%]")
     method_handles = [Line2D([0], [0], marker="o", ls="", color=METHOD_COLORS[m],
                              markersize=10, label=m) for m in ORDER if any(k[0] == m for k in keys)]
     graph_handles = [Line2D([0], [0], marker=GRAPH_MARKERS[g], ls="", color="#666666",
