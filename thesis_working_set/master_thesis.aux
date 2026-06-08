@@ -1,0 +1,249 @@
+\relax 
+\providecommand\hyper@newdestlabel[2]{}
+\providecommand\HyField@AuxAddToFields[1]{}
+\providecommand\HyField@AuxAddToCoFields[2]{}
+\bibstyle{plainnat}
+\citation{Baron2023}
+\citation{Lundberg2017,Heskes2020}
+\citation{Frye2021}
+\citation{Heskes2020}
+\citation{Wang2021}
+\citation{Spirtes2000}
+\citation{Shimizu2011}
+\citation{Glymour2019}
+\@writefile{toc}{\contentsline {section}{\numberline {1}Introduction}{3}{section.1}\protected@file@percent }
+\newlabel{sec:intro}{{1}{3}{Introduction}{section.1}{}}
+\citation{Sachs2005}
+\citation{Baron2023}
+\citation{Wachter2018}
+\citation{Mahajan2020}
+\citation{Pearl2009}
+\citation{Wang2021}
+\@writefile{toc}{\contentsline {section}{\numberline {2}Conceptual Framework and Methodology}{5}{section.2}\protected@file@percent }
+\newlabel{sec:framework}{{2}{5}{Conceptual Framework and Methodology}{section.2}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.1}Model Explainability and Causal Understanding}{5}{subsection.2.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.2}Counterfactual Explanations and the Structural Causal Model Framework}{5}{subsection.2.2}\protected@file@percent }
+\citation{Spirtes2000}
+\citation{Shimizu2011}
+\citation{Shapley1953}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.3}Causal Discovery: Structure Identification}{6}{subsection.2.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{PC Algorithm \citep  {Spirtes2000}.}{6}{section*.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{DirectLiNGAM \citep  {Shimizu2011}.}{6}{section*.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.4}Traditional Shapley Values and the Axiomatic Framework}{6}{subsection.2.4}\protected@file@percent }
+\citation{Frye2021}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.5}Structure-Aware Shapley Methods: Theoretical Foundations}{7}{subsection.2.5}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {2.5.1}Asymmetric Shapley Values (ASV)}{7}{subsubsection.2.5.1}\protected@file@percent }
+\citation{Heskes2020}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {2.5.2}Causal Shapley Values (CSV)}{8}{subsubsection.2.5.2}\protected@file@percent }
+\citation{Wang2021}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {2.5.3}Shapley Flow}{9}{subsubsection.2.5.3}\protected@file@percent }
+\newlabel{sec:flow}{{2.5.3}{9}{Shapley Flow}{subsubsection.2.5.3}{}}
+\citation{Wang2021}
+\@writefile{toc}{\contentsline {section}{\numberline {3}Experimental Setup and Practical Implementation}{11}{section.3}\protected@file@percent }
+\newlabel{sec:setup}{{3}{11}{Experimental Setup and Practical Implementation}{section.3}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces \textbf  {Overview of the experimental pipeline.} End-to-end flow from data generation and causal discovery through Shapley computation to evaluation, illustrating how the two datasets, three graph sources, and three structure-aware methods feed into the magnitude and sign metrics.}}{11}{figure.caption.4}\protected@file@percent }
+\providecommand*\caption@xref[2]{\@setref\relax\@undefined{#1}}
+\newlabel{fig:pipeline}{{1}{11}{\textbf {Overview of the experimental pipeline.} End-to-end flow from data generation and causal discovery through Shapley computation to evaluation, illustrating how the two datasets, three graph sources, and three structure-aware methods feed into the magnitude and sign metrics}{figure.caption.4}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.1}Data Synthesis and Target Datasets}{11}{subsection.3.1}\protected@file@percent }
+\citation{Sachs2005}
+\citation{Scheines2024}
+\@writefile{toc}{\contentsline {paragraph}{Linear System with Confounding (Synthetic).}{12}{section*.5}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Sachs Cell Signaling Dataset (Real Data).}{12}{section*.6}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.2}Predictive Model}{12}{subsection.3.2}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {1}{\ignorespaces \textbf  {Predictive Model Performance and Output Distribution on Test Sets.} The output std $\hat  {\sigma }$ is the standard deviation of the LightGBM predictions, used to normalise the magnitude metrics (Section~\ref {sec:metrics}). AU\,=\,Akt concentration units.}}{12}{table.caption.7}\protected@file@percent }
+\newlabel{tab:model_performance}{{1}{12}{\textbf {Predictive Model Performance and Output Distribution on Test Sets.} The output std $\hat {\sigma }$ is the standard deviation of the LightGBM predictions, used to normalise the magnitude metrics (Section~\ref {sec:metrics}). AU\,=\,Akt concentration units}{table.caption.7}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.3}Causal Discovery Framework}{13}{subsection.3.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {3.3.1}DirectLiNGAM Integration}{13}{subsubsection.3.3.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {3.3.2}PC Algorithm Integration}{13}{subsubsection.3.3.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {3.3.3}$X \to Y$ Edge Augmentation Rule}{13}{subsubsection.3.3.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {3.3.4}Discovery Performance}{14}{subsubsection.3.3.4}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces \textbf  {Causal discovery F1 ($X \to X$ edges) versus LightGBM test R\textsuperscript  {2}, synthetic vs.\ Sachs.} Bars give PC and LiNGAM F1 on each dataset; the dashed line tracks model R\textsuperscript  {2}. The discovery-quality ordering of the two algorithms reverses between tracks even as model fit declines from synthetic to real data.}}{14}{figure.caption.8}\protected@file@percent }
+\newlabel{fig:discovery_r2}{{2}{14}{\textbf {Causal discovery F1 ($X \to X$ edges) versus LightGBM test R\textsuperscript {2}, synthetic vs.\ Sachs.} Bars give PC and LiNGAM F1 on each dataset; the dashed line tracks model R\textsuperscript {2}. The discovery-quality ordering of the two algorithms reverses between tracks even as model fit declines from synthetic to real data}{figure.caption.8}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.4}Shapley Computation Settings}{14}{subsection.3.4}\protected@file@percent }
+\citation{Lundberg2017}
+\@writefile{lot}{\contentsline {table}{\numberline {2}{\ignorespaces \textbf  {What Each Method Changes Relative to Traditional Shapley.}}}{15}{table.caption.9}\protected@file@percent }
+\newlabel{tab:method_comparison}{{2}{15}{\textbf {What Each Method Changes Relative to Traditional Shapley.}}{table.caption.9}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {3.4.1}Traditional Shapley Values (Graph-Free Baseline)}{15}{subsubsection.3.4.1}\protected@file@percent }
+\@writefile{loa}{\contentsline {algorithm}{\numberline {1}{\ignorespaces Traditional Shapley (Monte Carlo)}}{16}{algorithm.1}\protected@file@percent }
+\newlabel{alg:traditional}{{1}{16}{Traditional Shapley (Monte Carlo)}{algorithm.1}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {3.4.2}Asymmetric Shapley Values}{16}{subsubsection.3.4.2}\protected@file@percent }
+\@writefile{loa}{\contentsline {algorithm}{\numberline {2}{\ignorespaces Asymmetric Shapley}}{17}{algorithm.2}\protected@file@percent }
+\newlabel{alg:asymmetric}{{2}{17}{Asymmetric Shapley}{algorithm.2}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {3.4.3}Causal Shapley Values}{17}{subsubsection.3.4.3}\protected@file@percent }
+\@writefile{loa}{\contentsline {algorithm}{\numberline {3}{\ignorespaces Causal Shapley (post-interventional)}}{18}{algorithm.3}\protected@file@percent }
+\newlabel{alg:causal}{{3}{18}{Causal Shapley (post-interventional)}{algorithm.3}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {3.4.4}Shapley Flow}{18}{subsubsection.3.4.4}\protected@file@percent }
+\newlabel{sec:flow_alg}{{3.4.4}{18}{Shapley Flow}{subsubsection.3.4.4}{}}
+\@writefile{loa}{\contentsline {algorithm}{\numberline {4}{\ignorespaces Shapley Flow (uniform edge-permutation)}}{19}{algorithm.4}\protected@file@percent }
+\newlabel{alg:flow}{{4}{19}{Shapley Flow (uniform edge-permutation)}{algorithm.4}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.5}Evaluation Metrics}{20}{subsection.3.5}\protected@file@percent }
+\newlabel{sec:metrics}{{3.5}{20}{Evaluation Metrics}{subsection.3.5}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {3.5.1}Notation}{20}{subsubsection.3.5.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {3.5.2}Two Dimensions, Two Metrics, Three Comparisons}{20}{subsubsection.3.5.2}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {3}{\ignorespaces \textbf  {Evaluation Metric Framework.} Two metrics, two dimensions, three reference comparisons.}}{21}{table.caption.10}\protected@file@percent }
+\newlabel{tab:metric_framework}{{3}{21}{\textbf {Evaluation Metric Framework.} Two metrics, two dimensions, three reference comparisons}{table.caption.10}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {3.5.3}Three Measurement Levels}{21}{subsubsection.3.5.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Instance level (signed).}{21}{section*.11}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Feature level (non-negative).}{21}{section*.12}\protected@file@percent }
+\citation{Spirtes2000}
+\citation{Hoyer2008,Shimizu2011}
+\@writefile{toc}{\contentsline {paragraph}{Global level.}{22}{section*.13}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {4}Results and Empirical Analysis}{22}{section.4}\protected@file@percent }
+\newlabel{sec:results}{{4}{22}{Results and Empirical Analysis}{section.4}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.1}Causal Discovery Baseline Performance}{22}{subsection.4.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {4.1.1}Performance on the Confounded Linear System}{22}{subsubsection.4.1.1}\protected@file@percent }
+\citation{Glymour2019,Ramsey2014}
+\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces \textbf  {$X \to X$ adjacency matrices for the synthetic linear-confounded dataset, where $\mathrm  {adj}[i,j]=1$ denotes an edge $i \to j$.} The True DAG (87 edges) is shown alongside the PC (54 edges) and LiNGAM (105 edges) recoveries. PC stays close to the sparse true structure, whereas LiNGAM scatters spurious edges across the matrix, the visual signature of the over-connection that drives its low precision.}}{23}{figure.caption.14}\protected@file@percent }
+\newlabel{fig:adj_synthetic}{{3}{23}{\textbf {$X \to X$ adjacency matrices for the synthetic linear-confounded dataset, where $\mathrm {adj}[i,j]=1$ denotes an edge $i \to j$.} The True DAG (87 edges) is shown alongside the PC (54 edges) and LiNGAM (105 edges) recoveries. PC stays close to the sparse true structure, whereas LiNGAM scatters spurious edges across the matrix, the visual signature of the over-connection that drives its low precision}{figure.caption.14}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {4.1.2}Performance Reversal on the Sachs Cell Signaling Dataset}{23}{subsubsection.4.1.2}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces \textbf  {$X \to X$ adjacency matrices for the Sachs dataset, where $\mathrm  {adj}[i,j]=1$ denotes an edge $i \to j$.} The consensus reference DAG (17 edges) is compared against the PC (19 edges) and LiNGAM (26 edges) recoveries over the ten signaling proteins. Both algorithms recover only a fraction of the true links and introduce edges absent from the consensus network, with LiNGAM the denser of the two.}}{24}{figure.caption.15}\protected@file@percent }
+\newlabel{fig:adj_sachs}{{4}{24}{\textbf {$X \to X$ adjacency matrices for the Sachs dataset, where $\mathrm {adj}[i,j]=1$ denotes an edge $i \to j$.} The consensus reference DAG (17 edges) is compared against the PC (19 edges) and LiNGAM (26 edges) recoveries over the ten signaling proteins. Both algorithms recover only a fraction of the true links and introduce edges absent from the consensus network, with LiNGAM the denser of the two}{figure.caption.15}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.2}Graph-Free Baseline Deviation Analysis}{24}{subsection.4.2}\protected@file@percent }
+\newlabel{sec:baseline}{{4.2}{24}{Graph-Free Baseline Deviation Analysis}{subsection.4.2}{}}
+\newlabel{fig:scatter_trad_synth}{{5a}{25}{Synthetic dataset. Asymmetric Shapley clusters tightly in the lower-left corner under both graphs, while Causal and Flow sit far to the upper-right, deviating strongly on both axes regardless of which graph supplies the structure}{figure.caption.16}{}}
+\newlabel{sub@fig:scatter_trad_synth}{{a}{25}{Synthetic dataset. Asymmetric Shapley clusters tightly in the lower-left corner under both graphs, while Causal and Flow sit far to the upper-right, deviating strongly on both axes regardless of which graph supplies the structure}{figure.caption.16}{}}
+\newlabel{fig:scatter_trad_sachs}{{5b}{25}{Sachs dataset. The same lower-left clustering of Asymmetric Shapley holds, but both axes spread wider than on synthetic and the PC/LiNGAM markers separate more visibly for Causal and Flow, but still less than 2\% apart, the early signal of the discovery-algorithm sensitivity examined in Section~\ref {sec:disc_analysis}}{figure.caption.16}{}}
+\newlabel{sub@fig:scatter_trad_sachs}{{b}{25}{Sachs dataset. The same lower-left clustering of Asymmetric Shapley holds, but both axes spread wider than on synthetic and the PC/LiNGAM markers separate more visibly for Causal and Flow, but still less than 2\% apart, the early signal of the discovery-algorithm sensitivity examined in Section~\ref {sec:disc_analysis}}{figure.caption.16}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {5}{\ignorespaces \textbf  {Magnitude versus sign deviation from Traditional Shapley.}}}{25}{figure.caption.16}\protected@file@percent }
+\newlabel{fig:scatter_trad}{{5}{25}{\textbf {Magnitude versus sign deviation from Traditional Shapley.}}{figure.caption.16}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {4}{\ignorespaces \textbf  {Baseline Deviation -- Linear-Conf Synthetic Dataset.}}}{25}{table.caption.17}\protected@file@percent }
+\newlabel{tab:baseline_synth}{{4}{25}{\textbf {Baseline Deviation -- Linear-Conf Synthetic Dataset.}}{table.caption.17}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {5}{\ignorespaces \textbf  {Baseline Deviation -- Sachs Cell Signaling Dataset.}}}{25}{table.caption.18}\protected@file@percent }
+\newlabel{tab:baseline_sachs}{{5}{25}{\textbf {Baseline Deviation -- Sachs Cell Signaling Dataset.}}{table.caption.18}{}}
+\newlabel{fig:heatmap_trad_synth}{{6a}{26}{Synthetic dataset (top 10 features by mean $\Delta M_{\text {base}}$). Rows are method-graph combinations; columns are features. The Asymmetric rows are near-zero throughout, while Causal and Flow concentrate their largest deviations on X24, X33 and X47}{figure.caption.19}{}}
+\newlabel{sub@fig:heatmap_trad_synth}{{a}{26}{Synthetic dataset (top 10 features by mean $\Delta M_{\text {base}}$). Rows are method-graph combinations; columns are features. The Asymmetric rows are near-zero throughout, while Causal and Flow concentrate their largest deviations on X24, X33 and X47}{figure.caption.19}{}}
+\newlabel{fig:heatmap_trad_sachs}{{6b}{26}{Sachs dataset (top 10 features by mean $\Delta M_{\text {base}}$). The deviation concentrates on erk and pka, with Flow under PC producing the single largest feature-level shift (erk, 57.9\% of $\hat {\sigma }$)}{figure.caption.19}{}}
+\newlabel{sub@fig:heatmap_trad_sachs}{{b}{26}{Sachs dataset (top 10 features by mean $\Delta M_{\text {base}}$). The deviation concentrates on erk and pka, with Flow under PC producing the single largest feature-level shift (erk, 57.9\% of $\hat {\sigma }$)}{figure.caption.19}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {6}{\ignorespaces \textbf  {Feature-level Magnitude Divergence $\Delta M_{\text  {base}}$ vs.\ Traditional Shapley.}}}{26}{figure.caption.19}\protected@file@percent }
+\newlabel{fig:heatmap_trad}{{6}{26}{\textbf {Feature-level Magnitude Divergence $\Delta M_{\text {base}}$ vs.\ Traditional Shapley.}}{figure.caption.19}{}}
+\newlabel{fig:sign_trad_synth}{{7a}{26}{Synthetic dataset (top 10 features by mean $D_{\text {base}}$). Rows are method-graph combinations; columns are features. The Asymmetric rows are near-zero throughout; Causal and Flow show elevated sign-flip rates concentrated on the same dominant features as the magnitude heatmap}{figure.caption.20}{}}
+\newlabel{sub@fig:sign_trad_synth}{{a}{26}{Synthetic dataset (top 10 features by mean $D_{\text {base}}$). Rows are method-graph combinations; columns are features. The Asymmetric rows are near-zero throughout; Causal and Flow show elevated sign-flip rates concentrated on the same dominant features as the magnitude heatmap}{figure.caption.20}{}}
+\newlabel{fig:sign_trad_sachs}{{7b}{26}{Sachs dataset (top 10 features by mean $D_{\text {base}}$). Sign disagreement concentrates on raf, plc, pkc, with Causal under LiNGAM producing the highest per-feature sign-flip rate against the graph-free baseline}{figure.caption.20}{}}
+\newlabel{sub@fig:sign_trad_sachs}{{b}{26}{Sachs dataset (top 10 features by mean $D_{\text {base}}$). Sign disagreement concentrates on raf, plc, pkc, with Causal under LiNGAM producing the highest per-feature sign-flip rate against the graph-free baseline}{figure.caption.20}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {7}{\ignorespaces \textbf  {Feature-level Sign Disagreement $D_{\text  {base}}$ vs.\ Traditional Shapley.}}}{26}{figure.caption.20}\protected@file@percent }
+\newlabel{fig:sign_trad}{{7}{26}{\textbf {Feature-level Sign Disagreement $D_{\text {base}}$ vs.\ Traditional Shapley.}}{figure.caption.20}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {4.2.1}Asymmetric Shapley: High Robustness to Graph Injection}{27}{subsubsection.4.2.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {4.2.2}Causal Shapley: Intermediate Deviation with Interventional Redistribution}{27}{subsubsection.4.2.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {4.2.3}Shapley Flow: High Deviation with Sign Instability}{28}{subsubsection.4.2.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.3}True-Graph Causal Alignment}{28}{subsection.4.3}\protected@file@percent }
+\newlabel{sec:oracle_align}{{4.3}{28}{True-Graph Causal Alignment}{subsection.4.3}{}}
+\newlabel{fig:scatter_oracle_synth}{{8a}{29}{Synthetic dataset. Asymmetric Shapley sits in the lower-left corner under both graphs, recovering the oracle attributions almost exactly, while Causal and Flow sit far up and to the right}{figure.caption.21}{}}
+\newlabel{sub@fig:scatter_oracle_synth}{{a}{29}{Synthetic dataset. Asymmetric Shapley sits in the lower-left corner under both graphs, recovering the oracle attributions almost exactly, while Causal and Flow sit far up and to the right}{figure.caption.21}{}}
+\newlabel{fig:scatter_oracle_sachs}{{8b}{29}{Sachs dataset ($\Delta M_{\text {oracle}}$). The lower-left ordering is less clean than on the synthetic track: Asymmetric still aligns best on magnitude, but the sign axis compresses the three methods together and the PC/LiNGAM markers separate widely on magnitude}{figure.caption.21}{}}
+\newlabel{sub@fig:scatter_oracle_sachs}{{b}{29}{Sachs dataset ($\Delta M_{\text {oracle}}$). The lower-left ordering is less clean than on the synthetic track: Asymmetric still aligns best on magnitude, but the sign axis compresses the three methods together and the PC/LiNGAM markers separate widely on magnitude}{figure.caption.21}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {8}{\ignorespaces \textbf  {Magnitude versus sign deviation from the oracle DAG.}}}{29}{figure.caption.21}\protected@file@percent }
+\newlabel{fig:scatter_oracle}{{8}{29}{\textbf {Magnitude versus sign deviation from the oracle DAG.}}{figure.caption.21}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {6}{\ignorespaces \textbf  {Oracle Alignment -- Linear-Conf Synthetic Dataset.} $D_{\text  {oracle}}$ and $\Delta M_{\text  {oracle}}$ in \% of $\hat  {\sigma }$.}}{29}{table.caption.22}\protected@file@percent }
+\newlabel{tab:oracle_synth}{{6}{29}{\textbf {Oracle Alignment -- Linear-Conf Synthetic Dataset.} $D_{\text {oracle}}$ and $\Delta M_{\text {oracle}}$ in \% of $\hat {\sigma }$}{table.caption.22}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {7}{\ignorespaces \textbf  {Oracle Alignment -- Sachs Cell Signaling Dataset (oracle = consensus DAG).} $D_{\text  {oracle}}$ and $\Delta M_{\text  {oracle}}$ in \% of $\hat  {\sigma }$.}}{30}{table.caption.23}\protected@file@percent }
+\newlabel{tab:oracle_sachs}{{7}{30}{\textbf {Oracle Alignment -- Sachs Cell Signaling Dataset (oracle = consensus DAG).} $D_{\text {oracle}}$ and $\Delta M_{\text {oracle}}$ in \% of $\hat {\sigma }$}{table.caption.23}{}}
+\newlabel{fig:heatmap_oracle_synth}{{9a}{30}{Synthetic dataset (top 10 features by mean $\Delta M_{\text {oracle}}$). Asymmetric rows are near-zero; Causal and Flow concentrate their oracle deviations on X24, X33, X47 and X6}{figure.caption.24}{}}
+\newlabel{sub@fig:heatmap_oracle_synth}{{a}{30}{Synthetic dataset (top 10 features by mean $\Delta M_{\text {oracle}}$). Asymmetric rows are near-zero; Causal and Flow concentrate their oracle deviations on X24, X33, X47 and X6}{figure.caption.24}{}}
+\newlabel{fig:heatmap_oracle_sachs}{{9b}{30}{Sachs dataset (top 10 features by mean $\Delta M_{\text {oracle}}$). Flow under PC produces the largest single deviation on erk (49.2\% of $\hat {\sigma }$), the protein PC isolates by deleting its parent links}{figure.caption.24}{}}
+\newlabel{sub@fig:heatmap_oracle_sachs}{{b}{30}{Sachs dataset (top 10 features by mean $\Delta M_{\text {oracle}}$). Flow under PC produces the largest single deviation on erk (49.2\% of $\hat {\sigma }$), the protein PC isolates by deleting its parent links}{figure.caption.24}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {9}{\ignorespaces \textbf  {Feature-level Magnitude Divergence $\Delta M_{\text  {oracle}}$ vs.\ the oracle DAG.}}}{30}{figure.caption.24}\protected@file@percent }
+\newlabel{fig:heatmap_oracle}{{9}{30}{\textbf {Feature-level Magnitude Divergence $\Delta M_{\text {oracle}}$ vs.\ the oracle DAG.}}{figure.caption.24}{}}
+\newlabel{fig:sign_oracle_synth}{{10a}{31}{Synthetic dataset (top 10 features by mean $D_{\text {oracle}}$). Asymmetric rows are near-zero; Causal and Flow show the highest sign disagreement on X24, X33, X47 and X6, the same dominant features that carry the oracle magnitude deviations}{figure.caption.25}{}}
+\newlabel{sub@fig:sign_oracle_synth}{{a}{31}{Synthetic dataset (top 10 features by mean $D_{\text {oracle}}$). Asymmetric rows are near-zero; Causal and Flow show the highest sign disagreement on X24, X33, X47 and X6, the same dominant features that carry the oracle magnitude deviations}{figure.caption.25}{}}
+\newlabel{fig:sign_oracle_sachs}{{10b}{31}{Sachs dataset (top 10 features by mean $D_{\text {oracle}}$). Sign disagreement concentrates on erk and pka; Flow under PC produces the highest per-feature oracle sign-flip rate on erk, consistent with its largest magnitude deviation on that protein}{figure.caption.25}{}}
+\newlabel{sub@fig:sign_oracle_sachs}{{b}{31}{Sachs dataset (top 10 features by mean $D_{\text {oracle}}$). Sign disagreement concentrates on erk and pka; Flow under PC produces the highest per-feature oracle sign-flip rate on erk, consistent with its largest magnitude deviation on that protein}{figure.caption.25}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {10}{\ignorespaces \textbf  {Feature-level Sign Disagreement $D_{\text  {oracle}}$ vs.\ the oracle DAG.}}}{31}{figure.caption.25}\protected@file@percent }
+\newlabel{fig:sign_oracle}{{10}{31}{\textbf {Feature-level Sign Disagreement $D_{\text {oracle}}$ vs.\ the oracle DAG.}}{figure.caption.25}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {4.3.1}Asymmetric Shapley: Near-Perfect Oracle Fidelity}{31}{subsubsection.4.3.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {4.3.2}Causal and Flow: Compounding Error Under Imprecise Graphs}{32}{subsubsection.4.3.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.4}Discovery Algorithm Sensitivity Analysis}{32}{subsection.4.4}\protected@file@percent }
+\newlabel{sec:disc_analysis}{{4.4}{32}{Discovery Algorithm Sensitivity Analysis}{subsection.4.4}{}}
+\newlabel{fig:scatter_disc_synth}{{11a}{33}{Synthetic dataset. Asymmetric sits in the lower-left (stable on both axes), Causal in the upper-right (unstable on both), and Flow in between, magnitude-sensitive but comparatively sign-stable}{figure.caption.26}{}}
+\newlabel{sub@fig:scatter_disc_synth}{{a}{33}{Synthetic dataset. Asymmetric sits in the lower-left (stable on both axes), Causal in the upper-right (unstable on both), and Flow in between, magnitude-sensitive but comparatively sign-stable}{figure.caption.26}{}}
+\newlabel{fig:scatter_disc_sachs}{{11b}{33}{Sachs dataset ($\Delta M_{\text {disc}}$). The same ordering holds, with both axes wider than on synthetic; Causal remains the most sign-unstable while Flow carries the largest magnitude difference between graphs}{figure.caption.26}{}}
+\newlabel{sub@fig:scatter_disc_sachs}{{b}{33}{Sachs dataset ($\Delta M_{\text {disc}}$). The same ordering holds, with both axes wider than on synthetic; Causal remains the most sign-unstable while Flow carries the largest magnitude difference between graphs}{figure.caption.26}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {11}{\ignorespaces \textbf  {Graph-discovery instability (PC vs.\ LiNGAM).}}}{33}{figure.caption.26}\protected@file@percent }
+\newlabel{fig:scatter_disc}{{11}{33}{\textbf {Graph-discovery instability (PC vs.\ LiNGAM).}}{figure.caption.26}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {8}{\ignorespaces \textbf  {PC vs.\ LiNGAM Sensitivity -- Synthetic.}}}{33}{table.caption.27}\protected@file@percent }
+\newlabel{tab:disc_synth}{{8}{33}{\textbf {PC vs.\ LiNGAM Sensitivity -- Synthetic.}}{table.caption.27}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {9}{\ignorespaces \textbf  {PC vs.\ LiNGAM Sensitivity -- Sachs.}}}{33}{table.caption.27}\protected@file@percent }
+\newlabel{tab:disc_sachs}{{9}{33}{\textbf {PC vs.\ LiNGAM Sensitivity -- Sachs.}}{table.caption.27}{}}
+\newlabel{fig:gss_synth}{{12a}{34}{Synthetic dataset (top 10 features by mean $\Delta M_{\text {disc}}$). The Asymmetric row is near-zero; Causal and Flow concentrate their PC-vs-LiNGAM magnitude differences on X33 and X47, with Flow producing the single darkest cell on X33}{figure.caption.28}{}}
+\newlabel{sub@fig:gss_synth}{{a}{34}{Synthetic dataset (top 10 features by mean $\Delta M_{\text {disc}}$). The Asymmetric row is near-zero; Causal and Flow concentrate their PC-vs-LiNGAM magnitude differences on X33 and X47, with Flow producing the single darkest cell on X33}{figure.caption.28}{}}
+\newlabel{fig:gss_sachs}{{12b}{34}{Sachs dataset (top 10 features by mean $\Delta M_{\text {disc}}$). The sensitivity concentrates on erk and pka across all three methods, with Flow reaching a feature-level $\Delta M_{\text {disc}}$ of 57.5\% of $\hat {\sigma }$ on erk}{figure.caption.28}{}}
+\newlabel{sub@fig:gss_sachs}{{b}{34}{Sachs dataset (top 10 features by mean $\Delta M_{\text {disc}}$). The sensitivity concentrates on erk and pka across all three methods, with Flow reaching a feature-level $\Delta M_{\text {disc}}$ of 57.5\% of $\hat {\sigma }$ on erk}{figure.caption.28}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {12}{\ignorespaces \textbf  {Feature-level cross-discovery Magnitude Divergence $\Delta M_{\text  {disc}}$ (PC vs.\ LiNGAM).}}}{34}{figure.caption.28}\protected@file@percent }
+\newlabel{fig:gss}{{12}{34}{\textbf {Feature-level cross-discovery Magnitude Divergence $\Delta M_{\text {disc}}$ (PC vs.\ LiNGAM).}}{figure.caption.28}{}}
+\newlabel{fig:sss_synth}{{13a}{34}{Synthetic dataset (top 10 features by mean $D_{\text {disc}}$). The Asymmetric row is clearly low; Causal shows the highest sign instability concentrated on X10 and X32, while Flow's sign instability is moderate compared to its magnitude sensitivity}{figure.caption.29}{}}
+\newlabel{sub@fig:sss_synth}{{a}{34}{Synthetic dataset (top 10 features by mean $D_{\text {disc}}$). The Asymmetric row is clearly low; Causal shows the highest sign instability concentrated on X10 and X32, while Flow's sign instability is moderate compared to its magnitude sensitivity}{figure.caption.29}{}}
+\newlabel{fig:sss_sachs}{{13b}{34}{Sachs dataset (top 10 features by mean $D_{\text {disc}}$). Sign instability concentrates on pkc and p38; Causal Shapley shows the broadest sign disagreement across proteins, consistent with its highest global $D_{\text {disc}}$}{figure.caption.29}{}}
+\newlabel{sub@fig:sss_sachs}{{b}{34}{Sachs dataset (top 10 features by mean $D_{\text {disc}}$). Sign instability concentrates on pkc and p38; Causal Shapley shows the broadest sign disagreement across proteins, consistent with its highest global $D_{\text {disc}}$}{figure.caption.29}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {13}{\ignorespaces \textbf  {Feature-level cross-discovery Sign Disagreement $D_{\text  {disc}}$ (PC vs.\ LiNGAM).}}}{34}{figure.caption.29}\protected@file@percent }
+\newlabel{fig:sss}{{13}{34}{\textbf {Feature-level cross-discovery Sign Disagreement $D_{\text {disc}}$ (PC vs.\ LiNGAM).}}{figure.caption.29}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {4.4.1}Asymmetric Shapley: Minimal Sensitivity on Synthetic}{35}{subsubsection.4.4.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {4.4.2}Causal and Flow: High Sensitivity, Especially on Real Data}{35}{subsubsection.4.4.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.5}Granular Case Studies}{36}{subsection.4.5}\protected@file@percent }
+\newlabel{sec:cases}{{4.5}{36}{Granular Case Studies}{subsection.4.5}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {4.5.1}Out-Degree Inflation and Root Cause Overloading}{36}{subsubsection.4.5.1}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {14}{\ignorespaces \textbf  {Causal neighbourhood of X24 across the PC (left), True DAG (centre), and LiNGAM (right) graphs, synthetic dataset.} Blue edges are incoming (parents), amber edges are outgoing (children). In the True DAG, X24 is a direct parent of $Y$ with 3 incoming and 4 outgoing edges. Both PC and LiNGAM strip its true incoming edges and add spurious outgoing ones (6 out-edges under PC, 14 under LiNGAM, 0 in-edges in both), recasting a mid-graph node as an apparent root source.}}{36}{figure.caption.30}\protected@file@percent }
+\newlabel{fig:dag_X24}{{14}{36}{\textbf {Causal neighbourhood of X24 across the PC (left), True DAG (centre), and LiNGAM (right) graphs, synthetic dataset.} Blue edges are incoming (parents), amber edges are outgoing (children). In the True DAG, X24 is a direct parent of $Y$ with 3 incoming and 4 outgoing edges. Both PC and LiNGAM strip its true incoming edges and add spurious outgoing ones (6 out-edges under PC, 14 under LiNGAM, 0 in-edges in both), recasting a mid-graph node as an apparent root source}{figure.caption.30}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {15}{\ignorespaces \textbf  {Shapley Flow SHAP scatter (feature value vs.\ SHAP value) for X24 under Traditional (no graph), Flow+PC, Flow+LiNGAM and Flow+True DAG, synthetic dataset.} The Traditional column shows a stable attribution pattern; both discovered-graph columns diverge substantially from the True-DAG oracle, with inflated and partially sign-flipped values. The magnitude of this divergence, 32.5\% of $\hat  {\sigma }$, is precisely the $\Delta M_{\text  {base}}$ signal identified in Section~\ref {sec:baseline}, making this scatter a direct visualisation of why large feature-level baseline divergence should trigger structural validation of the discovered graph.}}{37}{figure.caption.31}\protected@file@percent }
+\newlabel{fig:shap_X24}{{15}{37}{\textbf {Shapley Flow SHAP scatter (feature value vs.\ SHAP value) for X24 under Traditional (no graph), Flow+PC, Flow+LiNGAM and Flow+True DAG, synthetic dataset.} The Traditional column shows a stable attribution pattern; both discovered-graph columns diverge substantially from the True-DAG oracle, with inflated and partially sign-flipped values. The magnitude of this divergence, 32.5\% of $\hat {\sigma }$, is precisely the $\Delta M_{\text {base}}$ signal identified in Section~\ref {sec:baseline}, making this scatter a direct visualisation of why large feature-level baseline divergence should trigger structural validation of the discovered graph}{figure.caption.31}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {16}{\ignorespaces \textbf  {Causal neighbourhood of X47 across the PC (left), True DAG (centre), and LiNGAM (right) graphs, synthetic dataset.} PC recovers X47's incoming edges accurately (depth 2, 3 in-edges), whereas LiNGAM reverses them, leaving X47 as a 0-in / 5-out apparent source.}}{38}{figure.caption.32}\protected@file@percent }
+\newlabel{fig:dag_X47}{{16}{38}{\textbf {Causal neighbourhood of X47 across the PC (left), True DAG (centre), and LiNGAM (right) graphs, synthetic dataset.} PC recovers X47's incoming edges accurately (depth 2, 3 in-edges), whereas LiNGAM reverses them, leaving X47 as a 0-in / 5-out apparent source}{figure.caption.32}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {17}{\ignorespaces \textbf  {Shapley Flow SHAP scatter for X47.} Flow+PC and Flow+True columns show closely matching magnitudes, while Flow+LiNGAM is visibly inflated---the scatter-level signature of reversal-induced root-source overloading.}}{38}{figure.caption.33}\protected@file@percent }
+\newlabel{fig:shap_X47}{{17}{38}{\textbf {Shapley Flow SHAP scatter for X47.} Flow+PC and Flow+True columns show closely matching magnitudes, while Flow+LiNGAM is visibly inflated---the scatter-level signature of reversal-induced root-source overloading}{figure.caption.33}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {18}{\ignorespaces \textbf  {Causal neighbourhood of pka across the PC (left), True DAG (centre), and LiNGAM (right) graphs, Sachs dataset.} pka is a near-root source with 1 incoming and 6 outgoing edges in the consensus DAG. PC gives pka 3 incoming and 3 outgoing edges (reversing several true outgoing links), while LiNGAM keeps it a pure root with 7 outgoing edges and none incoming, much closer to the consensus structure. The PC reversal that adds spurious incoming edges drives its $\Delta M_{\text  {oracle}}$ from 6.4\% of $\hat  {\sigma }$ (LiNGAM) up to 25.0\% (PC).}}{39}{figure.caption.34}\protected@file@percent }
+\newlabel{fig:dag_pka}{{18}{39}{\textbf {Causal neighbourhood of pka across the PC (left), True DAG (centre), and LiNGAM (right) graphs, Sachs dataset.} pka is a near-root source with 1 incoming and 6 outgoing edges in the consensus DAG. PC gives pka 3 incoming and 3 outgoing edges (reversing several true outgoing links), while LiNGAM keeps it a pure root with 7 outgoing edges and none incoming, much closer to the consensus structure. The PC reversal that adds spurious incoming edges drives its $\Delta M_{\text {oracle}}$ from 6.4\% of $\hat {\sigma }$ (LiNGAM) up to 25.0\% (PC)}{figure.caption.34}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {4.5.2}Directed Edge Inversion and Causal Credit Transfer}{39}{subsubsection.4.5.2}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {19}{\ignorespaces \textbf  {Causal neighbourhood of X21 across the PC (left), True DAG (centre), and LiNGAM (right) graphs, synthetic dataset.} In the True DAG and under LiNGAM, the edge runs $X_{21} \to X_{47}$. PC reverses it to $X_{47} \to X_{21}$, placing X47 upstream of X21 and misdirecting attribution credit in both Causal Shapley and Flow.}}{40}{figure.caption.35}\protected@file@percent }
+\newlabel{fig:dag_X21}{{19}{40}{\textbf {Causal neighbourhood of X21 across the PC (left), True DAG (centre), and LiNGAM (right) graphs, synthetic dataset.} In the True DAG and under LiNGAM, the edge runs $X_{21} \to X_{47}$. PC reverses it to $X_{47} \to X_{21}$, placing X47 upstream of X21 and misdirecting attribution credit in both Causal Shapley and Flow}{figure.caption.35}{}}
+\newlabel{fig:shap_X47_X21_causal}{{20a}{41}{Causal Shapley: under LiNGAM (correct orientation) both X21 and X47 attributions track the oracle. Under PC (reversed orientation), X47 is suppressed and X21 acquires inflated credit}{figure.caption.36}{}}
+\newlabel{sub@fig:shap_X47_X21_causal}{{a}{41}{Causal Shapley: under LiNGAM (correct orientation) both X21 and X47 attributions track the oracle. Under PC (reversed orientation), X47 is suppressed and X21 acquires inflated credit}{figure.caption.36}{}}
+\newlabel{fig:shap_X47_X21_flow}{{20b}{41}{Shapley Flow: the same orientation-driven credit transfer appears; Flow+LiNGAM and Flow+True agree closely, while Flow+PC diverges on both features}{figure.caption.36}{}}
+\newlabel{sub@fig:shap_X47_X21_flow}{{b}{41}{Shapley Flow: the same orientation-driven credit transfer appears; Flow+LiNGAM and Flow+True agree closely, while Flow+PC diverges on both features}{figure.caption.36}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {20}{\ignorespaces \textbf  {SHAP scatter for X21 and X47 across graph configurations.}}}{41}{figure.caption.36}\protected@file@percent }
+\newlabel{fig:shap_X47_X21}{{20}{41}{\textbf {SHAP scatter for X21 and X47 across graph configurations.}}{figure.caption.36}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {4.5.3}Confounded Subordination and Boundary Isolation}{41}{subsubsection.4.5.3}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {21}{\ignorespaces \textbf  {Causal neighbourhood of X6 across the PC (left), True DAG (centre), and LiNGAM (right) graphs, synthetic dataset.} X6 is a genuine intermediate node with 3 incoming and 4 outgoing edges in the True DAG. LiNGAM inflates its in-degree to 8, the over-connection that contaminates its interventional parent set under Causal Shapley.}}{41}{figure.caption.37}\protected@file@percent }
+\newlabel{fig:dag_X6}{{21}{41}{\textbf {Causal neighbourhood of X6 across the PC (left), True DAG (centre), and LiNGAM (right) graphs, synthetic dataset.} X6 is a genuine intermediate node with 3 incoming and 4 outgoing edges in the True DAG. LiNGAM inflates its in-degree to 8, the over-connection that contaminates its interventional parent set under Causal Shapley}{figure.caption.37}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {22}{\ignorespaces \textbf  {Causal Shapley SHAP scatter for X6 across Traditional (no graph), Causal+PC, Causal+LiNGAM and Causal+True DAG, synthetic dataset.} The LiNGAM column diverges substantially from both the Traditional baseline and the True DAG oracle, while PC stays close to the oracle---a direct consequence of LiNGAM inflating X6's in-degree from 3 to 8 and contaminating its interventional conditioning set.}}{42}{figure.caption.38}\protected@file@percent }
+\newlabel{fig:shap_X6}{{22}{42}{\textbf {Causal Shapley SHAP scatter for X6 across Traditional (no graph), Causal+PC, Causal+LiNGAM and Causal+True DAG, synthetic dataset.} The LiNGAM column diverges substantially from both the Traditional baseline and the True DAG oracle, while PC stays close to the oracle---a direct consequence of LiNGAM inflating X6's in-degree from 3 to 8 and contaminating its interventional conditioning set}{figure.caption.38}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {23}{\ignorespaces \textbf  {Causal neighbourhood of erk across the PC (left), True DAG (centre), and LiNGAM (right) graphs, Sachs dataset.} In the consensus DAG erk is a downstream node receiving inputs from pka and mek. PC removes its true incoming edges and leaves it with outgoing edges only, recasting a downstream node as a boundary source, the mis-orientation that drives Flow+PC's feature-level $\Delta M_{\text  {oracle}}$ of 49.2\% of $\hat  {\sigma }$.}}{43}{figure.caption.39}\protected@file@percent }
+\newlabel{fig:dag_erk}{{23}{43}{\textbf {Causal neighbourhood of erk across the PC (left), True DAG (centre), and LiNGAM (right) graphs, Sachs dataset.} In the consensus DAG erk is a downstream node receiving inputs from pka and mek. PC removes its true incoming edges and leaves it with outgoing edges only, recasting a downstream node as a boundary source, the mis-orientation that drives Flow+PC's feature-level $\Delta M_{\text {oracle}}$ of 49.2\% of $\hat {\sigma }$}{figure.caption.39}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {24}{\ignorespaces \textbf  {Shapley Flow SHAP scatter for erk, Sachs dataset.} All three graph-aware variants diverge from each other and from the Traditional baseline. Flow+PC inflates erk's attributions by treating it as a source node; Flow+LiNGAM produces a distinct distortion; only Flow+True DAG tracks the correct downstream credit distribution. The simultaneous divergence on $\Delta M_{\text  {base}}$, $\Delta M_{\text  {oracle}}$, and $\Delta M_{\text  {disc}}$ marks erk as a node where structure-aware methods should not be deployed without prior graph validation.}}{43}{figure.caption.40}\protected@file@percent }
+\newlabel{fig:shap_erk}{{24}{43}{\textbf {Shapley Flow SHAP scatter for erk, Sachs dataset.} All three graph-aware variants diverge from each other and from the Traditional baseline. Flow+PC inflates erk's attributions by treating it as a source node; Flow+LiNGAM produces a distinct distortion; only Flow+True DAG tracks the correct downstream credit distribution. The simultaneous divergence on $\Delta M_{\text {base}}$, $\Delta M_{\text {oracle}}$, and $\Delta M_{\text {disc}}$ marks erk as a node where structure-aware methods should not be deployed without prior graph validation}{figure.caption.40}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {5}Conclusion}{44}{section.5}\protected@file@percent }
+\newlabel{sec:conclusion}{{5}{44}{Conclusion}{section.5}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.1}Summary of Findings}{44}{subsection.5.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.2}Main Contribution and Practical Recommendations}{45}{subsection.5.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.3}Limitations and Future Work}{46}{subsection.5.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {A}Shapley Method Subroutines}{47}{appendix.A}\protected@file@percent }
+\newlabel{app:subroutines}{{A}{47}{Shapley Method Subroutines}{appendix.A}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {A.1}Coalition Value (Traditional and Asymmetric Shapley)}{47}{subsection.A.1}\protected@file@percent }
+\@writefile{loa}{\contentsline {algorithm}{\numberline {5}{\ignorespaces COALITION\_VALUE --- $v(S) = \mathbb  {E}[f(X) \mid X_S = x_S]$}}{47}{algorithm.5}\protected@file@percent }
+\newlabel{alg:coalition_value}{{5}{47}{COALITION\_VALUE --- $v(S) = \mathbb {E}[f(X) \mid X_S = x_S]$}{algorithm.5}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {A.2}Uniform Random Topological Ordering (Asymmetric and Causal Shapley)}{47}{subsection.A.2}\protected@file@percent }
+\@writefile{loa}{\contentsline {algorithm}{\numberline {6}{\ignorespaces SAMPLE\_TOPOLOGICAL\_ORDERING --- uniform random linear extension (Kahn)}}{48}{algorithm.6}\protected@file@percent }
+\newlabel{alg:topo}{{6}{48}{SAMPLE\_TOPOLOGICAL\_ORDERING --- uniform random linear extension (Kahn)}{algorithm.6}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {A.3}Post-Interventional Sampling (Causal Shapley)}{48}{subsection.A.3}\protected@file@percent }
+\@writefile{loa}{\contentsline {algorithm}{\numberline {7}{\ignorespaces POST\_INTERVENTIONAL\_SAMPLE --- draw from $P(X \mid \mathrm  {do}(X_S = x_S))$}}{49}{algorithm.7}\protected@file@percent }
+\newlabel{alg:post_int}{{7}{49}{POST\_INTERVENTIONAL\_SAMPLE --- draw from $P(X \mid \mathrm {do}(X_S = x_S))$}{algorithm.7}{}}
+\@writefile{loa}{\contentsline {algorithm}{\numberline {8}{\ignorespaces GAUSSIAN\_CONDITIONAL --- closed-form conditional Gaussian draw}}{49}{algorithm.8}\protected@file@percent }
+\newlabel{alg:gaussian_cond}{{8}{49}{GAUSSIAN\_CONDITIONAL --- closed-form conditional Gaussian draw}{algorithm.8}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {A.4}System Value (Shapley Flow)}{50}{subsection.A.4}\protected@file@percent }
+\@writefile{loa}{\contentsline {algorithm}{\numberline {9}{\ignorespaces SYSTEM\_VALUE --- binary foreground/background activation}}{50}{algorithm.9}\protected@file@percent }
+\newlabel{alg:system_value}{{9}{50}{SYSTEM\_VALUE --- binary foreground/background activation}{algorithm.9}{}}
+\bibdata{references}
+\bibcite{Baron2023}{{1}{2023}{{Baron}}{{}}}
+\bibcite{Frye2021}{{2}{2021}{{Frye et~al.}}{{Frye, Rowat, and Feige}}}
+\bibcite{Glymour2019}{{3}{2019}{{Glymour et~al.}}{{Glymour, Zhang, and Spirtes}}}
+\bibcite{Heskes2020}{{4}{2020}{{Heskes et~al.}}{{Heskes, Sijben, Bucur, and Claassen}}}
+\bibcite{Hoyer2008}{{5}{2008}{{Hoyer et~al.}}{{Hoyer, Shimizu, Kerminen, and Palviainen}}}
+\bibcite{Lundberg2017}{{6}{2017}{{Lundberg and Lee}}{{}}}
+\bibcite{Mahajan2020}{{7}{2020}{{Mahajan et~al.}}{{Mahajan, Tan, and Sharma}}}
+\bibcite{Pearl2009}{{8}{2009}{{Pearl}}{{}}}
+\bibcite{Ramsey2014}{{9}{2014}{{Ramsey et~al.}}{{Ramsey, Hanson, and Glymour}}}
+\bibcite{Sachs2005}{{10}{2005}{{Sachs et~al.}}{{Sachs, Perez, Pe'er, Lauffenburger, and Nolan}}}
+\bibcite{Scheines2024}{{11}{2024}{{Scheines}}{{}}}
+\bibcite{Shapley1953}{{12}{1953}{{Shapley}}{{}}}
+\bibcite{Shimizu2011}{{13}{2011}{{Shimizu et~al.}}{{Shimizu, Inazumi, Sogourou, and Hyv{\"a}rinen}}}
+\bibcite{Spirtes2000}{{14}{2000}{{Spirtes et~al.}}{{Spirtes, Glymour, and Scheines}}}
+\bibcite{Wachter2018}{{15}{2018}{{Wachter et~al.}}{{Wachter, Mittelstadt, and Russell}}}
+\bibcite{Wang2021}{{16}{2021}{{Wang et~al.}}{{Wang, Wiens, and Lundberg}}}
+\gdef \@abspage@last{53}

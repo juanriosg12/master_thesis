@@ -1,0 +1,117 @@
+\begin{thebibliography}{16}
+\providecommand{\natexlab}[1]{#1}
+\providecommand{\url}[1]{\texttt{#1}}
+\expandafter\ifx\csname urlstyle\endcsname\relax
+  \providecommand{\doi}[1]{doi: #1}\else
+  \providecommand{\doi}{doi: \begingroup \urlstyle{rm}\Url}\fi
+
+\bibitem[Baron(2023)]{Baron2023}
+Samuel Baron.
+\newblock Explainable {AI} and causal understanding: Counterfactual approaches
+  considered.
+\newblock \emph{Minds and Machines}, 33:\penalty0 347--377, 2023.
+\newblock \doi{10.1007/s11023-023-09632-w}.
+
+\bibitem[Frye et~al.(2021)Frye, Rowat, and Feige]{Frye2021}
+Christopher Frye, Colin Rowat, and Ilya Feige.
+\newblock Asymmetric {Shapley} values: Incorporating causal knowledge into
+  model-agnostic explainability.
+\newblock In \emph{Advances in Neural Information Processing Systems},
+  volume~34, pages 1229--1239, 2021.
+
+\bibitem[Glymour et~al.(2019)Glymour, Zhang, and Spirtes]{Glymour2019}
+Clark Glymour, Kun Zhang, and Peter Spirtes.
+\newblock Review of causal discovery methods based on graphical models.
+\newblock \emph{Frontiers in Genetics}, 10:\penalty0 524, 2019.
+\newblock \doi{10.3389/fgene.2019.00524}.
+
+\bibitem[Heskes et~al.(2020)Heskes, Sijben, Bucur, and Claassen]{Heskes2020}
+Tom Heskes, Evi Sijben, Ioan~Gabriel Bucur, and Tom Claassen.
+\newblock Causal {Shapley} values: Exploiting causal knowledge to explain
+  individual predictions of complex models.
+\newblock In \emph{Advances in Neural Information Processing Systems},
+  volume~33, pages 4778--4789, 2020.
+
+\bibitem[Hoyer et~al.(2008)Hoyer, Shimizu, Kerminen, and Palviainen]{Hoyer2008}
+Patrik~O. Hoyer, Shohei Shimizu, Antti~J. Kerminen, and Markus Palviainen.
+\newblock Estimation of causal effects using linear non-{Gaussian} causal
+  models with hidden variables.
+\newblock \emph{International Journal of Approximate Reasoning}, 49\penalty0
+  (2):\penalty0 362--378, 2008.
+
+\bibitem[Lundberg and Lee(2017)]{Lundberg2017}
+Scott~M. Lundberg and Su-In Lee.
+\newblock A unified approach to interpreting model predictions.
+\newblock In \emph{Advances in Neural Information Processing Systems},
+  volume~30, pages 4765--4774, 2017.
+
+\bibitem[Mahajan et~al.(2020)Mahajan, Tan, and Sharma]{Mahajan2020}
+Divyat Mahajan, Chenhao Tan, and Amit Sharma.
+\newblock Preserving causal constraints in counterfactual explanations for
+  machine learning classifiers.
+\newblock In \emph{Advances in Neural Information Processing Systems},
+  volume~33, 2020.
+
+\bibitem[Pearl(2009)]{Pearl2009}
+Judea Pearl.
+\newblock \emph{Causality: Models, Reasoning, and Inference}.
+\newblock Cambridge University Press, 2nd edition, 2009.
+
+\bibitem[Ramsey et~al.(2014)Ramsey, Hanson, and Glymour]{Ramsey2014}
+Joseph~D. Ramsey, Stephen~J. Hanson, and Clark Glymour.
+\newblock Multi-subject search correctly identifies causal connections and most
+  causal directions in the {fMRI} multisubject network challenge.
+\newblock \emph{NeuroImage}, 100:\penalty0 362--378, 2014.
+
+\bibitem[Sachs et~al.(2005)Sachs, Perez, Pe'er, Lauffenburger, and
+  Nolan]{Sachs2005}
+Karen Sachs, Omar Perez, Dana Pe'er, Douglas~A. Lauffenburger, and Garry~P.
+  Nolan.
+\newblock Causal protein-signaling networks derived from multiparameter
+  single-cell data.
+\newblock \emph{Science}, 308\penalty0 (5721):\penalty0 523--529, 2005.
+\newblock \doi{10.1126/science.1105809}.
+
+\bibitem[Scheines(2024)]{Scheines2024}
+Richard Scheines.
+\newblock Example causal datasets: {Sachs} [data repository].
+\newblock Carnegie Mellon University, Department of Philosophy.
+  \url{https://github.com/cmu-phil/example-causal-datasets/tree/main/real/sachs},
+  2024.
+
+\bibitem[Shapley(1953)]{Shapley1953}
+Lloyd~S. Shapley.
+\newblock A value for $n$-person games.
+\newblock In Harold~W. Kuhn and Albert~W. Tucker, editors, \emph{Contributions
+  to the Theory of Games}, volume~II, pages 307--317. Princeton University
+  Press, 1953.
+
+\bibitem[Shimizu et~al.(2011)Shimizu, Inazumi, Sogourou, and
+  Hyv{\"a}rinen]{Shimizu2011}
+Shohei Shimizu, Takanori Inazumi, Yasuhiro Sogourou, and Aapo Hyv{\"a}rinen.
+\newblock {DirectLiNGAM}: A direct method for learning a linear non-{Gaussian}
+  structural equation model.
+\newblock \emph{Journal of Machine Learning Research}, 12:\penalty0 1225--1248,
+  2011.
+
+\bibitem[Spirtes et~al.(2000)Spirtes, Glymour, and Scheines]{Spirtes2000}
+Peter Spirtes, Clark Glymour, and Richard Scheines.
+\newblock \emph{Causation, Prediction, and Search}.
+\newblock MIT Press, 2nd edition, 2000.
+
+\bibitem[Wachter et~al.(2018)Wachter, Mittelstadt, and Russell]{Wachter2018}
+Sandra Wachter, Brent Mittelstadt, and Chris Russell.
+\newblock Counterfactual explanations without opening the black box: Automated
+  decisions and the {GDPR}.
+\newblock \emph{Harvard Journal of Law \& Technology}, 31\penalty0
+  (2):\penalty0 841--887, 2018.
+
+\bibitem[Wang et~al.(2021)Wang, Wiens, and Lundberg]{Wang2021}
+Jiaxuan Wang, Jenna Wiens, and Scott Lundberg.
+\newblock Shapley flow: A graph-based approach to interpreting model
+  predictions.
+\newblock In \emph{Proceedings of the 24th International Conference on
+  Artificial Intelligence and Statistics (AISTATS)}, volume 130 of \emph{PMLR},
+  2021.
+
+\end{thebibliography}

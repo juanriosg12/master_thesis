@@ -3,8 +3,6 @@
 
 Juan David Rios Garcia
 
-*Master's Thesis Research Manuscript -- Industrial Engineering*
-
 # 1. Introduction
 
 Model explainability has become a fundamental prerequisite for the deployment of machine learning systems, particularly across high-stakes socioeconomic domains such as credit scoring, healthcare access, and public resource allocation, where algorithmic decisions must be transparently justified to affected individuals and regulatory bodies (Baron, 2023).
