@@ -987,7 +987,7 @@ def make_shap_scatter_figure(
             )
 
         fig.update_yaxes(
-            title_text=feat, title_font=dict(size=9),
+            title_text=f"SHAP({feat})", title_font=dict(size=9),
             title_standoff=4, row=ri + 1, col=1,
         )
         for ci in range(1, n_cols + 1):
@@ -1270,6 +1270,7 @@ def plot_shap_scatter_pc_vs_lingam(
     method: str = "Asymmetric",
     features: list | None = None,
     colors: dict | None = None,
+    save_dir=None,
 ):
     """
     SHAP scatter plot (feature value vs SHAP) for ONE method across all graph sources.
@@ -1349,6 +1350,8 @@ def plot_shap_scatter_pc_vs_lingam(
         colors         = colors or DEFAULT_METHOD_COLORS,
     )
     fig.show()
+    feat_tag = "_".join(features) if features else f"top{n_top_features}"
+    _save_fig(fig, save_dir, f"shap_scatter_{method.lower()}_{feat_tag}_{dataset}.png")
     return fig
 
 
@@ -1364,6 +1367,7 @@ def plot_instance_shap_pc_vs_lingam(
     n_top_features: int,
     method: str = "Asymmetric",
     features: list | None = None,
+    save_dir=None,
 ):
     """
     Instance-level SHAP bar charts for ONE method, comparing all graph sources.
@@ -1442,6 +1446,8 @@ def plot_instance_shap_pc_vs_lingam(
         ),
     )
     fig.show()
+    feat_tag = "_".join(features) if features else f"top{n_top_features}"
+    _save_fig(fig, save_dir, f"shap_instance_{method.lower()}_{feat_tag}_{dataset}.png")
     return fig
 
 
@@ -1458,14 +1464,23 @@ def _save_fig(fig, save_dir, filename):
     out = Path(save_dir)
     out.mkdir(parents=True, exist_ok=True)
     dest = out / filename
-    if hasattr(fig, "write_image"):          # Plotly figure
+    if hasattr(fig, "write_image"):          # Plotly figure — use kaleido v1 directly
         try:
-            fig.write_image(str(dest))
-        except Exception:
-            fig.write_html(str(dest.with_suffix(".html")))
+            import kaleido as _kaleido
+            _fig_dict = fig.to_dict()
+            _img_bytes = _kaleido.calc_fig_sync(
+                _fig_dict,
+                opts=dict(format="png", scale=2),
+            )
+            dest.write_bytes(_img_bytes)
+            print(f"  ✅  Saved → {dest}")
+        except Exception as e:
+            html_dest = dest.with_suffix(".html")
+            fig.write_html(str(html_dest))
+            print(f"  ⚠️  PNG export failed ({e}); saved HTML → {html_dest}")
     else:                                    # Matplotlib figure
         fig.savefig(str(dest), dpi=150, bbox_inches="tight")
-    print(f"  ✅  Saved → {dest}")
+        print(f"  ✅  Saved → {dest}")
 
 
 def plot_timing_table(
@@ -1942,28 +1957,27 @@ def _draw_ego_panel(
 
     if n_p > 0:
         ax.text(0.0, hdr_y, f"parents  ({n_p})",
-                ha="center", va="bottom", fontsize=10, color=C_IN, fontweight="semibold")
+                ha="center", va="bottom", fontsize=12, color=C_IN, fontweight="semibold")
         ax.text(0.5, hdr_y - 0.02, "← incoming",
-                ha="center", va="bottom", fontsize=9, color=C_IN, fontstyle="italic")
+                ha="center", va="bottom", fontsize=10, color=C_IN, fontstyle="italic")
     else:
         ax.text(0.0, hdr_y, "source node",
-                ha="center", va="bottom", fontsize=9.5, color="#999", fontstyle="italic")
+                ha="center", va="bottom", fontsize=12, color="#999", fontstyle="italic")
 
     if n_c > 0:
         ax.text(2.0, hdr_y, f"children  ({n_c})",
-                ha="center", va="bottom", fontsize=10, color=C_OUT, fontweight="semibold")
+                ha="center", va="bottom", fontsize=12, color=C_OUT, fontweight="semibold")
         ax.text(1.5, hdr_y - 0.02, "outgoing →",
-                ha="center", va="bottom", fontsize=9, color=C_OUT, fontstyle="italic")
+                ha="center", va="bottom", fontsize=10, color=C_OUT, fontstyle="italic")
     else:
         ax.text(2.0, hdr_y, "no children",
-                ha="center", va="bottom", fontsize=9.5, color="#999", fontstyle="italic")
+                ha="center", va="bottom", fontsize=12, color="#999", fontstyle="italic")
 
     # Stats footer
     depth_h  = topo_depth.get(h_idx, "?")
     src_note = "  · source" if n_p == 0 else ""
-    y_note   = "  · direct parent of Y" if y_idx in children else ""
-    ax.text(1.0, -0.16, f"depth {depth_h}{src_note}{y_note}",
-            ha="center", va="top", fontsize=9.5, color="#666666")
+    ax.text(1.0, -0.16, f"depth {depth_h}{src_note}",
+            ha="center", va="top", fontsize=12, color="#666666")
 
     ax.set_title(f"{graph_label}  graph", fontsize=13, fontweight="bold",
                  color=title_color, pad=10)
