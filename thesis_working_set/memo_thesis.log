@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.29 (TeX Live 2026) (preloaded format=pdflatex 2026.3.22)  9 JUN 2026 23:59
+This is pdfTeX, Version 3.141592653-2.6-1.40.29 (TeX Live 2026) (preloaded format=pdflatex 2026.3.22)  10 JUN 2026 00:08
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -1206,10 +1206,6 @@ Overfull \hbox (3.89603pt too wide) in paragraph at lines 363--363
  []
 
 
-Underfull \vbox (badness 10000) has occurred while \output is active []
-
-
-
 Package fancyhdr Warning: \headheight is too small (12.0pt): 
 (fancyhdr)                Make it at least 13.59999pt, for example:
 (fancyhdr)                \setlength{\headheight}{13.59999pt}.
@@ -1233,12 +1229,9 @@ LaTeX Font Info:    Font shape `T1/ntxtlf/b/n' will be
 File: figures/discovery_vs_r2.png Graphic file (type png)
 <use figures/discovery_vs_r2.png>
 Package pdftex.def Info: figures/discovery_vs_r2.png  used on input line 456.
-(pdftex.def)             Requested size: 213.29411pt x 132.15962pt.
+(pdftex.def)             Requested size: 180.67166pt x 111.94049pt.
 LaTeX Font Info:    Font shape `T1/ntxtlf/m/n' will be
 (Font)              scaled to size 7.3pt on input line 457.
-
-Underfull \vbox (badness 3009) has occurred while \output is active []
-
 
 
 Package fancyhdr Warning: \headheight is too small (12.0pt): 
@@ -1256,7 +1249,7 @@ file (type png)
 <use figures/tga_sa_scatter_traditional_linear_conf_f50_s1000_p30.png>
 Package pdftex.def Info: figures/tga_sa_scatter_traditional_linear_conf_f50_s10
 00_p30.png  used on input line 501.
-(pdftex.def)             Requested size: 120.4465pt x 90.768pt.
+(pdftex.def)             Requested size: 114.17471pt x 86.03883pt.
 LaTeX Font Info:    Font shape `T1/ntxtlf/b/n' will be
 (Font)              scaled to size 8.0pt on input line 502.
 <figures/tga_sa_scatter_traditional_sachs.png, id=250, 467.346pt x 352.1958pt>
@@ -1264,12 +1257,9 @@ File: figures/tga_sa_scatter_traditional_sachs.png Graphic file (type png)
 <use figures/tga_sa_scatter_traditional_sachs.png>
 Package pdftex.def Info: figures/tga_sa_scatter_traditional_sachs.png  used on 
 input line 507.
-(pdftex.def)             Requested size: 120.4465pt x 90.768pt.
+(pdftex.def)             Requested size: 114.17471pt x 86.03883pt.
 
-Underfull \vbox (badness 10000) has occurred while \output is active []
-
-
-Underfull \vbox (badness 1325) has occurred while \output is active []
+Underfull \vbox (badness 2213) has occurred while \output is active []
 
 
 
@@ -1288,13 +1278,13 @@ ype png)
 <use figures/tga_sa_scatter_true_linear_conf_f50_s1000_p30.png>
 Package pdftex.def Info: figures/tga_sa_scatter_true_linear_conf_f50_s1000_p30.
 png  used on input line 554.
-(pdftex.def)             Requested size: 120.4465pt x 90.768pt.
+(pdftex.def)             Requested size: 114.17471pt x 86.03883pt.
 <figures/tga_sa_scatter_true_sachs.png, id=267, 467.346pt x 352.1958pt>
 File: figures/tga_sa_scatter_true_sachs.png Graphic file (type png)
 <use figures/tga_sa_scatter_true_sachs.png>
 Package pdftex.def Info: figures/tga_sa_scatter_true_sachs.png  used on input l
 ine 560.
-(pdftex.def)             Requested size: 120.4465pt x 90.768pt.
+(pdftex.def)             Requested size: 114.17471pt x 86.03883pt.
 <figures/gss_sss_scatter_linear_conf_f50_s1000_p30.png, id=272, 445.1832pt x 35
 2.1958pt>
 File: figures/gss_sss_scatter_linear_conf_f50_s1000_p30.png Graphic file (type 
@@ -1302,13 +1292,31 @@ png)
 <use figures/gss_sss_scatter_linear_conf_f50_s1000_p30.png>
 Package pdftex.def Info: figures/gss_sss_scatter_linear_conf_f50_s1000_p30.png 
  used on input line 598.
-(pdftex.def)             Requested size: 120.4465pt x 95.2876pt.
+(pdftex.def)             Requested size: 114.17471pt x 90.32196pt.
 <figures/gss_sss_scatter_sachs.png, id=273, 423.5022pt x 352.1958pt>
 File: figures/gss_sss_scatter_sachs.png Graphic file (type png)
 <use figures/gss_sss_scatter_sachs.png>
 Package pdftex.def Info: figures/gss_sss_scatter_sachs.png  used on input line 
 604.
-(pdftex.def)             Requested size: 120.4465pt x 100.16188pt.
+(pdftex.def)             Requested size: 114.17471pt x 94.94904pt.
+<figures/dag_neighborhood_X24_linear_conf_f50_s1000_p30.png, id=276, 1291.224pt
+ x 481.8pt>
+File: figures/dag_neighborhood_X24_linear_conf_f50_s1000_p30.png Graphic file (
+type png)
+<use figures/dag_neighborhood_X24_linear_conf_f50_s1000_p30.png>
+Package pdftex.def Info: figures/dag_neighborhood_X24_linear_conf_f50_s1000_p30
+.png  used on input line 637.
+(pdftex.def)             Requested size: 250.93245pt x 93.63081pt.
+<figures/shap_scatter_flow_X24_linear_conf_f50_s1000_p30.png, id=277, 2168.1pt 
+x 602.25pt>
+File: figures/shap_scatter_flow_X24_linear_conf_f50_s1000_p30.png Graphic file 
+(type png)
+<use figures/shap_scatter_flow_X24_linear_conf_f50_s1000_p30.png>
+Package pdftex.def Info: figures/shap_scatter_flow_X24_linear_conf_f50_s1000_p3
+0.png  used on input line 646.
+(pdftex.def)             Requested size: 250.93245pt x 69.70299pt.
+LaTeX Font Info:    Font shape `T1/ntxtlf/m/n' will be
+(Font)              scaled to size 5.5pt on input line 650.
 
 
 Package fancyhdr Warning: \headheight is too small (12.0pt): 
@@ -1320,24 +1328,6 @@ Package fancyhdr Warning: \headheight is too small (12.0pt):
 [7 <./figures/tga_sa_scatter_true_linear_conf_f50_s1000_p30.png> <./figures/tga
 _sa_scatter_true_sachs.png> <./figures/gss_sss_scatter_linear_conf_f50_s1000_p3
 0.png> <./figures/gss_sss_scatter_sachs.png>]
-<figures/dag_neighborhood_X24_linear_conf_f50_s1000_p30.png, id=288, 1291.224pt
- x 481.8pt>
-File: figures/dag_neighborhood_X24_linear_conf_f50_s1000_p30.png Graphic file (
-type png)
-<use figures/dag_neighborhood_X24_linear_conf_f50_s1000_p30.png>
-Package pdftex.def Info: figures/dag_neighborhood_X24_linear_conf_f50_s1000_p30
-.png  used on input line 637.
-(pdftex.def)             Requested size: 250.93245pt x 93.63081pt.
-<figures/shap_scatter_flow_X24_linear_conf_f50_s1000_p30.png, id=289, 2168.1pt 
-x 602.25pt>
-File: figures/shap_scatter_flow_X24_linear_conf_f50_s1000_p30.png Graphic file 
-(type png)
-<use figures/shap_scatter_flow_X24_linear_conf_f50_s1000_p30.png>
-Package pdftex.def Info: figures/shap_scatter_flow_X24_linear_conf_f50_s1000_p3
-0.png  used on input line 646.
-(pdftex.def)             Requested size: 250.93245pt x 69.70299pt.
-LaTeX Font Info:    Font shape `T1/ntxtlf/m/n' will be
-(Font)              scaled to size 5.5pt on input line 650.
 <figures/dag_neighborhood_pka_sachs.png, id=291, 1291.224pt x 481.8pt>
 File: figures/dag_neighborhood_pka_sachs.png Graphic file (type png)
 <use figures/dag_neighborhood_pka_sachs.png>
@@ -1381,13 +1371,13 @@ Package fancyhdr Warning: \headheight is too small (12.0pt):
 [8 <./figures/dag_neighborhood_X24_linear_conf_f50_s1000_p30.png> <./figures/sh
 ap_scatter_flow_X24_linear_conf_f50_s1000_p30.png> <./figures/dag_neighborhood_
 pka_sachs.png> <./figures/dag_neighborhood_X21_linear_conf_f50_s1000_p30.png>]
-<figures/dag_neighborhood_erk_sachs.png, id=312, 1291.224pt x 481.8pt>
+<figures/dag_neighborhood_erk_sachs.png, id=313, 1291.224pt x 481.8pt>
 File: figures/dag_neighborhood_erk_sachs.png Graphic file (type png)
 <use figures/dag_neighborhood_erk_sachs.png>
 Package pdftex.def Info: figures/dag_neighborhood_erk_sachs.png  used on input 
 line 756.
 (pdftex.def)             Requested size: 250.93245pt x 93.63081pt.
-<figures/shap_scatter_flow_erk_sachs.png, id=313, 2168.1pt x 602.25pt>
+<figures/shap_scatter_flow_erk_sachs.png, id=314, 2168.1pt x 602.25pt>
 File: figures/shap_scatter_flow_erk_sachs.png Graphic file (type png)
 <use figures/shap_scatter_flow_erk_sachs.png>
 Package pdftex.def Info: figures/shap_scatter_flow_erk_sachs.png  used on input
@@ -1406,7 +1396,13 @@ Package fancyhdr Warning: \headheight is too small (12.0pt):
 
 [9 <./figures/shap_scatter_causal_X47_X21_linear_conf_f50_s1000_p30.png> <./fig
 ures/shap_scatter_flow_X47_X21_linear_conf_f50_s1000_p30.png> <./figures/dag_ne
-ighborhood_erk_sachs.png>]
+ighborhood_erk_sachs.png> <./figures/shap_scatter_flow_erk_sachs.png>]
+Underfull \vbox (badness 10000) has occurred while \output is active []
+
+
+Underfull \vbox (badness 10000) has occurred while \output is active []
+
+
 
 Package fancyhdr Warning: \headheight is too small (12.0pt): 
 (fancyhdr)                Make it at least 13.59999pt, for example:
@@ -1414,7 +1410,7 @@ Package fancyhdr Warning: \headheight is too small (12.0pt):
 (fancyhdr)                You might also make \topmargin smaller:
 (fancyhdr)                \addtolength{\topmargin}{-1.59999pt}.
 
-[10 <./figures/shap_scatter_flow_erk_sachs.png>] (./memo_thesis.bbl
+[10] (./memo_thesis.bbl
 Underfull \vbox (badness 10000) has occurred while \output is active []
 
 
@@ -1765,7 +1761,7 @@ Package rerunfilecheck Info: File `memo_thesis.out' has not changed.
 Here is how much of TeX's memory you used:
  21518 strings out of 467525
  348170 string characters out of 5418982
- 786987 words of memory out of 5000000
+ 786986 words of memory out of 5000000
  49680 multiletter control sequences out of 15000+600000
  819240 words of font info for 409 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
@@ -1781,7 +1777,7 @@ pe1/public/newtx/txsys.pfb></usr/local/texlive/2026/texmf-dist/fonts/type1/publ
 ic/newtx/ztmb.pfb></usr/local/texlive/2026/texmf-dist/fonts/type1/public/newtx/
 ztmr.pfb></usr/local/texlive/2026/texmf-dist/fonts/type1/public/newtx/ztmri.pfb
 >
-Output written on memo_thesis.pdf (20 pages, 3113968 bytes).
+Output written on memo_thesis.pdf (20 pages, 3113982 bytes).
 PDF statistics:
  510 PDF objects out of 1000 (max. 8388607)
  400 compressed objects within 4 object streams

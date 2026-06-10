@@ -316,7 +316,7 @@ Shapley computation. Table~\ref{tab:model_performance} reports performance; $\ha
 is the standard deviation of model predictions over the test set and normalizes all
 magnitude metrics; the normalization rationale is explained in Section~\ref{sec:metrics}.
 
-\begin{table}[H]
+\begin{table}[t]
   \centering
   \footnotesize
   \caption{\textbf{Model performance.} $\hat{\sigma}$ normalizes all $\Delta M$ metrics.}
@@ -345,7 +345,7 @@ explained. CSV uses $M = 10$ inner interventional samples per coalition. Table~\
 {tab:method_comparison} summarizes what each method changes relative to Traditional
 Shapley.
 
-\begin{table}[H]
+\begin{table}[t]
   \centering
   \footnotesize
   \setlength{\tabcolsep}{3pt}
@@ -451,9 +451,9 @@ when the massive sample size makes it hypersensitive to distributional violation
 \citep{Glymour2019}. Both algorithms perform substantially worse on the real data
 despite the larger sample size.
 
-\begin{figure}[H]
+\begin{figure}[t]
   \centering
-  \includegraphics[width=0.85\linewidth]{figures/discovery_vs_r2.png}
+  \includegraphics[width=0.72\linewidth]{figures/discovery_vs_r2.png}
   \caption{\textbf{Causal discovery F1 ($X \to X$ edges) versus LightGBM test R\textsuperscript{2}, synthetic vs.\ Sachs.} Bars give PC and LiNGAM F1 on each dataset; the dashed line tracks model R\textsuperscript{2}. The discovery-quality ordering of the two algorithms reverses between tracks even as model fit declines from synthetic to real data.}
   \label{fig:discovery_r2}
 \end{figure}
@@ -497,13 +497,13 @@ instability on synthetic ($D_{\text{base}} = 36.58$--$37.68\%$).
 
 \begin{figure}[tp]
   \centering
-  \begin{subfigure}[t]{0.48\linewidth}
+  \begin{subfigure}[t]{0.455\linewidth}
     \includegraphics[width=\linewidth]{figures/tga_sa_scatter_traditional_linear_conf_f50_s1000_p30.png}
     \caption{Synthetic.}
     \label{fig:scatter_trad_synth}
   \end{subfigure}
   \hfill
-  \begin{subfigure}[t]{0.48\linewidth}
+  \begin{subfigure}[t]{0.455\linewidth}
     \includegraphics[width=\linewidth]{figures/tga_sa_scatter_traditional_sachs.png}
     \caption{Sachs.}
     \label{fig:scatter_trad_sachs}
@@ -550,13 +550,13 @@ error rather than absorbing it.
 
 \begin{figure}[tp]
   \centering
-  \begin{subfigure}[t]{0.48\linewidth}
+  \begin{subfigure}[t]{0.455\linewidth}
     \includegraphics[width=\linewidth]{figures/tga_sa_scatter_true_linear_conf_f50_s1000_p30.png}
     \caption{Synthetic.}
     \label{fig:scatter_oracle_synth}
   \end{subfigure}
   \hfill
-  \begin{subfigure}[t]{0.48\linewidth}
+  \begin{subfigure}[t]{0.455\linewidth}
     \includegraphics[width=\linewidth]{figures/tga_sa_scatter_true_sachs.png}
     \caption{Sachs.}
     \label{fig:scatter_oracle_sachs}
@@ -594,13 +594,13 @@ Sachs ($\Delta M_{\text{disc}} = 14.92\%$).
 
 \begin{figure}[tp]
   \centering
-  \begin{subfigure}[t]{0.48\linewidth}
+  \begin{subfigure}[t]{0.455\linewidth}
     \includegraphics[width=\linewidth]{figures/gss_sss_scatter_linear_conf_f50_s1000_p30.png}
     \caption{Synthetic.}
     \label{fig:scatter_disc_synth}
   \end{subfigure}
   \hfill
-  \begin{subfigure}[t]{0.48\linewidth}
+  \begin{subfigure}[t]{0.455\linewidth}
     \includegraphics[width=\linewidth]{figures/gss_sss_scatter_sachs.png}
     \caption{Sachs.}
     \label{fig:scatter_disc_sachs}
