@@ -70,43 +70,39 @@
 \newlabel{fig:scatter_trad}{{3}{6}{\textbf {Deviation from Traditional Shapley.} ASV clusters lower-left; CSV and Flow upper-right on both axes. Sachs spreads wider}{figure.caption.15}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {4.3}Oracle Alignment}{6}{subsection.4.3}\protected@file@percent }
 \newlabel{sec:oracle_align}{{4.3}{6}{Oracle Alignment}{subsection.4.3}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.4}Cross-Discovery Sensitivity}{6}{subsection.4.4}\protected@file@percent }
-\newlabel{sec:disc_analysis}{{4.4}{6}{Cross-Discovery Sensitivity}{subsection.4.4}{}}
 \newlabel{fig:scatter_oracle_synth}{{4a}{7}{Synthetic}{figure.caption.16}{}}
 \newlabel{sub@fig:scatter_oracle_synth}{{a}{7}{Synthetic}{figure.caption.16}{}}
 \newlabel{fig:scatter_oracle_sachs}{{4b}{7}{Sachs}{figure.caption.16}{}}
 \newlabel{sub@fig:scatter_oracle_sachs}{{b}{7}{Sachs}{figure.caption.16}{}}
 \@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces \textbf  {Deviation from the oracle DAG.} ASV lower-left under both graphs; CSV and Flow upper-right. PC/LiNGAM markers spread wider on Sachs.}}{7}{figure.caption.16}\protected@file@percent }
 \newlabel{fig:scatter_oracle}{{4}{7}{\textbf {Deviation from the oracle DAG.} ASV lower-left under both graphs; CSV and Flow upper-right. PC/LiNGAM markers spread wider on Sachs}{figure.caption.16}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.5}Case Studies: When Graph Errors Matter Most}{7}{subsection.4.5}\protected@file@percent }
-\newlabel{sec:cases}{{4.5}{7}{Case Studies: When Graph Errors Matter Most}{subsection.4.5}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.4}Cross-Discovery Sensitivity}{7}{subsection.4.4}\protected@file@percent }
+\newlabel{sec:disc_analysis}{{4.4}{7}{Cross-Discovery Sensitivity}{subsection.4.4}{}}
 \newlabel{fig:scatter_disc_synth}{{5a}{7}{Synthetic}{figure.caption.17}{}}
 \newlabel{sub@fig:scatter_disc_synth}{{a}{7}{Synthetic}{figure.caption.17}{}}
 \newlabel{fig:scatter_disc_sachs}{{5b}{7}{Sachs}{figure.caption.17}{}}
 \newlabel{sub@fig:scatter_disc_sachs}{{b}{7}{Sachs}{figure.caption.17}{}}
 \@writefile{lof}{\contentsline {figure}{\numberline {5}{\ignorespaces \textbf  {Cross-discovery instability (PC vs.\ LiNGAM).} ASV lower-left (stable); CSV upper-right (unstable signs); Flow largest magnitude gap on Sachs.}}{7}{figure.caption.17}\protected@file@percent }
 \newlabel{fig:scatter_disc}{{5}{7}{\textbf {Cross-discovery instability (PC vs.\ LiNGAM).} ASV lower-left (stable); CSV upper-right (unstable signs); Flow largest magnitude gap on Sachs}{figure.caption.17}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.5}Case Studies: When Graph Errors Matter Most}{7}{subsection.4.5}\protected@file@percent }
+\newlabel{sec:cases}{{4.5}{7}{Case Studies: When Graph Errors Matter Most}{subsection.4.5}{}}
 \@writefile{toc}{\contentsline {subsubsection}{\numberline {4.5.1}Out-Degree Inflation and Root Cause Overloading}{7}{subsubsection.4.5.1}\protected@file@percent }
 \@writefile{lof}{\contentsline {figure}{\numberline {6}{\ignorespaces \textbf  {Causal neighbourhood of X24 (Synthetic).} Both PC and LiNGAM strip true parents and add spurious children (6 and 14 out-edges respectively, 0 in-edges), converting a mid-graph node into an apparent root source. Blue = incoming, amber = outgoing.}}{8}{figure.caption.18}\protected@file@percent }
 \newlabel{fig:dag_X24}{{6}{8}{\textbf {Causal neighbourhood of X24 (Synthetic).} Both PC and LiNGAM strip true parents and add spurious children (6 and 14 out-edges respectively, 0 in-edges), converting a mid-graph node into an apparent root source. Blue = incoming, amber = outgoing}{figure.caption.18}{}}
 \@writefile{lof}{\contentsline {figure}{\numberline {7}{\ignorespaces \textbf  {Shapley Flow SHAP scatter for X24 (Synthetic).} Traditional shows a stable attribution pattern; both discovered-graph columns diverge substantially from the True-DAG oracle---the instance-level signature of out-degree inflation ($\Delta M_{\text  {base}} = 32.5\%$ of $\hat  {\sigma }$).}}{8}{figure.caption.19}\protected@file@percent }
 \newlabel{fig:shap_X24}{{7}{8}{\textbf {Shapley Flow SHAP scatter for X24 (Synthetic).} Traditional shows a stable attribution pattern; both discovered-graph columns diverge substantially from the True-DAG oracle---the instance-level signature of out-degree inflation ($\Delta M_{\text {base}} = 32.5\%$ of $\hat {\sigma }$)}{figure.caption.19}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {4.5.2}Directed Edge Inversion and Causal Credit Transfer}{8}{subsubsection.4.5.2}\protected@file@percent }
 \@writefile{lof}{\contentsline {figure}{\numberline {8}{\ignorespaces \textbf  {Causal neighbourhood of pka (Sachs).} PC gives pka 3 incoming and 3 outgoing edges, reversing several true outgoing links. LiNGAM keeps it a near-root with 7 outgoing and 0 incoming edges, much closer to the consensus structure.}}{8}{figure.caption.20}\protected@file@percent }
 \newlabel{fig:dag_pka}{{8}{8}{\textbf {Causal neighbourhood of pka (Sachs).} PC gives pka 3 incoming and 3 outgoing edges, reversing several true outgoing links. LiNGAM keeps it a near-root with 7 outgoing and 0 incoming edges, much closer to the consensus structure}{figure.caption.20}{}}
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {4.5.2}Directed Edge Inversion and Causal Credit Transfer}{8}{subsubsection.4.5.2}\protected@file@percent }
-\@writefile{lof}{\contentsline {figure}{\numberline {9}{\ignorespaces \textbf  {Causal neighbourhood of X21 (Synthetic).} In the True DAG and under LiNGAM the edge runs $X_{21} \to X_{47}$. PC reverses it to $X_{47} \to X_{21}$, misdirecting attribution credit in both CSV and Flow.}}{8}{figure.caption.21}\protected@file@percent }
-\newlabel{fig:dag_X21}{{9}{8}{\textbf {Causal neighbourhood of X21 (Synthetic).} In the True DAG and under LiNGAM the edge runs $X_{21} \to X_{47}$. PC reverses it to $X_{47} \to X_{21}$, misdirecting attribution credit in both CSV and Flow}{figure.caption.21}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {10}{\ignorespaces \textbf  {SHAP scatter for X21 and X47 (Synthetic).} \textit  {Top} (Causal Shapley): under LiNGAM both features track the oracle; under PC, X47 is suppressed and X21 acquires inflated credit. \textit  {Bottom} (Shapley Flow): the same orientation-driven credit transfer appears; Flow+LiNGAM and Flow+True agree closely while Flow+PC diverges on both features.}}{9}{figure.caption.22}\protected@file@percent }
-\newlabel{fig:shap_X47_X21}{{10}{9}{\textbf {SHAP scatter for X21 and X47 (Synthetic).} \textit {Top} (Causal Shapley): under LiNGAM both features track the oracle; under PC, X47 is suppressed and X21 acquires inflated credit. \textit {Bottom} (Shapley Flow): the same orientation-driven credit transfer appears; Flow+LiNGAM and Flow+True agree closely while Flow+PC diverges on both features}{figure.caption.22}{}}
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {4.5.3}Confounded Subordination and Boundary Isolation}{9}{subsubsection.4.5.3}\protected@file@percent }
-\@writefile{lof}{\contentsline {figure}{\numberline {11}{\ignorespaces \textbf  {Causal neighbourhood of X6 (Synthetic).} X6 has 3 incoming and 4 outgoing edges in the True DAG. LiNGAM inflates its in-degree to 8, contaminating its interventional conditioning set under CSV.}}{9}{figure.caption.23}\protected@file@percent }
-\newlabel{fig:dag_X6}{{11}{9}{\textbf {Causal neighbourhood of X6 (Synthetic).} X6 has 3 incoming and 4 outgoing edges in the True DAG. LiNGAM inflates its in-degree to 8, contaminating its interventional conditioning set under CSV}{figure.caption.23}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {12}{\ignorespaces \textbf  {Causal Shapley SHAP scatter for X6 (Synthetic).} The LiNGAM column diverges sharply from both the Traditional baseline and the True-DAG oracle; PC stays close---a direct consequence of LiNGAM's in-degree inflation from 3 to 8.}}{9}{figure.caption.24}\protected@file@percent }
-\newlabel{fig:shap_X6}{{12}{9}{\textbf {Causal Shapley SHAP scatter for X6 (Synthetic).} The LiNGAM column diverges sharply from both the Traditional baseline and the True-DAG oracle; PC stays close---a direct consequence of LiNGAM's in-degree inflation from 3 to 8}{figure.caption.24}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {13}{\ignorespaces \textbf  {Causal neighbourhood of erk (Sachs).} PC removes its true parent links (pka, mek) and isolates erk as a boundary source---driving Flow+PC's $\Delta M_{\text  {oracle}} = 49.2\%$ of $\hat  {\sigma }$.}}{10}{figure.caption.25}\protected@file@percent }
-\newlabel{fig:dag_erk}{{13}{10}{\textbf {Causal neighbourhood of erk (Sachs).} PC removes its true parent links (pka, mek) and isolates erk as a boundary source---driving Flow+PC's $\Delta M_{\text {oracle}} = 49.2\%$ of $\hat {\sigma }$}{figure.caption.25}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {14}{\ignorespaces \textbf  {Shapley Flow SHAP scatter for erk (Sachs).} All three graph-aware variants diverge from each other and from Traditional. Flow+PC inflates erk's attributions by treating it as an isolated source node; only Flow+True DAG tracks the correct downstream credit distribution.}}{10}{figure.caption.26}\protected@file@percent }
-\newlabel{fig:shap_erk}{{14}{10}{\textbf {Shapley Flow SHAP scatter for erk (Sachs).} All three graph-aware variants diverge from each other and from Traditional. Flow+PC inflates erk's attributions by treating it as an isolated source node; only Flow+True DAG tracks the correct downstream credit distribution}{figure.caption.26}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {9}{\ignorespaces \textbf  {Causal neighbourhood of X21 (Synthetic).} In the True DAG and under PC the edge runs $X_{21} \to X_{47}$. LiNGAM reverses it to $X_{47} \to X_{21}$, misdirecting attribution credit in both CSV and Flow.}}{8}{figure.caption.21}\protected@file@percent }
+\newlabel{fig:dag_X21}{{9}{8}{\textbf {Causal neighbourhood of X21 (Synthetic).} In the True DAG and under PC the edge runs $X_{21} \to X_{47}$. LiNGAM reverses it to $X_{47} \to X_{21}$, misdirecting attribution credit in both CSV and Flow}{figure.caption.21}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {4.5.3}Node Misspecification Captured by Experimental Metrics}{8}{subsubsection.4.5.3}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {10}{\ignorespaces \textbf  {SHAP scatter for X21 and X47 (Synthetic).} \textit  {Top} (Causal Shapley): under PC both features track the oracle; under LiNGAM, X47 is suppressed and X21 acquires inflated credit. \textit  {Bottom} (Shapley Flow): the same orientation-driven credit transfer appears; Flow+PC and Flow+True agree closely while Flow+LiNGAM diverges on both features.}}{9}{figure.caption.22}\protected@file@percent }
+\newlabel{fig:shap_X47_X21}{{10}{9}{\textbf {SHAP scatter for X21 and X47 (Synthetic).} \textit {Top} (Causal Shapley): under PC both features track the oracle; under LiNGAM, X47 is suppressed and X21 acquires inflated credit. \textit {Bottom} (Shapley Flow): the same orientation-driven credit transfer appears; Flow+PC and Flow+True agree closely while Flow+LiNGAM diverges on both features}{figure.caption.22}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {11}{\ignorespaces \textbf  {Causal neighbourhood of erk (Sachs).} PC removes its true parent links (pka, mek) and isolates erk as a boundary source---driving Flow+PC's $\Delta M_{\text  {oracle}} = 49.2\%$ of $\hat  {\sigma }$.}}{9}{figure.caption.23}\protected@file@percent }
+\newlabel{fig:dag_erk}{{11}{9}{\textbf {Causal neighbourhood of erk (Sachs).} PC removes its true parent links (pka, mek) and isolates erk as a boundary source---driving Flow+PC's $\Delta M_{\text {oracle}} = 49.2\%$ of $\hat {\sigma }$}{figure.caption.23}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {12}{\ignorespaces \textbf  {Shapley Flow SHAP scatter for erk (Sachs).} All three graph-aware variants diverge from each other and from Traditional. Flow+PC inflates erk's attributions by treating it as an isolated source node; only Flow+True DAG tracks the correct downstream credit distribution.}}{10}{figure.caption.24}\protected@file@percent }
+\newlabel{fig:shap_erk}{{12}{10}{\textbf {Shapley Flow SHAP scatter for erk (Sachs).} All three graph-aware variants diverge from each other and from Traditional. Flow+PC inflates erk's attributions by treating it as an isolated source node; only Flow+True DAG tracks the correct downstream credit distribution}{figure.caption.24}{}}
 \@writefile{toc}{\contentsline {section}{\numberline {5}Conclusion}{10}{section.5}\protected@file@percent }
 \newlabel{sec:conclusion}{{5}{10}{Conclusion}{section.5}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {5.1}Summary of Findings}{10}{subsection.5.1}\protected@file@percent }
@@ -127,67 +123,67 @@
 \@writefile{toc}{\contentsline {section}{\numberline {A}Detailed Results Tables}{13}{appendix.A}\protected@file@percent }
 \newlabel{app:tables}{{A}{13}{Detailed Results Tables}{appendix.A}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {A.1}Baseline Deviation (vs.\ Traditional Shapley)}{13}{subsection.A.1}\protected@file@percent }
-\@writefile{lot}{\contentsline {table}{\numberline {3}{\ignorespaces \textbf  {Baseline Deviation -- Linear-Conf Synthetic Dataset.}}}{13}{table.caption.28}\protected@file@percent }
-\newlabel{tab:baseline_synth}{{3}{13}{\textbf {Baseline Deviation -- Linear-Conf Synthetic Dataset.}}{table.caption.28}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {4}{\ignorespaces \textbf  {Baseline Deviation -- Sachs Cell Signaling Dataset.}}}{13}{table.caption.29}\protected@file@percent }
-\newlabel{tab:baseline_sachs}{{4}{13}{\textbf {Baseline Deviation -- Sachs Cell Signaling Dataset.}}{table.caption.29}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {3}{\ignorespaces \textbf  {Baseline Deviation -- Linear-Conf Synthetic Dataset.}}}{13}{table.caption.26}\protected@file@percent }
+\newlabel{tab:baseline_synth}{{3}{13}{\textbf {Baseline Deviation -- Linear-Conf Synthetic Dataset.}}{table.caption.26}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {4}{\ignorespaces \textbf  {Baseline Deviation -- Sachs Cell Signaling Dataset.}}}{13}{table.caption.27}\protected@file@percent }
+\newlabel{tab:baseline_sachs}{{4}{13}{\textbf {Baseline Deviation -- Sachs Cell Signaling Dataset.}}{table.caption.27}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {A.2}Oracle Alignment (vs.\ True / Consensus DAG)}{13}{subsection.A.2}\protected@file@percent }
-\@writefile{lot}{\contentsline {table}{\numberline {5}{\ignorespaces \textbf  {Oracle Alignment -- Linear-Conf Synthetic Dataset.} $D_{\text  {oracle}}$ and $\Delta M_{\text  {oracle}}$ in \% of $\hat  {\sigma }$.}}{13}{table.caption.30}\protected@file@percent }
-\newlabel{tab:oracle_synth}{{5}{13}{\textbf {Oracle Alignment -- Linear-Conf Synthetic Dataset.} $D_{\text {oracle}}$ and $\Delta M_{\text {oracle}}$ in \% of $\hat {\sigma }$}{table.caption.30}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {6}{\ignorespaces \textbf  {Oracle Alignment -- Sachs Cell Signaling Dataset (oracle = consensus DAG).} $D_{\text  {oracle}}$ and $\Delta M_{\text  {oracle}}$ in \% of $\hat  {\sigma }$.}}{14}{table.caption.31}\protected@file@percent }
-\newlabel{tab:oracle_sachs}{{6}{14}{\textbf {Oracle Alignment -- Sachs Cell Signaling Dataset (oracle = consensus DAG).} $D_{\text {oracle}}$ and $\Delta M_{\text {oracle}}$ in \% of $\hat {\sigma }$}{table.caption.31}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {5}{\ignorespaces \textbf  {Oracle Alignment -- Linear-Conf Synthetic Dataset.} $D_{\text  {oracle}}$ and $\Delta M_{\text  {oracle}}$ in \% of $\hat  {\sigma }$.}}{13}{table.caption.28}\protected@file@percent }
+\newlabel{tab:oracle_synth}{{5}{13}{\textbf {Oracle Alignment -- Linear-Conf Synthetic Dataset.} $D_{\text {oracle}}$ and $\Delta M_{\text {oracle}}$ in \% of $\hat {\sigma }$}{table.caption.28}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {6}{\ignorespaces \textbf  {Oracle Alignment -- Sachs Cell Signaling Dataset (oracle = consensus DAG).} $D_{\text  {oracle}}$ and $\Delta M_{\text  {oracle}}$ in \% of $\hat  {\sigma }$.}}{14}{table.caption.29}\protected@file@percent }
+\newlabel{tab:oracle_sachs}{{6}{14}{\textbf {Oracle Alignment -- Sachs Cell Signaling Dataset (oracle = consensus DAG).} $D_{\text {oracle}}$ and $\Delta M_{\text {oracle}}$ in \% of $\hat {\sigma }$}{table.caption.29}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {A.3}Cross-Discovery Sensitivity (PC vs.\ LiNGAM)}{14}{subsection.A.3}\protected@file@percent }
-\@writefile{lot}{\contentsline {table}{\numberline {7}{\ignorespaces \textbf  {PC vs.\ LiNGAM Sensitivity -- Linear-Conf Synthetic Dataset.}}}{14}{table.caption.32}\protected@file@percent }
-\newlabel{tab:disc_synth}{{7}{14}{\textbf {PC vs.\ LiNGAM Sensitivity -- Linear-Conf Synthetic Dataset.}}{table.caption.32}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {8}{\ignorespaces \textbf  {PC vs.\ LiNGAM Sensitivity -- Sachs Cell Signaling Dataset.}}}{14}{table.caption.33}\protected@file@percent }
-\newlabel{tab:disc_sachs}{{8}{14}{\textbf {PC vs.\ LiNGAM Sensitivity -- Sachs Cell Signaling Dataset.}}{table.caption.33}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {7}{\ignorespaces \textbf  {PC vs.\ LiNGAM Sensitivity -- Linear-Conf Synthetic Dataset.}}}{14}{table.caption.30}\protected@file@percent }
+\newlabel{tab:disc_synth}{{7}{14}{\textbf {PC vs.\ LiNGAM Sensitivity -- Linear-Conf Synthetic Dataset.}}{table.caption.30}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {8}{\ignorespaces \textbf  {PC vs.\ LiNGAM Sensitivity -- Sachs Cell Signaling Dataset.}}}{14}{table.caption.31}\protected@file@percent }
+\newlabel{tab:disc_sachs}{{8}{14}{\textbf {PC vs.\ LiNGAM Sensitivity -- Sachs Cell Signaling Dataset.}}{table.caption.31}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {A.4}Discovery Adjacency Matrices}{14}{subsection.A.4}\protected@file@percent }
-\newlabel{fig:adj_synthetic}{{15a}{14}{Synthetic: True DAG (87 edges), PC (54), LiNGAM (105). LiNGAM scatters spurious edges across the matrix}{figure.caption.34}{}}
-\newlabel{sub@fig:adj_synthetic}{{a}{14}{Synthetic: True DAG (87 edges), PC (54), LiNGAM (105). LiNGAM scatters spurious edges across the matrix}{figure.caption.34}{}}
-\newlabel{fig:adj_sachs}{{15b}{14}{Sachs: consensus DAG (17 edges), PC (19), LiNGAM (26). Both algorithms recover only a fraction of true links}{figure.caption.34}{}}
-\newlabel{sub@fig:adj_sachs}{{b}{14}{Sachs: consensus DAG (17 edges), PC (19), LiNGAM (26). Both algorithms recover only a fraction of true links}{figure.caption.34}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {15}{\ignorespaces \textbf  {$X \to X$ adjacency matrices.} $\mathrm  {adj}[i,j]=1$ denotes $i \to j$. The discovery-quality ordering reverses between datasets.}}{14}{figure.caption.34}\protected@file@percent }
-\newlabel{fig:adj_pair}{{15}{14}{\textbf {$X \to X$ adjacency matrices.} $\mathrm {adj}[i,j]=1$ denotes $i \to j$. The discovery-quality ordering reverses between datasets}{figure.caption.34}{}}
+\newlabel{fig:adj_synthetic}{{13a}{14}{Synthetic: True DAG (87 edges), PC (54), LiNGAM (105). LiNGAM scatters spurious edges across the matrix}{figure.caption.32}{}}
+\newlabel{sub@fig:adj_synthetic}{{a}{14}{Synthetic: True DAG (87 edges), PC (54), LiNGAM (105). LiNGAM scatters spurious edges across the matrix}{figure.caption.32}{}}
+\newlabel{fig:adj_sachs}{{13b}{14}{Sachs: consensus DAG (17 edges), PC (19), LiNGAM (26). Both algorithms recover only a fraction of true links}{figure.caption.32}{}}
+\newlabel{sub@fig:adj_sachs}{{b}{14}{Sachs: consensus DAG (17 edges), PC (19), LiNGAM (26). Both algorithms recover only a fraction of true links}{figure.caption.32}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {13}{\ignorespaces \textbf  {$X \to X$ adjacency matrices.} $\mathrm  {adj}[i,j]=1$ denotes $i \to j$. The discovery-quality ordering reverses between datasets.}}{14}{figure.caption.32}\protected@file@percent }
+\newlabel{fig:adj_pair}{{13}{14}{\textbf {$X \to X$ adjacency matrices.} $\mathrm {adj}[i,j]=1$ denotes $i \to j$. The discovery-quality ordering reverses between datasets}{figure.caption.32}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {A.5}Feature-Level Magnitude Heatmaps ($\Delta M$)}{14}{subsection.A.5}\protected@file@percent }
 \newlabel{app:heatmaps_magnitude}{{A.5}{14}{Feature-Level Magnitude Heatmaps ($\Delta M$)}{subsection.A.5}{}}
-\newlabel{fig:heatmap_trad_synth}{{16a}{15}{Synthetic. Asymmetric rows near-zero throughout; Causal and Flow concentrate on X24, X33, X47}{figure.caption.35}{}}
-\newlabel{sub@fig:heatmap_trad_synth}{{a}{15}{Synthetic. Asymmetric rows near-zero throughout; Causal and Flow concentrate on X24, X33, X47}{figure.caption.35}{}}
-\newlabel{fig:heatmap_trad_sachs}{{16b}{15}{Sachs. Deviation concentrates on erk and pka; Flow+PC produces the largest single shift (erk, 57.9\% of $\hat {\sigma }$)}{figure.caption.35}{}}
-\newlabel{sub@fig:heatmap_trad_sachs}{{b}{15}{Sachs. Deviation concentrates on erk and pka; Flow+PC produces the largest single shift (erk, 57.9\% of $\hat {\sigma }$)}{figure.caption.35}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {16}{\ignorespaces \textbf  {Feature-level $\Delta M_{\text  {base}}$ vs.\ Traditional Shapley.}}}{15}{figure.caption.35}\protected@file@percent }
-\newlabel{fig:heatmap_trad}{{16}{15}{\textbf {Feature-level $\Delta M_{\text {base}}$ vs.\ Traditional Shapley.}}{figure.caption.35}{}}
-\newlabel{fig:heatmap_oracle_synth}{{17a}{15}{Synthetic. Asymmetric rows near-zero; Causal and Flow concentrate oracle deviations on X24, X33, X47, X6}{figure.caption.36}{}}
-\newlabel{sub@fig:heatmap_oracle_synth}{{a}{15}{Synthetic. Asymmetric rows near-zero; Causal and Flow concentrate oracle deviations on X24, X33, X47, X6}{figure.caption.36}{}}
-\newlabel{fig:heatmap_oracle_sachs}{{17b}{15}{Sachs. Flow+PC produces the largest single deviation on erk (49.2\% of $\hat {\sigma }$)}{figure.caption.36}{}}
-\newlabel{sub@fig:heatmap_oracle_sachs}{{b}{15}{Sachs. Flow+PC produces the largest single deviation on erk (49.2\% of $\hat {\sigma }$)}{figure.caption.36}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {17}{\ignorespaces \textbf  {Feature-level $\Delta M_{\text  {oracle}}$ vs.\ the oracle DAG.}}}{15}{figure.caption.36}\protected@file@percent }
-\newlabel{fig:heatmap_oracle}{{17}{15}{\textbf {Feature-level $\Delta M_{\text {oracle}}$ vs.\ the oracle DAG.}}{figure.caption.36}{}}
-\newlabel{fig:heatmap_disc_synth}{{18a}{15}{Synthetic. Asymmetric near-zero; Causal and Flow concentrate on X33 and X47}{figure.caption.37}{}}
-\newlabel{sub@fig:heatmap_disc_synth}{{a}{15}{Synthetic. Asymmetric near-zero; Causal and Flow concentrate on X33 and X47}{figure.caption.37}{}}
-\newlabel{fig:heatmap_disc_sachs}{{18b}{15}{Sachs. Sensitivity concentrates on erk and pka; Flow reaches 57.5\% of $\hat {\sigma }$ on erk}{figure.caption.37}{}}
-\newlabel{sub@fig:heatmap_disc_sachs}{{b}{15}{Sachs. Sensitivity concentrates on erk and pka; Flow reaches 57.5\% of $\hat {\sigma }$ on erk}{figure.caption.37}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {18}{\ignorespaces \textbf  {Feature-level $\Delta M_{\text  {disc}}$ (PC vs.\ LiNGAM).}}}{15}{figure.caption.37}\protected@file@percent }
-\newlabel{fig:heatmap_disc}{{18}{15}{\textbf {Feature-level $\Delta M_{\text {disc}}$ (PC vs.\ LiNGAM).}}{figure.caption.37}{}}
+\newlabel{fig:heatmap_trad_synth}{{14a}{15}{Synthetic. Asymmetric rows near-zero throughout; Causal and Flow concentrate on X24, X33, X47}{figure.caption.33}{}}
+\newlabel{sub@fig:heatmap_trad_synth}{{a}{15}{Synthetic. Asymmetric rows near-zero throughout; Causal and Flow concentrate on X24, X33, X47}{figure.caption.33}{}}
+\newlabel{fig:heatmap_trad_sachs}{{14b}{15}{Sachs. Deviation concentrates on erk and pka; Flow+PC produces the largest single shift (erk, 57.9\% of $\hat {\sigma }$)}{figure.caption.33}{}}
+\newlabel{sub@fig:heatmap_trad_sachs}{{b}{15}{Sachs. Deviation concentrates on erk and pka; Flow+PC produces the largest single shift (erk, 57.9\% of $\hat {\sigma }$)}{figure.caption.33}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {14}{\ignorespaces \textbf  {Feature-level $\Delta M_{\text  {base}}$ vs.\ Traditional Shapley.}}}{15}{figure.caption.33}\protected@file@percent }
+\newlabel{fig:heatmap_trad}{{14}{15}{\textbf {Feature-level $\Delta M_{\text {base}}$ vs.\ Traditional Shapley.}}{figure.caption.33}{}}
+\newlabel{fig:heatmap_oracle_synth}{{15a}{15}{Synthetic. Asymmetric rows near-zero; Causal and Flow concentrate oracle deviations on X24, X33, X47}{figure.caption.34}{}}
+\newlabel{sub@fig:heatmap_oracle_synth}{{a}{15}{Synthetic. Asymmetric rows near-zero; Causal and Flow concentrate oracle deviations on X24, X33, X47}{figure.caption.34}{}}
+\newlabel{fig:heatmap_oracle_sachs}{{15b}{15}{Sachs. Flow+PC produces the largest single deviation on erk (49.2\% of $\hat {\sigma }$)}{figure.caption.34}{}}
+\newlabel{sub@fig:heatmap_oracle_sachs}{{b}{15}{Sachs. Flow+PC produces the largest single deviation on erk (49.2\% of $\hat {\sigma }$)}{figure.caption.34}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {15}{\ignorespaces \textbf  {Feature-level $\Delta M_{\text  {oracle}}$ vs.\ the oracle DAG.}}}{15}{figure.caption.34}\protected@file@percent }
+\newlabel{fig:heatmap_oracle}{{15}{15}{\textbf {Feature-level $\Delta M_{\text {oracle}}$ vs.\ the oracle DAG.}}{figure.caption.34}{}}
+\newlabel{fig:heatmap_disc_synth}{{16a}{15}{Synthetic. Asymmetric near-zero; Causal and Flow concentrate on X33 and X47}{figure.caption.35}{}}
+\newlabel{sub@fig:heatmap_disc_synth}{{a}{15}{Synthetic. Asymmetric near-zero; Causal and Flow concentrate on X33 and X47}{figure.caption.35}{}}
+\newlabel{fig:heatmap_disc_sachs}{{16b}{15}{Sachs. Sensitivity concentrates on erk and pka; Flow reaches 57.5\% of $\hat {\sigma }$ on erk}{figure.caption.35}{}}
+\newlabel{sub@fig:heatmap_disc_sachs}{{b}{15}{Sachs. Sensitivity concentrates on erk and pka; Flow reaches 57.5\% of $\hat {\sigma }$ on erk}{figure.caption.35}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {16}{\ignorespaces \textbf  {Feature-level $\Delta M_{\text  {disc}}$ (PC vs.\ LiNGAM).}}}{15}{figure.caption.35}\protected@file@percent }
+\newlabel{fig:heatmap_disc}{{16}{15}{\textbf {Feature-level $\Delta M_{\text {disc}}$ (PC vs.\ LiNGAM).}}{figure.caption.35}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {A.6}Feature-Level Sign Disagreement Heatmaps ($D$)}{16}{subsection.A.6}\protected@file@percent }
 \newlabel{app:heatmaps_sign}{{A.6}{16}{Feature-Level Sign Disagreement Heatmaps ($D$)}{subsection.A.6}{}}
-\newlabel{fig:sign_trad_synth}{{19a}{16}{Synthetic. Asymmetric rows near-zero; Causal and Flow concentrate sign flips on X24, X33, X47}{figure.caption.38}{}}
-\newlabel{sub@fig:sign_trad_synth}{{a}{16}{Synthetic. Asymmetric rows near-zero; Causal and Flow concentrate sign flips on X24, X33, X47}{figure.caption.38}{}}
-\newlabel{fig:sign_trad_sachs}{{19b}{16}{Sachs. Sign disagreement concentrates on raf, plc, pkc; Causal+LiNGAM produces the highest per-feature flip rate vs.\ the baseline}{figure.caption.38}{}}
-\newlabel{sub@fig:sign_trad_sachs}{{b}{16}{Sachs. Sign disagreement concentrates on raf, plc, pkc; Causal+LiNGAM produces the highest per-feature flip rate vs.\ the baseline}{figure.caption.38}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {19}{\ignorespaces \textbf  {Feature-level $D_{\text  {base}}$ vs.\ Traditional Shapley.}}}{16}{figure.caption.38}\protected@file@percent }
-\newlabel{fig:sign_trad}{{19}{16}{\textbf {Feature-level $D_{\text {base}}$ vs.\ Traditional Shapley.}}{figure.caption.38}{}}
-\newlabel{fig:sign_oracle_synth}{{20a}{16}{Synthetic. Causal and Flow concentrate sign disagreement on X24, X33, X47, X6 --- the same features that carry the oracle magnitude deviations}{figure.caption.39}{}}
-\newlabel{sub@fig:sign_oracle_synth}{{a}{16}{Synthetic. Causal and Flow concentrate sign disagreement on X24, X33, X47, X6 --- the same features that carry the oracle magnitude deviations}{figure.caption.39}{}}
-\newlabel{fig:sign_oracle_sachs}{{20b}{16}{Sachs. Sign disagreement vs.\ oracle concentrates on erk and pka; Flow+PC has the highest per-feature oracle sign-flip rate on erk}{figure.caption.39}{}}
-\newlabel{sub@fig:sign_oracle_sachs}{{b}{16}{Sachs. Sign disagreement vs.\ oracle concentrates on erk and pka; Flow+PC has the highest per-feature oracle sign-flip rate on erk}{figure.caption.39}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {20}{\ignorespaces \textbf  {Feature-level $D_{\text  {oracle}}$ vs.\ the oracle DAG.}}}{16}{figure.caption.39}\protected@file@percent }
-\newlabel{fig:sign_oracle}{{20}{16}{\textbf {Feature-level $D_{\text {oracle}}$ vs.\ the oracle DAG.}}{figure.caption.39}{}}
-\newlabel{fig:sign_disc_synth}{{21a}{17}{Synthetic. Causal shows the highest sign instability concentrated on X10 and X32; Flow's sign instability is moderate vs.\ its magnitude sensitivity}{figure.caption.40}{}}
-\newlabel{sub@fig:sign_disc_synth}{{a}{17}{Synthetic. Causal shows the highest sign instability concentrated on X10 and X32; Flow's sign instability is moderate vs.\ its magnitude sensitivity}{figure.caption.40}{}}
-\newlabel{fig:sign_disc_sachs}{{21b}{17}{Sachs. Sign instability concentrates on pkc and p38; Causal Shapley shows the broadest sign disagreement across proteins}{figure.caption.40}{}}
-\newlabel{sub@fig:sign_disc_sachs}{{b}{17}{Sachs. Sign instability concentrates on pkc and p38; Causal Shapley shows the broadest sign disagreement across proteins}{figure.caption.40}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {21}{\ignorespaces \textbf  {Feature-level $D_{\text  {disc}}$ (PC vs.\ LiNGAM).}}}{17}{figure.caption.40}\protected@file@percent }
-\newlabel{fig:sign_disc}{{21}{17}{\textbf {Feature-level $D_{\text {disc}}$ (PC vs.\ LiNGAM).}}{figure.caption.40}{}}
+\newlabel{fig:sign_trad_synth}{{17a}{16}{Synthetic. Asymmetric rows near-zero; Causal and Flow concentrate sign flips on X24, X33, X47}{figure.caption.36}{}}
+\newlabel{sub@fig:sign_trad_synth}{{a}{16}{Synthetic. Asymmetric rows near-zero; Causal and Flow concentrate sign flips on X24, X33, X47}{figure.caption.36}{}}
+\newlabel{fig:sign_trad_sachs}{{17b}{16}{Sachs. Sign disagreement concentrates on raf, plc, pkc; Causal+LiNGAM produces the highest per-feature flip rate vs.\ the baseline}{figure.caption.36}{}}
+\newlabel{sub@fig:sign_trad_sachs}{{b}{16}{Sachs. Sign disagreement concentrates on raf, plc, pkc; Causal+LiNGAM produces the highest per-feature flip rate vs.\ the baseline}{figure.caption.36}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {17}{\ignorespaces \textbf  {Feature-level $D_{\text  {base}}$ vs.\ Traditional Shapley.}}}{16}{figure.caption.36}\protected@file@percent }
+\newlabel{fig:sign_trad}{{17}{16}{\textbf {Feature-level $D_{\text {base}}$ vs.\ Traditional Shapley.}}{figure.caption.36}{}}
+\newlabel{fig:sign_oracle_synth}{{18a}{16}{Synthetic. Causal and Flow concentrate sign disagreement on X24, X33, X47 --- the same features that carry the oracle magnitude deviations}{figure.caption.37}{}}
+\newlabel{sub@fig:sign_oracle_synth}{{a}{16}{Synthetic. Causal and Flow concentrate sign disagreement on X24, X33, X47 --- the same features that carry the oracle magnitude deviations}{figure.caption.37}{}}
+\newlabel{fig:sign_oracle_sachs}{{18b}{16}{Sachs. Sign disagreement vs.\ oracle concentrates on erk and pka; Flow+PC has the highest per-feature oracle sign-flip rate on erk}{figure.caption.37}{}}
+\newlabel{sub@fig:sign_oracle_sachs}{{b}{16}{Sachs. Sign disagreement vs.\ oracle concentrates on erk and pka; Flow+PC has the highest per-feature oracle sign-flip rate on erk}{figure.caption.37}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {18}{\ignorespaces \textbf  {Feature-level $D_{\text  {oracle}}$ vs.\ the oracle DAG.}}}{16}{figure.caption.37}\protected@file@percent }
+\newlabel{fig:sign_oracle}{{18}{16}{\textbf {Feature-level $D_{\text {oracle}}$ vs.\ the oracle DAG.}}{figure.caption.37}{}}
+\newlabel{fig:sign_disc_synth}{{19a}{17}{Synthetic. Causal shows the highest sign instability concentrated on X10 and X32; Flow's sign instability is moderate vs.\ its magnitude sensitivity}{figure.caption.38}{}}
+\newlabel{sub@fig:sign_disc_synth}{{a}{17}{Synthetic. Causal shows the highest sign instability concentrated on X10 and X32; Flow's sign instability is moderate vs.\ its magnitude sensitivity}{figure.caption.38}{}}
+\newlabel{fig:sign_disc_sachs}{{19b}{17}{Sachs. Sign instability concentrates on pkc and p38; Causal Shapley shows the broadest sign disagreement across proteins}{figure.caption.38}{}}
+\newlabel{sub@fig:sign_disc_sachs}{{b}{17}{Sachs. Sign instability concentrates on pkc and p38; Causal Shapley shows the broadest sign disagreement across proteins}{figure.caption.38}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {19}{\ignorespaces \textbf  {Feature-level $D_{\text  {disc}}$ (PC vs.\ LiNGAM).}}}{17}{figure.caption.38}\protected@file@percent }
+\newlabel{fig:sign_disc}{{19}{17}{\textbf {Feature-level $D_{\text {disc}}$ (PC vs.\ LiNGAM).}}{figure.caption.38}{}}
 \@writefile{toc}{\contentsline {section}{\numberline {B}Algorithm Pseudocode}{17}{appendix.B}\protected@file@percent }
 \newlabel{app:algorithms}{{B}{17}{Algorithm Pseudocode}{appendix.B}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {B.1}Main Methods}{17}{subsection.B.1}\protected@file@percent }
