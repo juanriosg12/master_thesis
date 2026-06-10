@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.29 (TeX Live 2026) (preloaded format=pdflatex 2026.3.22)  10 JUN 2026 15:57
+This is pdfTeX, Version 3.141592653-2.6-1.40.29 (TeX Live 2026) (preloaded format=pdflatex 2026.3.22)  10 JUN 2026 18:09
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -782,411 +782,389 @@ Package microtype Info: Loading generic protrusion settings for font family
 (microtype)             See the microtype manual for details.
 LaTeX Font Info:    External font `lmex10' loaded for size
 (Font)              <10.95> on input line 252.
- [12]
-
-Package natbib Warning: Citation `Zheng2024' on page 13 undefined on input line
- 271.
-
-
-Package natbib Warning: Citation `Zheng2024' on page 13 undefined on input line
- 275.
-
-[13]
-<figures/discovery_vs_r2.png, id=414, 1187.43625pt x 735.74875pt>
-File: figures/discovery_vs_r2.png Graphic file (type png)
-<use figures/discovery_vs_r2.png>
-Package pdftex.def Info: figures/discovery_vs_r2.png  used on input line 285.
-(pdftex.def)             Requested size: 374.86775pt x 232.26727pt.
- [14 <./figures/discovery_vs_r2.png>]
-Underfull \hbox (badness 10000) in paragraph at lines 314--314
+ [12] [13] [14]
+Underfull \hbox (badness 10000) in paragraph at lines 329--329
 []|\T1/lmr/m/n/10 (+20) Permutation
  []
 
 
-Underfull \hbox (badness 6396) in paragraph at lines 314--314
+Underfull \hbox (badness 6396) in paragraph at lines 329--329
 \T1/lmr/m/n/10 (+20) ings of fea-ture
  []
 
 
-Underfull \hbox (badness 1205) in paragraph at lines 314--314
+Underfull \hbox (badness 1205) in paragraph at lines 329--329
 []|\T1/lmr/m/n/10 (+20) All or-der-ings of
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 314--314
+Underfull \hbox (badness 10000) in paragraph at lines 329--329
 []|\T1/lmr/m/n/10 (+20) Obs. $\U/msb/m/n/10 E\OT1/lmr/m/n/10 (+20) [\OML/lmm/m/
 it/10 f \OMS/lmsy/m/n/10 j
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 314--314
+Underfull \hbox (badness 10000) in paragraph at lines 329--329
 []|\T1/lmr/m/n/10 (+20) Observational
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 314--314
+Underfull \hbox (badness 10000) in paragraph at lines 329--329
 []|\T1/lmr/m/n/10 (+20) Interventional
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 314--314
+Underfull \hbox (badness 10000) in paragraph at lines 329--329
 \U/msb/m/n/10 E\OT1/lmr/m/n/10 (+20) [\OML/lmm/m/it/10 f \OMS/lmsy/m/n/10 j
  []
 
 
-Overfull \hbox (26.3355pt too wide) in paragraph at lines 314--314
+Overfull \hbox (26.3355pt too wide) in paragraph at lines 329--329
 []|\T1/lmr/m/n/10 (-20) Foreground/background
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 314--314
+Underfull \hbox (badness 10000) in paragraph at lines 329--329
 []|\T1/lmr/m/n/10 (+20) Defines com-po-
  []
 
 
-Underfull \hbox (badness 7221) in paragraph at lines 314--314
+Underfull \hbox (badness 7221) in paragraph at lines 329--329
 \T1/lmr/m/n/10 (+20) nents, or-der-ing,
  []
 
-[15]
 Package microtype Info: Character `029' is missing
 (microtype)             in font `T1/lmr/m/sc/12'.
 (microtype)             Ignoring protrusion settings for this character.
 Package hyperref Info: bookmark level for unknown algorithm defaults to 0 on in
-put line 324.
- [16]
-Underfull \hbox (badness 10000) in paragraph at lines 386--387
+put line 339.
+[15] [16]
+Underfull \hbox (badness 10000) in paragraph at lines 401--402
 []\T1/lmtt/m/n/12 components\T1/lmr/m/n/12 (+20) , \T1/lmtt/m/n/12 confounded[]
 \T1/lmr/m/n/12 (+20) , \T1/lmtt/m/n/12 parents[] $\OMS/lmsy/m/n/12  $
  []
 
 [17] [18] [19]
 LaTeX Font Info:    Trying to load font information for TS1+lmr on input line 4
-63.
+78.
  (/usr/local/texlive/2026/texmf-dist/tex/latex/lm/ts1lmr.fd
 File: ts1lmr.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
 )
 [20{/usr/local/texlive/2026/texmf-dist/fonts/enc/dvips/lm/lm-ts1.enc}]
-Underfull \hbox (badness 10000) in paragraph at lines 485--485
+Underfull \hbox (badness 10000) in paragraph at lines 500--500
 []|\T1/lmr/bx/n/12 (+20) vs. Tra-di-tional
  []
 
 
-Underfull \hbox (badness 3536) in paragraph at lines 485--485
+Underfull \hbox (badness 3536) in paragraph at lines 500--500
 []|\T1/lmr/bx/n/12 (+20) vs. Or-a-cle DAG
  []
 
 [21]
-<figures/adjacency_comparison_linear_conf_f50_s1000_p30.png, id=482, 1074.414pt
+<figures/adjacency_comparison_linear_conf_f50_s1000_p30.png, id=484, 1074.414pt
  x 341.5962pt>
 File: figures/adjacency_comparison_linear_conf_f50_s1000_p30.png Graphic file (
 type png)
 <use figures/adjacency_comparison_linear_conf_f50_s1000_p30.png>
 Package pdftex.def Info: figures/adjacency_comparison_linear_conf_f50_s1000_p30
-.png  used on input line 535.
+.png  used on input line 550.
 (pdftex.def)             Requested size: 441.01773pt x 140.2117pt.
  [22]
-<figures/adjacency_comparison_sachs.png, id=492, 1074.414pt x 342.078pt>
+<figures/adjacency_comparison_sachs.png, id=494, 1074.414pt x 342.078pt>
 File: figures/adjacency_comparison_sachs.png Graphic file (type png)
 <use figures/adjacency_comparison_sachs.png>
 Package pdftex.def Info: figures/adjacency_comparison_sachs.png  used on input 
-line 546.
+line 561.
 (pdftex.def)             Requested size: 441.01773pt x 140.40947pt.
  [23 <./figures/adjacency_comparison_linear_conf_f50_s1000_p30.png>]
 [24 <./figures/adjacency_comparison_sachs.png>]
-<figures/tga_sa_scatter_traditional_linear_conf_f50_s1000_p30.png, id=513, 467.
+<figures/tga_sa_scatter_traditional_linear_conf_f50_s1000_p30.png, id=515, 467.
 346pt x 352.1958pt>
 File: figures/tga_sa_scatter_traditional_linear_conf_f50_s1000_p30.png Graphic 
 file (type png)
 <use figures/tga_sa_scatter_traditional_linear_conf_f50_s1000_p30.png>
 Package pdftex.def Info: figures/tga_sa_scatter_traditional_linear_conf_f50_s10
-00_p30.png  used on input line 563.
+00_p30.png  used on input line 578.
 (pdftex.def)             Requested size: 211.68661pt x 159.52383pt.
-<figures/tga_sa_scatter_traditional_sachs.png, id=514, 467.346pt x 352.1958pt>
+<figures/tga_sa_scatter_traditional_sachs.png, id=516, 467.346pt x 352.1958pt>
 File: figures/tga_sa_scatter_traditional_sachs.png Graphic file (type png)
 <use figures/tga_sa_scatter_traditional_sachs.png>
 Package pdftex.def Info: figures/tga_sa_scatter_traditional_sachs.png  used on 
-input line 569.
+input line 584.
 (pdftex.def)             Requested size: 211.68661pt x 159.52383pt.
-<figures/tga_heatmap_traditional_linear_conf_f50_s1000_p30.png, id=517, 568.524
+<figures/tga_heatmap_traditional_linear_conf_f50_s1000_p30.png, id=519, 568.524
 pt x 358.941pt>
 File: figures/tga_heatmap_traditional_linear_conf_f50_s1000_p30.png Graphic fil
 e (type png)
 <use figures/tga_heatmap_traditional_linear_conf_f50_s1000_p30.png>
 Package pdftex.def Info: figures/tga_heatmap_traditional_linear_conf_f50_s1000_
-p30.png  used on input line 616.
+p30.png  used on input line 631.
 (pdftex.def)             Requested size: 211.68661pt x 133.64954pt.
-<figures/tga_heatmap_traditional_sachs.png, id=518, 568.524pt x 358.941pt>
+<figures/tga_heatmap_traditional_sachs.png, id=520, 568.524pt x 358.941pt>
 File: figures/tga_heatmap_traditional_sachs.png Graphic file (type png)
 <use figures/tga_heatmap_traditional_sachs.png>
 Package pdftex.def Info: figures/tga_heatmap_traditional_sachs.png  used on inp
-ut line 622.
+ut line 637.
 (pdftex.def)             Requested size: 211.68661pt x 133.64954pt.
  [25 <./figures/tga_sa_scatter_traditional_linear_conf_f50_s1000_p30.png> <./fi
 gures/tga_sa_scatter_traditional_sachs.png>]
 <figures/sign_alignment_heatmap_traditional_linear_conf_f50_s1000_p30.png, id=5
-28, 568.524pt x 358.941pt>
+29, 568.524pt x 358.941pt>
 File: figures/sign_alignment_heatmap_traditional_linear_conf_f50_s1000_p30.png 
 Graphic file (type png)
 <use figures/sign_alignment_heatmap_traditional_linear_conf_f50_s1000_p30.png>
 Package pdftex.def Info: figures/sign_alignment_heatmap_traditional_linear_conf
-_f50_s1000_p30.png  used on input line 635.
+_f50_s1000_p30.png  used on input line 650.
 (pdftex.def)             Requested size: 211.68661pt x 133.64954pt.
-<figures/sign_alignment_heatmap_traditional_sachs.png, id=529, 568.524pt x 358.
+<figures/sign_alignment_heatmap_traditional_sachs.png, id=530, 568.524pt x 358.
 941pt>
 File: figures/sign_alignment_heatmap_traditional_sachs.png Graphic file (type p
 ng)
 <use figures/sign_alignment_heatmap_traditional_sachs.png>
 Package pdftex.def Info: figures/sign_alignment_heatmap_traditional_sachs.png  
-used on input line 641.
+used on input line 656.
 (pdftex.def)             Requested size: 211.68661pt x 133.64954pt.
  [26 <./figures/tga_heatmap_traditional_linear_conf_f50_s1000_p30.png> <./figur
 es/tga_heatmap_traditional_sachs.png> <./figures/sign_alignment_heatmap_traditi
 onal_linear_conf_f50_s1000_p30.png> <./figures/sign_alignment_heatmap_tradition
 al_sachs.png>] [27] [28]
-<figures/tga_sa_scatter_true_linear_conf_f50_s1000_p30.png, id=554, 467.346pt x
+<figures/tga_sa_scatter_true_linear_conf_f50_s1000_p30.png, id=555, 467.346pt x
  352.1958pt>
 File: figures/tga_sa_scatter_true_linear_conf_f50_s1000_p30.png Graphic file (t
 ype png)
 <use figures/tga_sa_scatter_true_linear_conf_f50_s1000_p30.png>
 Package pdftex.def Info: figures/tga_sa_scatter_true_linear_conf_f50_s1000_p30.
-png  used on input line 679.
+png  used on input line 696.
 (pdftex.def)             Requested size: 211.68661pt x 159.52383pt.
-<figures/tga_sa_scatter_true_sachs.png, id=555, 467.346pt x 352.1958pt>
+<figures/tga_sa_scatter_true_sachs.png, id=556, 467.346pt x 352.1958pt>
 File: figures/tga_sa_scatter_true_sachs.png Graphic file (type png)
 <use figures/tga_sa_scatter_true_sachs.png>
 Package pdftex.def Info: figures/tga_sa_scatter_true_sachs.png  used on input l
-ine 685.
+ine 702.
 (pdftex.def)             Requested size: 211.68661pt x 159.52383pt.
- [29]
-<figures/tga_heatmap_true_linear_conf_f50_s1000_p30.png, id=563, 568.524pt x 35
+ [29 <./figures/tga_sa_scatter_true_linear_conf_f50_s1000_p30.png> <./figures/t
+ga_sa_scatter_true_sachs.png>]
+<figures/tga_heatmap_true_linear_conf_f50_s1000_p30.png, id=566, 568.524pt x 35
 8.941pt>
 File: figures/tga_heatmap_true_linear_conf_f50_s1000_p30.png Graphic file (type
  png)
 <use figures/tga_heatmap_true_linear_conf_f50_s1000_p30.png>
 Package pdftex.def Info: figures/tga_heatmap_true_linear_conf_f50_s1000_p30.png
-  used on input line 732.
+  used on input line 749.
 (pdftex.def)             Requested size: 211.68661pt x 133.64954pt.
 
-Underfull \hbox (badness 1067) in paragraph at lines 733--733
+Underfull \hbox (badness 1067) in paragraph at lines 750--750
 \OT1/lmr/m/n/10 (+20) ^^A\OML/lmm/m/it/10 M[]$\T1/lmr/m/n/10 (+20) ). Asym-met-
 ric rows are near-zero;
  []
 
-<figures/tga_heatmap_true_sachs.png, id=564, 568.524pt x 358.941pt>
+<figures/tga_heatmap_true_sachs.png, id=567, 568.524pt x 358.941pt>
 File: figures/tga_heatmap_true_sachs.png Graphic file (type png)
 <use figures/tga_heatmap_true_sachs.png>
 Package pdftex.def Info: figures/tga_heatmap_true_sachs.png  used on input line
- 738.
+ 755.
 (pdftex.def)             Requested size: 211.68661pt x 133.64954pt.
-[30 <./figures/tga_sa_scatter_true_linear_conf_f50_s1000_p30.png> <./figures/tg
-a_sa_scatter_true_sachs.png>]
-<figures/sign_alignment_heatmap_true_linear_conf_f50_s1000_p30.png, id=572, 568
+[30 <./figures/tga_heatmap_true_linear_conf_f50_s1000_p30.png> <./figures/tga_h
+eatmap_true_sachs.png>]
+<figures/sign_alignment_heatmap_true_linear_conf_f50_s1000_p30.png, id=576, 568
 .524pt x 358.941pt>
 File: figures/sign_alignment_heatmap_true_linear_conf_f50_s1000_p30.png Graphic
  file (type png)
 <use figures/sign_alignment_heatmap_true_linear_conf_f50_s1000_p30.png>
 Package pdftex.def Info: figures/sign_alignment_heatmap_true_linear_conf_f50_s1
-000_p30.png  used on input line 752.
+000_p30.png  used on input line 769.
 (pdftex.def)             Requested size: 211.68661pt x 133.64954pt.
-<figures/sign_alignment_heatmap_true_sachs.png, id=573, 568.524pt x 358.941pt>
+<figures/sign_alignment_heatmap_true_sachs.png, id=577, 568.524pt x 358.941pt>
 File: figures/sign_alignment_heatmap_true_sachs.png Graphic file (type png)
 <use figures/sign_alignment_heatmap_true_sachs.png>
 Package pdftex.def Info: figures/sign_alignment_heatmap_true_sachs.png  used on
- input line 758.
+ input line 775.
 (pdftex.def)             Requested size: 211.68661pt x 133.64954pt.
- [31 <./figures/tga_heatmap_true_linear_conf_f50_s1000_p30.png> <./figures/tga_
-heatmap_true_sachs.png>] [32 <./figures/sign_alignment_heatmap_true_linear_conf
-_f50_s1000_p30.png> <./figures/sign_alignment_heatmap_true_sachs.png>] [33] [34
-]
-<figures/gss_sss_scatter_linear_conf_f50_s1000_p30.png, id=600, 445.1832pt x 35
+ [31 <./figures/sign_alignment_heatmap_true_linear_conf_f50_s1000_p30.png> <./f
+igures/sign_alignment_heatmap_true_sachs.png>] [32]
+<figures/gss_sss_scatter_linear_conf_f50_s1000_p30.png, id=594, 445.1832pt x 35
 2.1958pt>
 File: figures/gss_sss_scatter_linear_conf_f50_s1000_p30.png Graphic file (type 
 png)
 <use figures/gss_sss_scatter_linear_conf_f50_s1000_p30.png>
 Package pdftex.def Info: figures/gss_sss_scatter_linear_conf_f50_s1000_p30.png 
- used on input line 800.
+ used on input line 809.
 (pdftex.def)             Requested size: 211.68661pt x 167.47209pt.
-<figures/gss_sss_scatter_sachs.png, id=601, 423.5022pt x 352.1958pt>
+<figures/gss_sss_scatter_sachs.png, id=595, 423.5022pt x 352.1958pt>
 File: figures/gss_sss_scatter_sachs.png Graphic file (type png)
 <use figures/gss_sss_scatter_sachs.png>
 Package pdftex.def Info: figures/gss_sss_scatter_sachs.png  used on input line 
-806.
+815.
 (pdftex.def)             Requested size: 211.68661pt x 176.04373pt.
-<figures/gss_heatmap_linear_conf_f50_s1000_p30.png, id=602, 568.524pt x 337.26p
+<figures/gss_heatmap_linear_conf_f50_s1000_p30.png, id=596, 568.524pt x 337.26p
 t>
 File: figures/gss_heatmap_linear_conf_f50_s1000_p30.png Graphic file (type png)
 
 <use figures/gss_heatmap_linear_conf_f50_s1000_p30.png>
 Package pdftex.def Info: figures/gss_heatmap_linear_conf_f50_s1000_p30.png  use
-d on input line 850.
+d on input line 859.
 (pdftex.def)             Requested size: 211.68661pt x 125.57675pt.
 
-Underfull \hbox (badness 2302) in paragraph at lines 851--851
+Underfull \hbox (badness 2302) in paragraph at lines 860--860
 []\T1/lmr/bx/n/10 (+20) (a) |\T1/lmr/m/n/10 (+20) Syn-thetic dataset (top 10 fe
 a-tures by
  []
 
-<figures/gss_heatmap_sachs.png, id=603, 568.524pt x 337.26pt>
+<figures/gss_heatmap_sachs.png, id=597, 568.524pt x 337.26pt>
 File: figures/gss_heatmap_sachs.png Graphic file (type png)
 <use figures/gss_heatmap_sachs.png>
-Package pdftex.def Info: figures/gss_heatmap_sachs.png  used on input line 856.
+Package pdftex.def Info: figures/gss_heatmap_sachs.png  used on input line 865.
 
 (pdftex.def)             Requested size: 211.68661pt x 125.57675pt.
-[35 <./figures/gss_sss_scatter_linear_conf_f50_s1000_p30.png> <./figures/gss_ss
-s_scatter_sachs.png>] [36 <./figures/gss_heatmap_linear_conf_f50_s1000_p30.png>
+[33 <./figures/gss_sss_scatter_linear_conf_f50_s1000_p30.png> <./figures/gss_ss
+s_scatter_sachs.png>] [34 <./figures/gss_heatmap_linear_conf_f50_s1000_p30.png>
  <./figures/gss_heatmap_sachs.png>]
-<figures/sss_heatmap_linear_conf_f50_s1000_p30.png, id=621, 568.524pt x 337.26p
+<figures/sss_heatmap_linear_conf_f50_s1000_p30.png, id=614, 568.524pt x 337.26p
 t>
 File: figures/sss_heatmap_linear_conf_f50_s1000_p30.png Graphic file (type png)
 
 <use figures/sss_heatmap_linear_conf_f50_s1000_p30.png>
 Package pdftex.def Info: figures/sss_heatmap_linear_conf_f50_s1000_p30.png  use
-d on input line 871.
+d on input line 880.
 (pdftex.def)             Requested size: 211.68661pt x 125.57675pt.
-<figures/sss_heatmap_sachs.png, id=622, 568.524pt x 337.26pt>
+<figures/sss_heatmap_sachs.png, id=615, 568.524pt x 337.26pt>
 File: figures/sss_heatmap_sachs.png Graphic file (type png)
 <use figures/sss_heatmap_sachs.png>
-Package pdftex.def Info: figures/sss_heatmap_sachs.png  used on input line 877.
+Package pdftex.def Info: figures/sss_heatmap_sachs.png  used on input line 886.
 
 (pdftex.def)             Requested size: 211.68661pt x 125.57675pt.
- [37 <./figures/sss_heatmap_linear_conf_f50_s1000_p30.png> <./figures/sss_heatm
-ap_sachs.png>] [38]
-<figures/dag_neighborhood_X24_linear_conf_f50_s1000_p30.png, id=639, 1291.224pt
+ [35 <./figures/sss_heatmap_linear_conf_f50_s1000_p30.png> <./figures/sss_heatm
+ap_sachs.png>] [36]
+<figures/dag_neighborhood_X24_linear_conf_f50_s1000_p30.png, id=632, 1291.224pt
  x 481.8pt>
 File: figures/dag_neighborhood_X24_linear_conf_f50_s1000_p30.png Graphic file (
 type png)
 <use figures/dag_neighborhood_X24_linear_conf_f50_s1000_p30.png>
 Package pdftex.def Info: figures/dag_neighborhood_X24_linear_conf_f50_s1000_p30
-.png  used on input line 916.
+.png  used on input line 925.
 (pdftex.def)             Requested size: 441.01773pt x 164.55234pt.
- [39]
-<figures/shap_scatter_flow_X24_linear_conf_f50_s1000_p30.png, id=646, 2168.1pt 
+ [37]
+<figures/shap_scatter_flow_X24_linear_conf_f50_s1000_p30.png, id=639, 2168.1pt 
 x 602.25pt>
 File: figures/shap_scatter_flow_X24_linear_conf_f50_s1000_p30.png Graphic file 
 (type png)
 <use figures/shap_scatter_flow_X24_linear_conf_f50_s1000_p30.png>
 Package pdftex.def Info: figures/shap_scatter_flow_X24_linear_conf_f50_s1000_p3
-0.png  used on input line 925.
+0.png  used on input line 934.
 (pdftex.def)             Requested size: 441.01773pt x 122.49713pt.
- [40 <./figures/dag_neighborhood_X24_linear_conf_f50_s1000_p30.png>]
-<figures/dag_neighborhood_X47_linear_conf_f50_s1000_p30.png, id=654, 1291.224pt
+ [38 <./figures/dag_neighborhood_X24_linear_conf_f50_s1000_p30.png>]
+<figures/dag_neighborhood_X47_linear_conf_f50_s1000_p30.png, id=647, 1291.224pt
  x 481.8pt>
 File: figures/dag_neighborhood_X47_linear_conf_f50_s1000_p30.png Graphic file (
 type png)
 <use figures/dag_neighborhood_X47_linear_conf_f50_s1000_p30.png>
 Package pdftex.def Info: figures/dag_neighborhood_X47_linear_conf_f50_s1000_p30
-.png  used on input line 934.
+.png  used on input line 943.
 (pdftex.def)             Requested size: 441.01773pt x 164.55234pt.
-<figures/shap_scatter_flow_X47_linear_conf_f50_s1000_p30.png, id=655, 2168.1pt 
+<figures/shap_scatter_flow_X47_linear_conf_f50_s1000_p30.png, id=648, 2168.1pt 
 x 602.25pt>
 File: figures/shap_scatter_flow_X47_linear_conf_f50_s1000_p30.png Graphic file 
 (type png)
 <use figures/shap_scatter_flow_X47_linear_conf_f50_s1000_p30.png>
 Package pdftex.def Info: figures/shap_scatter_flow_X47_linear_conf_f50_s1000_p3
-0.png  used on input line 941.
+0.png  used on input line 950.
 (pdftex.def)             Requested size: 441.01773pt x 122.49713pt.
- [41 <./figures/shap_scatter_flow_X24_linear_conf_f50_s1000_p30.png> <./figures
+ [39 <./figures/shap_scatter_flow_X24_linear_conf_f50_s1000_p30.png> <./figures
 /dag_neighborhood_X47_linear_conf_f50_s1000_p30.png>]
-<figures/dag_neighborhood_pka_sachs.png, id=666, 1291.224pt x 481.8pt>
+<figures/dag_neighborhood_pka_sachs.png, id=659, 1291.224pt x 481.8pt>
 File: figures/dag_neighborhood_pka_sachs.png Graphic file (type png)
 <use figures/dag_neighborhood_pka_sachs.png>
 Package pdftex.def Info: figures/dag_neighborhood_pka_sachs.png  used on input 
-line 952.
+line 961.
 (pdftex.def)             Requested size: 441.01773pt x 164.55234pt.
- [42 <./figures/shap_scatter_flow_X47_linear_conf_f50_s1000_p30.png>] [43 <./fi
+ [40 <./figures/shap_scatter_flow_X47_linear_conf_f50_s1000_p30.png>] [41 <./fi
 gures/dag_neighborhood_pka_sachs.png>]
-<figures/dag_neighborhood_X21_linear_conf_f50_s1000_p30.png, id=680, 1291.224pt
+<figures/dag_neighborhood_X21_linear_conf_f50_s1000_p30.png, id=672, 1291.224pt
  x 481.8pt>
 File: figures/dag_neighborhood_X21_linear_conf_f50_s1000_p30.png Graphic file (
 type png)
 <use figures/dag_neighborhood_X21_linear_conf_f50_s1000_p30.png>
 Package pdftex.def Info: figures/dag_neighborhood_X21_linear_conf_f50_s1000_p30
-.png  used on input line 967.
+.png  used on input line 976.
 (pdftex.def)             Requested size: 374.86775pt x 139.8728pt.
-<figures/shap_scatter_causal_X47_X21_linear_conf_f50_s1000_p30.png, id=681, 216
+<figures/shap_scatter_causal_X47_X21_linear_conf_f50_s1000_p30.png, id=673, 216
 8.1pt x 1043.9pt>
 File: figures/shap_scatter_causal_X47_X21_linear_conf_f50_s1000_p30.png Graphic
  file (type png)
 <use figures/shap_scatter_causal_X47_X21_linear_conf_f50_s1000_p30.png>
 Package pdftex.def Info: figures/shap_scatter_causal_X47_X21_linear_conf_f50_s1
-000_p30.png  used on input line 975.
+000_p30.png  used on input line 984.
 (pdftex.def)             Requested size: 211.68661pt x 101.91124pt.
-<figures/shap_scatter_flow_X47_X21_linear_conf_f50_s1000_p30.png, id=682, 2168.
+<figures/shap_scatter_flow_X47_X21_linear_conf_f50_s1000_p30.png, id=674, 2168.
 1pt x 1043.9pt>
 File: figures/shap_scatter_flow_X47_X21_linear_conf_f50_s1000_p30.png Graphic f
 ile (type png)
 <use figures/shap_scatter_flow_X47_X21_linear_conf_f50_s1000_p30.png>
 Package pdftex.def Info: figures/shap_scatter_flow_X47_X21_linear_conf_f50_s100
-0_p30.png  used on input line 981.
+0_p30.png  used on input line 990.
 (pdftex.def)             Requested size: 211.68661pt x 101.91124pt.
- [44 <./figures/dag_neighborhood_X21_linear_conf_f50_s1000_p30.png> <./figures/
+ [42 <./figures/dag_neighborhood_X21_linear_conf_f50_s1000_p30.png> <./figures/
 shap_scatter_causal_X47_X21_linear_conf_f50_s1000_p30.png> <./figures/shap_scat
 ter_flow_X47_X21_linear_conf_f50_s1000_p30.png>]
-<figures/dag_neighborhood_erk_sachs.png, id=693, 1291.224pt x 481.8pt>
+<figures/dag_neighborhood_erk_sachs.png, id=686, 1291.224pt x 481.8pt>
 File: figures/dag_neighborhood_erk_sachs.png Graphic file (type png)
 <use figures/dag_neighborhood_erk_sachs.png>
 Package pdftex.def Info: figures/dag_neighborhood_erk_sachs.png  used on input 
-line 1003.
+line 1012.
 (pdftex.def)             Requested size: 441.01773pt x 164.55234pt.
- [45 <./figures/dag_neighborhood_erk_sachs.png>]
-<figures/shap_scatter_flow_erk_sachs.png, id=704, 2168.1pt x 602.25pt>
+ [43 <./figures/dag_neighborhood_erk_sachs.png>]
+<figures/shap_scatter_flow_erk_sachs.png, id=697, 2168.1pt x 602.25pt>
 File: figures/shap_scatter_flow_erk_sachs.png Graphic file (type png)
 <use figures/shap_scatter_flow_erk_sachs.png>
 Package pdftex.def Info: figures/shap_scatter_flow_erk_sachs.png  used on input
- line 1045.
+ line 1054.
 (pdftex.def)             Requested size: 441.01773pt x 122.49713pt.
 
-[46 <./figures/shap_scatter_flow_erk_sachs.png>]
-<figures/dag_neighborhood_X6_linear_conf_f50_s1000_p30.png, id=714, 1291.224pt 
+[44 <./figures/shap_scatter_flow_erk_sachs.png>]
+<figures/dag_neighborhood_X6_linear_conf_f50_s1000_p30.png, id=707, 1291.224pt 
 x 481.8pt>
 File: figures/dag_neighborhood_X6_linear_conf_f50_s1000_p30.png Graphic file (t
 ype png)
 <use figures/dag_neighborhood_X6_linear_conf_f50_s1000_p30.png>
 Package pdftex.def Info: figures/dag_neighborhood_X6_linear_conf_f50_s1000_p30.
-png  used on input line 1068.
+png  used on input line 1077.
 (pdftex.def)             Requested size: 374.86775pt x 139.8728pt.
-<figures/shap_scatter_causal_X6_linear_conf_f50_s1000_p30.png, id=715, 2168.1pt
+<figures/shap_scatter_causal_X6_linear_conf_f50_s1000_p30.png, id=708, 2168.1pt
  x 602.25pt>
 File: figures/shap_scatter_causal_X6_linear_conf_f50_s1000_p30.png Graphic file
  (type png)
 <use figures/shap_scatter_causal_X6_linear_conf_f50_s1000_p30.png>
 Package pdftex.def Info: figures/shap_scatter_causal_X6_linear_conf_f50_s1000_p
-30.png  used on input line 1075.
+30.png  used on input line 1084.
 (pdftex.def)             Requested size: 441.01773pt x 122.49713pt.
- [47 <./figures/dag_neighborhood_X6_linear_conf_f50_s1000_p30.png> <./figures/s
-hap_scatter_causal_X6_linear_conf_f50_s1000_p30.png>] [48] [49] [50] [51]
-Underfull \hbox (badness 1152) in paragraph at lines 1186--1187
+ [45 <./figures/dag_neighborhood_X6_linear_conf_f50_s1000_p30.png> <./figures/s
+hap_scatter_causal_X6_linear_conf_f50_s1000_p30.png>] [46] [47] [48] [49]
+Underfull \hbox (badness 1152) in paragraph at lines 1195--1196
 [] $[]\OT1/lmr/m/n/12 (+20) [\OML/lmm/m/it/12 j\OT1/lmr/m/n/12 (+20) ] \OMS/lms
 y/m/n/12   []\OT1/lmr/m/n/12 (+20) ([] = \OMS/lmsy/m/n/12 f\OML/lmm/m/it/12 j\O
 MS/lmsy/m/n/12 g\OML/lmm/m/it/12 ;  [] \OT1/lmr/m/n/12 (+20) =
  []
 
-[52] [53] [54] (./master_thesis.bbl [55])
-
-Package natbib Warning: There were undefined citations.
-
-[56] (./master_thesis.aux
-
-Package natbib Warning: Citation(s) may have changed.
-(natbib)                Rerun to get citations correct.
-
-)
+[50] [51] [52] (./master_thesis.bbl [53]) [54] (./master_thesis.aux)
  ***********
 LaTeX2e <2025-11-01>
 L3 programming layer <2026-01-19>
  ***********
+
+
+LaTeX Warning: Label(s) may have changed. Rerun to get cross-references right.
+
 Package rerunfilecheck Info: File `master_thesis.out' has not changed.
 (rerunfilecheck)             Checksum: A61C0368266A27CE53A126A94785CCF0;13842.
  ) 
 Here is how much of TeX's memory you used:
- 18600 strings out of 467525
- 305952 string characters out of 5418982
- 767864 words of memory out of 5000000
- 46577 multiletter control sequences out of 15000+600000
- 770698 words of font info for 354 fonts, out of 8000000 for 9000
+ 18599 strings out of 467525
+ 305784 string characters out of 5418982
+ 768845 words of memory out of 5000000
+ 46570 multiletter control sequences out of 15000+600000
+ 771067 words of font info for 358 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 75i,16n,84p,2213b,662s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 75i,16n,84p,2126b,662s stack positions out of 10000i,1000n,20000p,200000b,200000s
 </usr/local/texlive/2026/texmf-dist/fonts/type1/public/lm/lmbx10.pfb></usr/lo
 cal/texlive/2026/texmf-dist/fonts/type1/public/lm/lmbx12.pfb></usr/local/texliv
 e/2026/texmf-dist/fonts/type1/public/lm/lmbx8.pfb></usr/local/texlive/2026/texm
@@ -1205,10 +1183,10 @@ m/lmr7.pfb></usr/local/texlive/2026/texmf-dist/fonts/type1/public/lm/lmr8.pfb><
 026/texmf-dist/fonts/type1/public/lm/lmsy8.pfb></usr/local/texlive/2026/texmf-d
 ist/fonts/type1/public/lm/lmtt12.pfb></usr/local/texlive/2026/texmf-dist/fonts/
 type1/public/amsfonts/symbols/msbm10.pfb>
-Output written on master_thesis.pdf (57 pages, 3933089 bytes).
+Output written on master_thesis.pdf (55 pages, 3852622 bytes).
 PDF statistics:
- 916 PDF objects out of 1000 (max. 8388607)
- 734 compressed objects within 8 object streams
- 186 named destinations out of 1000 (max. 500000)
- 77915 words of extra memory for PDF output out of 89155 (max. 10000000)
+ 908 PDF objects out of 1000 (max. 8388607)
+ 729 compressed objects within 8 object streams
+ 184 named destinations out of 1000 (max. 500000)
+ 77910 words of extra memory for PDF output out of 89155 (max. 10000000)
 
