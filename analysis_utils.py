@@ -3002,6 +3002,9 @@ def plot_shap_vs_feature(
     feat_idx  = [feature_names.index(f) for f in feat_list]
     n_rows    = len(feat_list)
 
+    _lbl = lambda m: "Traditional" if m == "Scratch" else m
+    lbl_1, lbl_2 = _lbl(method_1), _lbl(method_2)
+
     _c = {**_DEFAULT_COLORS, **(colors or {})}
     c1 = _c.get(method_1, "#1f77b4")
     c2 = _c.get(method_2, "#ff7f0e")
@@ -3013,22 +3016,22 @@ def plot_shap_vs_feature(
         vertical_spacing=v_spacing,
     )
 
-    _specs = [(method_1, c1, "circle"), (method_2, c2, "diamond")]
+    _specs = [(method_1, lbl_1, c1, "circle"), (method_2, lbl_2, c2, "diamond")]
 
     for ri, (fi, feat) in enumerate(zip(feat_idx, feat_list)):
         x_vals      = x_test[:, fi]
         show_legend = ri == 0
 
-        for method, color, symbol in _specs:
+        for method, lbl, color, symbol in _specs:
             sv = shap_data[method][:, fi]
             fig.add_trace(
                 go.Scatter(
                     x=x_vals, y=sv, mode="markers",
                     marker=dict(size=marker_size, color=color, symbol=symbol,
                                 opacity=opacity, line=dict(width=0)),
-                    name=method, showlegend=show_legend, legendgroup=method,
+                    name=lbl, showlegend=show_legend, legendgroup=lbl,
                     hovertemplate=(
-                        f"<b>{feat}</b> — {method}<br>"
+                        f"<b>{feat}</b> — {lbl}<br>"
                         "feature value = %{x:.4f}<br>SHAP = %{y:.4f}<extra></extra>"
                     ),
                 ),
@@ -3050,7 +3053,7 @@ def plot_shap_vs_feature(
             tickfont=dict(size=8), row=ri + 1, col=1,
         )
 
-    title_line1 = f"SHAP vs Feature Value — {method_1}  ·  {method_2}"
+    title_line1 = f"SHAP vs Feature Value — {lbl_1}  ·  {lbl_2}"
     title_line2_parts = ([dataset] if dataset else []) + (
         [f"{len(feat_list)} features"] if len(feat_list) < len(feature_names) else []
     )
@@ -3117,13 +3120,16 @@ def plot_shap_vs_instance(
     feat_idx  = [feature_names.index(f) for f in feat_list]
     n_rows    = len(feat_list)
 
+    _lbl = lambda m: "Traditional" if m == "Scratch" else m
+    lbl_1, lbl_2 = _lbl(method_1), _lbl(method_2)
+
     _c = {**_DEFAULT_COLORS, **(colors or {})}
     c1 = _c.get(method_1, "#1f77b4")
     c2 = _c.get(method_2, "#ff7f0e")
     v_spacing = max(0.005, min(0.06, 0.25 / max(n_rows - 1, 1)))
     use_lines = "lines" in mode
 
-    _specs = [(method_1, c1, "circle", "solid"), (method_2, c2, "diamond", "dot")]
+    _specs = [(method_1, lbl_1, c1, "circle", "solid"), (method_2, lbl_2, c2, "diamond", "dot")]
 
     fig = make_subplots(
         rows=n_rows, cols=1,
@@ -3133,15 +3139,15 @@ def plot_shap_vs_instance(
 
     for ri, (fi, feat) in enumerate(zip(feat_idx, feat_list)):
         show_legend = ri == 0
-        for method, color, symbol, dash in _specs:
+        for method, lbl, color, symbol, dash in _specs:
             sv = shap_data[method][inst_idx, fi]
             kw: dict = dict(
                 x=inst_idx, y=sv, mode=mode,
                 marker=dict(size=marker_size, color=color, symbol=symbol,
                             opacity=opacity, line=dict(width=0)),
-                name=method, showlegend=show_legend, legendgroup=method,
+                name=lbl, showlegend=show_legend, legendgroup=lbl,
                 hovertemplate=(
-                    f"<b>{feat}</b> — {method}<br>"
+                    f"<b>{feat}</b> — {lbl}<br>"
                     "instance = %{x}<br>SHAP = %{y:.4f}<extra></extra>"
                 ),
             )
@@ -3161,7 +3167,7 @@ def plot_shap_vs_instance(
     fig.update_xaxes(title_text="Instance index", tickfont=dict(size=8),
                      row=n_rows, col=1)
 
-    title_line1 = f"SHAP vs Instance — {method_1}  ·  {method_2}"
+    title_line1 = f"SHAP vs Instance — {lbl_1}  ·  {lbl_2}"
     title_line2_parts = ([dataset] if dataset else []) + (
         [f"n={len(inst_idx)} instances"] if len(inst_idx) < n_total else []
     )
