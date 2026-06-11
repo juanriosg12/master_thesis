@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.29 (TeX Live 2026) (preloaded format=pdflatex 2026.3.22)  10 JUN 2026 20:29
+This is pdfTeX, Version 3.141592653-2.6-1.40.29 (TeX Live 2026) (preloaded format=pdflatex 2026.3.22)  10 JUN 2026 22:31
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -1053,112 +1053,175 @@ Package pdftex.def Info: figures/shap_scatter_flow_X24_linear_conf_f50_s1000_p3
 0.png  used on input line 944.
 (pdftex.def)             Requested size: 441.01773pt x 122.49713pt.
  [39 <./figures/dag_neighborhood_X24_linear_conf_f50_s1000_p30.png>]
-<figures/dag_neighborhood_X47_linear_conf_f50_s1000_p30.png, id=654, 1291.224pt
+<figures/dag_neighborhood_X33_linear_conf_f50_s1000_p30.png, id=657, 1291.224pt
+ x 481.8pt>
+File: figures/dag_neighborhood_X33_linear_conf_f50_s1000_p30.png Graphic file (
+type png)
+<use figures/dag_neighborhood_X33_linear_conf_f50_s1000_p30.png>
+Package pdftex.def Info: figures/dag_neighborhood_X33_linear_conf_f50_s1000_p30
+.png  used on input line 953.
+(pdftex.def)             Requested size: 441.01773pt x 164.55234pt.
+ [40 <./figures/shap_scatter_flow_X24_linear_conf_f50_s1000_p30.png>]
+<figures/shap_scatter_flow_X33_linear_conf_f50_s1000_p30.png, id=666, 2168.1pt 
+x 602.25pt>
+File: figures/shap_scatter_flow_X33_linear_conf_f50_s1000_p30.png Graphic file 
+(type png)
+<use figures/shap_scatter_flow_X33_linear_conf_f50_s1000_p30.png>
+Package pdftex.def Info: figures/shap_scatter_flow_X33_linear_conf_f50_s1000_p3
+0.png  used on input line 960.
+(pdftex.def)             Requested size: 441.01773pt x 122.49713pt.
+ [41 <./figures/dag_neighborhood_X33_linear_conf_f50_s1000_p30.png> <./figures/
+shap_scatter_flow_X33_linear_conf_f50_s1000_p30.png>]
+<figures/dag_neighborhood_pka_sachs.png, id=678, 1291.224pt x 481.8pt>
+File: figures/dag_neighborhood_pka_sachs.png Graphic file (type png)
+<use figures/dag_neighborhood_pka_sachs.png>
+Package pdftex.def Info: figures/dag_neighborhood_pka_sachs.png  used on input 
+line 969.
+(pdftex.def)             Requested size: 441.01773pt x 164.55234pt.
+<figures/shap_scatter_flow_pka_sachs.png, id=679, 2168.1pt x 602.25pt>
+File: figures/shap_scatter_flow_pka_sachs.png Graphic file (type png)
+<use figures/shap_scatter_flow_pka_sachs.png>
+Package pdftex.def Info: figures/shap_scatter_flow_pka_sachs.png  used on input
+ line 976.
+(pdftex.def)             Requested size: 441.01773pt x 122.49713pt.
+ [42 <./figures/dag_neighborhood_pka_sachs.png> <./figures/shap_scatter_flow_pk
+a_sachs.png>]
+<figures/dag_neighborhood_X47_linear_conf_f50_s1000_p30.png, id=690, 1291.224pt
  x 481.8pt>
 File: figures/dag_neighborhood_X47_linear_conf_f50_s1000_p30.png Graphic file (
 type png)
 <use figures/dag_neighborhood_X47_linear_conf_f50_s1000_p30.png>
 Package pdftex.def Info: figures/dag_neighborhood_X47_linear_conf_f50_s1000_p30
-.png  used on input line 953.
+.png  used on input line 989.
 (pdftex.def)             Requested size: 441.01773pt x 164.55234pt.
-<figures/shap_scatter_flow_X47_linear_conf_f50_s1000_p30.png, id=655, 2168.1pt 
-x 602.25pt>
-File: figures/shap_scatter_flow_X47_linear_conf_f50_s1000_p30.png Graphic file 
-(type png)
-<use figures/shap_scatter_flow_X47_linear_conf_f50_s1000_p30.png>
-Package pdftex.def Info: figures/shap_scatter_flow_X47_linear_conf_f50_s1000_p3
-0.png  used on input line 960.
-(pdftex.def)             Requested size: 441.01773pt x 122.49713pt.
- [40 <./figures/shap_scatter_flow_X24_linear_conf_f50_s1000_p30.png> <./figures
-/dag_neighborhood_X47_linear_conf_f50_s1000_p30.png>]
-<figures/dag_neighborhood_pka_sachs.png, id=666, 1291.224pt x 481.8pt>
-File: figures/dag_neighborhood_pka_sachs.png Graphic file (type png)
-<use figures/dag_neighborhood_pka_sachs.png>
-Package pdftex.def Info: figures/dag_neighborhood_pka_sachs.png  used on input 
-line 971.
-(pdftex.def)             Requested size: 441.01773pt x 164.55234pt.
- [41 <./figures/shap_scatter_flow_X47_linear_conf_f50_s1000_p30.png>] [42 <./fi
-gures/dag_neighborhood_pka_sachs.png>]
-<figures/dag_neighborhood_X21_linear_conf_f50_s1000_p30.png, id=680, 1291.224pt
+ [43 <./figures/dag_neighborhood_X47_linear_conf_f50_s1000_p30.png>]
+<figures/dag_neighborhood_X21_linear_conf_f50_s1000_p30.png, id=698, 1291.224pt
  x 481.8pt>
 File: figures/dag_neighborhood_X21_linear_conf_f50_s1000_p30.png Graphic file (
 type png)
 <use figures/dag_neighborhood_X21_linear_conf_f50_s1000_p30.png>
 Package pdftex.def Info: figures/dag_neighborhood_X21_linear_conf_f50_s1000_p30
-.png  used on input line 986.
+.png  used on input line 1000.
 (pdftex.def)             Requested size: 374.86775pt x 139.8728pt.
-<figures/shap_scatter_causal_X47_X21_linear_conf_f50_s1000_p30.png, id=681, 216
+<figures/shap_scatter_causal_X47_X21_linear_conf_f50_s1000_p30.png, id=699, 216
 8.1pt x 1043.9pt>
 File: figures/shap_scatter_causal_X47_X21_linear_conf_f50_s1000_p30.png Graphic
  file (type png)
 <use figures/shap_scatter_causal_X47_X21_linear_conf_f50_s1000_p30.png>
 Package pdftex.def Info: figures/shap_scatter_causal_X47_X21_linear_conf_f50_s1
-000_p30.png  used on input line 994.
+000_p30.png  used on input line 1008.
 (pdftex.def)             Requested size: 211.68661pt x 101.91124pt.
-<figures/shap_scatter_flow_X47_X21_linear_conf_f50_s1000_p30.png, id=682, 2168.
+<figures/shap_scatter_flow_X47_X21_linear_conf_f50_s1000_p30.png, id=700, 2168.
 1pt x 1043.9pt>
 File: figures/shap_scatter_flow_X47_X21_linear_conf_f50_s1000_p30.png Graphic f
 ile (type png)
 <use figures/shap_scatter_flow_X47_X21_linear_conf_f50_s1000_p30.png>
 Package pdftex.def Info: figures/shap_scatter_flow_X47_X21_linear_conf_f50_s100
-0_p30.png  used on input line 1000.
+0_p30.png  used on input line 1014.
 (pdftex.def)             Requested size: 211.68661pt x 101.91124pt.
- [43 <./figures/dag_neighborhood_X21_linear_conf_f50_s1000_p30.png> <./figures/
+ [44 <./figures/dag_neighborhood_X21_linear_conf_f50_s1000_p30.png> <./figures/
 shap_scatter_causal_X47_X21_linear_conf_f50_s1000_p30.png> <./figures/shap_scat
 ter_flow_X47_X21_linear_conf_f50_s1000_p30.png>]
-<figures/dag_neighborhood_erk_sachs.png, id=693, 1291.224pt x 481.8pt>
+<figures/dag_neighborhood_erk_sachs.png, id=712, 1291.224pt x 481.8pt>
 File: figures/dag_neighborhood_erk_sachs.png Graphic file (type png)
 <use figures/dag_neighborhood_erk_sachs.png>
 Package pdftex.def Info: figures/dag_neighborhood_erk_sachs.png  used on input 
-line 1022.
+line 1044.
 (pdftex.def)             Requested size: 441.01773pt x 164.55234pt.
- [44 <./figures/dag_neighborhood_erk_sachs.png>]
-<figures/shap_scatter_flow_erk_sachs.png, id=704, 2168.1pt x 602.25pt>
+ [45 <./figures/dag_neighborhood_erk_sachs.png>]
+<figures/shap_scatter_flow_erk_sachs.png, id=721, 2168.1pt x 602.25pt>
 File: figures/shap_scatter_flow_erk_sachs.png Graphic file (type png)
 <use figures/shap_scatter_flow_erk_sachs.png>
 Package pdftex.def Info: figures/shap_scatter_flow_erk_sachs.png  used on input
- line 1064.
+ line 1067.
 (pdftex.def)             Requested size: 441.01773pt x 122.49713pt.
 
-[45 <./figures/shap_scatter_flow_erk_sachs.png>]
-<figures/dag_neighborhood_X6_linear_conf_f50_s1000_p30.png, id=714, 1291.224pt 
-x 481.8pt>
-File: figures/dag_neighborhood_X6_linear_conf_f50_s1000_p30.png Graphic file (t
-ype png)
-<use figures/dag_neighborhood_X6_linear_conf_f50_s1000_p30.png>
-Package pdftex.def Info: figures/dag_neighborhood_X6_linear_conf_f50_s1000_p30.
-png  used on input line 1087.
-(pdftex.def)             Requested size: 374.86775pt x 139.8728pt.
-<figures/shap_scatter_causal_X6_linear_conf_f50_s1000_p30.png, id=715, 2168.1pt
- x 602.25pt>
-File: figures/shap_scatter_causal_X6_linear_conf_f50_s1000_p30.png Graphic file
+
+LaTeX Warning: Reference `fig:dag_X10' on page 46 undefined on input line 1076.
+
+
+
+LaTeX Warning: Reference `fig:shap_X10' on page 46 undefined on input line 1076
+.
+
+[46 <./figures/shap_scatter_flow_erk_sachs.png>]
+<figures/dag_neighborhood_X10_linear_conf_f50_s1000_p30.png, id=728, 1291.224pt
+ x 481.8pt>
+File: figures/dag_neighborhood_X10_linear_conf_f50_s1000_p30.png Graphic file (
+type png)
+<use figures/dag_neighborhood_X10_linear_conf_f50_s1000_p30.png>
+Package pdftex.def Info: figures/dag_neighborhood_X10_linear_conf_f50_s1000_p30
+.png  used on input line 1080.
+(pdftex.def)             Requested size: 441.01773pt x 164.55234pt.
+<figures/shap_vs_feature_Scratch_vs_Causal__PC__linear_conf_f50_s1000_p30.png, 
+id=729, 923.45pt x 923.45pt>
+File: figures/shap_vs_feature_Scratch_vs_Causal__PC__linear_conf_f50_s1000_p30.
+png Graphic file (type png)
+<use figures/shap_vs_feature_Scratch_vs_Causal__PC__linear_conf_f50_s1000_p30.p
+ng>
+Package pdftex.def Info: figures/shap_vs_feature_Scratch_vs_Causal__PC__linear_
+conf_f50_s1000_p30.png  used on input line 1087.
+(pdftex.def)             Requested size: 441.01773pt x 441.01054pt.
+ [47 <./figures/dag_neighborhood_X10_linear_conf_f50_s1000_p30.png>]
+
+LaTeX Warning: Reference `fig:dag_pkc' on page 48 undefined on input line 1092.
+
+
+
+LaTeX Warning: Reference `fig:shap_pkc' on page 48 undefined on input line 1092
+.
+
+[48 <./figures/shap_vs_feature_Scratch_vs_Causal__PC__linear_conf_f50_s1000_p30
+.png>]
+<figures/dag_neighborhood_pkc_sachs.png, id=743, 1291.224pt x 481.8pt>
+File: figures/dag_neighborhood_pkc_sachs.png Graphic file (type png)
+<use figures/dag_neighborhood_pkc_sachs.png>
+Package pdftex.def Info: figures/dag_neighborhood_pkc_sachs.png  used on input 
+line 1096.
+(pdftex.def)             Requested size: 441.01773pt x 164.55234pt.
+<figures/shap_vs_feature_Scratch_vs_Causal__LiNGAM__sachs.png, id=744, 923.45pt
+ x 923.45pt>
+File: figures/shap_vs_feature_Scratch_vs_Causal__LiNGAM__sachs.png Graphic file
  (type png)
-<use figures/shap_scatter_causal_X6_linear_conf_f50_s1000_p30.png>
-Package pdftex.def Info: figures/shap_scatter_causal_X6_linear_conf_f50_s1000_p
-30.png  used on input line 1094.
-(pdftex.def)             Requested size: 441.01773pt x 122.49713pt.
- [46 <./figures/dag_neighborhood_X6_linear_conf_f50_s1000_p30.png> <./figures/s
-hap_scatter_causal_X6_linear_conf_f50_s1000_p30.png>] [47] [48] [49] [50]
-Underfull \hbox (badness 1152) in paragraph at lines 1205--1206
+<use figures/shap_vs_feature_Scratch_vs_Causal__LiNGAM__sachs.png>
+Package pdftex.def Info: figures/shap_vs_feature_Scratch_vs_Causal__LiNGAM__sac
+hs.png  used on input line 1103.
+(pdftex.def)             Requested size: 441.01773pt x 441.01054pt.
+ [49 <./figures/dag_neighborhood_pkc_sachs.png>] [50 <./figures/shap_vs_feature
+_Scratch_vs_Causal__LiNGAM__sachs.png>] [51] [52] [53] [54] [55]
+Underfull \hbox (badness 1152) in paragraph at lines 1216--1217
 [] $[]\OT1/lmr/m/n/12 (+20) [\OML/lmm/m/it/12 j\OT1/lmr/m/n/12 (+20) ] \OMS/lms
 y/m/n/12   []\OT1/lmr/m/n/12 (+20) ([] = \OMS/lmsy/m/n/12 f\OML/lmm/m/it/12 j\O
 MS/lmsy/m/n/12 g\OML/lmm/m/it/12 ;  [] \OT1/lmr/m/n/12 (+20) =
  []
 
-[51] [52] [53] (./master_thesis.bbl [54]) [55] (./master_thesis.aux)
+[56] [57] (./master_thesis.bbl [58]) [59] (./master_thesis.aux)
  ***********
 LaTeX2e <2025-11-01>
 L3 programming layer <2026-01-19>
  ***********
-Package rerunfilecheck Info: File `master_thesis.out' has not changed.
-(rerunfilecheck)             Checksum: A61C0368266A27CE53A126A94785CCF0;13842.
+
+
+LaTeX Warning: There were undefined references.
+
+
+LaTeX Warning: Label(s) may have changed. Rerun to get cross-references right.
+
+
+Package rerunfilecheck Warning: File `master_thesis.out' has changed.
+(rerunfilecheck)                Rerun to get outlines right
+(rerunfilecheck)                or use package `bookmark'.
+
+Package rerunfilecheck Info: Checksums for `master_thesis.out':
+(rerunfilecheck)             Before: A61C0368266A27CE53A126A94785CCF0;13842
+(rerunfilecheck)             After:  7D6FE4BE040005D23BB6570D52926D4C;14195.
  ) 
 Here is how much of TeX's memory you used:
- 18604 strings out of 467525
- 305876 string characters out of 5418982
- 767882 words of memory out of 5000000
- 46573 multiletter control sequences out of 15000+600000
- 771067 words of font info for 358 fonts, out of 8000000 for 9000
+ 18661 strings out of 467525
+ 307899 string characters out of 5418982
+ 768243 words of memory out of 5000000
+ 46605 multiletter control sequences out of 15000+600000
+ 771848 words of font info for 366 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
  75i,16n,84p,2126b,662s stack positions out of 10000i,1000n,20000p,200000b,200000s
 </usr/local/texlive/2026/texmf-dist/fonts/type1/public/lm/lmbx10.pfb></usr/lo
@@ -1179,10 +1242,10 @@ m/lmr7.pfb></usr/local/texlive/2026/texmf-dist/fonts/type1/public/lm/lmr8.pfb><
 026/texmf-dist/fonts/type1/public/lm/lmsy8.pfb></usr/local/texlive/2026/texmf-d
 ist/fonts/type1/public/lm/lmtt12.pfb></usr/local/texlive/2026/texmf-dist/fonts/
 type1/public/amsfonts/symbols/msbm10.pfb>
-Output written on master_thesis.pdf (56 pages, 3858704 bytes).
+Output written on master_thesis.pdf (60 pages, 4238335 bytes).
 PDF statistics:
- 915 PDF objects out of 1000 (max. 8388607)
- 735 compressed objects within 8 object streams
- 186 named destinations out of 1000 (max. 500000)
- 77910 words of extra memory for PDF output out of 89155 (max. 10000000)
+ 951 PDF objects out of 1000 (max. 8388607)
+ 759 compressed objects within 8 object streams
+ 195 named destinations out of 1000 (max. 500000)
+ 77930 words of extra memory for PDF output out of 89155 (max. 10000000)
 
