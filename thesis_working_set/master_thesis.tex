@@ -160,7 +160,7 @@ The structure-aware Shapley methods discussed in this chapter all require a caus
 
 \paragraph{DirectLiNGAM \citep{Shimizu2011}.} A functional causal model that exploits linear non-Gaussian structures to simultaneously identify causal ordering and structural coefficients. Each entry in the estimated adjacency matrix represents the linear weight a parent contributes to a child. Because DirectLiNGAM initially returns a dense matrix containing minor estimation noise, a magnitude threshold is applied to recover a sparse structure. Edges with an absolute coefficient below $0.10$ are pruned; this cutoff effectively removes estimation noise while retaining edges that carry a structurally meaningful direct effect.
 
-Both algorithms operate strictly on the $X$-only training partition, excluding the target for the dicovery step. While both the synthetic dataset and the real-world biological data likely do not perfectly fulfill all the theoretical requirements of these algorithms, this imperfection is deliberate. This is a realistic robustness test, reflecting the natural unmeasured confounding and structural uncertainty practitioners face in real-world applications.
+Both algorithms operate strictly on the $X$-only training partition, excluding the target for the discovery step. While both the synthetic dataset and the real-world biological data likely do not perfectly fulfill all the theoretical requirements of these algorithms, this imperfection is deliberate. This is a realistic robustness test, reflecting the natural unmeasured confounding and structural uncertainty practitioners face in real-world applications.
 
 \subsection{Traditional Shapley Values and the Axiomatic Framework}
 
@@ -492,8 +492,8 @@ Every comparison in this chapter asks the same two questions of a (method, graph
 The only thing that changes between comparisons is the reference, which is carried as a tag so the same two names cover all six cells of Table~\ref{tab:metric_framework}:
 \begin{itemize}[nosep]
   \item Tag \textbf{base} --- reference is Traditional Shapley (how far a graph moves attributions away from the graph-free baseline); Section~\ref{sec:baseline}.
-  \item Tag \textbf{oracle} --- reference is the True / consensus DAG (how faithfully a discovered graph recovers the oracle attributions); Section~\ref{sec:oracle_align}.
   \item Tag \textbf{disc} --- reference is the opposite discovered graph (how much the choice of discovery algorithm alone perturbs attributions); Section~\ref{sec:disc_analysis}.
+  \item Tag \textbf{oracle} --- reference is the True / consensus DAG (how faithfully a discovered graph recovers the oracle attributions); Section~\ref{sec:oracle_align}.
 \end{itemize}
 
 \begin{table}[H]
@@ -580,7 +580,7 @@ Following the metric definitions of Section~\ref{sec:metrics}, this evaluation b
 
 The theoretical ordering of sensitivity to causal graph injection is given directly by Table~\ref{tab:method_comparison}. Asymmetric Shapley is the least conditioned by the graph: it uses the discovered edges only to restrict the permutation space while keeping the observational value function unchanged, so its deviation from the graph-free baseline depends entirely on how many orderings the graph forbids. Causal Shapley is more sensitive: the graph enters the value function itself, driving post-interventional distributions for features outside the coalition via their discovered parent sets, so every false or missing edge corrupts an attribution directly. Shapley Flow is the most sensitive: the discovered edges are the players of the game, and the entire credit-routing mechanism collapses without them, so any graph error propagates across all downstream paths simultaneously.
 
-Two cross-cutting patterns emerge from Tables~\ref{tab:baseline_synth}--\ref{tab:baseline_sachs} and are visible immediately in the scatter plots. First, Sign Disagreement $D_{\text{base}}$ is a more severe perturbation than Magnitude Divergence $\Delta M_{\text{base}}$: introducing a causal graph flips the direction of a larger share of features attributions than it inflates their absolute size. This is because sign inversions arise whenever a moderate per-feature change crosses zero, a threshold many near-zero attributions sit close to, while large magnitude changes are concentrated in a handful of dominant features. Second, the choice of discovered graph, PC or LiNGAM,matters little for the graph-versus-no-graph contrast: both discovered graphs perturb $\Delta M_{\text{base}}$ and $D_{\text{base}}$ by nearly identical amounts for a given method, so the dominant driver of deviation is the method's structural coupling to any causal graph, not the specific graph supplied.
+Two cross-cutting patterns emerge from Tables~\ref{tab:baseline_synth}--\ref{tab:baseline_sachs} and are visible immediately in the scatter plots. First, Sign Disagreement $D_{\text{base}}$ is a more severe perturbation than Magnitude Divergence $\Delta M_{\text{base}}$: introducing a causal graph flips the direction of a larger share of feature attributions than it inflates their absolute size. This is because sign inversions arise whenever a moderate per-feature change crosses zero, a threshold many near-zero attributions sit close to, while large magnitude changes are concentrated in a handful of dominant features. Second, the choice of discovered graph, PC or LiNGAM, matters little for the graph-versus-no-graph contrast: both discovered graphs perturb $\Delta M_{\text{base}}$ and $D_{\text{base}}$ by nearly identical amounts for a given method, so the dominant driver of deviation is the method's structural coupling to any causal graph, not the specific graph supplied.
 
 \begin{figure}[H]
   \centering
@@ -671,11 +671,11 @@ The feature-level magnitude deviations summarized by the global $\Delta M_{\text
   \label{fig:sign_trad}
 \end{figure}
 
-The shapley method hierarchy  by sign disagreement is similar, Asymmetric rows remain near-zero throughout, while Causal and Flow show elevated sign-flip rates, but the nodes flagged by the sign heatmap are \emph{not} the same nodes flagged by the magnitude heatmap. On synthetic, the highest sign disagreement concentrates on X10 and X11; on Sachs it concentrates on raf, plc, and pkc. These are different features from the magnitude leaders (X24, X33, X47; erk, pka). The reason is that sign inversions arise when a graph-induced attribution shift is large enough to cross zero, and the features most vulnerable to this are those whose Traditional Shapley values already sit near zero: a modest structural change in the discovered DAG is sufficient to flip their sign without producing a large RMS magnitude divergence. The dominant features, by contrast, carry large attributions that absorb the same redistribution without changing direction. The practical implication is that the sign and magnitude heatmaps are complementary diagnostics, not redundant ones. Elevated $D_{\text{base}}$ on a feature is a direct alert to inspect whether the discovered graph's structural changes for that feature, a new parent, a reversed edge, or a spurious child, provide a causally coherent explanation for the sign flip; if they do not, the graph in that neighbourhood is likely unreliable and should be validated before using any structure-aware method for that node.
+The Shapley method hierarchy by sign disagreement is similar: Asymmetric rows remain near-zero throughout, while Causal and Flow show elevated sign-flip rates, but the nodes flagged by the sign heatmap are \emph{not} the same nodes flagged by the magnitude heatmap. On synthetic, the highest sign disagreement concentrates on X10 and X11; on Sachs it concentrates on raf, plc, and pkc. These are different features from the magnitude leaders (X24, X33, X47; erk, pka). The reason is that sign inversions arise when a graph-induced attribution shift is large enough to cross zero, and the features most vulnerable to this are those whose Traditional Shapley values already sit near zero: a modest structural change in the discovered DAG is sufficient to flip their sign without producing a large RMS magnitude divergence. The dominant features, by contrast, carry large attributions that absorb the same redistribution without changing direction. The practical implication is that the sign and magnitude heatmaps are complementary diagnostics, not redundant ones. Elevated $D_{\text{base}}$ on a feature is a direct alert to inspect whether the discovered graph's structural changes for that feature, a new parent, a reversed edge, or a spurious child, provide a causally coherent explanation for the sign flip; if they do not, the graph in that neighbourhood is likely unreliable and should be validated before using any structure-aware method for that node.
 
 \subsubsection{Asymmetric Shapley, High Robustness to Graph Injection}
 
-Asymmetric Shapley achieves the closest agreement with the Traditional Shapley baseline across both datasets. On the synthetic track, $D_{\text{base}} = 5.08\%$ (PC) and $5.76\%$ (LiNGAM), with $\Delta M_{\text{base}} = 0.68\%$ and $0.86\%$ respectively: fewer than 6\% of attribution signs change and the magnitude divergence is under 1\% of $\hat{\sigma}$. On Sachs the deviation $D_{\text{base}}$ triples (16.80--17.00\%), also not bad if compared with the behaviour of Causal Shapley and Shapley Flow on synthetic dataset, and $\Delta M_{\text{base}}$ 4.41--5.08\% of $\hat{\sigma}$, the larger numbers reflecting the compact 10-node network where each ordering constraint binds a larger share of the graph. In both cases ASV remains the method that perturbs the baseline least.
+Asymmetric Shapley achieves the closest agreement with the Traditional Shapley baseline across both datasets. On the synthetic track, $D_{\text{base}} = 5.08\%$ (PC) and $5.76\%$ (LiNGAM), with $\Delta M_{\text{base}} = 0.68\%$ and $0.86\%$ respectively: fewer than 6\% of attribution signs change and the magnitude divergence is under 1\% of $\hat{\sigma}$. On Sachs the deviation $D_{\text{base}}$ triples (16.80--17.00\%), still well below the deviation seen under Causal Shapley and Shapley Flow on the synthetic dataset, and $\Delta M_{\text{base}}$ reaches 4.41--5.08\% of $\hat{\sigma}$, the larger numbers reflecting the compact 10-node network where each ordering constraint binds a larger share of the graph. In both cases ASV remains the method that perturbs the baseline least.
 
 The reason is structural, ASV changes only the permutation space and leaves the observational value function untouched, so its deviation from Traditional depends solely on how many orderings the graph forbids. The discovered graphs forbid very few, none of the PC or LiNGAM graphs form long directed chains, so most feature pairs stay order-free and the admissible permutations remain close to the full $N!$ set. The averaging therefore runs over almost the same orderings as Traditional and the attributions barely move, least of all on the larger, sparser synthetic graph.
 
@@ -695,10 +695,125 @@ Shapley Flow shows the highest Sign Disagreement on the synthetic dataset ($D_{\
 
 Read per feature, the signed instance-level gap again has a structural meaning, but for Flow the discriminating quantity is the node's balance of incoming to outgoing edges. A node's attribution is the sum of its outgoing edge credits, so a feature with many incoming edges spends its activation propagating its parents' credit forward and tends to lose magnitude, while a feature with a high outgoing-to-incoming ratio accumulates edge credit and tends to gain it. The features that best illustrate these mechanisms, including cases where a node's edge balance flips between the two discovered graphs, are deferred to Section~\ref{sec:cases}.
 
+\subsection{Discovery Algorithm Sensitivity Analysis}
+\label{sec:disc_analysis}
+
+Beyond knowing that injecting a causal graph shifts attributions away from the baseline, a practitioner also needs to know how stable those shifts are: if two reasonable discovery algorithms produce different explanations for the same data, the specific graph supplied is itself a source of uncertainty. This section quantifies that instability. If a practitioner runs two discovery algorithms on the same data and feeds each graph into the same Shapley method, how much do the explanations change? The answer is, it depends heavily on the method, and the effect is larger on the sign of attributions than on their magnitude. Asymmetric Shapley consistently shows the lowest sensitivity, it keeps both $\Delta M_{\text{disc}}$ and $D_{\text{disc}}$ well below its counterparts on both datasets. The gap is most visible on the real data, Flow's magnitude divergence between the two graphs ($\Delta M_{\text{disc}} = 14.92\%$ of $\hat{\sigma}$) is nearly double Asymmetric's (8.46\%), meaning that choosing Shapley Flow instead of Asymmetric makes the explanation twice as sensitive in magnitude to the choice of discovery algorithm. On the sign axis, choosing between Causal Shapley and Asymmetric Shapley for the Sachs dataset determines whether switching from one discovered graph to the other flips 31.80\% or 18.60\% of attribution signs, Causal disagrees with itself across graphs at almost double the rate of Asymmetric.
+
+Figures~\ref{fig:scatter_disc} plot the two quantities against each other; the lower-left corner marks a method whose attributions are stable regardless of which discovery algorithm was used. Tables~\ref{tab:disc_synth}--\ref{tab:disc_sachs} quantify how much the choice between PC and LiNGAM affects the final attributions for each Shapley method.
+
+\begin{figure}[H]
+  \centering
+  \begin{subfigure}[t]{0.48\linewidth}
+    \includegraphics[width=\linewidth]{figures/gss_sss_scatter_linear_conf_f50_s1000_p30.png}
+    \caption{Synthetic dataset. Asymmetric sits in the lower-left (stable on both axes), Causal in the upper-right (unstable on both), and Flow in between, magnitude-sensitive but comparatively sign-stable.}
+    \label{fig:scatter_disc_synth}
+  \end{subfigure}
+  \hfill
+  \begin{subfigure}[t]{0.48\linewidth}
+    \includegraphics[width=\linewidth]{figures/gss_sss_scatter_sachs.png}
+    \caption{Sachs dataset ($\Delta M_{\text{disc}}$). The same ordering holds, with both axes wider than on synthetic; Causal remains the most sign-unstable while Flow carries the largest magnitude difference between graphs.}
+    \label{fig:scatter_disc_sachs}
+  \end{subfigure}
+  \caption{\textbf{Graph-discovery instability (PC vs.\ LiNGAM).}}
+  \label{fig:scatter_disc}
+\end{figure}
+
+\begin{table}[H]
+  \centering
+  \begin{minipage}[t]{0.48\linewidth}
+    \centering
+    \caption{\textbf{PC vs.\ LiNGAM Sensitivity -- Synthetic.}}
+    \label{tab:disc_synth}
+    \begin{tabular}{lrr}
+      \toprule
+      \textbf{Method} & $\Delta M_{\text{disc}}$ & $D_{\text{disc}}$ \\
+      \midrule
+      Asymmetric & 1.07\%  & 5.93\%  \\
+      Causal     & 7.15\%  & 37.94\% \\
+      Flow       & 6.06\%  & 13.27\% \\
+      \bottomrule
+    \end{tabular}
+  \end{minipage}
+  \hfill
+  \begin{minipage}[t]{0.48\linewidth}
+    \centering
+    \caption{\textbf{PC vs.\ LiNGAM Sensitivity -- Sachs.}}
+    \label{tab:disc_sachs}
+    \begin{tabular}{lrr}
+      \toprule
+      \textbf{Method} & $\Delta M_{\text{disc}}$ & $D_{\text{disc}}$ \\
+      \midrule
+      Asymmetric & 8.46\%  & 18.60\% \\
+      Causal     & 10.11\% & 31.80\% \\
+      Flow       & 14.92\% & 21.88\% \\
+      \bottomrule
+    \end{tabular}
+  \end{minipage}
+\end{table}
+
+\begin{figure}[H]
+  \centering
+  \begin{subfigure}[t]{0.48\linewidth}
+    \includegraphics[width=\linewidth]{figures/gss_heatmap_linear_conf_f50_s1000_p30.png}
+    \caption{Synthetic dataset (top 10 features by mean $\Delta M_{\text{disc}}$). The Asymmetric row is near-zero; Causal and Flow concentrate their PC-vs-LiNGAM magnitude differences on X33 and X47, with Flow producing the single darkest cell on X33.}
+    \label{fig:gss_synth}
+  \end{subfigure}
+  \hfill
+  \begin{subfigure}[t]{0.48\linewidth}
+    \includegraphics[width=\linewidth]{figures/gss_heatmap_sachs.png}
+    \caption{Sachs dataset (top 10 features by mean $\Delta M_{\text{disc}}$). The sensitivity concentrates on erk and pka across all three methods, with Flow reaching a feature-level $\Delta M_{\text{disc}}$ of 57.5\% of $\hat{\sigma}$ on erk.}
+    \label{fig:gss_sachs}
+  \end{subfigure}
+  \caption{\textbf{Feature-level cross-discovery Magnitude Divergence $\Delta M_{\text{disc}}$ (PC vs.\ LiNGAM).}}
+  \label{fig:gss}
+\end{figure}
+
+The feature-level breakdown of $\Delta M_{\text{disc}}$ reveals which features have contested causal connections, nodes whose discovered neighbourhood differs materially between PC and LiNGAM and whose attributions therefore shift depending on which graph is used. The features flagged by $\Delta M_{\text{disc}}$ are the same ones already flagged by $\Delta M_{\text{base}}$: on synthetic the cross-discovery magnitude instability concentrates on X33 and X47, and on Sachs almost entirely on erk and pka, exactly the dominant nodes that showed the largest deviations from the Traditional Shapley baseline in Section~\ref{sec:baseline}. This convergence is not coincidental. Both metrics measure how much a feature's attribution diverges when the causal graph changes: $\Delta M_{\text{base}}$ captures the divergence when a graph is introduced at all (any discovered graph versus no graph), while $\Delta M_{\text{disc}}$ captures the divergence when the graph switches between two imperfect alternatives. A feature that ranks high on both lists is one whose Shapley attribution is structurally sensitive in two independent senses, it is affected by graph injection and it is affected by graph choice, pointing to a local causal neighbourhood that is both influential and poorly agreed upon by the discovery algorithms. Used together, $\Delta M_{\text{base}}$ and $\Delta M_{\text{disc}}$ at the feature level provide a targeted audit: they narrow the practitioner's attention from the full feature set to the handful of nodes where structural uncertainty actually drives attribution variance.
+
+On the synthetic dataset, Asymmetric Shapley confirms the sparsity buffer already seen in the oracle comparison: its per-feature $\Delta M_{\text{disc}}$ stays well within a single percentage point of $\hat{\sigma}$ across all features, meaning that switching between the PC and LiNGAM graphs has essentially no effect on ASV attributions at the individual feature level. The 50-node sparse structure leaves most ordering relationships unconstrained by either discovered graph, so the two variants of ASV average over nearly the same permutation space and produce nearly identical attributions. The picture shifts on Sachs: even Asymmetric shows elevated $\Delta M_{\text{disc}}$ on erk and pka, reflecting the large structural disagreement between PC and LiNGAM on those proteins in the compact 10-node network. This once again, is not a failure of the method but a consequence of the dataset regime, in low-dimensional graphs, discovery errors and inter-algorithm disagreements bind a large fraction of the available orderings, and ASV cannot average them away. Even so, the $\Delta M_{\text{disc}}$ feature-level heatmap remains useful in exactly this regime: it clearly identifies erk and pka as the contested nodes, giving the practitioner a precise and actionable target for graph validation rather than a global warning about the entire network.
+
+\begin{figure}[H]
+  \centering
+  \begin{subfigure}[t]{0.48\linewidth}
+    \includegraphics[width=\linewidth]{figures/sss_heatmap_linear_conf_f50_s1000_p30.png}
+    \caption{Synthetic dataset (top 10 features by mean $D_{\text{disc}}$). The Asymmetric row is clearly low; Causal shows the highest sign instability concentrated on X10 and X32, while Flow's sign instability is moderate compared to its magnitude sensitivity.}
+    \label{fig:sss_synth}
+  \end{subfigure}
+  \hfill
+  \begin{subfigure}[t]{0.48\linewidth}
+    \includegraphics[width=\linewidth]{figures/sss_heatmap_sachs.png}
+    \caption{Sachs dataset (top 10 features by mean $D_{\text{disc}}$). Sign instability concentrates on pkc and p38; Causal Shapley shows the broadest sign disagreement across proteins, consistent with its highest global $D_{\text{disc}}$.}
+    \label{fig:sss_sachs}
+  \end{subfigure}
+  \caption{\textbf{Feature-level cross-discovery Sign Disagreement $D_{\text{disc}}$ (PC vs.\ LiNGAM).}}
+  \label{fig:sss}
+\end{figure}
+
+Causal Shapley carries the largest cross-discovery sign instability on both tracks, reaching up to 64\% disagreement on individual features, meaning that for 64 out of 100 evaluated instances the attribution sign flips depending solely on which discovery algorithm was used, which is a very high instability. This concentrates across methods on X10 for the synthetic dataset and on pkc for Sachs.
+
+The cross-discovery sign heatmaps also confirm the sparsity buffer for ASV already seen in the magnitude analysis. On the synthetic track, ASV's row in the $D_{\text{disc}}$ heatmap is almost uniformly pale: the high-dimensional sparse graph leaves most ordering relationships unconstrained by both PC and LiNGAM, so the two ASV variants sample nearly identical permutation spaces and produce nearly identical attribution directions. On Sachs, the same buffer weakens for the same reason, and ASV's sign instability on pkc and p38 is no longer well separated from Causal and Flow.
+
+A pattern that runs through the cross-discovery sign heatmap on both datasets is that the features with the highest $D_{\text{disc}}$ are not the same features with the highest $\Delta M_{\text{disc}}$. On synthetic, X10 and X32 carry the largest cross-discovery sign disagreement while X33 and X47 carry the largest cross-discovery magnitude divergence; on Sachs, sign instability peaks on pkc and p38 while magnitude instability peaks on erk and pka. The logic is the same as in every earlier sign comparison: sign flips occur where a feature's attribution sits close to zero, so switching from one discovered graph to the other is enough to cross the zero boundary without leaving a large RMS footprint. Features with already small attributions need only a modest structural change to invert their direction, whereas dominant features absorb the same structural change without changing sign. The $D_{\text{disc}}$ heatmap is therefore a complementary tool to $\Delta M_{\text{disc}}$: where $\Delta M_{\text{disc}}$ flags features whose importance is contested between the two algorithms, $D_{\text{disc}}$ flags features whose explainability is inherently fragile, sitting so close to zero that the direction of the explanation is determined by which discovery algorithm was run rather than by any stable structural signal.
+
+\subsubsection{Asymmetric Shapley, Minimal Sensitivity on Synthetic}
+
+On the synthetic dataset, ASV shows the lowest sensitivity to discovery algorithm choice: $\Delta M_{\text{disc}} = 1.07\%$ of $\hat{\sigma}$, $D_{\text{disc}} = 5.93\%$. Only about 6 in 100 attribution signs differs between the PC and LiNGAM variants on average on all features. This could be explained by the high-dimensional sparse settings of the synthetic dataset, both graphs leave most ordering relationships unconstrained and ASV's permutation sampling produces nearly identical attribution distributions regardless of which graph is supplied.
+
+On the Sachs dataset, sensitivity increases substantially to $\Delta M_{\text{disc}} = 8.46\%$ of $\hat{\sigma}$ and $D_{\text{disc}} = 18.6\%$. Unlike the synthetic dataset, the Sachs dataset is compact (10 nodes): the different edge sets discovered by PC and LiNGAM impose materially different topological constraints, and these differences accumulate into visible attribution changes, specially in nodes with known influence as erk and pka.
+
+\subsubsection{Causal and Flow, High Sensitivity, Especially on Real Data}
+
+CSV and Shapley Flow are substantially more sensitive to discovery algorithm choice, but in different ways. On the synthetic dataset, CSV's $\Delta M_{\text{disc}} = 7.15\%$ and Flow's $\Delta M_{\text{disc}} = 6.06\%$ of $\hat{\sigma}$ are roughly 7 and 6 times larger than ASV's. The sign axis separates the two methods: CSV's $D_{\text{disc}} = 37.94\%$ is the highest instability in the synthetic experiment, because interventional conditioning inverts attribution signs whenever the parent sets differ between graphs, which happens frequently given LiNGAM's 81 spurious edges. Flow, by contrast, is much more sign-stable on synthetic ($D_{\text{disc}} = 13.27\%$) despite its comparable magnitude sensitivity; its cross-discovery sign instability comes largely from both discovered graphs sharing many of the same orientation errors rather than diverging from each other.
+
+On the Sachs dataset the magnitude instability escalates: CSV's $\Delta M_{\text{disc}} = 10.11\%$ and Flow's $\Delta M_{\text{disc}} = 14.92\%$ of $\hat{\sigma}$ mean that choosing LiNGAM over PC moves CSV and Flow attributions by more than a tenth of the model-output standard deviation, making the discovery algorithm a dominant source of attribution variance. The sign-disagreement rates converge somewhat (CSV $D_{\text{disc}} = 31.80\%$, Flow 21.88\%), with CSV remaining the most sign-unstable method on both tracks. The feature-level heatmaps in Figures~\ref{fig:gss}--\ref{fig:sss} show that magnitude instability is concentrated on a few nodes: on synthetic, $\Delta M_{\text{disc}}$ focuses on X33 and X47, and on Sachs almost entirely on erk and pka, the same dominant nodes that drive every other comparison in this chapter.
+
+Across all three comparison tracks, a consistent pattern holds: magnitude divergence is driven by a handful of focal nodes, which Section~\ref{sec:cases} examines in depth to understand how specific discovery errors interact with each Shapley method. Sign divergence, by contrast, tends to spread more broadly across features, with many near-zero attributions getting pushed across the sign boundary by small magnitude shifts. In both dimensions, Asymmetric Shapley remains the lowest-risk choice when transitioning from a graph-free baseline, whether the discovered graph is noisy, unvalidated, or switches between discovery strategies.
+
 \subsection{True-Graph Causal Alignment}
 \label{sec:oracle_align}
 
-The baseline deviation analysis quantified how much each method moves attributions when a causal graph is injected; a large $\Delta M_{\text{base}}$ or $D_{\text{base}}$ confirms the graph is doing structural work but says nothing about whether that work is correct. The oracle-alignment analysis now measures how closely each combination of structure-aware Shapley method and discovered graph recovers the attributions that would be obtained with the oracle graph as input. On the synthetic track the oracle is the True DAG; on Sachs it is the consensus reference DAG, which plays the same role. Tables~\ref{tab:oracle_synth}--\ref{tab:oracle_sachs} report $\Delta M_{\text{oracle}}$ and $D_{\text{oracle}}$ for each track, and Figures~\ref{fig:scatter_oracle} place every configuration on the magnitude axis ($\Delta M_{\text{oracle}}$) against the sign axis ($D_{\text{oracle}}$), where the lower-left corner marks the closest recovery of the oracle attributions. Better discovery accuracy consistently produces smaller oracle deviation. On the synthetic dataset the margin is modest: Causal Shapley under PC (F1 = 0.567) reaches $D_{\text{oracle}} = 31.60\%$ and $\Delta M_{\text{oracle}} = 5.32\%$, versus 37.46\% and 7.57\% under LiNGAM (F1 = 0.250). The effect is more visible on Sachs, where LiNGAM outperforms PC (F1 = 0.326 vs.\ 0.167): Asymmetric Shapley under LiNGAM achieves $\Delta M_{\text{oracle}} = 2.84\%$ versus 9.16\% under PC, and Shapley Flow drops from 15.52\% to 8.12\% when switching from PC to LiNGAM. Among the three methods, Asymmetric Shapley remains the least penalised by graph misspecification, with oracle deviation staying low regardless of which discovered graph is supplied.
+The two preceding analyses establish that injecting a causal graph moves attributions away from the graph-free baseline, and that the size of this shift varies systematically depending on which discovery algorithm is used. Neither analysis, however, can say whether the shift moves the explanation closer to or further from the truth. The oracle-alignment analysis now measures how closely each method and discovered-graph combination recovers the attributions that would be obtained with the oracle graph as input. On the synthetic track the oracle is the True DAG; on Sachs it is the consensus reference DAG, which plays the same role. Tables~\ref{tab:oracle_synth}--\ref{tab:oracle_sachs} report $\Delta M_{\text{oracle}}$ and $D_{\text{oracle}}$ for each track, and Figures~\ref{fig:scatter_oracle} place every configuration on the magnitude axis ($\Delta M_{\text{oracle}}$) against the sign axis ($D_{\text{oracle}}$), where the lower-left corner marks the closest recovery of the oracle attributions. Better discovery accuracy consistently produces smaller oracle deviation. On the synthetic dataset the margin is modest: Causal Shapley under PC (F1 = 0.567) reaches $D_{\text{oracle}} = 31.60\%$ and $\Delta M_{\text{oracle}} = 5.32\%$, versus 37.46\% and 7.57\% under LiNGAM (F1 = 0.250). The effect is more visible on Sachs, where LiNGAM outperforms PC (F1 = 0.326 vs.\ 0.167): Asymmetric Shapley under LiNGAM achieves $\Delta M_{\text{oracle}} = 2.84\%$ versus 9.16\% under PC, and Shapley Flow drops from 15.52\% to 8.12\% when switching from PC to LiNGAM. Among the three methods, Asymmetric Shapley remains the least penalised by graph misspecification, with oracle deviation staying low regardless of which discovered graph is supplied.
 
 \begin{figure}[H]
   \centering
@@ -805,121 +920,6 @@ ASV achieves the highest oracle alignment on both tracks. On synthetic, $D_{\tex
 \subsubsection{Causal and Flow, Compounding Error Under Imprecise Graphs}
 
 CSV and Flow are substantially more sensitive to graph quality. On synthetic, CSV reaches $D_{\text{oracle}} = 31.60$--$37.46\%$ and Flow $D_{\text{oracle}} = 42.26$--$44.91\%$, meaning close to half of all Flow attributions point in the wrong direction relative to the True DAG. On Sachs both methods improve with the better LiNGAM graph: CSV drops from 36.30\% to 32.30\% and Flow's magnitude deviation falls from 15.52\% to 8.12\% of $\hat{\sigma}$. Flow's high synthetic sign instability is partly a property of the dense, heavily mis-oriented graphs on that track rather than an invariant of the method.
-
-\subsection{Discovery Algorithm Sensitivity Analysis}
-\label{sec:disc_analysis}
-
-The oracle analysis requires a known ground-truth graph and is only possible in controlled experiments. The question a practitioner actually faces without oracle access is how consistent the explanations are when two different discovery algorithms are tried on the same data. This final comparison answers that practical question: if a practitioner runs two discovery algorithms on the same data and feeds each graph into the same Shapley method, how much do the explanations change? The answer is, it depends heavily on the method, and the effect is larger on the sign of attributions than on their magnitude. Asymmetric Shapley consistently shows the lowest sensitivity, it keeps both $\Delta M_{\text{disc}}$ and $D_{\text{disc}}$ well below its counterparts on both datasets. The gap is most visible on the real data, Flow's magnitude divergence between the two graphs ($\Delta M_{\text{disc}} = 14.92\%$ of $\hat{\sigma}$) is nearly double Asymmetric's (8.46\%), meaning that choosing Shapley Flow instead of Asymmetric makes the explanation twice sensible as much in magnitude depending solely on which discovery algorithm was run. On the sign axis, choosing between Causal Shapley and Asymmetric Shapley for the Sachs dataset determines whether switching from one discovered graph to the other flips 31.80\% or 18.60\% of attribution signs, Causal disagrees with itself across graphs at almost double the rate of Asymmetric.
-
-Figures~\ref{fig:scatter_disc} plot the two quantities against each other; the lower-left corner marks a method whose attributions are stable regardless of which discovery algorithm was used. Tables~\ref{tab:disc_synth}--\ref{tab:disc_sachs} quantify how much the choice between PC and LiNGAM affects the final attributions for each Shapley method.
-
-\begin{figure}[H]
-  \centering
-  \begin{subfigure}[t]{0.48\linewidth}
-    \includegraphics[width=\linewidth]{figures/gss_sss_scatter_linear_conf_f50_s1000_p30.png}
-    \caption{Synthetic dataset. Asymmetric sits in the lower-left (stable on both axes), Causal in the upper-right (unstable on both), and Flow in between, magnitude-sensitive but comparatively sign-stable.}
-    \label{fig:scatter_disc_synth}
-  \end{subfigure}
-  \hfill
-  \begin{subfigure}[t]{0.48\linewidth}
-    \includegraphics[width=\linewidth]{figures/gss_sss_scatter_sachs.png}
-    \caption{Sachs dataset ($\Delta M_{\text{disc}}$). The same ordering holds, with both axes wider than on synthetic; Causal remains the most sign-unstable while Flow carries the largest magnitude difference between graphs.}
-    \label{fig:scatter_disc_sachs}
-  \end{subfigure}
-  \caption{\textbf{Graph-discovery instability (PC vs.\ LiNGAM).}}
-  \label{fig:scatter_disc}
-\end{figure}
-
-\begin{table}[H]
-  \centering
-  \begin{minipage}[t]{0.48\linewidth}
-    \centering
-    \caption{\textbf{PC vs.\ LiNGAM Sensitivity -- Synthetic.}}
-    \label{tab:disc_synth}
-    \begin{tabular}{lrr}
-      \toprule
-      \textbf{Method} & $\Delta M_{\text{disc}}$ & $D_{\text{disc}}$ \\
-      \midrule
-      Asymmetric & 1.07\%  & 5.93\%  \\
-      Causal     & 7.15\%  & 37.94\% \\
-      Flow       & 6.06\%  & 13.27\% \\
-      \bottomrule
-    \end{tabular}
-  \end{minipage}
-  \hfill
-  \begin{minipage}[t]{0.48\linewidth}
-    \centering
-    \caption{\textbf{PC vs.\ LiNGAM Sensitivity -- Sachs.}}
-    \label{tab:disc_sachs}
-    \begin{tabular}{lrr}
-      \toprule
-      \textbf{Method} & $\Delta M_{\text{disc}}$ & $D_{\text{disc}}$ \\
-      \midrule
-      Asymmetric & 8.46\%  & 18.60\% \\
-      Causal     & 10.11\% & 31.80\% \\
-      Flow       & 14.92\% & 21.88\% \\
-      \bottomrule
-    \end{tabular}
-  \end{minipage}
-\end{table}
-
-\begin{figure}[H]
-  \centering
-  \begin{subfigure}[t]{0.48\linewidth}
-    \includegraphics[width=\linewidth]{figures/gss_heatmap_linear_conf_f50_s1000_p30.png}
-    \caption{Synthetic dataset (top 10 features by mean $\Delta M_{\text{disc}}$). The Asymmetric row is near-zero; Causal and Flow concentrate their PC-vs-LiNGAM magnitude differences on X33 and X47, with Flow producing the single darkest cell on X33.}
-    \label{fig:gss_synth}
-  \end{subfigure}
-  \hfill
-  \begin{subfigure}[t]{0.48\linewidth}
-    \includegraphics[width=\linewidth]{figures/gss_heatmap_sachs.png}
-    \caption{Sachs dataset (top 10 features by mean $\Delta M_{\text{disc}}$). The sensitivity concentrates on erk and pka across all three methods, with Flow reaching a feature-level $\Delta M_{\text{disc}}$ of 57.5\% of $\hat{\sigma}$ on erk.}
-    \label{fig:gss_sachs}
-  \end{subfigure}
-  \caption{\textbf{Feature-level cross-discovery Magnitude Divergence $\Delta M_{\text{disc}}$ (PC vs.\ LiNGAM).}}
-  \label{fig:gss}
-\end{figure}
-
-The feature-level breakdown of $\Delta M_{\text{disc}}$ reveals which features have contested causal connections, nodes whose discovered neighbourhood differs materially between PC and LiNGAM and whose attributions therefore shift depending on which graph is used. The features flagged by $\Delta M_{\text{disc}}$ are the same ones already flagged by $\Delta M_{\text{base}}$: on synthetic the cross-discovery magnitude instability concentrates on X33 and X47, and on Sachs almost entirely on erk and pka, exactly the dominant nodes that showed the largest deviations from the Traditional Shapley baseline in Section~\ref{sec:baseline}. This convergence is not coincidental. Both metrics measure how much a feature's attribution diverges when the causal graph changes: $\Delta M_{\text{base}}$ captures the divergence when a graph is introduced at all (any discovered graph versus no graph), while $\Delta M_{\text{disc}}$ captures the divergence when the graph switches between two imperfect alternatives. A feature that ranks high on both lists is one whose Shapley attribution is structurally sensitive in two independent senses, it is affected by graph injection and it is affected by graph choice, pointing to a local causal neighbourhood that is both influential and poorly agreed upon by the discovery algorithms. Used together, $\Delta M_{\text{base}}$ and $\Delta M_{\text{disc}}$ at the feature level provide a targeted audit: they narrow the practitioner's attention from the full feature set to the handful of nodes where structural uncertainty actually drives attribution variance.
-
-On the synthetic dataset, Asymmetric Shapley confirms the sparsity buffer already seen in the oracle comparison: its per-feature $\Delta M_{\text{disc}}$ stays well within a single percentage point of $\hat{\sigma}$ across all features, meaning that switching between the PC and LiNGAM graphs has essentially no effect on ASV attributions at the individual feature level. The 50-node sparse structure leaves most ordering relationships unconstrained by either discovered graph, so the two variants of ASV average over nearly the same permutation space and produce nearly identical attributions. The picture shifts on Sachs: even Asymmetric shows elevated $\Delta M_{\text{disc}}$ on erk and pka, reflecting the large structural disagreement between PC and LiNGAM on those proteins in the compact 10-node network. This once again, is not a failure of the method but a consequence of the dataset regime, in low-dimensional graphs, discovery errors and inter-algorithm disagreements bind a large fraction of the available orderings, and ASV cannot average them away. Even so, the $\Delta M_{\text{disc}}$ feature-level heatmap remains useful in exactly this regime: it clearly identifies erk and pka as the contested nodes, giving the practitioner a precise and actionable target for graph validation rather than a global warning about the entire network.
-
-\begin{figure}[H]
-  \centering
-  \begin{subfigure}[t]{0.48\linewidth}
-    \includegraphics[width=\linewidth]{figures/sss_heatmap_linear_conf_f50_s1000_p30.png}
-    \caption{Synthetic dataset (top 10 features by mean $D_{\text{disc}}$). The Asymmetric row is clearly low; Causal shows the highest sign instability concentrated on X10 and X32, while Flow's sign instability is moderate compared to its magnitude sensitivity.}
-    \label{fig:sss_synth}
-  \end{subfigure}
-  \hfill
-  \begin{subfigure}[t]{0.48\linewidth}
-    \includegraphics[width=\linewidth]{figures/sss_heatmap_sachs.png}
-    \caption{Sachs dataset (top 10 features by mean $D_{\text{disc}}$). Sign instability concentrates on pkc and p38; Causal Shapley shows the broadest sign disagreement across proteins, consistent with its highest global $D_{\text{disc}}$.}
-    \label{fig:sss_sachs}
-  \end{subfigure}
-  \caption{\textbf{Feature-level cross-discovery Sign Disagreement $D_{\text{disc}}$ (PC vs.\ LiNGAM).}}
-  \label{fig:sss}
-\end{figure}
-
-Causal Shapley carries the largest cross-discovery sign instability on both tracks, reaching up to 64\% disagreement on individual features, meaning that for 64 out of 100 evaluated instances the attribution sign flips depending solely on which discovery algorithm was used, which is a very high instability. This concentrates across methods on X10 for the synthetic dataset and on pkc for Sachs.
-
-The cross-discovery sign heatmaps also confirm the sparsity buffer for ASV already seen in the magnitude analysis. On the synthetic track, ASV's row in the $D_{\text{disc}}$ heatmap is almost uniformly pale: the high-dimensional sparse graph leaves most ordering relationships unconstrained by both PC and LiNGAM, so the two ASV variants sample nearly identical permutation spaces and produce nearly identical attribution directions. On Sachs, the same buffer weakens for the same reason, and ASV's sign instability on pkc and p38 is no longer well separated from Causal and Flow.
-
-A pattern that runs through the cross-discovery sign heatmap on both datasets is that the features with the highest $D_{\text{disc}}$ are not the same features with the highest $\Delta M_{\text{disc}}$. On synthetic, X10 and X32 carry the largest cross-discovery sign disagreement while X33 and X47 carry the largest cross-discovery magnitude divergence; on Sachs, sign instability peaks on pkc and p38 while magnitude instability peaks on erk and pka. The logic is the same as in every earlier sign comparison: sign flips occur where a feature's attribution sits close to zero, so switching from one discovered graph to the other is enough to cross the zero boundary without leaving a large RMS footprint. Features with already small attributions need only a modest structural change to invert their direction, whereas dominant features absorb the same structural change without changing sign. The $D_{\text{disc}}$ heatmap is therefore a complementary tool to $\Delta M_{\text{disc}}$: where $\Delta M_{\text{disc}}$ flags features whose importance is contested between the two algorithms, $D_{\text{disc}}$ flags features whose explanability is inherently fragile, sitting so close to zero that the direction of the explanation is determined by which discovery algorithm was run rather than by any stable structural signal.
-
-\subsubsection{Asymmetric Shapley, Minimal Sensitivity on Synthetic}
-
-On the synthetic dataset, ASV shows the lowest sensitivity to discovery algorithm choice: $\Delta M_{\text{disc}} = 1.07\%$ of $\hat{\sigma}$, $D_{\text{disc}} = 5.93\%$. Only about 6 in 100 attribution signs differs between the PC and LiNGAM variants on average on all features. This could be explained by the high-dimensional sparse settings of the synthetic dataset, both graphs leave most ordering relationships unconstrained and ASV's permutation sampling produces nearly identical attribution distributions regardless of which graph is supplied.
-
-On the Sachs dataset, sensitivity increases substantially to $\Delta M_{\text{disc}} = 8.46\%$ of $\hat{\sigma}$ and $D_{\text{disc}} = 18.6\%$. Opposite to the synthetic dataset Sachs dataset is compact  with 10 node setting, the different edge sets discovered by PC and LiNGAM impose materially different topological constraints, and these differences accumulate into visible attribution changes, specially in nodes with known influence as erk and pka.
-
-\subsubsection{Causal and Flow, High Sensitivity, Especially on Real Data}
-
-CSV and Shapley Flow are substantially more sensitive to discovery algorithm choice, but in different ways. On the synthetic dataset, CSV's $\Delta M_{\text{disc}} = 7.15\%$ and Flow's $\Delta M_{\text{disc}} = 6.06\%$ of $\hat{\sigma}$ are roughly 7 and 6 times larger than ASV's. The sign axis separates the two methods: CSV's $D_{\text{disc}} = 37.94\%$ is the highest instability in the synthetic experiment, because interventional conditioning inverts attribution signs whenever the parent sets differ between graphs, which happens frequently given LiNGAM's 81 spurious edges. Flow, by contrast, is much more sign-stable on synthetic ($D_{\text{disc}} = 13.27\%$) despite its comparable magnitude sensitivity; its cross-discovery sign instability comes largely from both discovered graphs sharing many of the same orientation errors rather than diverging from each other.
-
-On the Sachs dataset the magnitude instability escalates: CSV's $\Delta M_{\text{disc}} = 10.11\%$ and Flow's $\Delta M_{\text{disc}} = 14.92\%$ of $\hat{\sigma}$ mean that choosing LiNGAM over PC moves CSV and Flow attributions by more than a tenth of the model-output standard deviation, making the discovery algorithm a dominant source of attribution variance. The sign-disagreement rates converge somewhat (CSV $D_{\text{disc}} = 31.80\%$, Flow 21.88\%), with CSV remaining the most sign-unstable method on both tracks. The feature-level heatmaps in Figures~\ref{fig:gss}--\ref{fig:sss} show that magnitude instability is concentrated on a few nodes: on synthetic, $\Delta M_{\text{disc}}$ focuses on X33 and X47, and on Sachs almost entirely on erk and pka, the same dominant nodes that drive every other comparison in this chapter.
-
-Across all three comparison tracks, a consistent pattern holds: magnitude divergence is driven by a handful of focal nodes, which Section~\ref{sec:cases} examines in depth to understand how specific discovery errors interact with each Shapley method. Sign divergence, by contrast, tends to spread more broadly across features, with many near-zero attributions getting pushed across the sign boundary by small magnitude shifts. In both dimensions, Asymmetric Shapley remains the lowest-risk choice when transitioning from a graph-free baseline, whether the discovered graph is noisy, unvalidated, or switches between discovery strategies.
 
 \subsection{Granular Case Studies}
 \label{sec:cases}
@@ -1086,8 +1086,7 @@ sit near zero across the test set, so PC's structural changes to X10's neighbour
 producing a feature-level $D_{\text{base}}$ of 96\% for Causal+PC, the highest in the
 synthetic experiment. The SHAP scatter (Figure~\ref{fig:shap_X10}) makes this visible:
 a tight near-zero Traditional cluster fans out into a broad, sign-mixed Causal+PC distribution.
-Adding the $D_{\text{disc}}$ for X10, the practitioner could spot a high sign disagreement between PC and LiNGAM,
-making it validate the discovered causal structure and measuring the implication of this using the structure-aware Shapley method for this feature.
+The $D_{\text{disc}}$ for X10 would show a high sign disagreement between PC and LiNGAM, confirming that the discovered neighbourhood is contested and that any structure-aware attribution for this feature should be treated with caution until the graph is validated.
 
 \begin{figure}[H]
   \centering
@@ -1138,28 +1137,52 @@ Taken together, the four case studies validate the two-signal alarm workflow des
 
 This thesis built an experimental pipeline to give practitioners a structured approach for cases where their modelled system has causal relationships and they want structure-aware Shapley explanations that are more faithful to those dependencies.
 
-The pipeline tests three structure-aware Shapley methods, Asymmetric Shapley (ASV), Causal Shapley (CSV), and Shapley Flow, under two automatically discovered graphs (PC and LiNGAM) across three comparison tracks: against the graph-free Traditional Shapley baseline, against the True DAG oracle, and as cross-discovery sensitivity between PC and LiNGAM. The evaluation framework introduces two complementary dimensions: magnitude of change ($\Delta M$) and sign change ($D$), each measured at three levels, global (dataset), feature, and instance, forming a systematic diagnostic alert system whose behaviour is illustrated through the most informative high-deviation cases.
+The pipeline tests three structure-aware Shapley methods, Asymmetric Shapley (ASV), Causal Shapley (CSV), and Shapley Flow, under two automatically discovered graphs (PC and LiNGAM) across three comparison tracks: against the graph-free Traditional Shapley baseline, as cross-discovery sensitivity between PC and LiNGAM, and against the True DAG oracle. The evaluation framework introduces two complementary dimensions: magnitude of change ($\Delta M$) and sign change ($D$), each measured at three levels, global (dataset), feature, and instance, forming a systematic diagnostic alert system whose behaviour is illustrated through the most informative high-deviation cases.
 
 The introduced experimental metrics, were tested in two datasets, a synthetic linear confounded dataset with 50 features and a sparse causal structure, and the real-world Sachs dataset with 10 proteins and a denser causal structure. The results show that the introduced metrics successfully flag structurally fragile nodes without oracle access, guiding practitioners on where to focus validation efforts when working with imperfect causal graphs.
 
-The three methods occupy distinct somehow expected sensitivity regimes, but now it is measurable. ASV is stable under graph errors: on the 50-feature synthetic data, replacing the True DAG with an imprecise discovered graph moves attributions by under 1.1\% of $\hat{\sigma}$ and flips fewer than 7\% of signs. On Sachs the absolute numbers are higher, oracle deviation rises to $\Delta M_{\text{oracle}} = 2.84\%$ of $\hat{\sigma}$ under LiNGAM (F1 = 0.326), but ASV still records the lowest oracle deviation of any method on that dataset, and remains the method least penalised by graph misspecification. CSV and Flow are more exposed because they embed the graph deeper into the computation, CSV inside the value function, Flow in the players themselves, so edge errors propagate directly into attributions.
+The three methods occupy distinct sensitivity regimes, as expected, but the experimental pipeline
+now makes those differences measurable. ASV is stable under graph errors: on synthetic,
+$\Delta M_{\text{base}} < 1\%$ of $\hat{\sigma}$ and $D_{\text{base}} < 6\%$, and cross-discovery
+sensitivity stays below 1.1\% and 6\% respectively. On Sachs the numbers rise, but the framework
+remains informative: feature-level $\Delta M_{\text{disc}}$ and $D_{\text{disc}}$ point directly
+to erk and pka as the contested nodes. CSV and Flow are more exposed
+because they embed the graph deeper into the computation, CSV inside the value function,
+Flow in the players themselves, so their baseline and cross-discovery divergences are
+substantially higher than ASV's on both datasets.
 
-Two patterns hold across all settings. First, the specific discovered graph supplied (PC or LiNGAM) has little effect on the baseline deviation: both perturb $\Delta M_{\text{base}}$ and $D_{\text{base}}$ by nearly identical amounts for a given method, so the dominant driver is the method's structural coupling to any graph, not which graph is used. Second, sign disagreement ($D$) is a more severe perturbation than magnitude divergence ($\Delta M$): adding a causal graph flips attribution directions more often than it inflates their size, because near-zero attributions need only a small shift to cross the sign boundary whereas large attributions absorb the same redistribution without changing direction.
+Two patterns hold across all settings. First, the specific discovered graph supplied (PC or LiNGAM) has little effect on the baseline deviation: both perturb $\Delta M_{\text{base}}$ and $D_{\text{base}}$ by nearly identical amounts for a given method, so what matters is whether a causal graph is used at all, not which specific graph is supplied. Second, sign disagreement ($D$) is a more severe perturbation than magnitude divergence ($\Delta M$): adding a causal graph flips attribution directions more often than it inflates their size, because near-zero attributions need only a small shift to cross the sign boundary whereas large attributions absorb the same redistribution without changing direction.
 
-Neither discovery algorithm consistently outperforms the other across both datasets, and in practice a discovered graph will always be imperfect. The decisive question is not which discovery algorithm is better, but how much the chosen Shapley method amplifies its errors. ASV absorbs those errors, especially in high-dimensional sparse graphs; CSV and Flow inherit them. This shifts the recommendation: before improving the graph, first check whether the Shapley method is sensitive enough to make that improvement worthwhile.
+In real-world scenarios the experimental pipeline does not reveal which graph structure is truly correct: the discovered graph will always be imperfect. When the causal structure of the observational data is unclear, the safe choice is ASV, which absorbs discovery errors rather than inheriting them. CSV and Flow should only be used when the cross-discovery metrics ($\Delta M_{\text{disc}}$, $D_{\text{disc}}$) are low across all features, indicating that any reasonable graph produces similar attributions and no contested nodes exist.
 
-The metrics surface three distinct alarm patterns visible in the case studies. $\Delta M_{\text{base}}$ alone flags a correlated failure: X24's baseline deviation reaches 32.5\% of $\hat{\sigma}$ while its cross-discovery signal stays quiet, because both algorithms commit the same structural error and agree with each other despite both being wrong. $\Delta M_{\text{base}}$ and $\Delta M_{\text{disc}}$ firing together mark a contested neighbourhood: pka (17.3\% baseline), X47 (29.8\% cross-discovery for CSV), and erk (57.5\% cross-discovery for Flow) all show both alarms simultaneously, identifying nodes where the discovered causal structure is influential and disputed. The sign metrics surface a third class: X10 reaches $D_{\text{base}} = 96\%$ for Causal+PC and pkc leads the Sachs sign heatmaps, yet neither appears in the magnitude heatmaps — both carry near-zero baseline attributions, so a small structural shift is enough to flip their direction without leaving a large RMS footprint. A practitioner monitoring only magnitude metrics will miss this class entirely.
+The metrics surface three distinct alarm patterns visible in the case studies.
+$\Delta M_{\text{base}}$ alone flags a shared graph failure: X24 reaches $\Delta M_{\text{base}} = 32.5\%$
+of $\hat{\sigma}$ while $\Delta M_{\text{disc}} \approx 8.9\%$ stays quiet, because both discovery
+algorithms commit the same structural error and agree with each other despite both being wrong, 
+this would be a blind spot for practitioners.
+$\Delta M_{\text{base}}$ and $\Delta M_{\text{disc}}$ firing together mark a contested neighbourhood:
+pka ($\Delta M_{\text{base}} = 17.3\%$ for CSV PC, $\Delta M_{\text{disc}} = 30.2\%$  for ASV),
+X47 ($\Delta M_{\text{base}} = 21.8\%$ for CSV PC, $\Delta M_{\text{disc}} = 29.7\%$ for CSV), and
+erk ($\Delta M_{\text{base}} = 57.9\%$ for Flow PC, $\Delta M_{\text{disc}} = 57.5\%$ for Flow 
+and even $\Delta M_{\text{disc}} = 35.8\%$ for ASV) all show both alarms simultaneously, identifying nodes where the discovered
+causal structure is influential and disputed. The sign metrics surface a third
+class: X10 reaches $D_{\text{base}} = 96\%$ for Causal+PC and pkc leads the
+Sachs sign heatmaps, yet neither appears in the magnitude heatmaps, both carry
+near-zero baseline attributions, so a small structural shift is enough to flip
+their direction without leaving a large RMS footprint. Running all four metrics
+together is therefore what makes the framework diagnostic rather than merely descriptive:
+each alarm pattern reveals a structurally distinct failure mode that the others cannot detect.
 
 \subsection{Main Contribution and Practical Recommendations}
 
 The most important contribution of this work is the evaluation framework itself. Before this work, a practitioner who wanted to add a discovered causal graph to a Shapley computation had no systematic way to assess what that decision would cost in attribution quality. The metrics defined here, $\Delta M_{\text{base}}$, $\Delta M_{\text{disc}}$, $D_{\text{base}}$, $D_{\text{disc}}$, at both global level and feature level, give a practitioner a structured set of tools for the assessment. Each metric measures a different dimension of change: how much the graph changes attributions away from the graph-free model behaviour, and how stable those attributions are when the input causal graph is swapped. Together these two dimensions describe not just whether attributions changed but whether the explanation can be trusted: a high baseline deviation signals that the graph is doing substantial structural work on a node, and a high cross-discovery instability signals which specific features would need additional revision of their discovered causal relationships before the attributions can be trusted. Both signals are computable without a ground-truth graph, $\Delta M_{\text{base}}$ and $D_{\text{base}}$ only need the Traditional Shapley run as a reference, and $\Delta M_{\text{disc}}$ and $D_{\text{disc}}$ only need two discovery algorithms run on the same data.
 
-One practical use of the framework is to run two or more discovery algorithms on the same data and measure the cross-discovery stability ($\Delta M_{\text{disc}}$, $D_{\text{disc}}$) before committing to any structure-aware Shapley method. If PC and LiNGAM produce very different attributions for the same feature, that is a direct sign that the method's output depends more on which algorithm happened to be chosen than on the model's actual predictive behaviour. This does not require a ground-truth graph, the disagreement between two imperfect algorithms is itself the warning signal. This makes the pipeline a diagnostic tool: it points to exactly which nodes and which edges are responsible for the instability, so graph refinement effort can be focused where it matters. The sign metrics extend this audit: $\Delta M_{\text{disc}}$ flags nodes whose attribution magnitude is contested, $D_{\text{disc}}$ identifies a distinct population of near-zero features whose explanatory direction flips between algorithms — features that would be entirely invisible in a magnitude-only inspection.
+One practical use of the framework is to run two or more discovery algorithms on the same data and measure the cross-discovery stability ($\Delta M_{\text{disc}}$, $D_{\text{disc}}$) before committing to any structure-aware Shapley method. If PC and LiNGAM produce very different attributions for the same feature, that is a direct sign that the method's output depends more on which algorithm happened to be chosen than on the model's actual predictive behaviour. The pipeline is therefore a diagnostic tool: it points to exactly which nodes and which edges are responsible for the instability, so graph refinement effort can be focused where it matters. Once the graph has been refined and a method chosen, reporting $\Delta M_{\text{base}}$ and $D_{\text{base}}$ quantifies the net divergence of the final structure-aware explanation from the graph-free baseline, making the causal modelling decision transparent and auditable. The sign metrics extend this audit further: $\Delta M_{\text{disc}}$ flags nodes whose attribution magnitude is contested, $D_{\text{disc}}$ identifies a distinct population of near-zero features whose explanatory direction flips between discovered graphs, features that would be entirely invisible in a magnitude-only inspection.
 
 Given all of this, the practical ordering of the three methods is clear:
 \begin{itemize}
-  \item \textbf{ASV is the recommended default} for any practitioner who wants to incorporate causal structure without taking on attribution instability. It delivers oracle-level alignment with minimal deviation from the Traditional Shapley baseline, works well even with poor discovery results like Sachs PC (F1 = 0.167), and adds no computational cost above standard Monte Carlo SHAP.
-  \item \textbf{CSV and Flow are useful only when the graph quality is high}, for example when domain experts have validated the structure or when the cross-discovery stability metrics show the graph is stable. On confounded synthetic data with LiNGAM's graph, CSV produces $D_{\text{oracle}} = 37.5\%$ and $D_{\text{disc}} = 37.9\%$, meaning that attributions differ in sign from the oracle more than a third of the time and differ in sign between PC and LiNGAM variants more than a third of the time. That level of instability makes explanations inconsistent across audit runs and difficult to defend in practice.
+  \item \textbf{ASV is the recommended default.} It delivers oracle-level alignment with minimal deviation from the Traditional Shapley baseline, tolerates poor discovery results, and adds no computational cost above standard Monte Carlo SHAP. Even so, the diagnostic framework should always be run first: there can be contested features even under ASV that require graph validation before the attributions can be trusted.
+  \item \textbf{CSV and Flow are useful only when graph quality is high} for example when domain experts have validated the structure or when the cross-discovery stability metrics confirm the explanations are graph stable.
 \end{itemize}
 
 \subsection{Limitations and Future Work}
@@ -1171,6 +1194,14 @@ All Shapley computations use $T = 100$ Monte Carlo samples, a deliberate trade-o
 Future work should extend the evaluation to nonlinear Shapley variants, explore ensemble approaches that average attributions across multiple discovered graphs to reduce cross-discovery instability, and investigate whether active learning strategies could use the feature-level $\Delta M_{\text{disc}}$ signal to guide targeted graph refinement, starting from the nodes the framework identifies as most contested.
 
 %% ============================================================
+%% Bibliography
+%% ============================================================
+\newpage
+\bibliography{references}
+
+\newpage
+%% ============================================================
+\renewcommand{\thesection}{Appendix}
 \appendix
 \section{Shapley Method Subroutines}
 \label{app:subroutines}
@@ -1295,11 +1326,5 @@ Shapley Flow evaluates the model on a set of active edges with the subroutine be
     \EndFunction
   \end{algorithmic}
 \end{algorithm}
-
-%% ============================================================
-%% Bibliography
-%% ============================================================
-\newpage
-\bibliography{references}
 
 \end{document}

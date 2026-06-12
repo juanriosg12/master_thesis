@@ -140,11 +140,20 @@ In practice the graph is almost never directly observable: practitioners must re
 automated discovery algorithms such as the PC algorithm \citep{Spirtes2000} and
 DirectLiNGAM \citep{Shimizu2011} to infer it from observational data. These estimated
 graphs are inherently noisy, subject to false-positive and false-negative edge errors,
-and sensitive to assumption violations \citep{Glymour2019}.
+and sensitive to assumption violations \citep{Glymour2019}. Yet no existing framework
+quantifies how attribution quality degrades as a function of graph imperfection; without
+one, a practitioner has no principled basis for deciding whether a discovered graph
+improves or distorts explanations relative to the simpler graph-free baseline.
 
-We build an experimental pipeline that feeds automatically discovered graphs into the
-three methods and measures, for the first time, how much attribution quality degrades
-when the graph is imperfect. Evaluation is performed on a controlled synthetic dataset
+We address this gap with an experimental pipeline: a reusable, end-to-end evaluation
+workflow that feeds automatically discovered graphs into the three structure-aware methods
+and measures how much attribution quality degrades when the graph is imperfect.
+The pipeline is designed to be general --- its metrics presuppose nothing about the data
+distribution, the predictive model, or the discovery algorithm used, so any practitioner
+combining a structure-aware Shapley method with an imperfect graph can apply it directly.
+The central question is whether graph injection moves attributions closer to or further
+from what the True DAG would have produced --- and whether that movement is detectable
+without oracle access. Evaluation is performed on a controlled synthetic dataset
 (50 features, known linear causal structure) and the real-world Sachs cell-signaling
 dataset \citep{Sachs2005}, where an established consensus DAG allows external
 validation.
@@ -451,12 +460,20 @@ when the massive sample size makes it hypersensitive to distributional violation
 \citep{Glymour2019}. Both algorithms perform substantially worse on the real data
 despite the larger sample size.
 
-\begin{figure}[t]
+\begin{table}[t]
   \centering
-  \includegraphics[width=0.72\linewidth]{figures/discovery_vs_r2.png}
-  \caption{\textbf{Causal discovery F1 ($X \to X$ edges) versus LightGBM test R\textsuperscript{2}, synthetic vs.\ Sachs.} Bars give PC and LiNGAM F1 on each dataset; the dashed line tracks model R\textsuperscript{2}. The discovery-quality ordering of the two algorithms reverses between tracks even as model fit declines from synthetic to real data.}
-  \label{fig:discovery_r2}
-\end{figure}
+  \footnotesize
+  \caption{\textbf{Causal discovery F1 scores ($X \to X$ edges).} The algorithm ranking reverses between datasets.}
+  \label{tab:discovery_f1}
+  \begin{tabular}{lrr}
+    \toprule
+    \textbf{Algorithm} & \textbf{Synthetic} & \textbf{Sachs} \\
+    \midrule
+    PC        & 0.567 & 0.167 \\
+    LiNGAM    & 0.250 & 0.326 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
 
 \subsection{Graph-Free Baseline Deviation}
 \label{sec:baseline}
@@ -613,9 +630,18 @@ Sachs ($\Delta M_{\text{disc}} = 14.92\%$).
 \subsection{Case Studies: When Graph Errors Matter Most}
 \label{sec:cases}
 
-Three archetypal error mechanisms illustrate the micro-level behaviour observed across
-both experimental tracks. Each is identified by tracing a large global divergence, then
-inspecting the most prominent feature-level metric back and an instance-level view.
+The metrics surface three archetypal alarm patterns, each defined by which signals fire,
+and all detectable without a ground-truth graph. A \textbf{correlated failure} is
+indicated when $\Delta M_{\text{base}}$ is large while $\Delta M_{\text{disc}}$ stays
+quiet: both algorithms committed the same structural error and agree with each other
+despite both being wrong. A \textbf{contested neighbourhood} fires when both
+$\Delta M_{\text{base}}$ and $\Delta M_{\text{disc}}$ are elevated on the same feature:
+the graph is doing substantial structural work \emph{and} the two algorithms disagree on
+what that structure is. A \textbf{near-zero sign flip} appears when $D_{\text{base}}$ or
+$D_{\text{disc}}$ is high with no matching magnitude footprint: a feature whose
+Traditional Shapley value sits close to zero needs only a small graph-induced shift to
+invert its sign, a class invisible to magnitude-only inspection. One case illustrates
+each pattern.
 
 \subsubsection{Out-Degree Inflation and Root Cause Overloading}
 
@@ -625,12 +651,13 @@ case is X24, a true direct parent of $Y$ with 3 incoming and 4 outgoing edges in
 True DAG. Both PC and LiNGAM strip its true parents and add spurious children
 (Figure~\ref{fig:dag_X24}), recasting it as an apparent high-degree root source; this
 inflates its outgoing-edge credit under Flow and its interventional parent set under
-CSV. X24's feature-level $\Delta M_{\text{base}}$ reaches 32.5\% of $\hat{\sigma}$,on of the
-highest on the synthetic vs baseline track,and the SHAP scatter (Figure~\ref{fig:shap_X24})
+CSV. X24's feature-level $\Delta M_{\text{base}}$ reaches 32.5\% of $\hat{\sigma}$, among the
+highest on the synthetic baseline track, and the SHAP scatter (Figure~\ref{fig:shap_X24})
 confirms that both discovered-graph columns diverge substantially from the True-DAG
-oracle, also in a $\Delta M_{\text{oracle}}$ of around 32\%, with inflated and partially sign-flipped values. 
-Any feature producing a $\Delta M_{\text{base}}$ well above the dataset average deserves scrutiny of its
-discovered connections before any Structure-aware attribution is used downstream.
+oracle with inflated and partially sign-flipped values. This is the correlated-failure
+alarm: $\Delta M_{\text{base}}$ fires while $\Delta M_{\text{disc}}$ stays quiet because
+both algorithms converged on the same wrong structure, a failure the cross-discovery
+comparison cannot detect on its own.
 
 \begin{figure}[t]
   \centering
@@ -651,105 +678,25 @@ discovered connections before any Structure-aware attribution is used downstream
   \label{fig:shap_X24}
 \end{figure}
 
-The same mechanism appears on Sachs through protein pka, a near-root source (1 incoming,
-6 outgoing edges in the consensus DAG). LiNGAM preserves this structure accurately,
-keeping pka as a near-pure root (ASV $\Delta M_{\text{oracle}} = 6.4\%$ of $\hat{\sigma}$).
-PC reverses several of its outgoing edges into a 3-in/3-out configuration, and that
-mis-orientation is reflected in pka's ASV $\Delta M_{\text{oracle}}$ of 25.0\%
-(Figure~\ref{fig:dag_pka}). A high $\Delta M_{\text{base}}$ (17.3\% of $\hat{\sigma}$)
-combined with a large $\Delta M_{\text{disc}}$ (30.2\% of $\hat{\sigma}$) forms the
-two-signal alarm: pka's discovered connections are both influential and contested across algorithms.
+\subsubsection{Contested Neighbourhood and Structural Role Error}
 
-\begin{figure}[t]
-  \centering
-  \includegraphics[width=\columnwidth]{figures/dag_neighborhood_pka_sachs.png}
-  \caption{\textbf{Causal neighbourhood of pka (Sachs).} PC gives pka 3 incoming and
-  3 outgoing edges, reversing several true outgoing links. LiNGAM keeps it a near-root
-  with 7 outgoing and 0 incoming edges, much closer to the consensus structure.}
-  \label{fig:dag_pka}
-\end{figure}
+Protein erk on Sachs is the clearest contested-neighbourhood case: both observable
+alarm signals fire simultaneously, and the practitioner needs no ground-truth DAG to
+spot the problem. In the consensus DAG, erk is a downstream node receiving inputs from
+pka and mek. PC removes its true parent links entirely, leaving erk as an isolated
+boundary source (Figure~\ref{fig:dag_erk}). LiNGAM, by contrast, recovers at least some
+incoming connections, placing erk closer to its true downstream role. The two algorithms
+therefore disagree fundamentally on erk's structural position.
 
-\subsubsection{Directed Edge Inversion and Causal Credit Transfer}
-
-A single edge orientation error by one discovery algorithm can produce a sharply
-divergent attribution. In the True DAG the edge runs $X_{21} \to X_{47}$: X21 is a
-causal ancestor of X47, which is a dominant direct parent of $Y$. PC recovers
-this orientation correctly; LiNGAM reverses it to $X_{47} \to X_{21}$, placing X47 upstream
-of X21 (Figure~\ref{fig:dag_X21}).
-
-Under PC, both CSV and Flow correctly treat X21 as an upstream node, assigning
-indirect credit for its causal influence through X47. Under LiNGAM the reversed edge injects
-X47 into X21's interventional parent set (CSV) and routes edge credit from X47 toward
-X21 (Flow), suppressing X47's attribution and inflating X21's. The SHAP scatters
-(Figure~\ref{fig:shap_X47_X21}) confirm this: both CSV+PC and Flow+PC track
-the True-DAG oracle closely, while the LiNGAM variants diverge on both features.
-Feature-level $\Delta M_{\text{disc}}$ for CSV reaches 29.8\% of $\hat{\sigma}$ on
-X47---the two-signal alarm indicating that a real edge's \emph{orientation}, not its
-existence, must be resolved before using any structure-aware Shapley method.
-
-\begin{figure}[t]
-  \centering
-  \includegraphics[width=0.85\columnwidth]{figures/dag_neighborhood_X21_linear_conf_f50_s1000_p30.png}
-  \caption{\textbf{Causal neighbourhood of X21 (Synthetic).} In the True DAG and under
-  PC the edge runs $X_{21} \to X_{47}$. LiNGAM reverses it to $X_{47} \to X_{21}$,
-  misdirecting attribution credit in both CSV and Flow.}
-  \label{fig:dag_X21}
-\end{figure}
-
-\begin{figure}[t]
-  \centering
-  \includegraphics[width=\columnwidth]{figures/shap_scatter_causal_X47_X21_linear_conf_f50_s1000_p30.png}
-  \vspace{2pt}
-  \includegraphics[width=\columnwidth]{figures/shap_scatter_flow_X47_X21_linear_conf_f50_s1000_p30.png}
-  \caption{\textbf{SHAP scatter for X21 and X47 (Synthetic).} \textit{Top} (Causal
-  Shapley): under PC both features track the oracle; under LiNGAM, X47 is suppressed
-  and X21 acquires inflated credit. \textit{Bottom} (Shapley Flow): the same
-  orientation-driven credit transfer appears; Flow+PC and Flow+True agree closely
-  while Flow+LiNGAM diverges on both features.}
-  \label{fig:shap_X47_X21}
-\end{figure}
-
-\subsubsection{Node Misspecification Captured by Experimental Metrics}
-
-Protein erk on Sachs is a good example where all three metric signals fire simultaneously, and where
-the framework's diagnostic value is clearest for a practitioner who has no ground-truth
-DAG. In the consensus DAG, erk is a downstream node receiving inputs from pka and mek.
-PC removes its true parent links entirely, leaving erk with outgoing edges only and
-recasting it as an isolated boundary source (Figure~\ref{fig:dag_erk}). Under Shapley
-Flow this isolation is catastrophic: with no incoming edges, erk accumulates all
-outgoing-edge credit without distributing any to upstream ancestors, yielding a
-feature-level $\Delta M_{\text{oracle}} = 49.2\%$ of $\hat{\sigma}$, the largest
-single oracle deviation in the entire experiment.
-
-What makes erk especially important from a diagnostic standpoint is that both
-\emph{observable} signals---those available without any ground-truth graph---also fire
-on this node. First, the feature-level $\Delta M_{\text{base}}$ shows elevated deviation
-from the Traditional Shapley baseline even for ASV, the most graph-robust method: erk
-appears among the highest-deviating features in the baseline magnitude heatmap
-(Appendix~\ref{app:heatmaps_magnitude}), indicating that the injected graph is doing
-substantial work on erk's attribution, especially under the PC graph. Second, the
-feature-level $\Delta M_{\text{disc}}$ for erk is very large: the two discovery
-algorithms produce such different neighbourhoods that their attributions diverge
-substantially, with Flow reaching $57.5\%$ of $\hat{\sigma}$ on erk in the
-cross-discovery heatmap (Appendix~\ref{app:heatmaps_magnitude}). Crucially, even ASV,
-which stays near-zero for almost every other feature on Sachs, shows elevated
-$\Delta M_{\text{disc}}$ on erk ($35.8\%$ of $\hat{\sigma}$), driven by the large
-structural differences between what PC and LiNGAM discover for this protein. A
-practitioner running both algorithms and comparing feature-level attributions would
-immediately flag erk from the cross-discovery signal alone, with no oracle needed.
-
-The SHAP scatter (Figure~\ref{fig:shap_erk}) makes the instance-level consequences
-visible: all three graph-aware variants produce materially different attribution patterns.
-Flow+PC inflates erk systematically by treating it as an isolated source. Flow+LiNGAM
-produces a distinct distortion: LiNGAM recovers some incoming structure for erk but
-the overall topology still diverges from the consensus, yielding attributions that match
-neither the PC column nor the True DAG oracle. The practical takeaway is direct: the
-combination of an elevated $\Delta M_{\text{base}}$ (graph injection is doing substantial
-work on erk) and an elevated $\Delta M_{\text{disc}}$ (the two discovered graphs
-fundamentally disagree on erk's position in the network) constitutes a two-signal alarm
-that requires structural validation before any structure-aware method is trusted for
-this node. The oracle confirms the damage, but the practitioner did not need it to
-identify the problem.
+Both observable signals flag this directly. First, $\Delta M_{\text{base}}$ is elevated
+on erk across all three methods, indicating the injected graph is doing substantial
+structural work on this protein's attribution. Second, $\Delta M_{\text{disc}}$ reaches
+$57.5\%$ of $\hat{\sigma}$ for Flow and $35.8\%$ for ASV on erk --- the highest
+cross-discovery divergence ASV produces for any feature on either dataset. A practitioner
+running both algorithms would flag erk immediately from these signals alone, with no
+oracle access required.  The SHAP scatter (Figure~\ref{fig:shap_erk}) confirms the
+consequence: Flow+PC inflates erk by treating it as an isolated source; Flow+LiNGAM
+produces a distinct distortion; neither matches the oracle.
 
 \begin{figure}[t]
   \centering
@@ -770,6 +717,17 @@ identify the problem.
   \label{fig:shap_erk}
 \end{figure}
 
+\subsubsection{Near-Zero Sign Flip}
+
+Feature X10 on the synthetic dataset illustrates the third alarm pattern. Its Traditional
+Shapley attributions cluster near zero across the test set, so PC's structural changes
+to X10's neighbourhood are enough to push most instances across the sign boundary,
+producing $D_{\text{base}} = 96\%$ for Causal+PC --- the highest sign disagreement in
+the synthetic experiment. Yet X10 is entirely absent from the magnitude heatmaps because
+the absolute size of its attributions barely changes. The sign metrics
+(Appendix~\ref{app:heatmaps_sign}) are the only signal that surfaces this class.
+A practitioner monitoring only $\Delta M$ metrics will miss it entirely.
+
 %% ============================================================
 \section{Conclusion}
 \label{sec:conclusion}
@@ -779,12 +737,18 @@ identify the problem.
 
 This work built an experimental pipeline to measure what happens to feature attributions
 when you plug an automatically discovered causal graph into a structure-aware Shapley
-method. The three methods fall into completely different sensitivity regimes. ASV is
-stable under graph errors: it only restricts the permutation space, leaving the
-observational value function untouched, so most orderings remain compatible across the
-true and discovered graphs and attributions barely move. CSV and Flow instead inject the
-graph directly into the conditioning set or the players themselves, so every false edge
-contaminates an attribution directly.
+method. The evaluation framework introduced here --- $\Delta M_{\text{base}}$,
+$\Delta M_{\text{disc}}$, $D_{\text{base}}$, $D_{\text{disc}}$ at both dataset and
+feature level --- is the primary contribution: the first systematic method for measuring
+attribution quality degradation as a function of graph imperfection, operable without
+ground-truth graph access.
+
+The three methods occupy distinct sensitivity regimes, now measurable. ASV is stable
+under graph errors: on the 50-feature synthetic data, replacing the True DAG with a
+discovered graph moves attributions by under 1.1\% of $\hat{\sigma}$ and flips fewer
+than 7\% of signs; on Sachs oracle deviation rises but ASV still records the lowest of
+any method. CSV and Flow instead inject the graph directly into the conditioning set or
+the players themselves, so every false edge contaminates an attribution directly.
 
 The two discovery algorithms swap rankings across datasets and neither reaches high
 accuracy on either. Even so, $\Delta M_{\text{disc}}$ flags the same contested nodes
