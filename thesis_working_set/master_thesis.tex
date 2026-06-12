@@ -1201,9 +1201,11 @@ Future work should extend the evaluation to nonlinear Shapley variants, explore 
 
 \newpage
 %% ============================================================
-\renewcommand{\thesection}{Appendix}
 \appendix
-\section{Shapley Method Subroutines}
+\stepcounter{section}% \thesection = A; subsections become A.1, A.2, …
+\phantomsection
+\addcontentsline{toc}{section}{Appendix: Shapley Method Subroutines}
+\section*{Appendix: Shapley Method Subroutines}
 \label{app:subroutines}
 %% ============================================================
 
