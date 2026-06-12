@@ -2,7 +2,7 @@
 
 This document formalises all evaluation metrics used in the thesis to compare structure-aware Shapley methods (Asymmetric, Causal, ShapleyFlow) across causal graph variants (PC, LiNGAM, True/consensus DAG) and the graph-free Traditional (Scratch) baseline.
 
-The two primary metrics — **Magnitude Divergence** and **Sign Disagreement** — are implemented in `analysis_utils.py` and `assessment_extras.py` and computed in `notebooks/shapley_summary.ipynb`. The scalar values they produce are tabulated per dataset in `notebooks/plots_claude/<dataset>/method_level_metrics_<dataset>.md`.
+The two primary metrics — **Magnitude Divergence** and **Sign Disagreement** — are implemented in `analysis_utils.py` and `assessment_extras.py` and computed in `notebooks/shapley_summary.ipynb`. The scalar values they produce are tabulated per dataset in `notebooks/plots_clean/<dataset>/method_level_metrics_<dataset>.md`.
 
 > **Naming.** Earlier drafts used four acronyms for what are really two metrics under different references. This document uses the standardised scheme: a single magnitude metric (ΔM) and a single sign metric (D), each carried under a reference subscript. The legacy mapping is: TGA → ΔM, GSS → ΔM_disc, (1 − SA) → D, (1 − SSS) → D_disc.
 

@@ -10,7 +10,7 @@ palette, marker style, and PNG-save logic.
 Import from ``analysis_utils`` directly, or continue using this module via
 ``scp.plot_shap_vs_feature(...)`` — both work.
 """
-from analysis_utils import (  # noqa: F401
+from utils.analysis_utils import (  # noqa: F401
     plot_shap_vs_feature,
     plot_shap_vs_instance,
 )
