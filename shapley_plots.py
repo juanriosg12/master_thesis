@@ -355,34 +355,82 @@ def plot_tga_heatmap(ctx, reference="True", top_n=10, plots_dir=DEFAULT_PLOTS_DI
 # ============================================================================= #
 def plot_adjacency_comparison(ctx, plots_dir=DEFAULT_PLOTS_DIR, show=False):
     """Side-by-side True / PC / LiNGAM X→X adjacency heatmaps. adj[i,j]=1 means edge i→j.
-    Each panel uses the reference colour of its graph."""
+    The True panel is greyscale; PC and LiNGAM panels are colour-coded vs the True graph:
+      green  = True Positive  (edge in both)
+      red    = False Positive (edge in discovered, not in true)
+      blue   = False Negative (edge in true, not in discovered)
+      white  = True Negative  (no edge in either)
+    """
+    from matplotlib.colors import ListedColormap, BoundaryNorm
+
     adj = load_adjacency(ctx)
     if adj is None:
         return None
     true_xx, pc_xx, lg_xx, names = adj
     n = len(names)
     annotate = n <= 16
-    fig, axes = plt.subplots(1, 3, figsize=(15, 4.8))
-    panels = [(axes[0], true_xx, "True X→X", "Greys"),
-              (axes[1], pc_xx, "PC X→X", "Blues"),
-              (axes[2], lg_xx, "LiNGAM X→X", "Oranges")]
-    for axx, mat, title, cmap in panels:
-        axx.imshow(mat, cmap=cmap, vmin=0, vmax=1, aspect="auto")
+
+    # 0=TN (white), 1=TP (green), 2=FP (red), 3=FN (blue)
+    _CMP_COLORS = ["#f5f5f5", "#2ca02c", "#d62728", "#1f77b4"]
+    cmp_cmap = ListedColormap(_CMP_COLORS)
+    cmp_norm = BoundaryNorm([0, 1, 2, 3, 4], cmp_cmap.N)
+
+    def _diff_mat(disc):
+        m = np.zeros_like(true_xx)
+        m[(true_xx == 1) & (disc == 1)] = 1   # TP
+        m[(true_xx == 0) & (disc == 1)] = 2   # FP
+        m[(true_xx == 1) & (disc == 0)] = 3   # FN
+        return m
+
+    def _setup_ticks(axx):
         axx.set_xticks(range(n)); axx.set_xticklabels(names, rotation=45, ha="right", fontsize=7)
         axx.set_yticks(range(n)); axx.set_yticklabels(names, fontsize=7)
         axx.set_xticks(np.arange(-.5, n, 1), minor=True)
         axx.set_yticks(np.arange(-.5, n, 1), minor=True)
         axx.grid(which="minor", color="#dddddd", linewidth=0.5)
         axx.tick_params(which="minor", length=0)
-        axx.set_title(f"{title}  ({int(mat.sum())} edges)", fontsize=11, fontweight="bold")
+
+    fig, axes = plt.subplots(1, 3, figsize=(15, 5.2))
+
+    # --- Panel 0: True graph (greyscale reference) ---
+    axes[0].imshow(true_xx, cmap="Greys", vmin=0, vmax=1, aspect="auto")
+    _setup_ticks(axes[0])
+    axes[0].set_title(f"True X→X  ({int(true_xx.sum())} edges)", fontsize=11, fontweight="bold")
+    if annotate:
+        for i in range(n):
+            for j in range(n):
+                if true_xx[i, j]:
+                    axes[0].text(j, i, "→", ha="center", va="center", fontsize=8, color="#f5f5f5")
+
+    # --- Panels 1 & 2: discovered graphs colour-coded vs True ---
+    for axx, disc, label in [(axes[1], pc_xx, "PC"), (axes[2], lg_xx, "LiNGAM")]:
+        diff = _diff_mat(disc)
+        tp = int((diff == 1).sum()); fp = int((diff == 2).sum()); fn = int((diff == 3).sum())
+        axx.imshow(diff, cmap=cmp_cmap, norm=cmp_norm, aspect="auto")
+        _setup_ticks(axx)
+        axx.set_title(f"{label} X→X  (TP={tp}  FP={fp}  FN={fn})", fontsize=11, fontweight="bold")
         if annotate:
+            _sym = {1: "→", 2: "→", 3: "○"}
             for i in range(n):
                 for j in range(n):
-                    if mat[i, j]:
-                        axx.text(j, i, "→", ha="center", va="center", fontsize=8, color="#222222")
+                    v = int(diff[i, j])
+                    if v != 0:
+                        axx.text(j, i, _sym[v], ha="center", va="center",
+                                 fontsize=8, color="white")
+
+    # --- shared legend ---
+    legend_handles = [
+        Patch(facecolor="#2ca02c", label="True Positive  (TP)"),
+        Patch(facecolor="#d62728", label="False Positive (FP)"),
+        Patch(facecolor="#1f77b4", label="False Negative (FN)"),
+        Patch(facecolor="#f5f5f5", edgecolor="#aaaaaa", label="True Negative  (TN)"),
+    ]
+    fig.legend(handles=legend_handles, loc="lower center", ncol=4,
+               fontsize=9, framealpha=0.9, bbox_to_anchor=(0.5, 0.0))
+
     fig.suptitle(f"Adjacency comparison (X-only) — {ctx['dataset']}   ·   adj[i,j]=1 means edge i→j",
                  fontweight="bold", fontsize=12)
-    fig.tight_layout()
+    fig.tight_layout(rect=[0, 0.07, 1, 1])
     out = savefig(fig, plots_dir, ctx["dataset"], f"adjacency_comparison_{ctx['dataset']}.png")
     plt.show() if show else plt.close(fig)
     return out
