@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.29 (TeX Live 2026) (preloaded format=pdflatex 2026.3.22)  12 JUN 2026 13:14
+This is pdfTeX, Version 3.141592653-2.6-1.40.29 (TeX Live 2026) (preloaded format=pdflatex 2026.3.22)  12 JUN 2026 14:19
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -31,40 +31,41 @@ Package: inputenc 2024/02/08 v1.3d Input encoding file
 \inpenc@prehook=\toks17
 \inpenc@posthook=\toks18
 )
-(/usr/local/texlive/2026/texmf-dist/tex/latex/lm/lmodern.sty
-Package: lmodern 2015/05/01 v1.6.1 Latin Modern Fonts
+(/usr/local/texlive/2026/texmf-dist/tex/latex/psnfss/mathptmx.sty
+Package: mathptmx 2020/03/25 PSNFSS-v9.3 Times w/ Math, improved (SPQR, WaS) 
+LaTeX Font Info:    Redeclaring symbol font `operators' on input line 28.
 LaTeX Font Info:    Overwriting symbol font `operators' in version `normal'
-(Font)                  OT1/cmr/m/n --> OT1/lmr/m/n on input line 22.
-LaTeX Font Info:    Overwriting symbol font `letters' in version `normal'
-(Font)                  OML/cmm/m/it --> OML/lmm/m/it on input line 23.
-LaTeX Font Info:    Overwriting symbol font `symbols' in version `normal'
-(Font)                  OMS/cmsy/m/n --> OMS/lmsy/m/n on input line 24.
-LaTeX Font Info:    Overwriting symbol font `largesymbols' in version `normal'
-(Font)                  OMX/cmex/m/n --> OMX/lmex/m/n on input line 25.
+(Font)                  OT1/cmr/m/n --> OT1/ztmcm/m/n on input line 28.
 LaTeX Font Info:    Overwriting symbol font `operators' in version `bold'
-(Font)                  OT1/cmr/bx/n --> OT1/lmr/bx/n on input line 26.
+(Font)                  OT1/cmr/bx/n --> OT1/ztmcm/m/n on input line 28.
+LaTeX Font Info:    Redeclaring symbol font `letters' on input line 29.
+LaTeX Font Info:    Overwriting symbol font `letters' in version `normal'
+(Font)                  OML/cmm/m/it --> OML/ztmcm/m/it on input line 29.
 LaTeX Font Info:    Overwriting symbol font `letters' in version `bold'
-(Font)                  OML/cmm/b/it --> OML/lmm/b/it on input line 27.
+(Font)                  OML/cmm/b/it --> OML/ztmcm/m/it on input line 29.
+LaTeX Font Info:    Redeclaring symbol font `symbols' on input line 30.
+LaTeX Font Info:    Overwriting symbol font `symbols' in version `normal'
+(Font)                  OMS/cmsy/m/n --> OMS/ztmcm/m/n on input line 30.
 LaTeX Font Info:    Overwriting symbol font `symbols' in version `bold'
-(Font)                  OMS/cmsy/b/n --> OMS/lmsy/b/n on input line 28.
+(Font)                  OMS/cmsy/b/n --> OMS/ztmcm/m/n on input line 30.
+LaTeX Font Info:    Redeclaring symbol font `largesymbols' on input line 31.
+LaTeX Font Info:    Overwriting symbol font `largesymbols' in version `normal'
+(Font)                  OMX/cmex/m/n --> OMX/ztmcm/m/n on input line 31.
 LaTeX Font Info:    Overwriting symbol font `largesymbols' in version `bold'
-(Font)                  OMX/cmex/m/n --> OMX/lmex/m/n on input line 29.
+(Font)                  OMX/cmex/m/n --> OMX/ztmcm/m/n on input line 31.
+\symbold=\mathgroup4
+\symitalic=\mathgroup5
+LaTeX Font Info:    Redeclaring math alphabet \mathbf on input line 34.
 LaTeX Font Info:    Overwriting math alphabet `\mathbf' in version `normal'
-(Font)                  OT1/cmr/bx/n --> OT1/lmr/bx/n on input line 31.
-LaTeX Font Info:    Overwriting math alphabet `\mathsf' in version `normal'
-(Font)                  OT1/cmss/m/n --> OT1/lmss/m/n on input line 32.
-LaTeX Font Info:    Overwriting math alphabet `\mathit' in version `normal'
-(Font)                  OT1/cmr/m/it --> OT1/lmr/m/it on input line 33.
-LaTeX Font Info:    Overwriting math alphabet `\mathtt' in version `normal'
-(Font)                  OT1/cmtt/m/n --> OT1/lmtt/m/n on input line 34.
+(Font)                  OT1/cmr/bx/n --> OT1/ptm/bx/n on input line 34.
 LaTeX Font Info:    Overwriting math alphabet `\mathbf' in version `bold'
-(Font)                  OT1/cmr/bx/n --> OT1/lmr/bx/n on input line 35.
-LaTeX Font Info:    Overwriting math alphabet `\mathsf' in version `bold'
-(Font)                  OT1/cmss/bx/n --> OT1/lmss/bx/n on input line 36.
+(Font)                  OT1/cmr/bx/n --> OT1/ptm/bx/n on input line 34.
+LaTeX Font Info:    Redeclaring math alphabet \mathit on input line 35.
+LaTeX Font Info:    Overwriting math alphabet `\mathit' in version `normal'
+(Font)                  OT1/cmr/m/it --> OT1/ptm/m/it on input line 35.
 LaTeX Font Info:    Overwriting math alphabet `\mathit' in version `bold'
-(Font)                  OT1/cmr/bx/it --> OT1/lmr/bx/it on input line 37.
-LaTeX Font Info:    Overwriting math alphabet `\mathtt' in version `bold'
-(Font)                  OT1/cmtt/m/n --> OT1/lmtt/m/n on input line 38.
+(Font)                  OT1/cmr/bx/it --> OT1/ptm/m/it on input line 35.
+LaTeX Info: Redefining \hbar on input line 50.
 )
 (/usr/local/texlive/2026/texmf-dist/tex/latex/microtype/microtype.sty
 Package: microtype 2026/03/01 v3.2d Micro-typographical refinements (RS)
@@ -202,9 +203,8 @@ Package: amssymb 2013/01/14 v3.01 AMS font symbols
 
 (/usr/local/texlive/2026/texmf-dist/tex/latex/amsfonts/amsfonts.sty
 Package: amsfonts 2013/01/14 v3.01 Basic AMSFonts support
-\symAMSa=\mathgroup4
-\symAMSb=\mathgroup5
-LaTeX Font Info:    Redeclaring math symbol \hbar on input line 98.
+\symAMSa=\mathgroup6
+\symAMSb=\mathgroup7
 LaTeX Font Info:    Overwriting math alphabet `\mathfrak' in version `bold'
 (Font)                  U/euf/m/n --> U/euf/b/n on input line 106.
 ))
@@ -241,13 +241,14 @@ Package: mhsetup 2021/03/18 v1.4 programming setup (MH)
 )
 (/usr/local/texlive/2026/texmf-dist/tex/latex/tools/bm.sty
 Package: bm 2025/10/21 v1.2g Bold Symbol Support (DPC/FMi)
-\symboldoperators=\mathgroup6
-\symboldletters=\mathgroup7
-\symboldsymbols=\mathgroup8
-Package bm Info: No bold for \OMX/lmex/m/n, using \pmb.
+Package bm Info: No bold for \OT1/ztmcm/m/n, using \pmb.
+Package bm Info: No bold for \OML/ztmcm/m/it, using \pmb.
+Package bm Info: No bold for \OMS/ztmcm/m/n, using \pmb.
+Package bm Info: No bold for \OMX/ztmcm/m/n, using \pmb.
+Package bm Info: No bold for \OT1/ptm/bx/n, using \pmb.
+Package bm Info: No bold for \OT1/ptm/m/it, using \pmb.
 Package bm Info: No bold for \U/msa/m/n, using \pmb.
 Package bm Info: No bold for \U/msb/m/n, using \pmb.
-LaTeX Font Info:    Redeclaring math alphabet \mathbf on input line 149.
 )
 (/usr/local/texlive/2026/texmf-dist/tex/latex/algorithms/algorithm.sty
 Package: algorithm 2009/08/24 v0.1 Document Style `algorithm' - floating enviro
@@ -568,11 +569,11 @@ Package: fancyhdr 2025/02/07 v5.2 Extensive control of page headers and footers
 \f@nch@widthR=\skip84
 \@temptokenb=\toks35
 )
-LaTeX Font Info:    Trying to load font information for T1+lmr on input line 85
+LaTeX Font Info:    Trying to load font information for T1+ptm on input line 85
 .
 
-(/usr/local/texlive/2026/texmf-dist/tex/latex/lm/t1lmr.fd
-File: t1lmr.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
+(/usr/local/texlive/2026/texmf-dist/tex/latex/psnfss/t1ptm.fd
+File: t1ptm.fd 2001/06/04 font definitions for T1/ptm.
 )
 (/usr/local/texlive/2026/texmf-dist/tex/latex/l3backend/l3backend-pdftex.def
 File: l3backend-pdftex.def 2025-10-09 L3 backend support: PDF output (pdfTeX)
@@ -617,9 +618,8 @@ Package microtype Info: No adjustment of tracking.
 Package microtype Info: No adjustment of interword spacing.
 Package microtype Info: No adjustment of character kerning.
 
-(/usr/local/texlive/2026/texmf-dist/tex/latex/microtype/mt-cmr.cfg
-File: mt-cmr.cfg 2013/05/19 v2.2 microtype config. file: Computer Modern Roman 
-(RS)
+(/usr/local/texlive/2026/texmf-dist/tex/latex/microtype/mt-ptm.cfg
+File: mt-ptm.cfg 2006/04/20 v1.7 microtype config. file: Times (RS)
 )
 *geometry* driver: auto-detecting
 *geometry* detected driver: pdftex
@@ -689,49 +689,50 @@ Package hyperref Info: Link coloring OFF on input line 85.
  [1
 
 {/usr/local/texlive/2026/texmf-var/fonts/map/pdftex/updmap/pdftex.map}{/usr/loc
-al/texlive/2026/texmf-dist/fonts/enc/dvips/lm/lm-ec.enc}] (./master_thesis.toc
-LaTeX Font Info:    Trying to load font information for OT1+lmr on input line 3
+al/texlive/2026/texmf-dist/fonts/enc/dvips/base/8r.enc}] (./master_thesis.toc
+LaTeX Font Info:    Trying to load font information for OT1+ztmcm on input line
+ 3.
+
+(/usr/local/texlive/2026/texmf-dist/tex/latex/psnfss/ot1ztmcm.fd
+File: ot1ztmcm.fd 2000/01/03 Fontinst v1.801 font definitions for OT1/ztmcm.
+)
+Package microtype Info: Loading generic protrusion settings for font family
+(microtype)             `ztmcm' (encoding: OT1).
+(microtype)             For optimal results, create family-specific settings.
+(microtype)             See the microtype manual for details.
+LaTeX Font Info:    Trying to load font information for OML+ztmcm on input line
+ 3.
+
+(/usr/local/texlive/2026/texmf-dist/tex/latex/psnfss/omlztmcm.fd
+File: omlztmcm.fd 2000/01/03 Fontinst v1.801 font definitions for OML/ztmcm.
+)
+LaTeX Font Info:    Trying to load font information for OMS+ztmcm on input line
+ 3.
+
+(/usr/local/texlive/2026/texmf-dist/tex/latex/psnfss/omsztmcm.fd
+File: omsztmcm.fd 2000/01/03 Fontinst v1.801 font definitions for OMS/ztmcm.
+)
+LaTeX Font Info:    Trying to load font information for OMX+ztmcm on input line
+ 3.
+
+(/usr/local/texlive/2026/texmf-dist/tex/latex/psnfss/omxztmcm.fd
+File: omxztmcm.fd 2000/01/03 Fontinst v1.801 font definitions for OMX/ztmcm.
+)
+LaTeX Font Info:    Trying to load font information for OT1+ptm on input line 3
 .
 
-(/usr/local/texlive/2026/texmf-dist/tex/latex/lm/ot1lmr.fd
-File: ot1lmr.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
+(/usr/local/texlive/2026/texmf-dist/tex/latex/psnfss/ot1ptm.fd
+File: ot1ptm.fd 2001/06/04 font definitions for OT1/ptm.
 )
-LaTeX Font Info:    Trying to load font information for OML+lmm on input line 3
-.
+LaTeX Font Info:    Font shape `OT1/ptm/bx/n' in size <12> not available
+(Font)              Font shape `OT1/ptm/b/n' tried instead on input line 3.
+LaTeX Font Info:    Font shape `OT1/ptm/bx/n' in size <9> not available
+(Font)              Font shape `OT1/ptm/b/n' tried instead on input line 3.
+LaTeX Font Info:    Font shape `OT1/ptm/bx/n' in size <7> not available
+(Font)              Font shape `OT1/ptm/b/n' tried instead on input line 3.
 
-(/usr/local/texlive/2026/texmf-dist/tex/latex/lm/omllmm.fd
-File: omllmm.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
-)
-LaTeX Font Info:    Trying to load font information for OMS+lmsy on input line 
-3.
-
-(/usr/local/texlive/2026/texmf-dist/tex/latex/lm/omslmsy.fd
-File: omslmsy.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
-)
-LaTeX Font Info:    Trying to load font information for OMX+lmex on input line 
-3.
-
-(/usr/local/texlive/2026/texmf-dist/tex/latex/lm/omxlmex.fd
-File: omxlmex.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
-)
-LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <12> on input line 3.
-LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <8> on input line 3.
-LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <6> on input line 3.
-LaTeX Font Info:    Trying to load font information for U+msa on input line 3.
-
-(/usr/local/texlive/2026/texmf-dist/tex/latex/amsfonts/umsa.fd
-File: umsa.fd 2013/01/14 v3.01 AMS symbols A
-)
 (/usr/local/texlive/2026/texmf-dist/tex/latex/microtype/mt-msa.cfg
 File: mt-msa.cfg 2006/02/04 v1.1 microtype config. file: AMS symbols (a) (RS)
-)
-LaTeX Font Info:    Trying to load font information for U+msb on input line 3.
-
-(/usr/local/texlive/2026/texmf-dist/tex/latex/amsfonts/umsb.fd
-File: umsb.fd 2013/01/14 v3.01 AMS symbols B
 )
 (/usr/local/texlive/2026/texmf-dist/tex/latex/microtype/mt-msb.cfg
 File: mt-msb.cfg 2005/06/01 v1.0 microtype config. file: AMS symbols (b) (RS)
@@ -741,128 +742,107 @@ been already used, duplicate ignored
 <to be read again> 
                    \relax 
 l.43 ... Sensitivity Analysis}{30}{subsection.4.3}
-                                                  % [1{/usr/local/texlive/2026/
-texmf-dist/fonts/enc/dvips/lm/lm-mathit.enc}{/usr/local/texlive/2026/texmf-dist
-/fonts/enc/dvips/lm/lm-mathsy.enc}])
+                                                  % [1])
 \tf@toc=\write4
 \openout4 = `master_thesis.toc'.
 
- [2] [3] [4] [5] [6{/usr/local/texlive/2026/texmf-dist/fonts/enc/dvips/lm/lm-rm
-.enc}] [7] [8] [9]
-Overfull \hbox (54.1267pt too wide) detected at line 197
-[][][]\OML/lmm/m/it/12 v\OT1/lmr/m/n/12 (\OML/lmm/m/it/12 S\OT1/lmr/m/n/12 ) = 
-\U/msb/m/n/12 E\OT1/lmr/m/n/12 [\OML/lmm/m/it/12 f\OT1/lmr/m/n/12 (\OML/lmm/m/i
-t/12 X\OT1/lmr/m/n/12 ) \OMS/lmsy/m/n/12 j \OML/lmm/m/it/12 X[] \OT1/lmr/m/n/12
- = \OML/lmm/m/it/12 x[]\OT1/lmr/m/n/12 ] [] [] \OML/lmm/m/it/12 v[]\OT1/lmr/m/n
-/12 (\OML/lmm/m/it/12 S\OT1/lmr/m/n/12 ) = \U/msb/m/n/12 E\OT1/lmr/m/n/12 [\OML
-/lmm/m/it/12 f\OT1/lmr/m/n/12 (\OML/lmm/m/it/12 X\OT1/lmr/m/n/12 ) \OMS/lmsy/m/
-n/12 j []\OT1/lmr/m/n/12 (\OML/lmm/m/it/12 X[] \OT1/lmr/m/n/12 = \OML/lmm/m/it/
-12 x[]\OT1/lmr/m/n/12 )] []
+ [2] [3] [4] [5]
+Overfull \hbox (7.97502pt too wide) in paragraph at lines 145--145
+[]\T1/ptm/b/n/14.4 (-20) Counterfactual Ex-pla-na-tions and the Struc-tural Cau
+sal Model Frame-
  []
 
-[10{/usr/local/texlive/2026/texmf-dist/fonts/enc/dvips/lm/lm-mathex.enc}]
-[11]
-<figures/experimental_pipeline_diagram.png, id=404, 1364.09625pt x 514.92375pt>
+[6] [7] [8]
+Overfull \hbox (10.05252pt too wide) detected at line 197
+[][][]\OML/ztmcm/m/it/12 v\OT1/ztmcm/m/n/12 (\OML/ztmcm/m/it/12 S\OT1/ztmcm/m/n
+/12 ) = \U/msb/m/n/12 E\OT1/ztmcm/m/n/12 [\OML/ztmcm/m/it/12 f\OT1/ztmcm/m/n/12
+ (\OML/ztmcm/m/it/12 X\OT1/ztmcm/m/n/12 ) \OMS/ztmcm/m/n/12 j \OML/ztmcm/m/it/1
+2 X[] \OT1/ztmcm/m/n/12 = \OML/ztmcm/m/it/12 x[]\OT1/ztmcm/m/n/12 ] [] [] \OML/
+ztmcm/m/it/12 v[]\OT1/ztmcm/m/n/12 (\OML/ztmcm/m/it/12 S\OT1/ztmcm/m/n/12 ) = \
+U/msb/m/n/12 E\OT1/ztmcm/m/n/12 [\OML/ztmcm/m/it/12 f\OT1/ztmcm/m/n/12 (\OML/zt
+mcm/m/it/12 X\OT1/ztmcm/m/n/12 ) \OMS/ztmcm/m/n/12 j []\OT1/ztmcm/m/n/12 (\OML/
+ztmcm/m/it/12 X[] \OT1/ztmcm/m/n/12 = \OML/ztmcm/m/it/12 x[]\OT1/ztmcm/m/n/12 )
+] []
+ []
+
+[9] [10] [11]
+<figures/experimental_pipeline_diagram.png, id=400, 1364.09625pt x 514.92375pt>
 
 File: figures/experimental_pipeline_diagram.png Graphic file (type png)
 <use figures/experimental_pipeline_diagram.png>
 Package pdftex.def Info: figures/experimental_pipeline_diagram.png  used on inp
 ut line 238.
 (pdftex.def)             Requested size: 441.01773pt x 166.47609pt.
- [12 <./figures/experimental_pipeline_diagram.png>]
-LaTeX Font Info:    Trying to load font information for T1+lmtt on input line 2
-48.
-
-(/usr/local/texlive/2026/texmf-dist/tex/latex/lm/t1lmtt.fd
-File: t1lmtt.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
-)
 Package microtype Info: Loading generic protrusion settings for font family
-(microtype)             `lmtt' (encoding: T1).
+(microtype)             `cmtt' (encoding: T1).
 (microtype)             For optimal results, create family-specific settings.
 (microtype)             See the microtype manual for details.
- [13]
-LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <10.95> on input line 262.
- [14] [15]
+ [12 <./figures/experimental_pipeline_diagram.png>]
+LaTeX Font Info:    Font shape `OT1/ptm/bx/n' in size <10.95> not available
+(Font)              Font shape `OT1/ptm/b/n' tried instead on input line 262.
+LaTeX Font Info:    Font shape `OT1/ptm/bx/n' in size <8> not available
+(Font)              Font shape `OT1/ptm/b/n' tried instead on input line 262.
+LaTeX Font Info:    Font shape `OT1/ptm/bx/n' in size <6> not available
+(Font)              Font shape `OT1/ptm/b/n' tried instead on input line 262.
+ [13{/usr/local/texlive/2026/texmf-dist/fonts/enc/dvips/cm-super/cm-super-t1.en
+c}] [14]
+[15]
 Underfull \hbox (badness 10000) in paragraph at lines 339--339
-[]|\T1/lmr/m/n/10 (+20) Permutation
+[]|\T1/ptm/m/n/10 (+20) Topological or-
  []
 
 
-Underfull \hbox (badness 6396) in paragraph at lines 339--339
-\T1/lmr/m/n/10 (+20) ings of fea-ture
- []
-
-
-Underfull \hbox (badness 1205) in paragraph at lines 339--339
-[]|\T1/lmr/m/n/10 (+20) All or-der-ings of
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 339--339
-[]|\T1/lmr/m/n/10 (+20) Obs. $\U/msb/m/n/10 E\OT1/lmr/m/n/10 (+20) [\OML/lmm/m/
-it/10 f \OMS/lmsy/m/n/10 j
+Underfull \hbox (badness 5924) in paragraph at lines 339--339
+[]|\T1/ptm/m/n/10 (+20) All or-der-ings of
  []
 
 
 Underfull \hbox (badness 10000) in paragraph at lines 339--339
-[]|\T1/lmr/m/n/10 (+20) Observational
+[]|\T1/ptm/m/n/10 (+20) Observational
+ []
+
+
+Overfull \hbox (17.6565pt too wide) in paragraph at lines 339--339
+[]|\T1/ptm/m/n/10 (-20) Foreground/background
  []
 
 
 Underfull \hbox (badness 10000) in paragraph at lines 339--339
-[]|\T1/lmr/m/n/10 (+20) Interventional
+[]|\T1/ptm/m/n/10 (+20) Constrains or-der-
  []
 
 
 Underfull \hbox (badness 10000) in paragraph at lines 339--339
-\U/msb/m/n/10 E\OT1/lmr/m/n/10 (+20) [\OML/lmm/m/it/10 f \OMS/lmsy/m/n/10 j
- []
-
-
-Overfull \hbox (26.3355pt too wide) in paragraph at lines 339--339
-[]|\T1/lmr/m/n/10 (-20) Foreground/background
+[]|\T1/ptm/m/n/10 (+20) Defines com-po-
  []
 
 
 Underfull \hbox (badness 10000) in paragraph at lines 339--339
-[]|\T1/lmr/m/n/10 (+20) Defines com-po-
+\T1/ptm/m/n/10 (+20) nents, or-der-ing,
  []
 
-
-Underfull \hbox (badness 7221) in paragraph at lines 339--339
-\T1/lmr/m/n/10 (+20) nents, or-der-ing,
- []
-
-[16]
-Package microtype Info: Character `029' is missing
-(microtype)             in font `T1/lmr/m/sc/12'.
-(microtype)             Ignoring protrusion settings for this character.
 Package hyperref Info: bookmark level for unknown algorithm defaults to 0 on in
 put line 349.
- [17] [18]
+[16] [17]
 Underfull \hbox (badness 10000) in paragraph at lines 411--412
-[]\T1/lmtt/m/n/12 components\T1/lmr/m/n/12 (+20) , \T1/lmtt/m/n/12 confounded[]
-\T1/lmr/m/n/12 (+20) , \T1/lmtt/m/n/12 parents[] $\OMS/lmsy/m/n/12  $
+[]\T1/cmtt/m/n/12 components\T1/ptm/m/n/12 (+20) , \T1/cmtt/m/n/12 confounded[]
+\T1/ptm/m/n/12 (+20) , \T1/cmtt/m/n/12 parents[] $\OMS/ztmcm/m/n/12  $
  []
 
-[19] [20]
-LaTeX Font Info:    Trying to load font information for TS1+lmr on input line 4
+[18] [19]
+Overfull \hbox (16.8052pt too wide) in paragraph at lines 479--480
+\T1/ptm/m/n/12 (-20) ber in this chap-ter is re-ported as a frac-tion of it. Le
+t $\OML/ztmcm/m/it/12 m \OMS/ztmcm/m/n/12 2 f[]g$
+ []
+
+[20]
+LaTeX Font Info:    Trying to load font information for TS1+ptm on input line 4
 88.
- (/usr/local/texlive/2026/texmf-dist/tex/latex/lm/ts1lmr.fd
-File: ts1lmr.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
-) [21{/usr/local/texlive/2026/texmf-dist/fonts/enc/dvips/lm/lm-ts1.enc}]
-Underfull \hbox (badness 10000) in paragraph at lines 512--512
-[]|\T1/lmr/bx/n/12 (+20) vs. Tra-di-tional
- []
-
-
-Underfull \hbox (badness 3536) in paragraph at lines 512--512
-[]|\T1/lmr/bx/n/12 (+20) vs. Or-a-cle DAG
- []
-
-[22] [23]
-<figures/adjacency_comparison_linear_conf_f50_s1000_p30.png, id=514, 1074.414pt
+ (/usr/local/texlive/2026/texmf-dist/tex/latex/psnfss/ts1ptm.fd
+File: ts1ptm.fd 2001/06/04 font definitions for TS1/ptm.
+) [21]
+[22]
+<figures/adjacency_comparison_linear_conf_f50_s1000_p30.png, id=496, 1074.414pt
  x 378.213pt>
 File: figures/adjacency_comparison_linear_conf_f50_s1000_p30.png Graphic file (
 type png)
@@ -870,15 +850,16 @@ type png)
 Package pdftex.def Info: figures/adjacency_comparison_linear_conf_f50_s1000_p30
 .png  used on input line 562.
 (pdftex.def)             Requested size: 441.01773pt x 155.24146pt.
-<figures/adjacency_comparison_sachs.png, id=517, 1074.414pt x 378.213pt>
+ [23]
+<figures/adjacency_comparison_sachs.png, id=506, 1074.414pt x 378.213pt>
 File: figures/adjacency_comparison_sachs.png Graphic file (type png)
 <use figures/adjacency_comparison_sachs.png>
 Package pdftex.def Info: figures/adjacency_comparison_sachs.png  used on input 
 line 573.
 (pdftex.def)             Requested size: 441.01773pt x 155.24146pt.
- [24 <./figures/adjacency_comparison_linear_conf_f50_s1000_p30.png>]
-[25 <./figures/adjacency_comparison_sachs.png>]
-<figures/tga_sa_scatter_traditional_linear_conf_f50_s1000_p30.png, id=539, 467.
+ [24 <./figures/adjacency_comparison_linear_conf_f50_s1000_p30.png> <./figures/
+adjacency_comparison_sachs.png>]
+<figures/tga_sa_scatter_traditional_linear_conf_f50_s1000_p30.png, id=521, 467.
 346pt x 352.1958pt>
 File: figures/tga_sa_scatter_traditional_linear_conf_f50_s1000_p30.png Graphic 
 file (type png)
@@ -886,15 +867,14 @@ file (type png)
 Package pdftex.def Info: figures/tga_sa_scatter_traditional_linear_conf_f50_s10
 00_p30.png  used on input line 590.
 (pdftex.def)             Requested size: 211.68661pt x 159.52383pt.
-<figures/tga_sa_scatter_traditional_sachs.png, id=540, 467.346pt x 352.1958pt>
+<figures/tga_sa_scatter_traditional_sachs.png, id=522, 467.346pt x 352.1958pt>
 File: figures/tga_sa_scatter_traditional_sachs.png Graphic file (type png)
 <use figures/tga_sa_scatter_traditional_sachs.png>
 Package pdftex.def Info: figures/tga_sa_scatter_traditional_sachs.png  used on 
 input line 596.
 (pdftex.def)             Requested size: 211.68661pt x 159.52383pt.
- [26 <./figures/tga_sa_scatter_traditional_linear_conf_f50_s1000_p30.png> <./fi
-gures/tga_sa_scatter_traditional_sachs.png>]
-<figures/tga_heatmap_traditional_linear_conf_f50_s1000_p30.png, id=550, 568.524
+ [25]
+<figures/tga_heatmap_traditional_linear_conf_f50_s1000_p30.png, id=531, 568.524
 pt x 358.941pt>
 File: figures/tga_heatmap_traditional_linear_conf_f50_s1000_p30.png Graphic fil
 e (type png)
@@ -902,21 +882,23 @@ e (type png)
 Package pdftex.def Info: figures/tga_heatmap_traditional_linear_conf_f50_s1000_
 p30.png  used on input line 643.
 (pdftex.def)             Requested size: 211.68661pt x 133.64954pt.
-<figures/tga_heatmap_traditional_sachs.png, id=551, 568.524pt x 358.941pt>
+<figures/tga_heatmap_traditional_sachs.png, id=532, 568.524pt x 358.941pt>
 File: figures/tga_heatmap_traditional_sachs.png Graphic file (type png)
 <use figures/tga_heatmap_traditional_sachs.png>
 Package pdftex.def Info: figures/tga_heatmap_traditional_sachs.png  used on inp
 ut line 649.
 (pdftex.def)             Requested size: 211.68661pt x 133.64954pt.
+ [26 <./figures/tga_sa_scatter_traditional_linear_conf_f50_s1000_p30.png> <./fi
+gures/tga_sa_scatter_traditional_sachs.png>]
 <figures/sign_alignment_heatmap_traditional_linear_conf_f50_s1000_p30.png, id=5
-53, 568.524pt x 358.941pt>
+41, 568.524pt x 358.941pt>
 File: figures/sign_alignment_heatmap_traditional_linear_conf_f50_s1000_p30.png 
 Graphic file (type png)
 <use figures/sign_alignment_heatmap_traditional_linear_conf_f50_s1000_p30.png>
 Package pdftex.def Info: figures/sign_alignment_heatmap_traditional_linear_conf
 _f50_s1000_p30.png  used on input line 662.
 (pdftex.def)             Requested size: 211.68661pt x 133.64954pt.
-<figures/sign_alignment_heatmap_traditional_sachs.png, id=554, 568.524pt x 358.
+<figures/sign_alignment_heatmap_traditional_sachs.png, id=542, 568.524pt x 358.
 941pt>
 File: figures/sign_alignment_heatmap_traditional_sachs.png Graphic file (type p
 ng)
@@ -925,10 +907,10 @@ Package pdftex.def Info: figures/sign_alignment_heatmap_traditional_sachs.png
 used on input line 668.
 (pdftex.def)             Requested size: 211.68661pt x 133.64954pt.
  [27 <./figures/tga_heatmap_traditional_linear_conf_f50_s1000_p30.png> <./figur
-es/tga_heatmap_traditional_sachs.png>] [28 <./figures/sign_alignment_heatmap_tr
-aditional_linear_conf_f50_s1000_p30.png> <./figures/sign_alignment_heatmap_trad
-itional_sachs.png>] [29] [30]
-<figures/gss_sss_scatter_linear_conf_f50_s1000_p30.png, id=584, 445.1832pt x 35
+es/tga_heatmap_traditional_sachs.png> <./figures/sign_alignment_heatmap_traditi
+onal_linear_conf_f50_s1000_p30.png> <./figures/sign_alignment_heatmap_tradition
+al_sachs.png>] [28] [29]
+<figures/gss_sss_scatter_linear_conf_f50_s1000_p30.png, id=566, 445.1832pt x 35
 2.1958pt>
 File: figures/gss_sss_scatter_linear_conf_f50_s1000_p30.png Graphic file (type 
 png)
@@ -936,13 +918,15 @@ png)
 Package pdftex.def Info: figures/gss_sss_scatter_linear_conf_f50_s1000_p30.png 
  used on input line 710.
 (pdftex.def)             Requested size: 211.68661pt x 167.47209pt.
-<figures/gss_sss_scatter_sachs.png, id=585, 423.5022pt x 352.1958pt>
+<figures/gss_sss_scatter_sachs.png, id=567, 423.5022pt x 352.1958pt>
 File: figures/gss_sss_scatter_sachs.png Graphic file (type png)
 <use figures/gss_sss_scatter_sachs.png>
 Package pdftex.def Info: figures/gss_sss_scatter_sachs.png  used on input line 
 716.
 (pdftex.def)             Requested size: 211.68661pt x 176.04373pt.
-<figures/gss_heatmap_linear_conf_f50_s1000_p30.png, id=586, 568.524pt x 337.26p
+ [30 <./figures/gss_sss_scatter_linear_conf_f50_s1000_p30.png> <./figures/gss_s
+ss_scatter_sachs.png>]
+<figures/gss_heatmap_linear_conf_f50_s1000_p30.png, id=577, 568.524pt x 337.26p
 t>
 File: figures/gss_heatmap_linear_conf_f50_s1000_p30.png Graphic file (type png)
 
@@ -950,22 +934,15 @@ File: figures/gss_heatmap_linear_conf_f50_s1000_p30.png Graphic file (type png)
 Package pdftex.def Info: figures/gss_heatmap_linear_conf_f50_s1000_p30.png  use
 d on input line 760.
 (pdftex.def)             Requested size: 211.68661pt x 125.57675pt.
-
-Underfull \hbox (badness 2302) in paragraph at lines 761--761
-[]\T1/lmr/bx/n/10 (+20) (a) |\T1/lmr/m/n/10 (+20) Syn-thetic dataset (top 10 fe
-a-tures by
- []
-
-<figures/gss_heatmap_sachs.png, id=587, 568.524pt x 337.26pt>
+<figures/gss_heatmap_sachs.png, id=578, 568.524pt x 337.26pt>
 File: figures/gss_heatmap_sachs.png Graphic file (type png)
 <use figures/gss_heatmap_sachs.png>
 Package pdftex.def Info: figures/gss_heatmap_sachs.png  used on input line 766.
 
 (pdftex.def)             Requested size: 211.68661pt x 125.57675pt.
-[31 <./figures/gss_sss_scatter_linear_conf_f50_s1000_p30.png> <./figures/gss_ss
-s_scatter_sachs.png>] [32 <./figures/gss_heatmap_linear_conf_f50_s1000_p30.png>
- <./figures/gss_heatmap_sachs.png>]
-<figures/sss_heatmap_linear_conf_f50_s1000_p30.png, id=605, 568.524pt x 337.26p
+ [31 <./figures/gss_heatmap_linear_conf_f50_s1000_p30.png> <./figures/gss_heatm
+ap_sachs.png>]
+<figures/sss_heatmap_linear_conf_f50_s1000_p30.png, id=588, 568.524pt x 337.26p
 t>
 File: figures/sss_heatmap_linear_conf_f50_s1000_p30.png Graphic file (type png)
 
@@ -973,15 +950,16 @@ File: figures/sss_heatmap_linear_conf_f50_s1000_p30.png Graphic file (type png)
 Package pdftex.def Info: figures/sss_heatmap_linear_conf_f50_s1000_p30.png  use
 d on input line 781.
 (pdftex.def)             Requested size: 211.68661pt x 125.57675pt.
-<figures/sss_heatmap_sachs.png, id=606, 568.524pt x 337.26pt>
+<figures/sss_heatmap_sachs.png, id=589, 568.524pt x 337.26pt>
 File: figures/sss_heatmap_sachs.png Graphic file (type png)
 <use figures/sss_heatmap_sachs.png>
 Package pdftex.def Info: figures/sss_heatmap_sachs.png  used on input line 787.
 
 (pdftex.def)             Requested size: 211.68661pt x 125.57675pt.
- [33 <./figures/sss_heatmap_linear_conf_f50_s1000_p30.png> <./figures/sss_heatm
-ap_sachs.png>] [34]
-<figures/tga_sa_scatter_true_linear_conf_f50_s1000_p30.png, id=624, 467.346pt x
+
+[32 <./figures/sss_heatmap_linear_conf_f50_s1000_p30.png> <./figures/sss_heatma
+p_sachs.png>] [33]
+<figures/tga_sa_scatter_true_linear_conf_f50_s1000_p30.png, id=607, 467.346pt x
  352.1958pt>
 File: figures/tga_sa_scatter_true_linear_conf_f50_s1000_p30.png Graphic file (t
 ype png)
@@ -989,14 +967,14 @@ ype png)
 Package pdftex.def Info: figures/tga_sa_scatter_true_linear_conf_f50_s1000_p30.
 png  used on input line 823.
 (pdftex.def)             Requested size: 211.68661pt x 159.52383pt.
-<figures/tga_sa_scatter_true_sachs.png, id=625, 467.346pt x 352.1958pt>
+<figures/tga_sa_scatter_true_sachs.png, id=608, 467.346pt x 352.1958pt>
 File: figures/tga_sa_scatter_true_sachs.png Graphic file (type png)
 <use figures/tga_sa_scatter_true_sachs.png>
 Package pdftex.def Info: figures/tga_sa_scatter_true_sachs.png  used on input l
 ine 829.
 (pdftex.def)             Requested size: 211.68661pt x 159.52383pt.
- [35]
-<figures/tga_heatmap_true_linear_conf_f50_s1000_p30.png, id=633, 568.524pt x 35
+ [34]
+<figures/tga_heatmap_true_linear_conf_f50_s1000_p30.png, id=616, 568.524pt x 35
 8.941pt>
 File: figures/tga_heatmap_true_linear_conf_f50_s1000_p30.png Graphic file (type
  png)
@@ -1005,20 +983,20 @@ Package pdftex.def Info: figures/tga_heatmap_true_linear_conf_f50_s1000_p30.png
   used on input line 876.
 (pdftex.def)             Requested size: 211.68661pt x 133.64954pt.
 
-Underfull \hbox (badness 1067) in paragraph at lines 877--877
-\OT1/lmr/m/n/10 (+20) ^^A\OML/lmm/m/it/10 M[]$\T1/lmr/m/n/10 (+20) ). Asym-met-
-ric rows are near-zero;
+Underfull \hbox (badness 1275) in paragraph at lines 877--877
+[]\T1/ptm/b/n/10 (+20) (a) |\T1/ptm/m/n/10 (+20) Syn-thetic dataset (top 10 fea
+-tures by mean
  []
 
-<figures/tga_heatmap_true_sachs.png, id=634, 568.524pt x 358.941pt>
+<figures/tga_heatmap_true_sachs.png, id=617, 568.524pt x 358.941pt>
 File: figures/tga_heatmap_true_sachs.png Graphic file (type png)
 <use figures/tga_heatmap_true_sachs.png>
 Package pdftex.def Info: figures/tga_heatmap_true_sachs.png  used on input line
  882.
 (pdftex.def)             Requested size: 211.68661pt x 133.64954pt.
-[36 <./figures/tga_sa_scatter_true_linear_conf_f50_s1000_p30.png> <./figures/tg
+[35 <./figures/tga_sa_scatter_true_linear_conf_f50_s1000_p30.png> <./figures/tg
 a_sa_scatter_true_sachs.png>]
-<figures/sign_alignment_heatmap_true_linear_conf_f50_s1000_p30.png, id=642, 568
+<figures/sign_alignment_heatmap_true_linear_conf_f50_s1000_p30.png, id=624, 568
 .524pt x 358.941pt>
 File: figures/sign_alignment_heatmap_true_linear_conf_f50_s1000_p30.png Graphic
  file (type png)
@@ -1026,16 +1004,16 @@ File: figures/sign_alignment_heatmap_true_linear_conf_f50_s1000_p30.png Graphic
 Package pdftex.def Info: figures/sign_alignment_heatmap_true_linear_conf_f50_s1
 000_p30.png  used on input line 896.
 (pdftex.def)             Requested size: 211.68661pt x 133.64954pt.
-<figures/sign_alignment_heatmap_true_sachs.png, id=643, 568.524pt x 358.941pt>
+<figures/sign_alignment_heatmap_true_sachs.png, id=625, 568.524pt x 358.941pt>
 File: figures/sign_alignment_heatmap_true_sachs.png Graphic file (type png)
 <use figures/sign_alignment_heatmap_true_sachs.png>
 Package pdftex.def Info: figures/sign_alignment_heatmap_true_sachs.png  used on
  input line 902.
 (pdftex.def)             Requested size: 211.68661pt x 133.64954pt.
- [37 <./figures/tga_heatmap_true_linear_conf_f50_s1000_p30.png> <./figures/tga_
-heatmap_true_sachs.png>] [38 <./figures/sign_alignment_heatmap_true_linear_conf
-_f50_s1000_p30.png> <./figures/sign_alignment_heatmap_true_sachs.png>] [39]
-<figures/dag_neighborhood_X24_linear_conf_f50_s1000_p30.png, id=664, 1291.224pt
+ [36 <./figures/tga_heatmap_true_linear_conf_f50_s1000_p30.png> <./figures/tga_
+heatmap_true_sachs.png> <./figures/sign_alignment_heatmap_true_linear_conf_f50_
+s1000_p30.png> <./figures/sign_alignment_heatmap_true_sachs.png>] [37]
+<figures/dag_neighborhood_X24_linear_conf_f50_s1000_p30.png, id=643, 1291.224pt
  x 481.8pt>
 File: figures/dag_neighborhood_X24_linear_conf_f50_s1000_p30.png Graphic file (
 type png)
@@ -1043,7 +1021,8 @@ type png)
 Package pdftex.def Info: figures/dag_neighborhood_X24_linear_conf_f50_s1000_p30
 .png  used on input line 937.
 (pdftex.def)             Requested size: 441.01773pt x 164.55234pt.
-<figures/shap_scatter_flow_X24_linear_conf_f50_s1000_p30.png, id=666, 2168.1pt 
+ [38]
+<figures/shap_scatter_flow_X24_linear_conf_f50_s1000_p30.png, id=650, 2168.1pt 
 x 602.25pt>
 File: figures/shap_scatter_flow_X24_linear_conf_f50_s1000_p30.png Graphic file 
 (type png)
@@ -1051,8 +1030,8 @@ File: figures/shap_scatter_flow_X24_linear_conf_f50_s1000_p30.png Graphic file
 Package pdftex.def Info: figures/shap_scatter_flow_X24_linear_conf_f50_s1000_p3
 0.png  used on input line 946.
 (pdftex.def)             Requested size: 441.01773pt x 122.49713pt.
- [40 <./figures/dag_neighborhood_X24_linear_conf_f50_s1000_p30.png>]
-<figures/dag_neighborhood_X33_linear_conf_f50_s1000_p30.png, id=678, 1291.224pt
+ [39 <./figures/dag_neighborhood_X24_linear_conf_f50_s1000_p30.png>]
+<figures/dag_neighborhood_X33_linear_conf_f50_s1000_p30.png, id=661, 1291.224pt
  x 481.8pt>
 File: figures/dag_neighborhood_X33_linear_conf_f50_s1000_p30.png Graphic file (
 type png)
@@ -1060,8 +1039,8 @@ type png)
 Package pdftex.def Info: figures/dag_neighborhood_X33_linear_conf_f50_s1000_p30
 .png  used on input line 955.
 (pdftex.def)             Requested size: 441.01773pt x 164.55234pt.
- [41 <./figures/shap_scatter_flow_X24_linear_conf_f50_s1000_p30.png>]
-<figures/shap_scatter_flow_X33_linear_conf_f50_s1000_p30.png, id=687, 2168.1pt 
+ [40 <./figures/shap_scatter_flow_X24_linear_conf_f50_s1000_p30.png>]
+<figures/shap_scatter_flow_X33_linear_conf_f50_s1000_p30.png, id=670, 2168.1pt 
 x 602.25pt>
 File: figures/shap_scatter_flow_X33_linear_conf_f50_s1000_p30.png Graphic file 
 (type png)
@@ -1069,23 +1048,23 @@ File: figures/shap_scatter_flow_X33_linear_conf_f50_s1000_p30.png Graphic file
 Package pdftex.def Info: figures/shap_scatter_flow_X33_linear_conf_f50_s1000_p3
 0.png  used on input line 962.
 (pdftex.def)             Requested size: 441.01773pt x 122.49713pt.
- [42 <./figures/dag_neighborhood_X33_linear_conf_f50_s1000_p30.png> <./figures/
+ [41 <./figures/dag_neighborhood_X33_linear_conf_f50_s1000_p30.png> <./figures/
 shap_scatter_flow_X33_linear_conf_f50_s1000_p30.png>]
-<figures/dag_neighborhood_pka_sachs.png, id=700, 1291.224pt x 481.8pt>
+<figures/dag_neighborhood_pka_sachs.png, id=682, 1291.224pt x 481.8pt>
 File: figures/dag_neighborhood_pka_sachs.png Graphic file (type png)
 <use figures/dag_neighborhood_pka_sachs.png>
 Package pdftex.def Info: figures/dag_neighborhood_pka_sachs.png  used on input 
 line 971.
 (pdftex.def)             Requested size: 441.01773pt x 164.55234pt.
-<figures/shap_scatter_flow_pka_sachs.png, id=701, 2168.1pt x 602.25pt>
+<figures/shap_scatter_flow_pka_sachs.png, id=683, 2168.1pt x 602.25pt>
 File: figures/shap_scatter_flow_pka_sachs.png Graphic file (type png)
 <use figures/shap_scatter_flow_pka_sachs.png>
 Package pdftex.def Info: figures/shap_scatter_flow_pka_sachs.png  used on input
  line 978.
 (pdftex.def)             Requested size: 441.01773pt x 122.49713pt.
- [43 <./figures/dag_neighborhood_pka_sachs.png> <./figures/shap_scatter_flow_pk
+ [42 <./figures/dag_neighborhood_pka_sachs.png> <./figures/shap_scatter_flow_pk
 a_sachs.png>]
-<figures/dag_neighborhood_X47_linear_conf_f50_s1000_p30.png, id=711, 1291.224pt
+<figures/dag_neighborhood_X47_linear_conf_f50_s1000_p30.png, id=694, 1291.224pt
  x 481.8pt>
 File: figures/dag_neighborhood_X47_linear_conf_f50_s1000_p30.png Graphic file (
 type png)
@@ -1093,8 +1072,7 @@ type png)
 Package pdftex.def Info: figures/dag_neighborhood_X47_linear_conf_f50_s1000_p30
 .png  used on input line 991.
 (pdftex.def)             Requested size: 441.01773pt x 164.55234pt.
- [44 <./figures/dag_neighborhood_X47_linear_conf_f50_s1000_p30.png>]
-<figures/dag_neighborhood_X21_linear_conf_f50_s1000_p30.png, id=719, 1291.224pt
+<figures/dag_neighborhood_X21_linear_conf_f50_s1000_p30.png, id=695, 1291.224pt
  x 481.8pt>
 File: figures/dag_neighborhood_X21_linear_conf_f50_s1000_p30.png Graphic file (
 type png)
@@ -1102,7 +1080,8 @@ type png)
 Package pdftex.def Info: figures/dag_neighborhood_X21_linear_conf_f50_s1000_p30
 .png  used on input line 1002.
 (pdftex.def)             Requested size: 374.86775pt x 139.8728pt.
-<figures/shap_scatter_causal_X47_X21_linear_conf_f50_s1000_p30.png, id=720, 216
+ [43 <./figures/dag_neighborhood_X47_linear_conf_f50_s1000_p30.png>]
+<figures/shap_scatter_causal_X47_X21_linear_conf_f50_s1000_p30.png, id=703, 216
 8.1pt x 1043.9pt>
 File: figures/shap_scatter_causal_X47_X21_linear_conf_f50_s1000_p30.png Graphic
  file (type png)
@@ -1110,7 +1089,7 @@ File: figures/shap_scatter_causal_X47_X21_linear_conf_f50_s1000_p30.png Graphic
 Package pdftex.def Info: figures/shap_scatter_causal_X47_X21_linear_conf_f50_s1
 000_p30.png  used on input line 1010.
 (pdftex.def)             Requested size: 211.68661pt x 101.91124pt.
-<figures/shap_scatter_flow_X47_X21_linear_conf_f50_s1000_p30.png, id=721, 2168.
+<figures/shap_scatter_flow_X47_X21_linear_conf_f50_s1000_p30.png, id=704, 2168.
 1pt x 1043.9pt>
 File: figures/shap_scatter_flow_X47_X21_linear_conf_f50_s1000_p30.png Graphic f
 ile (type png)
@@ -1118,23 +1097,23 @@ ile (type png)
 Package pdftex.def Info: figures/shap_scatter_flow_X47_X21_linear_conf_f50_s100
 0_p30.png  used on input line 1016.
 (pdftex.def)             Requested size: 211.68661pt x 101.91124pt.
- [45 <./figures/dag_neighborhood_X21_linear_conf_f50_s1000_p30.png> <./figures/
+ [44 <./figures/dag_neighborhood_X21_linear_conf_f50_s1000_p30.png> <./figures/
 shap_scatter_causal_X47_X21_linear_conf_f50_s1000_p30.png> <./figures/shap_scat
 ter_flow_X47_X21_linear_conf_f50_s1000_p30.png>]
-<figures/dag_neighborhood_erk_sachs.png, id=733, 1291.224pt x 481.8pt>
+<figures/dag_neighborhood_erk_sachs.png, id=717, 1291.224pt x 481.8pt>
 File: figures/dag_neighborhood_erk_sachs.png Graphic file (type png)
 <use figures/dag_neighborhood_erk_sachs.png>
 Package pdftex.def Info: figures/dag_neighborhood_erk_sachs.png  used on input 
 line 1046.
 (pdftex.def)             Requested size: 441.01773pt x 164.55234pt.
- [46 <./figures/dag_neighborhood_erk_sachs.png>]
-<figures/shap_scatter_flow_erk_sachs.png, id=742, 2168.1pt x 602.25pt>
+<figures/shap_scatter_flow_erk_sachs.png, id=719, 2168.1pt x 602.25pt>
 File: figures/shap_scatter_flow_erk_sachs.png Graphic file (type png)
 <use figures/shap_scatter_flow_erk_sachs.png>
 Package pdftex.def Info: figures/shap_scatter_flow_erk_sachs.png  used on input
  line 1069.
 (pdftex.def)             Requested size: 441.01773pt x 122.49713pt.
-<figures/dag_neighborhood_X10_linear_conf_f50_s1000_p30.png, id=745, 1291.224pt
+ [45 <./figures/dag_neighborhood_erk_sachs.png>]
+<figures/dag_neighborhood_X10_linear_conf_f50_s1000_p30.png, id=728, 1291.224pt
  x 481.8pt>
 File: figures/dag_neighborhood_X10_linear_conf_f50_s1000_p30.png Graphic file (
 type png)
@@ -1143,9 +1122,9 @@ Package pdftex.def Info: figures/dag_neighborhood_X10_linear_conf_f50_s1000_p30
 .png  used on input line 1095.
 (pdftex.def)             Requested size: 441.01773pt x 164.55234pt.
 
-[47 <./figures/shap_scatter_flow_erk_sachs.png>]
+[46 <./figures/shap_scatter_flow_erk_sachs.png>]
 <figures/shap_vs_feature_Scratch_vs_Causal__PC__linear_conf_f50_s1000_p30.png, 
-id=754, 923.45pt x 923.45pt>
+id=737, 923.45pt x 923.45pt>
 File: figures/shap_vs_feature_Scratch_vs_Causal__PC__linear_conf_f50_s1000_p30.
 png Graphic file (type png)
 <use figures/shap_vs_feature_Scratch_vs_Causal__PC__linear_conf_f50_s1000_p30.p
@@ -1153,15 +1132,15 @@ ng>
 Package pdftex.def Info: figures/shap_vs_feature_Scratch_vs_Causal__PC__linear_
 conf_f50_s1000_p30.png  used on input line 1102.
 (pdftex.def)             Requested size: 176.40439pt x 176.4014pt.
-<figures/dag_neighborhood_pkc_sachs.png, id=757, 1291.224pt x 481.8pt>
+<figures/dag_neighborhood_pkc_sachs.png, id=740, 1291.224pt x 481.8pt>
 File: figures/dag_neighborhood_pkc_sachs.png Graphic file (type png)
 <use figures/dag_neighborhood_pkc_sachs.png>
 Package pdftex.def Info: figures/dag_neighborhood_pkc_sachs.png  used on input 
 line 1117.
 (pdftex.def)             Requested size: 441.01773pt x 164.55234pt.
- [48 <./figures/dag_neighborhood_X10_linear_conf_f50_s1000_p30.png> <./figures/
+ [47 <./figures/dag_neighborhood_X10_linear_conf_f50_s1000_p30.png> <./figures/
 shap_vs_feature_Scratch_vs_Causal__PC__linear_conf_f50_s1000_p30.png>]
-<figures/shap_vs_feature_Scratch_vs_Causal__LiNGAM__sachs.png, id=767, 923.45pt
+<figures/shap_vs_feature_Scratch_vs_Causal__LiNGAM__sachs.png, id=749, 923.45pt
  x 923.45pt>
 File: figures/shap_vs_feature_Scratch_vs_Causal__LiNGAM__sachs.png Graphic file
  (type png)
@@ -1169,59 +1148,63 @@ File: figures/shap_vs_feature_Scratch_vs_Causal__LiNGAM__sachs.png Graphic file
 Package pdftex.def Info: figures/shap_vs_feature_Scratch_vs_Causal__LiNGAM__sac
 hs.png  used on input line 1124.
 (pdftex.def)             Requested size: 176.40439pt x 176.4014pt.
- [49 <./figures/dag_neighborhood_pkc_sachs.png> <./figures/shap_vs_feature_Scra
+ [48 <./figures/dag_neighborhood_pkc_sachs.png> <./figures/shap_vs_feature_Scra
 tch_vs_Causal__LiNGAM__sachs.png>]
-[50] [51] [52] [53]
-Overfull \hbox (99.18082pt too wide) in paragraph at lines 1214--1215
-\T1/lmr/m/n/12 (-20) sity, De-part-ment of Phi-los-o-phy. []$\T1/lmtt/m/n/12 ht
-tps : / / github . com / cmu-[]phil / example-[]causal-[]datasets /
+[49] [50] [51] [52]
+Overfull \hbox (67.40453pt too wide) in paragraph at lines 1214--1215
+\T1/ptm/m/n/12 (-20) De-part-ment of Phi-los-o-phy. []$\T1/cmtt/m/n/12 https : 
+/ / github . com / cmu-[]phil / example-[]causal-[]datasets /
  []
 
-[54] (./master_thesis.bbl [55]) [56] [57]
-Underfull \hbox (badness 1152) in paragraph at lines 1298--1299
-[] $[]\OT1/lmr/m/n/12 (+20) [\OML/lmm/m/it/12 j\OT1/lmr/m/n/12 (+20) ] \OMS/lms
-y/m/n/12   []\OT1/lmr/m/n/12 (+20) ([] = \OMS/lmsy/m/n/12 f\OML/lmm/m/it/12 j\O
-MS/lmsy/m/n/12 g\OML/lmm/m/it/12 ;  [] \OT1/lmr/m/n/12 (+20) =
+[53] (./master_thesis.bbl [54]) [55] [56]
+Underfull \hbox (badness 10000) in paragraph at lines 1304--1305
+[] $[]\OT1/ztmcm/m/n/12 [\OML/ztmcm/m/it/12 j\OT1/ztmcm/m/n/12 ] \OMS/ztmcm/m/n
+/12   []\OT1/ztmcm/m/n/12 ([] = \OMS/ztmcm/m/n/12 f\OML/ztmcm/m/it/12 j\OMS/ztm
+cm/m/n/12 g\OML/ztmcm/m/it/12 ;  [] \OT1/ztmcm/m/n/12 =
  []
 
-[58] [59] [60] (./master_thesis.aux)
+
+Underfull \hbox (badness 2469) in paragraph at lines 1308--1309
+[] $[]\OT1/ztmcm/m/n/12 [[]] \OMS/ztmcm/m/n/12   []\OT1/ztmcm/m/n/12 ([] = []\O
+ML/ztmcm/m/it/12 ;  [] \OT1/ztmcm/m/n/12 =
+ []
+
+[57] [58] [59] (./master_thesis.aux)
  ***********
 LaTeX2e <2025-11-01>
 L3 programming layer <2026-01-19>
  ***********
+
+
+LaTeX Warning: Label(s) may have changed. Rerun to get cross-references right.
+
 Package rerunfilecheck Info: File `master_thesis.out' has not changed.
 (rerunfilecheck)             Checksum: 2D69EB3D25FC89C98553AC54D2D5F30C;14733.
  ) 
 Here is how much of TeX's memory you used:
- 18666 strings out of 467525
- 308000 string characters out of 5418982
- 770077 words of memory out of 5000000
- 46610 multiletter control sequences out of 15000+600000
- 771664 words of font info for 364 fonts, out of 8000000 for 9000
+ 18720 strings out of 467525
+ 305496 string characters out of 5418982
+ 766985 words of memory out of 5000000
+ 46549 multiletter control sequences out of 15000+600000
+ 759313 words of font info for 547 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 75i,16n,84p,2113b,662s stack positions out of 10000i,1000n,20000p,200000b,200000s
-</usr/local/texlive/2026/texmf-dist/fonts/type1/public/lm/lmbx10.pfb></usr/lo
-cal/texlive/2026/texmf-dist/fonts/type1/public/lm/lmbx12.pfb></usr/local/texliv
-e/2026/texmf-dist/fonts/type1/public/lm/lmbx8.pfb></usr/local/texlive/2026/texm
-f-dist/fonts/type1/public/lm/lmcsc10.pfb></usr/local/texlive/2026/texmf-dist/fo
-nts/type1/public/lm/lmex10.pfb></usr/local/texlive/2026/texmf-dist/fonts/type1/
-public/lm/lmmi10.pfb></usr/local/texlive/2026/texmf-dist/fonts/type1/public/lm/
-lmmi12.pfb></usr/local/texlive/2026/texmf-dist/fonts/type1/public/lm/lmmi6.pfb>
-</usr/local/texlive/2026/texmf-dist/fonts/type1/public/lm/lmmi7.pfb></usr/local
-/texlive/2026/texmf-dist/fonts/type1/public/lm/lmmi8.pfb></usr/local/texlive/20
-26/texmf-dist/fonts/type1/public/lm/lmr10.pfb></usr/local/texlive/2026/texmf-di
-st/fonts/type1/public/lm/lmr12.pfb></usr/local/texlive/2026/texmf-dist/fonts/ty
-pe1/public/lm/lmr6.pfb></usr/local/texlive/2026/texmf-dist/fonts/type1/public/l
-m/lmr7.pfb></usr/local/texlive/2026/texmf-dist/fonts/type1/public/lm/lmr8.pfb><
-/usr/local/texlive/2026/texmf-dist/fonts/type1/public/lm/lmri12.pfb></usr/local
-/texlive/2026/texmf-dist/fonts/type1/public/lm/lmsy10.pfb></usr/local/texlive/2
-026/texmf-dist/fonts/type1/public/lm/lmsy8.pfb></usr/local/texlive/2026/texmf-d
-ist/fonts/type1/public/lm/lmtt12.pfb></usr/local/texlive/2026/texmf-dist/fonts/
-type1/public/amsfonts/symbols/msbm10.pfb>
-Output written on master_thesis.pdf (61 pages, 4259954 bytes).
+ 75i,16n,84p,2113b,650s stack positions out of 10000i,1000n,20000p,200000b,200000s
+</usr/local/texlive/2026/texmf-dist/fonts/type1/public/amsfonts/cm/cmex10.pfb
+></usr/local/texlive/2026/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi10.pfb>
+</usr/local/texlive/2026/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb></
+usr/local/texlive/2026/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb></u
+sr/local/texlive/2026/texmf-dist/fonts/type1/public/amsfonts/symbols/msbm10.pfb
+></usr/local/texlive/2026/texmf-dist/fonts/type1/public/rsfs/rsfs10.pfb></usr/l
+ocal/texlive/2026/texmf-dist/fonts/type1/public/cm-super/sftt1200.pfb></usr/loc
+al/texlive/2026/texmf-dist/fonts/type1/urw/symbol/usyr.pfb></usr/local/texlive/
+2026/texmf-dist/fonts/type1/urw/symbol/usyr.pfb></usr/local/texlive/2026/texmf-
+dist/fonts/type1/urw/times/utmb8a.pfb></usr/local/texlive/2026/texmf-dist/fonts
+/type1/urw/times/utmr8a.pfb></usr/local/texlive/2026/texmf-dist/fonts/type1/urw
+/times/utmri8a.pfb>
+Output written on master_thesis.pdf (60 pages, 4022991 bytes).
 PDF statistics:
- 979 PDF objects out of 1000 (max. 8388607)
- 786 compressed objects within 8 object streams
- 199 named destinations out of 1000 (max. 500000)
- 77954 words of extra memory for PDF output out of 89155 (max. 10000000)
+ 917 PDF objects out of 1000 (max. 8388607)
+ 746 compressed objects within 8 object streams
+ 198 named destinations out of 1000 (max. 500000)
+ 120962 words of extra memory for PDF output out of 128383 (max. 10000000)
 

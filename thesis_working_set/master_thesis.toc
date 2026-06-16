@@ -5,32 +5,32 @@
 \contentsline {subsection}{\numberline {2.3}Causal Discovery: Structure Identification}{7}{subsection.2.3}%
 \contentsline {paragraph}{PC Algorithm \citep {Spirtes2000}.}{7}{section*.2}%
 \contentsline {paragraph}{DirectLiNGAM \citep {Shimizu2011}.}{7}{section*.3}%
-\contentsline {subsection}{\numberline {2.4}Traditional Shapley Values and the Axiomatic Framework}{8}{subsection.2.4}%
-\contentsline {subsection}{\numberline {2.5}Structure-Aware Shapley Methods: Theoretical Foundations}{9}{subsection.2.5}%
-\contentsline {subsubsection}{\numberline {2.5.1}Asymmetric Shapley Values (ASV)}{9}{subsubsection.2.5.1}%
-\contentsline {subsubsection}{\numberline {2.5.2}Causal Shapley Values (CSV)}{10}{subsubsection.2.5.2}%
-\contentsline {subsubsection}{\numberline {2.5.3}Shapley Flow}{11}{subsubsection.2.5.3}%
+\contentsline {subsection}{\numberline {2.4}Traditional Shapley Values and the Axiomatic Framework}{7}{subsection.2.4}%
+\contentsline {subsection}{\numberline {2.5}Structure-Aware Shapley Methods: Theoretical Foundations}{8}{subsection.2.5}%
+\contentsline {subsubsection}{\numberline {2.5.1}Asymmetric Shapley Values (ASV)}{8}{subsubsection.2.5.1}%
+\contentsline {subsubsection}{\numberline {2.5.2}Causal Shapley Values (CSV)}{9}{subsubsection.2.5.2}%
+\contentsline {subsubsection}{\numberline {2.5.3}Shapley Flow}{10}{subsubsection.2.5.3}%
 \contentsline {section}{\numberline {3}Experimental Setup and Practical Implementation}{12}{section.3}%
-\contentsline {subsection}{\numberline {3.1}Data Synthesis and Target Datasets}{13}{subsection.3.1}%
+\contentsline {subsection}{\numberline {3.1}Data Synthesis and Target Datasets}{12}{subsection.3.1}%
 \contentsline {paragraph}{Linear System with Confounding (Synthetic).}{13}{section*.5}%
 \contentsline {paragraph}{Sachs Cell Signaling Dataset (Real Data).}{13}{section*.6}%
-\contentsline {subsection}{\numberline {3.2}Predictive Model}{14}{subsection.3.2}%
+\contentsline {subsection}{\numberline {3.2}Predictive Model}{13}{subsection.3.2}%
 \contentsline {subsection}{\numberline {3.3}Causal Discovery Framework}{14}{subsection.3.3}%
 \contentsline {subsubsection}{\numberline {3.3.1}DirectLiNGAM Integration}{14}{subsubsection.3.3.1}%
 \contentsline {subsubsection}{\numberline {3.3.2}PC Algorithm Integration}{14}{subsubsection.3.3.2}%
-\contentsline {subsubsection}{\numberline {3.3.3}$X \to Y$ Edge Augmentation Rule}{15}{subsubsection.3.3.3}%
+\contentsline {subsubsection}{\numberline {3.3.3}$X \to Y$ Edge Augmentation Rule}{14}{subsubsection.3.3.3}%
 \contentsline {subsubsection}{\numberline {3.3.4}Discovery Performance}{15}{subsubsection.3.3.4}%
 \contentsline {subsection}{\numberline {3.4}Shapley Computation Settings}{15}{subsection.3.4}%
-\contentsline {subsubsection}{\numberline {3.4.1}Traditional Shapley Values (Graph-Free Baseline)}{17}{subsubsection.3.4.1}%
+\contentsline {subsubsection}{\numberline {3.4.1}Traditional Shapley Values (Graph-Free Baseline)}{16}{subsubsection.3.4.1}%
 \contentsline {subsubsection}{\numberline {3.4.2}Asymmetric Shapley Values}{17}{subsubsection.3.4.2}%
 \contentsline {subsubsection}{\numberline {3.4.3}Causal Shapley Values}{18}{subsubsection.3.4.3}%
-\contentsline {subsubsection}{\numberline {3.4.4}Shapley Flow}{20}{subsubsection.3.4.4}%
+\contentsline {subsubsection}{\numberline {3.4.4}Shapley Flow}{19}{subsubsection.3.4.4}%
 \contentsline {subsection}{\numberline {3.5}Evaluation Metrics}{21}{subsection.3.5}%
 \contentsline {subsubsection}{\numberline {3.5.1}Notation}{21}{subsubsection.3.5.1}%
 \contentsline {subsubsection}{\numberline {3.5.2}Two Dimensions, Two Metrics, Three Comparisons}{21}{subsubsection.3.5.2}%
 \contentsline {subsubsection}{\numberline {3.5.3}Three Measurement Levels}{22}{subsubsection.3.5.3}%
 \contentsline {paragraph}{Instance level (signed).}{22}{section*.11}%
-\contentsline {paragraph}{Feature level (non-negative).}{23}{section*.12}%
+\contentsline {paragraph}{Feature level (non-negative).}{22}{section*.12}%
 \contentsline {paragraph}{Global level.}{23}{section*.13}%
 \contentsline {section}{\numberline {4}Results and Empirical Analysis}{23}{section.4}%
 \contentsline {subsection}{\numberline {4.1}Causal Discovery Baseline Performance}{23}{subsection.4.1}%
@@ -39,26 +39,26 @@
 \contentsline {subsection}{\numberline {4.2}Graph-Free Baseline Deviation Analysis}{25}{subsection.4.2}%
 \contentsline {subsubsection}{\numberline {4.2.1}Asymmetric Shapley, High Robustness to Graph Injection}{28}{subsubsection.4.2.1}%
 \contentsline {subsubsection}{\numberline {4.2.2}Causal Shapley, Intermediate Deviation with Interventional Redistribution}{29}{subsubsection.4.2.2}%
-\contentsline {subsubsection}{\numberline {4.2.3}Shapley Flow, High Deviation with Sign Instability}{30}{subsubsection.4.2.3}%
+\contentsline {subsubsection}{\numberline {4.2.3}Shapley Flow, High Deviation with Sign Instability}{29}{subsubsection.4.2.3}%
 \contentsline {subsection}{\numberline {4.3}Discovery Algorithm Sensitivity Analysis}{30}{subsection.4.3}%
-\contentsline {subsubsection}{\numberline {4.3.1}Asymmetric Shapley, Minimal Sensitivity on Synthetic}{34}{subsubsection.4.3.1}%
-\contentsline {subsubsection}{\numberline {4.3.2}Causal and Flow, High Sensitivity, Especially on Real Data}{34}{subsubsection.4.3.2}%
-\contentsline {subsection}{\numberline {4.4}True-Graph Causal Alignment}{35}{subsection.4.4}%
-\contentsline {subsubsection}{\numberline {4.4.1}Asymmetric Shapley, Near-Perfect Oracle Fidelity}{39}{subsubsection.4.4.1}%
-\contentsline {subsubsection}{\numberline {4.4.2}Causal and Flow, Compounding Error Under Imprecise Graphs}{39}{subsubsection.4.4.2}%
-\contentsline {subsection}{\numberline {4.5}Granular Case Studies}{39}{subsection.4.5}%
-\contentsline {subsubsection}{\numberline {4.5.1}Correlated and Contested Discovery Failures}{40}{subsubsection.4.5.1}%
-\contentsline {subsubsection}{\numberline {4.5.2}Directed Edge Inversion and Causal Credit Transfer}{43}{subsubsection.4.5.2}%
-\contentsline {subsubsection}{\numberline {4.5.3}Structural Role Error Resolved by Domain Knowledge}{45}{subsubsection.4.5.3}%
-\contentsline {subsubsection}{\numberline {4.5.4}Near-Zero Attributions and Sign Disagreement Explosion}{47}{subsubsection.4.5.4}%
-\contentsline {section}{\numberline {5}Conclusion}{50}{section.5}%
-\contentsline {subsection}{\numberline {5.1}Summary of Findings}{50}{subsection.5.1}%
-\contentsline {subsection}{\numberline {5.2}Main Contribution and Practical Recommendations}{52}{subsection.5.2}%
-\contentsline {subsection}{\numberline {5.3}Limitations and Future Work}{53}{subsection.5.3}%
-\contentsline {section}{Declaration on the Use of Artificial Intelligence}{54}{section*.45}%
-\contentsline {section}{Declaration on the Use of Data}{54}{section*.46}%
-\contentsline {section}{Appendix: Shapley Method Subroutines}{57}{section*.48}%
-\contentsline {subsection}{\numberline {A.1}Coalition Value (Traditional and Asymmetric Shapley)}{57}{subsection.A.1}%
-\contentsline {subsection}{\numberline {A.2}Uniform Random Topological Ordering (Asymmetric and Causal Shapley)}{57}{subsection.A.2}%
-\contentsline {subsection}{\numberline {A.3}Post-Interventional Sampling (Causal Shapley)}{58}{subsection.A.3}%
-\contentsline {subsection}{\numberline {A.4}System Value (Shapley Flow)}{60}{subsection.A.4}%
+\contentsline {subsubsection}{\numberline {4.3.1}Asymmetric Shapley, Minimal Sensitivity on Synthetic}{33}{subsubsection.4.3.1}%
+\contentsline {subsubsection}{\numberline {4.3.2}Causal and Flow, High Sensitivity, Especially on Real Data}{33}{subsubsection.4.3.2}%
+\contentsline {subsection}{\numberline {4.4}True-Graph Causal Alignment}{34}{subsection.4.4}%
+\contentsline {subsubsection}{\numberline {4.4.1}Asymmetric Shapley, Near-Perfect Oracle Fidelity}{37}{subsubsection.4.4.1}%
+\contentsline {subsubsection}{\numberline {4.4.2}Causal and Flow, Compounding Error Under Imprecise Graphs}{38}{subsubsection.4.4.2}%
+\contentsline {subsection}{\numberline {4.5}Granular Case Studies}{38}{subsection.4.5}%
+\contentsline {subsubsection}{\numberline {4.5.1}Correlated and Contested Discovery Failures}{38}{subsubsection.4.5.1}%
+\contentsline {subsubsection}{\numberline {4.5.2}Directed Edge Inversion and Causal Credit Transfer}{42}{subsubsection.4.5.2}%
+\contentsline {subsubsection}{\numberline {4.5.3}Structural Role Error Resolved by Domain Knowledge}{44}{subsubsection.4.5.3}%
+\contentsline {subsubsection}{\numberline {4.5.4}Near-Zero Attributions and Sign Disagreement Explosion}{46}{subsubsection.4.5.4}%
+\contentsline {section}{\numberline {5}Conclusion}{49}{section.5}%
+\contentsline {subsection}{\numberline {5.1}Summary of Findings}{49}{subsection.5.1}%
+\contentsline {subsection}{\numberline {5.2}Main Contribution and Practical Recommendations}{50}{subsection.5.2}%
+\contentsline {subsection}{\numberline {5.3}Limitations and Future Work}{51}{subsection.5.3}%
+\contentsline {section}{Declaration on the Use of Artificial Intelligence}{53}{section*.45}%
+\contentsline {section}{Declaration on the Use of Data}{53}{section*.46}%
+\contentsline {section}{Appendix: Shapley Method Subroutines}{56}{section*.48}%
+\contentsline {subsection}{\numberline {A.1}Coalition Value (Traditional and Asymmetric Shapley)}{56}{subsection.A.1}%
+\contentsline {subsection}{\numberline {A.2}Uniform Random Topological Ordering (Asymmetric and Causal Shapley)}{56}{subsection.A.2}%
+\contentsline {subsection}{\numberline {A.3}Post-Interventional Sampling (Causal Shapley)}{57}{subsection.A.3}%
+\contentsline {subsection}{\numberline {A.4}System Value (Shapley Flow)}{59}{subsection.A.4}%

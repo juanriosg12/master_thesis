@@ -1,0 +1,1497 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Causal Shapley Values – Juan David Rios Garcia</title>
+
+  <!-- Reveal.js CDN -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reset.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/theme/black.css" />
+
+  <style>
+    /* ── Global overrides ─────────────────────────────────── */
+    :root {
+      --accent:   #4fa3e0;
+      --accent2:  #f0a500;
+      --danger:   #e05c4f;
+      --ok:       #5cba6e;
+      --bg-card:  rgba(255,255,255,0.06);
+      --border:   rgba(255,255,255,0.15);
+    }
+
+    .reveal { font-family: 'Segoe UI', system-ui, sans-serif; }
+    /* Tight slide padding — keeps everything inside the 720px height */
+    .reveal .slides section { padding: 10px 28px; box-sizing: border-box; overflow: hidden; }
+
+    /* Headings */
+    .reveal h1 { font-size: 1.6em; color: #fff; letter-spacing: -0.5px; margin: 0 0 6px; }
+    .reveal h2 { font-size: 1.1em; color: var(--accent); margin: 0 0 6px; }
+    .reveal h3 { font-size: 0.82em; color: var(--accent2); margin: 0 0 4px; }
+    .reveal p, .reveal li { font-size: 0.62em; line-height: 1.45; margin: 0 0 2px; }
+    .reveal ul { margin: 4px 0 4px 14px; padding: 0; }
+
+    /* Slide subtitle */
+    .subtitle { font-size: 0.75em; color: #aaa; margin-top: 0.2em; }
+
+    /* ── Layout helpers ───────────────────────────────────── */
+    .cols2 { display: flex; gap: 12px; align-items: flex-start; }
+    .cols2 > * { flex: 1; min-width: 0; }
+    .cols3 { display: flex; gap: 8px; align-items: flex-start; }
+    .cols3 > * { flex: 1; min-width: 0; }
+
+    /* Images — px-based to match the fixed 720px Reveal.js slide height */
+    .reveal img { max-width: 100%; max-height: 200px; object-fit: contain; border-radius: 4px; }
+    .img-full    { max-height: 240px !important; }
+    .img-tall    { max-height: 270px !important; }
+    .img-sm      { max-height: 150px !important; }
+    .img-xs      { max-height: 110px !important; }
+
+    /* Cards — tighter padding and margins */
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 7px 10px;
+      margin-bottom: 6px;
+    }
+    .card-accent  { border-left: 3px solid var(--accent); }
+    .card-warn    { border-left: 3px solid var(--accent2); }
+    .card-danger  { border-left: 3px solid var(--danger); }
+    .card-ok      { border-left: 3px solid var(--ok); }
+
+    /* Tags / badges */
+    .badge {
+      display: inline-block;
+      padding: 1px 6px;
+      border-radius: 3px;
+      font-size: 0.55em;
+      font-weight: 700;
+      margin: 0 2px;
+      vertical-align: middle;
+    }
+    .badge-blue   { background: #1a4a7a; color: #7ecbff; }
+    .badge-amber  { background: #5a3d00; color: #ffd27e; }
+    .badge-red    { background: #5a1a1a; color: #ffaaaa; }
+    .badge-green  { background: #1a4a2a; color: #9dffb3; }
+
+    /* Tables */
+    .reveal table { font-size: 0.56em; width: 100%; border-collapse: collapse; }
+    .reveal table th {
+      background: rgba(79,163,224,0.25);
+      color: var(--accent);
+      padding: 4px 8px;
+      text-align: left;
+      font-weight: 700;
+    }
+    .reveal table td { padding: 3px 8px; border-bottom: 1px solid var(--border); }
+    .reveal table tr:last-child td { border-bottom: none; }
+    .hi-row td { background: rgba(79,163,224,0.15); }
+    .lo-row td { background: rgba(92,186,110,0.12); }
+
+    /* Metric pill */
+    .metric { font-size: 1.2em; font-weight: 700; color: var(--accent); }
+    .metric-label { font-size: 0.55em; color: #aaa; display: block; margin-top: -2px; }
+
+    /* Numbered step */
+    .step {
+      display: flex; align-items: flex-start; gap: 6px;
+      margin-bottom: 4px;
+    }
+    .step-num {
+      min-width: 18px; height: 18px; border-radius: 50%;
+      background: var(--accent); color: #000;
+      font-weight: 800; font-size: 0.6em;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .step-body { font-size: 0.58em; line-height: 1.35; padding-top: 1px; }
+
+    /* Caption under image */
+    .fig-caption { font-size: 0.46em; color: #888; text-align: center; margin-top: 2px; }
+
+    /* Alarm box */
+    .alarm {
+      border-radius: 5px; padding: 5px 10px;
+      font-size: 0.57em; margin-bottom: 6px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .alarm-icon { font-size: 1.2em; flex-shrink: 0; }
+    .alarm-base   { background: rgba(240,165,0,0.15);  border: 1px solid rgba(240,165,0,0.4); }
+    .alarm-disc   { background: rgba(79,163,224,0.15); border: 1px solid rgba(79,163,224,0.4); }
+    .alarm-sign   { background: rgba(224,92,79,0.15);  border: 1px solid rgba(224,92,79,0.4); }
+
+    /* Section label */
+    .section-label {
+      font-size: 0.48em; letter-spacing: 2px; text-transform: uppercase;
+      color: var(--accent2); margin-bottom: 2px;
+    }
+
+    /* Title slide */
+    .title-bg {
+      background: linear-gradient(135deg, #0a1628 0%, #112244 60%, #0d2a3a 100%);
+      min-height: 100%;
+      display: flex; flex-direction: column; justify-content: center;
+    }
+    .title-divider { width: 60px; height: 3px; background: var(--accent); margin: 8px auto; }
+
+    /* Highlight text */
+    .hl  { color: var(--accent);  font-weight: 700; }
+    .hl2 { color: var(--accent2); font-weight: 700; }
+    .hl3 { color: var(--danger);  font-weight: 700; }
+
+    /* Progress dots */
+    .reveal .progress { color: var(--accent); }
+  </style>
+</head>
+<body>
+<div class="reveal">
+<div class="slides">
+
+<!-- ═══════════════════════════════════════════════════════════
+     SLIDE 1 — Title
+     ═══════════════════════════════════════════════════════════ -->
+<section>
+  <div class="title-bg" style="text-align:center; padding: 24px 50px;">
+    <div style="font-size:0.6em; letter-spacing:3px; text-transform:uppercase; color:var(--accent2); margin-bottom:10px;">Master Thesis · 2026</div>
+    <h1 style="font-size:1.8em; line-height:1.25; margin:0;">
+      Evaluating Structure-Aware Shapley Methods<br>Under Imperfect Causal Discovery
+    </h1>
+    <div class="title-divider"></div>
+    <p style="font-size:0.75em; color:#ccc; margin:4px 0;">Juan David Rios Garcia</p>
+    <p style="font-size:0.58em; color:#888; margin:2px 0;">
+      Asymmetric · Causal · Flow Shapley&nbsp;&nbsp;|&nbsp;&nbsp;PC &amp; LiNGAM Discovery&nbsp;&nbsp;|&nbsp;&nbsp;Magnitude &amp; Sign Metrics
+    </p>
+    <div style="margin-top:14px; display:flex; justify-content:center; gap:12px; flex-wrap:wrap;">
+      <span class="badge badge-blue">Explainable AI</span>
+      <span class="badge badge-amber">Causal Discovery</span>
+      <span class="badge badge-green">Diagnostic Framework</span>
+      <span class="badge badge-red">Graph Sensitivity</span>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SLIDE 1b — Assumption vs Reality (Visual)
+     ═══════════════════════════════════════════════════════════ -->
+<section style="padding:8px 20px;">
+  <div style="display:flex; gap:10px; height:600px;">
+
+    <!-- ── Left panel: Literature's assumption ── -->
+    <div style="flex:1; background:#f4efe4; border-radius:10px; padding:10px 14px; display:flex; flex-direction:column; align-items:center; overflow:hidden;">
+      <div style="font-size:0.68em; font-weight:900; color:#1a2744; text-align:center; letter-spacing:1px; margin-bottom:3px;">THE LITERATURE'S ASSUMPTION</div>
+      <div style="font-size:0.46em; color:#444; text-align:center; margin-bottom:4px;">A validated, ground-truth causal graph exists to<br>map feature dependencies perfectly.</div>
+      <!-- viewBox padded 30px each side so r=24 nodes never touch the edge -->
+      <svg viewBox="0 0 300 330" style="width:100%; flex:1; overflow:hidden;">
+        <defs>
+          <marker id="arr-b" markerWidth="9" markerHeight="9" refX="8" refY="3" orient="auto">
+            <path d="M0,0 L0,6 L9,3 z" fill="#1a2744"/>
+          </marker>
+        </defs>
+        <!-- Edges — border-to-border (r=24 offset along each direction) -->
+        <!-- A(150,38)→B(83,140): len≈122 unit=(-0.549,0.836) -->
+        <line x1="137" y1="58"  x2="96"  y2="120" stroke="#1a2744" stroke-width="2.2" marker-end="url(#arr-b)"/>
+        <!-- A(150,38)→C(217,140): len≈122 unit=(0.549,0.836) -->
+        <line x1="163" y1="58"  x2="204" y2="120" stroke="#1a2744" stroke-width="2.2" marker-end="url(#arr-b)"/>
+        <!-- B(83,140)→D(150,230): len≈112 unit=(0.597,0.802) -->
+        <line x1="97"  y1="159" x2="136" y2="211" stroke="#1a2744" stroke-width="2.2" marker-end="url(#arr-b)"/>
+        <!-- C(217,140)→D(150,230): len≈112 unit=(-0.597,0.802) -->
+        <line x1="203" y1="159" x2="164" y2="211" stroke="#1a2744" stroke-width="2.2" marker-end="url(#arr-b)"/>
+        <!-- C(217,140)→F(248,222): len≈88 unit=(0.354,0.935) -->
+        <line x1="226" y1="162" x2="240" y2="200" stroke="#1a2744" stroke-width="2.2" marker-end="url(#arr-b)"/>
+        <!-- D(150,230)→E(122,300): len≈75 unit=(-0.371,0.928) -->
+        <line x1="141" y1="252" x2="131" y2="278" stroke="#1a2744" stroke-width="2.2" marker-end="url(#arr-b)"/>
+        <!-- Nodes -->
+        <circle cx="150" cy="38"  r="24" fill="#8fa878" stroke="#fff" stroke-width="2.5"/>
+        <text   x="150" y="43"   text-anchor="middle" font-size="12" fill="#1a2744" font-weight="700">Node A</text>
+        <circle cx="83"  cy="140" r="24" fill="#8fa878" stroke="#fff" stroke-width="2.5"/>
+        <text   x="83"  y="145"  text-anchor="middle" font-size="12" fill="#1a2744" font-weight="700">Node B</text>
+        <circle cx="217" cy="140" r="24" fill="#8fa878" stroke="#fff" stroke-width="2.5"/>
+        <text   x="217" y="145"  text-anchor="middle" font-size="12" fill="#1a2744" font-weight="700">Node C</text>
+        <circle cx="150" cy="230" r="24" fill="#8fa878" stroke="#fff" stroke-width="2.5"/>
+        <text   x="150" y="235"  text-anchor="middle" font-size="12" fill="#1a2744" font-weight="700">Node D</text>
+        <circle cx="248" cy="222" r="24" fill="#8fa878" stroke="#fff" stroke-width="2.5"/>
+        <text   x="248" y="227"  text-anchor="middle" font-size="12" fill="#1a2744" font-weight="700">Node F</text>
+        <circle cx="122" cy="300" r="24" fill="#8fa878" stroke="#fff" stroke-width="2.5"/>
+        <text   x="122" y="305"  text-anchor="middle" font-size="12" fill="#1a2744" font-weight="700">Node E</text>
+        <!-- Label -->
+        <text x="154" y="175" font-size="10" fill="#666" font-style="italic" text-anchor="middle">Idealized, Error-Free</text>
+        <text x="154" y="188" font-size="10" fill="#666" font-style="italic" text-anchor="middle">Causal Model.</text>
+      </svg>
+    </div>
+
+    <!-- ── Right panel: Practitioner's reality ── -->
+    <div style="flex:1; background:#f4efe4; border-radius:10px; padding:10px 14px; display:flex; flex-direction:column; align-items:center; overflow:hidden;">
+      <div style="font-size:0.68em; font-weight:900; color:#1a2744; text-align:center; letter-spacing:1px; margin-bottom:3px;">THE PRACTITIONER'S REALITY</div>
+      <div style="font-size:0.46em; color:#444; text-align:center; margin-bottom:4px;">We rely on automated discovery algorithms. The<br>inferred graphs are noisy, imperfect, and contested.</div>
+      <!-- Same viewBox and node positions as left panel -->
+      <svg viewBox="0 0 300 330" style="width:100%; flex:1; overflow:hidden;">
+        <defs>
+          <marker id="arr-r" markerWidth="9" markerHeight="9" refX="8" refY="3" orient="auto">
+            <path d="M0,0 L0,6 L9,3 z" fill="#1a2744"/>
+          </marker>
+          <marker id="arr-or" markerWidth="9" markerHeight="9" refX="8" refY="3" orient="auto">
+            <path d="M0,0 L0,6 L9,3 z" fill="#b84d2a"/>
+          </marker>
+          <marker id="arr-or-s" markerWidth="9" markerHeight="9" refX="1" refY="3" orient="auto-start-reverse">
+            <path d="M9,3 L0,0 L0,6 z" fill="#b84d2a"/>
+          </marker>
+        </defs>
+
+        <!-- ✅ Correct edges (border-to-border, same offsets as left panel) -->
+        <!-- A→C: (163,58)→(204,120) -->
+        <line x1="163" y1="58"  x2="204" y2="120" stroke="#1a2744" stroke-width="2.2" marker-end="url(#arr-r)"/>
+        <!-- C→F: (226,162)→(240,200) -->
+        <line x1="226" y1="162" x2="240" y2="200" stroke="#1a2744" stroke-width="2.2" marker-end="url(#arr-r)"/>
+
+        <!-- ❌ B→A inverted (should be A→B): (96,120)→(137,58) -->
+        <line x1="96"  y1="120" x2="137" y2="58"  stroke="#b84d2a" stroke-width="2.2" marker-end="url(#arr-or)"/>
+
+        <!-- ❌ D→C inverted (should be C→D): (164,211)→(203,159) -->
+        <line x1="164" y1="211" x2="203" y2="159" stroke="#b84d2a" stroke-width="2.2" marker-end="url(#arr-or)"/>
+
+        <!-- ❌ D→B inverted (should be B→D): (136,211)→(97,159) -->
+        <line x1="136" y1="211" x2="97"  y2="159" stroke="#b84d2a" stroke-width="2.2" marker-end="url(#arr-or)"/>
+
+        <!-- ❌ E→D spurious dashed: (131,278)→(141,252) -->
+        <line x1="131" y1="278" x2="141" y2="252" stroke="#b84d2a" stroke-width="2.2" stroke-dasharray="6,3" marker-end="url(#arr-or)"/>
+
+        <!-- ❌ B↔C bidirectional: (107,140)→(193,140) -->
+        <line x1="107" y1="140" x2="193" y2="140"
+              stroke="#b84d2a" stroke-width="2.2"
+              marker-end="url(#arr-or)" marker-start="url(#arr-or-s)"/>
+
+        <!-- Nodes — identical positions to left panel -->
+        <circle cx="150" cy="38"  r="24" fill="#8fa878" stroke="#fff" stroke-width="2.5"/>
+        <text   x="150" y="43"   text-anchor="middle" font-size="12" fill="#1a2744" font-weight="700">Node A</text>
+        <circle cx="83"  cy="140" r="24" fill="#8fa878" stroke="#fff" stroke-width="2.5"/>
+        <text   x="83"  y="145"  text-anchor="middle" font-size="12" fill="#1a2744" font-weight="700">Node B</text>
+        <circle cx="217" cy="140" r="24" fill="#8fa878" stroke="#fff" stroke-width="2.5"/>
+        <text   x="217" y="145"  text-anchor="middle" font-size="12" fill="#1a2744" font-weight="700">Node C</text>
+        <circle cx="150" cy="230" r="24" fill="#8fa878" stroke="#fff" stroke-width="2.5"/>
+        <text   x="150" y="235"  text-anchor="middle" font-size="12" fill="#1a2744" font-weight="700">Node D</text>
+        <circle cx="248" cy="222" r="24" fill="#8fa878" stroke="#fff" stroke-width="2.5"/>
+        <text   x="248" y="227"  text-anchor="middle" font-size="12" fill="#1a2744" font-weight="700">Node F</text>
+        <circle cx="122" cy="300" r="24" fill="#8fa878" stroke="#fff" stroke-width="2.5"/>
+        <text   x="122" y="305"  text-anchor="middle" font-size="12" fill="#1a2744" font-weight="700">Node E</text>
+        <!-- Label -->
+        <text x="154" y="175" font-size="10" fill="#b84d2a" font-style="italic" text-anchor="middle">Inferred, Noisy, and</text>
+        <text x="154" y="188" font-size="10" fill="#b84d2a" font-style="italic" text-anchor="middle">Imperfect Causal Model.</text>
+      </svg>
+    </div>
+  </div>
+
+  <!-- Bottom banner -->
+  <div style="background:#1a2744; border-radius:7px; padding:9px 20px; margin-top:8px; text-align:center;">
+    <div style="font-size:0.58em; font-weight:900; color:#fff; letter-spacing:0.6px; text-transform:uppercase;">
+      Structure-Aware Explainable AI (XAI) Assumes the Causal Map is Correct.
+    </div>
+    <div style="font-size:0.55em; color:#ccc; margin-top:3px;">
+      What happens to our explanations when <span style="color:#d96a40; font-weight:700;">the map is wrong</span>?
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SLIDE 2 — The Practitioner's Problem
+     ═══════════════════════════════════════════════════════════ -->
+<section>
+  <div class="section-label">Motivation</div>
+  <h2>The World Practitioners Face</h2>
+  <div class="cols2" style="gap:14px;">
+    <div>
+      <div class="card card-accent">
+        <h3>Standard Explainability</h3>
+        <ul>
+          <li>Shapley values: gold standard for local feature attribution</li>
+          <li>Model-agnostic, works with any black-box predictor</li>
+          <li>Satisfies four cooperative-game axioms</li>
+        </ul>
+      </div>
+      <div class="card card-warn" style="margin-top:6px;">
+        <h3>The Symmetry Problem</h3>
+        <ul>
+          <li><span class="hl2">Symmetry axiom</span> treats all features as interchangeable</li>
+          <li>Averages over <em>all</em> N! orderings with equal weight</li>
+          <li>When X<sub>i</sub> causes X<sub>j</sub>: correlation mis-credited to downstream effect</li>
+          <li>Inflates credit of descendants, suppresses upstream causes</li>
+        </ul>
+      </div>
+    </div>
+    <div>
+      <div class="card" style="margin-bottom:6px;">
+        <h3>Four Shapley Axioms</h3>
+        <table>
+          <thead><tr><th>Axiom</th><th>Meaning</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Efficiency</strong></td><td>Credits sum to f(x) − baseline</td></tr>
+            <tr><td><strong>Linearity</strong></td><td>Ensemble attributions combine linearly</td></tr>
+            <tr><td><strong>Null Player</strong></td><td>Zero credit for zero-contribution features</td></tr>
+            <tr class="hi-row"><td><strong>Symmetry ✗</strong></td><td>Equal credit for equal contribution — <em>fails under causality</em></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="card card-danger">
+        <h3>Structure-Aware Methods</h3>
+        <ul>
+          <li>ASV, CSV, Shapley Flow embed causal graph into attribution</li>
+          <li>Preserve Efficiency, Linearity, Null Player</li>
+          <li><span class="hl3">Relax Symmetry</span> to honour causal ordering</li>
+          <li>Promise more faithful local explanations</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SLIDE 3 — The Open Problem
+     ═══════════════════════════════════════════════════════════ -->
+<section>
+  <div class="section-label">Problem Statement</div>
+  <h2>The Practitioner's Dilemma</h2>
+  <div class="cols2" style="gap:14px;">
+    <div>
+      <div class="card card-warn">
+        <h3>Structure-Aware methods require a causal graph</h3>
+        <ul>
+          <li>In practice, the true graph is <span class="hl2">never directly observable</span></li>
+          <li>Practitioners rely on automated <strong>causal discovery</strong> algorithms</li>
+          <li>Estimated graphs are noisy — false positives, false negatives, mis-orientations</li>
+        </ul>
+      </div>
+      <div class="card card-danger" style="margin-top:6px;">
+        <h3>The missing piece</h3>
+        <ul>
+          <li>No existing framework measures <em>how much attribution quality degrades</em> as a function of graph imperfection</li>
+          <li>Practitioners have <span class="hl3">no principled basis</span> to decide whether a discovered graph improves or distorts explanations</li>
+        </ul>
+      </div>
+      <div class="card card-ok" style="margin-top:6px;">
+        <h3>This thesis</h3>
+        <ul>
+          <li>Builds a <span class="hl">replicable experimental pipeline</span></li>
+          <li>Measures attribution change via <strong>Magnitude Divergence (ΔM)</strong> and <strong>Sign Disagreement (D)</strong></li>
+          <li>Works for any dataset, model, and discovery algorithm</li>
+        </ul>
+      </div>
+    </div>
+    <div style="display:flex; flex-direction:column; align-items:center; justify-content:center;">
+      <img src="figures/experimental_pipeline_diagram.png" alt="Pipeline overview" class="img-tall" />
+      <p class="fig-caption">Experimental pipeline — full detail in Slide 6</p>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SLIDE 4 — Traditional Shapley Values: Core Idea
+     ═══════════════════════════════════════════════════════════ -->
+<section>
+  <div class="section-label">Background</div>
+  <h2>Traditional Shapley Values</h2>
+  <div class="cols2" style="gap:14px;">
+    <div>
+      <div class="card card-accent">
+        <h3>Core idea — Cooperative Game Theory</h3>
+        <ul>
+          <li>Players = input features; Payoff = model prediction</li>
+          <li>Coalition S: features with their real values; absent features marginalized over background data</li>
+          <li>Marginal contribution: Δ when feature <em>i</em> joins coalition S</li>
+          <li>Attribution = average marginal contribution over <strong>all N! orderings</strong></li>
+        </ul>
+      </div>
+      <div class="card" style="margin-top:10px; text-align:center;">
+        <div style="font-size:0.9em; color:#ccc; font-family: monospace; padding:6px 0;">
+          φ<sub>i</sub> = Σ <span style="font-size:0.8em;">|S|!(N−|S|−1)! / N!</span> · [v(S∪{i}) − v(S)]
+        </div>
+        <p style="font-size:0.55em; color:#888; margin-top:4px;">v(S) = 𝔼[f(X) | X<sub>S</sub> = x<sub>S</sub>] — observational coalition value</p>
+      </div>
+    </div>
+    <div>
+      <div class="card card-warn">
+        <h3>Focus: Local Attribution</h3>
+        <ul>
+          <li>Explains <em>one prediction</em> for <em>one instance</em></li>
+          <li>Credits sum exactly to f(x) − baseline (Efficiency)</li>
+          <li>Model-agnostic: any black-box f(·)</li>
+        </ul>
+      </div>
+      <div class="card" style="margin-top:10px;">
+        <h3>Four Shapley Axioms</h3>
+        <table>
+          <thead><tr><th>Axiom</th><th>Meaning</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Efficiency</strong></td><td>Credits sum to f(x) − baseline</td></tr>
+            <tr><td><strong>Linearity</strong></td><td>Ensemble attributions combine linearly</td></tr>
+            <tr><td><strong>Null Player</strong></td><td>Zero credit for zero-contribution features</td></tr>
+            <tr class="hi-row"><td><strong>Symmetry ✗</strong></td><td>Equal weight for equal contribution — <em>fails under causality</em></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SLIDE 4b — The Symmetry Problem
+     ═══════════════════════════════════════════════════════════ -->
+<section>
+  <div class="section-label">Background</div>
+  <h2>The Symmetry Problem Under Causality</h2>
+  <div class="cols2" style="gap:14px;">
+    <div>
+      <div class="card card-danger">
+        <h3>The Symmetry Failure Under Causality</h3>
+        <ul>
+          <li>Uniform weighting over all N! orderings = Symmetry axiom</li>
+          <li>If X<sub>i</sub> → X<sub>j</sub>, they are <em>not</em> interchangeable coalition partners</li>
+          <li>Symmetric averaging <span class="hl3">inflates downstream X<sub>j</sub></span> at the expense of upstream cause X<sub>i</sub></li>
+          <li>Correlation between cause and effect is split as if neither caused the other</li>
+        </ul>
+      </div>
+    </div>
+    <div>
+      <div class="card card-ok">
+        <h3>What Structure-Aware Methods Fix</h3>
+        <ul>
+          <li>Each method modifies exactly <strong>one ingredient</strong> of the Traditional recipe</li>
+          <li>All three preserve Efficiency, Linearity, Null Player</li>
+          <li><span class="hl">Symmetry is the only axiom that changes</span></li>
+        </ul>
+      </div>
+      <div class="alarm alarm-disc" style="margin-top:10px; font-size:0.62em;">
+        <div class="alarm-icon">🔷</div>
+        <div>
+          <strong>The open question:</strong> When the causal graph injected into each method is <em>imperfect</em>, how much does the Symmetry fix hurt vs help?
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SLIDE 5 — Structure-Aware Methods Comparison
+     ═══════════════════════════════════════════════════════════ -->
+<section>
+  <div class="section-label">Methods</div>
+  <h2>Three Structure-Aware Extensions</h2>
+  <table style="margin-bottom:8px;">
+    <thead>
+      <tr>
+        <th>Method</th>
+        <th>Who are the players?</th>
+        <th>Permutation space</th>
+        <th>Value function v(S)</th>
+        <th>Graph role</th>
+        <th>Symmetry?</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr class="lo-row">
+        <td><strong>Traditional</strong><br><span style="font-size:0.85em;color:#888;">Baseline</span></td>
+        <td>Features</td>
+        <td>All N! orderings</td>
+        <td>Observational<br>𝔼[f | X<sub>S</sub>=x<sub>S</sub>]</td>
+        <td>Not used</td>
+        <td><span class="badge badge-blue">Yes</span></td>
+      </tr>
+      <tr>
+        <td><strong>Asymmetric (ASV)</strong></td>
+        <td>Features</td>
+        <td><span class="hl">Topological extensions only</span><br>ancestors before descendants</td>
+        <td>Observational<br>(unchanged)</td>
+        <td>Restricts permutations</td>
+        <td><span class="badge badge-red">Relaxed</span></td>
+      </tr>
+      <tr>
+        <td><strong>Causal (CSV)</strong></td>
+        <td>Features</td>
+        <td>All orderings<br>(component DAG)</td>
+        <td><span class="hl">Interventional<br>𝔼[f | do(X<sub>S</sub>=x<sub>S</sub>)]</span></td>
+        <td>Drives post-interventional distribution</td>
+        <td><span class="badge badge-red">Relaxed</span></td>
+      </tr>
+      <tr>
+        <td><strong>Shapley Flow</strong></td>
+        <td><span class="hl2">Directed edges</span></td>
+        <td>All |E|! edge orderings</td>
+        <td>Binary foreground/<br>background activation</td>
+        <td><span class="hl2">Edges ARE the players</span></td>
+        <td><span class="badge badge-red">Relaxed</span></td>
+      </tr>
+    </tbody>
+  </table>
+  <div class="cols3" style="margin-top:4px;">
+    <div class="card card-ok" style="font-size:0.62em;">
+      <strong>ASV</strong> — changes only <em>which orderings are sampled</em>. Graph enters at initialization only. Lightest structural dependency.
+    </div>
+    <div class="card card-warn" style="font-size:0.62em;">
+      <strong>CSV</strong> — every absent feature is re-sampled via do-calculus through its discovered parent set. Each wrong edge corrupts an attribution directly.
+    </div>
+    <div class="card card-danger" style="font-size:0.62em;">
+      <strong>Flow</strong> — no graph = no game. Credit propagates along edges; errors cascade across all connected paths simultaneously.
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SLIDE 6 — Experimental Pipeline
+     ═══════════════════════════════════════════════════════════ -->
+<section>
+  <div class="section-label">Experimental Design</div>
+  <h2>The Experimental Pipeline</h2>
+  <div style="text-align:center; margin-bottom:6px;">
+    <img src="figures/experimental_pipeline_diagram.png" alt="Pipeline diagram" style="max-height:220px;" />
+  </div>
+  <div class="cols3" style="margin-top:6px;">
+    <div class="card card-accent" style="font-size:0.6em;">
+      <strong>① Datasets</strong><br>Synthetic (linear+confounded, 50 feat) &amp; Sachs cell signaling (10 proteins)
+    </div>
+    <div class="card card-accent" style="font-size:0.6em;">
+      <strong>② Causal Discovery</strong><br>PC (constraint-based) · LiNGAM (functional) · True/Consensus DAG (oracle)
+    </div>
+    <div class="card card-accent" style="font-size:0.6em;">
+      <strong>③ Predictive Model</strong><br>LightGBM + Optuna hyperparameter search
+    </div>
+    <div class="card card-warn" style="font-size:0.6em;">
+      <strong>④ Shapley Methods</strong><br>Traditional · ASV · CSV · Flow — each receives a different graph
+    </div>
+    <div class="card card-warn" style="font-size:0.6em;">
+      <strong>⑤ Evaluation</strong><br>ΔM<sub>base</sub>, D<sub>base</sub> · ΔM<sub>disc</sub>, D<sub>disc</sub> · ΔM<sub>oracle</sub>, D<sub>oracle</sub>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SLIDE 7 — Datasets
+     ═══════════════════════════════════════════════════════════ -->
+<section>
+  <div class="section-label">Data</div>
+  <h2>Two Benchmark Datasets</h2>
+  <div class="cols2" style="gap:14px;">
+    <div>
+      <div class="card card-accent">
+        <h3>Synthetic — Linear + Confounded</h3>
+        <table>
+          <tbody>
+            <tr><td>Features (X)</td><td><strong>50</strong></td></tr>
+            <tr><td>Samples</td><td><strong>1,000</strong></td></tr>
+            <tr><td>X→X edges (True DAG)</td><td><strong>87</strong>  (~1.74 / node)</td></tr>
+            <tr><td>X→Y parents</td><td><strong>15</strong> (30% ratio)</td></tr>
+            <tr><td>Hidden confounders</td><td><strong>5</strong> (2-3 effects each)</td></tr>
+            <tr><td>Structure</td><td>X<sub>j</sub> = Σ w<sub>ij</sub>X<sub>i</sub> + ε, ε~N(0,0.5)</td></tr>
+            <tr><td>Coefficients</td><td>Uniform(0.5, 2.0) ± random sign</td></tr>
+            <tr><td>Preprocessing</td><td>None (raw)</td></tr>
+          </tbody>
+        </table>
+        <p style="font-size:0.55em;color:#888;margin-top:6px;">Graph density ~7.1% — calibrated to match Sachs density for fair comparison</p>
+      </div>
+    </div>
+    <div>
+      <div class="card card-warn">
+        <h3>Sachs — Cell Signaling (Real Data)</h3>
+        <table>
+          <tbody>
+            <tr><td>Proteins (X)</td><td><strong>10</strong> (raf, mek, plc, pip2, pip3, erk, pka, pkc, p38, jnk)</td></tr>
+            <tr><td>Target (Y)</td><td><strong>Akt kinase</strong></td></tr>
+            <tr><td>Samples</td><td><strong>7,466</strong></td></tr>
+            <tr><td>Consensus X→X edges</td><td><strong>17</strong></td></tr>
+            <tr><td>Consensus X→Y edges</td><td><strong>3</strong> (pip3, pka, erk → akt)</td></tr>
+            <tr><td>Preprocessing step 1</td><td>log1p transform (full dataset)</td></tr>
+            <tr><td>Preprocessing step 2</td><td>StandardScaler (fit on train only)</td></tr>
+          </tbody>
+        </table>
+        <p style="font-size:0.55em;color:#888;margin-top:6px;">80/20 train/test split, seed 42. log1p ensures LiNGAM pruning threshold is scale-consistent.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SLIDE 8 — Discovery & Model Results
+     ═══════════════════════════════════════════════════════════ -->
+<section>
+  <div class="section-label">Results</div>
+  <h2>Causal Discovery &amp; Model Performance</h2>
+  <div class="cols2" style="gap:12px; margin-bottom:8px;">
+    <div>
+      <img src="figures/adjacency_comparison_linear_conf_f50_s1000_p30.png" alt="Adjacency synthetic" />
+      <p class="fig-caption">Synthetic: True (87 edges) vs PC (54) vs LiNGAM (105)</p>
+    </div>
+    <div>
+      <img src="figures/adjacency_comparison_sachs.png" alt="Adjacency Sachs" />
+      <p class="fig-caption">Sachs: Consensus (17 edges) vs PC (19) vs LiNGAM (26)</p>
+    </div>
+  </div>
+  <div class="cols2" style="gap:12px;">
+    <div>
+      <table>
+        <caption style="color:var(--accent); font-size:0.65em; margin-bottom:2px;">Discovery — Synthetic</caption>
+        <thead><tr><th>Algorithm</th><th>Edges</th><th>TP</th><th>FP</th><th>Precision</th><th>F1</th></tr></thead>
+        <tbody>
+          <tr class="lo-row"><td>PC</td><td>54</td><td>40</td><td>14</td><td>0.741</td><td><strong>0.567</strong></td></tr>
+          <tr><td>LiNGAM</td><td>105</td><td>24</td><td>81</td><td>0.230</td><td><strong>0.250</strong></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div>
+      <table>
+        <caption style="color:var(--accent2); font-size:0.75em; margin-bottom:4px;">Discovery — Sachs (performance reversal)</caption>
+        <thead><tr><th>Algorithm</th><th>Edges</th><th>Precision</th><th>F1</th></tr></thead>
+        <tbody>
+          <tr><td>PC</td><td>19</td><td>0.158</td><td><strong>0.167</strong></td></tr>
+          <tr class="lo-row"><td>LiNGAM</td><td>26</td><td>0.269</td><td><strong>0.326</strong></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div class="cols2" style="gap:12px; margin-top:6px;">
+    <div class="card card-accent" style="font-size:0.6em;">
+      <strong>Synthetic:</strong> Confounders violate LiNGAM's independence assumption → 81 false positives. PC's conditional independence tests partially block spurious associations.
+    </div>
+    <div class="card card-warn" style="font-size:0.6em;">
+      <strong>Sachs:</strong> Non-Gaussian protein distributions LiNGAM can exploit. PC hypersensitive at 5,972 training rows. <span class="hl2">Performance hierarchy reverses.</span> &nbsp;Model: σ̂ = 4.71 (synthetic), 116.76 (Sachs). All ΔM metrics are % of σ̂.
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SLIDE 9 — Evaluation Framework Intro
+     ═══════════════════════════════════════════════════════════ -->
+<section>
+  <div class="section-label">Metrics</div>
+  <h2>Why Two Metrics?</h2>
+  <div class="cols2" style="gap:28px;">
+    <div>
+      <div class="card card-accent">
+        <h3>Magnitude Divergence (ΔM)</h3>
+        <ul>
+          <li>Per-feature RMS of |φ<sup>m,G</sup>| − |φ<sup>ref</sup>|, normalised by σ̂</li>
+          <li>Measures <span class="hl">how much the size of an attribution changes</span></li>
+          <li>Concentrates on a <strong>handful of dominant features</strong></li>
+          <li>ΔM = 0.10 means "10% of model output σ̂ difference"</li>
+        </ul>
+      </div>
+      <div class="card card-danger" style="margin-top:6px;">
+        <h3>Sign Disagreement (D)</h3>
+        <ul>
+          <li>Fraction of (instance, feature) pairs where sign flips vs reference</li>
+          <li>Measures <span class="hl3">whether the direction of attribution reverses</span></li>
+          <li>A sign flip = explanation says the opposite qualitative story</li>
+          <li>Fires on features <em>near zero</em> — invisible to ΔM</li>
+        </ul>
+      </div>
+    </div>
+    <div>
+      <div class="card card-warn" style="margin-bottom:6px;">
+        <h3>Why they flag different features</h3>
+        <ul>
+          <li><strong>High-magnitude features</strong>: large attributions absorb structural changes without crossing zero → ΔM fires, D stays low</li>
+          <li><strong>Near-zero features</strong>: a small graph-induced shift is enough to flip sign without leaving a large RMS footprint → D fires, ΔM stays low</li>
+          <li><span class="hl2">The two populations are largely non-overlapping</span></li>
+        </ul>
+      </div>
+      <div class="card" style="text-align:center; padding:8px;">
+        <div style="display:flex; justify-content:space-around; align-items:center;">
+          <div>
+            <div class="metric">ΔM</div>
+            <span class="metric-label">Magnitude Divergence<br>normalized by σ̂</span>
+          </div>
+          <div style="font-size:2em; color:var(--border);">+</div>
+          <div>
+            <div class="metric" style="color:var(--danger);">D</div>
+            <span class="metric-label">Sign Disagreement<br>fraction of flipped signs</span>
+          </div>
+        </div>
+        <p style="font-size:0.52em; color:#888; margin-top:6px;">Together: complete diagnostic picture</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SLIDE 10 — Three Comparisons
+     ═══════════════════════════════════════════════════════════ -->
+<section>
+  <div class="section-label">Metrics</div>
+  <h2>Three Comparison Tracks</h2>
+  <div class="cols3" style="gap:10px; margin-bottom:8px;">
+    <div class="card card-warn">
+      <h3>_base <span class="badge badge-amber">Practitioner</span></h3>
+      <p style="font-size:0.68em;"><strong>Reference:</strong> Traditional Shapley (no graph)</p>
+      <p style="font-size:0.65em; margin-top:6px;">
+        How much does injecting a causal graph move attributions away from the graph-free baseline?
+      </p>
+      <ul style="font-size:0.62em;">
+        <li>ΔM<sub>base</sub>: magnitude shift caused by graph injection</li>
+        <li>D<sub>base</sub>: fraction of signs that flip when graph is added</li>
+        <li><span class="hl2">Computable without any oracle — just run Traditional Shapley</span></li>
+      </ul>
+    </div>
+    <div class="card card-accent">
+      <h3>_disc <span class="badge badge-blue">Practitioner</span></h3>
+      <p style="font-size:0.68em;"><strong>Reference:</strong> same method, opposite discovered graph (PC ↔ LiNGAM)</p>
+      <p style="font-size:0.65em; margin-top:6px;">
+        How stable are attributions when you switch from one discovery algorithm to another?
+      </p>
+      <ul style="font-size:0.62em;">
+        <li>ΔM<sub>disc</sub>: magnitude instability between the two graphs</li>
+        <li>D<sub>disc</sub>: sign instability between the two graphs</li>
+        <li><span class="hl">Only requires two discovery runs on same data</span></li>
+      </ul>
+    </div>
+    <div class="card" style="border-left:3px solid #666;">
+      <h3>_oracle <span class="badge" style="background:#333;color:#aaa;">Validation</span></h3>
+      <p style="font-size:0.68em;"><strong>Reference:</strong> True DAG / Consensus DAG</p>
+      <p style="font-size:0.65em; margin-top:6px;">
+        How closely does a discovered graph recover the ground-truth attributions?
+      </p>
+      <ul style="font-size:0.62em;">
+        <li>Available only in controlled experiments</li>
+        <li>Confirms whether _base and _disc signals were pointing at genuine problems</li>
+        <li><em>Post-hoc validator, not a practitioner tool</em></li>
+      </ul>
+    </div>
+  </div>
+  <div class="card" style="font-size:0.62em; text-align:center; background:rgba(79,163,224,0.1);">
+    <strong>Key insight:</strong> &nbsp;_base and _disc together approximate what _oracle would reveal — <span class="hl">without needing a ground-truth graph</span>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SLIDE 11 — Metric Levels
+     ═══════════════════════════════════════════════════════════ -->
+<section>
+  <div class="section-label">Metrics</div>
+  <h2>Three Measurement Levels</h2>
+  <div class="cols3" style="gap:10px; margin-bottom:8px;">
+    <div class="card card-accent">
+      <h3>① Instance level</h3>
+      <p style="font-size:0.62em; font-family:monospace; background:#111; padding:8px; border-radius:4px; margin:8px 0;">
+        δ<sup>ref</sup><sub>i,f</sub> = |φ<sup>m,G</sup><sub>i,f</sub>| − |φ<sup>ref</sup><sub>i,f</sub>|
+      </p>
+      <ul style="font-size:0.62em;">
+        <li>Signed: positive = graph inflates, negative = suppresses</li>
+        <li>Sign disagreement: 1 if signs differ, 0 otherwise</li>
+        <li>Visible in scatter plots</li>
+      </ul>
+    </div>
+    <div class="card card-warn">
+      <h3>② Feature level</h3>
+      <p style="font-size:0.62em; font-family:monospace; background:#111; padding:8px; border-radius:4px; margin:8px 0;">
+        ΔM<sup>ref</sup><sub>f</sub> = (1/σ̂) √(mean over i of δ²)
+      </p>
+      <ul style="font-size:0.62em;">
+        <li>RMS collapses instance gaps — prevents cancellation</li>
+        <li>Divided by σ̂: % of model output standard deviation</li>
+        <li>Visible in heatmaps — <strong>identifies which features are affected</strong></li>
+      </ul>
+    </div>
+    <div class="card card-danger">
+      <h3>③ Global level</h3>
+      <p style="font-size:0.62em; font-family:monospace; background:#111; padding:8px; border-radius:4px; margin:8px 0;">
+        ΔM<sup>ref</sup> = (1/N) Σ<sub>f</sub> ΔM<sup>ref</sup><sub>f</sub>
+      </p>
+      <ul style="font-size:0.62em;">
+        <li>Average over all features</li>
+        <li>Single number per (method, graph) combination</li>
+        <li>Visible in scatter plots and summary tables</li>
+      </ul>
+    </div>
+  </div>
+  <div class="card" style="font-size:0.62em;">
+    <strong>Convention:</strong> &nbsp;Tables → global level &nbsp;|&nbsp; Heatmaps → feature level &nbsp;|&nbsp; Scatter plots → instance or global level
+    <br/><br/>
+    <strong>σ̂ normalization:</strong> By Efficiency, all attributions sum to f(x)−baseline, so attributions live on the model output scale. 
+    σ̂ = std of predictions over the test set = total dispersion the SHAP budget distributes. 
+    ΔM = 0.10 means "10% of explainable variation" — comparable across both datasets regardless of raw units.
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SLIDE 12 — Baseline Scatter
+     ═══════════════════════════════════════════════════════════ -->
+<section>
+  <div class="section-label">Results · Baseline Comparison</div>
+  <h2>Graph-Free Baseline Deviation — Scatter</h2>
+  <div class="cols2" style="gap:12px; margin-bottom:6px;">
+    <div>
+      <img src="figures/tga_sa_scatter_traditional_linear_conf_f50_s1000_p30.png" style="max-height:150px;" alt="Baseline scatter synthetic" />
+      <p class="fig-caption">Synthetic: ASV clusters lower-left; CSV &amp; Flow upper-right</p>
+    </div>
+    <div>
+      <img src="figures/tga_sa_scatter_traditional_sachs.png" alt="Baseline scatter Sachs" style="max-height:150px;" />
+      <p class="fig-caption">Sachs: same hierarchy — axes spread wider due to compact 10-node network</p>
+    </div>
+  </div>
+  <div class="cols2" style="gap:12px;">
+    <table>
+      <caption style="font-size:0.65em; color:var(--accent);">Baseline Deviation — Synthetic</caption>
+      <thead><tr><th>Method</th><th>Graph</th><th>D<sub>base</sub></th><th>ΔM<sub>base</sub></th></tr></thead>
+      <tbody>
+        <tr class="lo-row"><td>ASV</td><td>PC</td><td>5.08%</td><td>0.68%</td></tr>
+        <tr class="lo-row"><td>ASV</td><td>LiNGAM</td><td>5.76%</td><td>0.86%</td></tr>
+        <tr><td>CSV</td><td>PC</td><td>35.30%</td><td>6.39%</td></tr>
+        <tr><td>CSV</td><td>LiNGAM</td><td>33.92%</td><td>5.84%</td></tr>
+        <tr><td>Flow</td><td>PC</td><td>36.58%</td><td>6.62%</td></tr>
+        <tr><td>Flow</td><td>LiNGAM</td><td>37.68%</td><td>6.61%</td></tr>
+      </tbody>
+    </table>
+    <table>
+      <caption style="font-size:0.65em; color:var(--accent2);">Baseline Deviation — Sachs</caption>
+      <thead><tr><th>Method</th><th>Graph</th><th>D<sub>base</sub></th><th>ΔM<sub>base</sub></th></tr></thead>
+      <tbody>
+        <tr class="lo-row"><td>ASV</td><td>PC</td><td>16.80%</td><td>5.08%</td></tr>
+        <tr class="lo-row"><td>ASV</td><td>LiNGAM</td><td>17.00%</td><td>4.41%</td></tr>
+        <tr><td>CSV</td><td>PC</td><td>31.30%</td><td>7.83%</td></tr>
+        <tr><td>CSV</td><td>LiNGAM</td><td>33.10%</td><td>9.31%</td></tr>
+        <tr><td>Flow</td><td>PC</td><td>40.20%</td><td>12.68%</td></tr>
+        <tr><td>Flow</td><td>LiNGAM</td><td>41.50%</td><td>14.17%</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SLIDE 13 — Baseline Magnitude Heatmaps
+     ═══════════════════════════════════════════════════════════ -->
+<section>
+  <div class="section-label">Results · Baseline Comparison</div>
+  <h2>Baseline Magnitude Heatmaps (ΔM<sub>base</sub>)</h2>
+  <div class="cols2" style="gap:12px; margin-bottom:6px;">
+    <div>
+      <img src="figures/tga_heatmap_traditional_linear_conf_f50_s1000_p30.png" alt="Baseline magnitude heatmap synthetic" />
+      <p class="fig-caption">Synthetic: ASV rows pale throughout · CSV/Flow darken on X24, X33, X47</p>
+    </div>
+    <div>
+      <img src="figures/tga_heatmap_traditional_sachs.png" alt="Baseline magnitude heatmap Sachs" />
+      <p class="fig-caption">Sachs: even <span style="color:var(--accent);">ASV</span> shows elevated erk/pka — compact 10-node network effect</p>
+    </div>
+  </div>
+  <div class="cols2" style="gap:16px;">
+    <div class="card card-ok" style="font-size:0.6em;">
+      <strong>Synthetic (50 nodes):</strong> ASV rows nearly invisible — 50! ordering universe means each graph edge constrains a negligible fraction of permutations. CSV and Flow concentrate deviations on dominant features X24, X33, X47.
+    </div>
+    <div class="card card-warn" style="font-size:0.6em;">
+      <strong>Sachs (10 nodes):</strong> 10! = 3.6M orderings — each edge eliminates a far larger share. Even <span class="hl2">ASV shows elevated ΔM<sub>base</sub> on erk and pka</span>, signalling that the compact network amplifies ordering constraints.
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SLIDE 14 — Baseline Sign Heatmaps
+     ═══════════════════════════════════════════════════════════ -->
+<section>
+  <div class="section-label">Results · Baseline Comparison</div>
+  <h2>Baseline Sign Heatmaps (D<sub>base</sub>)</h2>
+  <div class="cols2" style="gap:12px; margin-bottom:6px;">
+    <div>
+      <img src="figures/sign_alignment_heatmap_traditional_linear_conf_f50_s1000_p30.png" alt="Baseline sign heatmap synthetic" />
+      <p class="fig-caption">Synthetic: sign flips concentrate on X10, X11 — not X24/X33/X47</p>
+    </div>
+    <div>
+      <img src="figures/sign_alignment_heatmap_traditional_sachs.png" alt="Baseline sign heatmap Sachs" />
+      <p class="fig-caption">Sachs: sign leaders are raf, plc, pkc — not erk/pka</p>
+    </div>
+  </div>
+  <div class="cols2" style="gap:16px;">
+    <div class="card card-danger" style="font-size:0.6em;">
+      <strong>Non-overlapping feature sets:</strong> Sign heatmap flags a completely different population from the magnitude heatmap. X10 (synth) and pkc (Sachs) lead sign disagreement but are invisible in magnitude — their Traditional Shapley values sit near zero.
+    </div>
+    <div class="card card-accent" style="font-size:0.6em;">
+      <strong>Why this matters:</strong> A sign flip tells the opposite qualitative story to an affected individual. ΔM alone would miss these features entirely. <span class="hl">The proportion of features changing sign is broader than the proportion driving magnitude change.</span>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SLIDE 15 — Discovery Sensitivity Scatter
+     ═══════════════════════════════════════════════════════════ -->
+<section>
+  <div class="section-label">Results · Discovery Sensitivity</div>
+  <h2>Discovery Algorithm Sensitivity — Scatter</h2>
+  <div class="cols2" style="gap:12px; margin-bottom:6px;">
+    <div>
+      <img src="figures/gss_sss_scatter_linear_conf_f50_s1000_p30.png" style="max-height:150px;" alt="Discovery scatter synthetic" />
+      <p class="fig-caption">Synthetic: ASV lower-left · CSV upper-right (high sign instability) · Flow centre</p>
+    </div>
+    <div>
+      <img src="figures/gss_sss_scatter_sachs.png" alt="Discovery scatter Sachs" style="max-height:150px;" />
+      <p class="fig-caption">Sachs: axes wider — flow magnitude instability doubles ASV; CSV most sign-unstable</p>
+    </div>
+  </div>
+  <div class="cols3" style="gap:8px;">
+    <div class="card card-ok" style="font-size:0.6em;">
+      <strong>ASV — minimal sensitivity (synthetic):</strong> ΔM<sub>disc</sub>=1.07%, D<sub>disc</sub>=5.93%. Sparse 50-node graph leaves most ordering relationships unconstrained by both PC and LiNGAM.
+    </div>
+    <div class="card card-accent" style="font-size:0.6em;">
+      <strong>ASV — Sachs raises concern:</strong> ΔM<sub>disc</sub>=8.46%, D<sub>disc</sub>=18.6%. Even the safest method is affected when the network is compact. Feature-level metrics identify exactly which nodes are contested.
+    </div>
+    <div class="card card-danger" style="font-size:0.6em;">
+      <strong>CSV &amp; Flow — high sensitivity:</strong> Flow ΔM<sub>disc</sub>=14.92% on Sachs — nearly 2× ASV. CSV D<sub>disc</sub>=31.80% on Sachs — sign of explanation flips on ~1 in 3 features when switching discovery algorithm.
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SLIDE 16 — Discovery Magnitude Heatmaps
+     ═══════════════════════════════════════════════════════════ -->
+<section>
+  <div class="section-label">Results · Discovery Sensitivity</div>
+  <h2>Cross-Discovery Magnitude Heatmaps (ΔM<sub>disc</sub>)</h2>
+  <div class="cols2" style="gap:12px; margin-bottom:6px;">
+    <div>
+      <img src="figures/gss_heatmap_linear_conf_f50_s1000_p30.png" alt="Discovery magnitude heatmap synthetic" />
+      <p class="fig-caption">Synthetic: ASV row near-zero · contested nodes = X33, X47</p>
+    </div>
+    <div>
+      <img src="figures/gss_heatmap_sachs.png" alt="Discovery magnitude heatmap Sachs" />
+      <p class="fig-caption">Sachs: erk &amp; pka elevated <em>even under ASV</em> — double-alarm features</p>
+    </div>
+  </div>
+  <div class="cols2" style="gap:16px;">
+    <div class="card card-accent" style="font-size:0.6em;">
+      <strong>Convergence of signals:</strong> The features flagged by ΔM<sub>disc</sub> are the same ones flagged by ΔM<sub>base</sub>. This is not coincidental — both metrics measure attribution change under graph perturbation, just from different starting points. A feature ranking high on <em>both</em> lists has a causal neighbourhood that is <span class="hl">influential AND poorly agreed upon</span> by the two algorithms.
+    </div>
+    <div class="card card-warn" style="font-size:0.6em;">
+      <strong>Double-alarm on Sachs:</strong> erk and pka show elevated ΔM<sub>base</sub> AND elevated ΔM<sub>disc</sub> — including under ASV. This gives a practitioner a precise, actionable target: validate these specific edges before trusting any structure-aware attribution for these proteins.
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SLIDE 17 — Discovery Sign Heatmaps
+     ═══════════════════════════════════════════════════════════ -->
+<section>
+  <div class="section-label">Results · Discovery Sensitivity</div>
+  <h2>Cross-Discovery Sign Heatmaps (D<sub>disc</sub>)</h2>
+  <div class="cols2" style="gap:12px; margin-bottom:6px;">
+    <div>
+      <img src="figures/sss_heatmap_linear_conf_f50_s1000_p30.png" alt="Discovery sign heatmap synthetic" />
+      <p class="fig-caption">Synthetic: CSV D<sub>disc</sub> up to 64% on X10 — sign leaders ≠ magnitude leaders</p>
+    </div>
+    <div>
+      <img src="figures/sss_heatmap_sachs.png" alt="Discovery sign heatmap Sachs" />
+      <p class="fig-caption">Sachs: sign instability peaks on pkc, p38 — not erk/pka</p>
+    </div>
+  </div>
+  <div class="cols2" style="gap:16px;">
+    <div class="card card-danger" style="font-size:0.6em;">
+      <strong>Complementary populations:</strong> Sign heatmap flags X10, X32 (synth) and pkc, p38 (Sachs) as unstable. These are near-zero attribution features invisible in ΔM<sub>disc</sub>. Switching discovery algorithm is enough to flip their explanatory direction — which algorithm was used determines the sign of the explanation.
+    </div>
+    <div class="card card-accent" style="font-size:0.6em;">
+      <strong>D<sub>disc</sub> diagnostic:</strong> Where ΔM<sub>disc</sub> flags features whose importance is <em>contested</em>, D<sub>disc</sub> flags features whose <em>direction</em> is fragile. Together they cover two structurally distinct failure classes that neither metric alone can detect.
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SLIDE 18 — Oracle Scatter
+     ═══════════════════════════════════════════════════════════ -->
+<section>
+  <div class="section-label">Results · Oracle Alignment</div>
+  <h2>Oracle Alignment — Scatter</h2>
+  <div class="cols2" style="gap:12px; margin-bottom:6px;">
+    <div>
+      <img src="figures/tga_sa_scatter_true_linear_conf_f50_s1000_p30.png" style="max-height:150px;" alt="Oracle scatter synthetic" />
+      <p class="fig-caption">Synthetic: ASV lower-left regardless of graph — near-perfect oracle fidelity</p>
+    </div>
+    <div>
+      <img src="figures/tga_sa_scatter_true_sachs.png" alt="Oracle scatter Sachs" style="max-height:150px;" />
+      <p class="fig-caption">Sachs: PC/LiNGAM separate widely on magnitude; ASV still best on ΔM<sub>oracle</sub></p>
+    </div>
+  </div>
+  <div class="cols2" style="gap:12px;">
+    <table>
+      <caption style="font-size:0.65em; color:var(--accent);">Oracle Alignment — Synthetic</caption>
+      <thead><tr><th>Method</th><th>Graph</th><th>D<sub>oracle</sub></th><th>ΔM<sub>oracle</sub></th></tr></thead>
+      <tbody>
+        <tr class="lo-row"><td>ASV</td><td>PC</td><td>5.88%</td><td>1.02%</td></tr>
+        <tr class="lo-row"><td>ASV</td><td>LiNGAM</td><td>6.30%</td><td>0.79%</td></tr>
+        <tr><td>CSV</td><td>PC</td><td>31.60%</td><td>5.32%</td></tr>
+        <tr><td>CSV</td><td>LiNGAM</td><td>37.46%</td><td>7.57%</td></tr>
+        <tr><td>Flow</td><td>PC</td><td>42.26%</td><td>7.34%</td></tr>
+        <tr><td>Flow</td><td>LiNGAM</td><td>44.91%</td><td>8.06%</td></tr>
+      </tbody>
+    </table>
+    <table>
+      <caption style="font-size:0.65em; color:var(--accent2);">Oracle Alignment — Sachs</caption>
+      <thead><tr><th>Method</th><th>Graph</th><th>D<sub>oracle</sub></th><th>ΔM<sub>oracle</sub></th></tr></thead>
+      <tbody>
+        <tr class="lo-row"><td>ASV</td><td>LiNGAM</td><td>23.40%</td><td>2.84%</td></tr>
+        <tr><td>ASV</td><td>PC</td><td>24.26%</td><td>9.16%</td></tr>
+        <tr><td>CSV</td><td>LiNGAM</td><td>32.30%</td><td>8.31%</td></tr>
+        <tr><td>CSV</td><td>PC</td><td>36.30%</td><td>9.01%</td></tr>
+        <tr><td>Flow</td><td>LiNGAM</td><td>23.81%</td><td>8.12%</td></tr>
+        <tr><td>Flow</td><td>PC</td><td>28.36%</td><td>15.52%</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SLIDE 19 — Oracle Magnitude Heatmaps
+     ═══════════════════════════════════════════════════════════ -->
+<section>
+  <div class="section-label">Results · Oracle Alignment</div>
+  <h2>Oracle Magnitude Heatmaps (ΔM<sub>oracle</sub>)</h2>
+  <div class="cols2" style="gap:12px; margin-bottom:6px;">
+    <div>
+      <img src="figures/tga_heatmap_true_linear_conf_f50_s1000_p30.png" style="max-height:160px;" alt="Oracle magnitude heatmap synthetic" />
+      <p class="fig-caption">Synthetic: ASV rows pale · CSV/Flow deviations on X24, X33, X47 — same focal nodes as baseline</p>
+    </div>
+    <div>
+      <img src="figures/tga_heatmap_true_sachs.png" alt="Oracle magnitude heatmap Sachs" style="max-height:160px;" />
+      <p class="fig-caption">Sachs: Flow+PC on erk = 49.2% σ̂ — largest single oracle deviation in the experiment</p>
+    </div>
+  </div>
+  <div class="cols2" style="gap:16px;">
+    <div class="card card-ok" style="font-size:0.6em;">
+      <strong>Validation of baseline signals:</strong> The same features flagged by ΔM<sub>base</sub> and ΔM<sub>disc</sub> appear here. The oracle confirms the accessible metrics were pointing at genuine structural problems — no ground-truth graph was needed to identify them.
+    </div>
+    <div class="card card-danger" style="font-size:0.6em;">
+      <strong>Worst-case — erk under Flow+PC:</strong> PC isolates erk as a root node (0 incoming edges). Flow treats it as a high-out-degree source → attribution inflated by 49.2% of σ̂. A practitioner using only PC for Flow would dramatically misrepresent this protein's causal role.
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SLIDE 20 — Oracle Sign Heatmaps
+     ═══════════════════════════════════════════════════════════ -->
+<section>
+  <div class="section-label">Results · Oracle Alignment</div>
+  <h2>Oracle Sign Heatmaps (D<sub>oracle</sub>)</h2>
+  <div class="cols2" style="gap:12px; margin-bottom:6px;">
+    <div>
+      <img src="figures/sign_alignment_heatmap_true_linear_conf_f50_s1000_p30.png" alt="Oracle sign heatmap synthetic" />
+      <p class="fig-caption">Synthetic: oracle sign leaders = X27, X36, X34 — not X24/X33/X47</p>
+    </div>
+    <div>
+      <img src="figures/sign_alignment_heatmap_true_sachs.png" alt="Oracle sign heatmap Sachs" />
+      <p class="fig-caption">Sachs: sign leaders = plc, pkc, pip2 — only pkc overlaps with magnitude leaders</p>
+    </div>
+  </div>
+  <div class="cols2" style="gap:16px;">
+    <div class="card card-danger" style="font-size:0.6em;">
+      <strong>Sign and magnitude remain non-overlapping:</strong> Features driving the highest oracle sign disagreement are again a distinct set from the magnitude leaders — the near-zero pattern is consistent across all three comparisons (_base, _disc, _oracle).
+    </div>
+    <div class="card card-accent" style="font-size:0.6em;">
+      <strong>Practical proxy:</strong> Since oracle is unavailable in practice, (_base + _disc) together approximate what oracle would reveal. This slide validates that approximation — the features flagged by the accessible metrics were indeed the problematic ones.
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SLIDE 21 — Alert System Summary
+     ═══════════════════════════════════════════════════════════ -->
+<section>
+  <div class="section-label">Case Studies</div>
+  <h2>The Two-Signal Alert System</h2>
+  <p style="font-size:0.58em; color:#bbb; margin-bottom:8px;">Four archetypal failure modes — each identified by a distinct alarm pattern in the accessible metrics</p>
+  <div class="cols2" style="gap:10px; margin-bottom:6px;">
+    <div class="alarm alarm-base">
+      <div class="alarm-icon">🔶</div>
+      <div>
+        <strong>Alarm 1 — ΔM<sub>base</sub> fires, ΔM<sub>disc</sub> quiet</strong><br/>
+        Both algorithms commit the <em>same</em> structural error → correlated failure. Cross-discovery cannot detect it. Example: X24
+      </div>
+    </div>
+    <div class="alarm alarm-disc">
+      <div class="alarm-icon">🔷</div>
+      <div>
+        <strong>Alarm 2 — Both ΔM<sub>base</sub> AND ΔM<sub>disc</sub> fire</strong><br/>
+        Neighbourhood is influential AND contested. Both algorithms wrong, but differently. Examples: X33, X47, pka, erk
+      </div>
+    </div>
+  </div>
+  <div class="cols2" style="gap:10px; margin-bottom:6px;">
+    <div class="alarm alarm-sign">
+      <div class="alarm-icon">🔴</div>
+      <div>
+        <strong>Alarm 3 — D<sub>base</sub> / D<sub>disc</sub> fires, ΔM quiet</strong><br/>
+        Near-zero attribution feature — small graph-induced shift crosses the sign boundary. Invisible to magnitude metrics. Examples: X10, pkc
+      </div>
+    </div>
+    <div class="card" style="font-size:0.62em; background:rgba(92,186,110,0.1); border:1px solid rgba(92,186,110,0.3);">
+      <strong style="color:var(--ok);">Running all four metrics together</strong> is what makes the framework diagnostic rather than merely descriptive. Each alarm pattern reveals a structurally distinct failure mode that the others cannot detect.
+      <br/><br/>
+      <span style="color:#888;">Next slides: detailed walkthrough of each failure mode with DAG and SHAP figures</span>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SLIDE 22 — Archetype 1: X33 (Synthetic)
+     ═══════════════════════════════════════════════════════════ -->
+<section>
+  <div class="section-label">Case Studies · Archetype 1</div>
+  <h2>Correlated &amp; Contested Failures — X33 (Synthetic)</h2>
+  <div class="cols2" style="gap:14px;">
+    <div>
+      <p style="font-size:0.6em; color:var(--accent2); font-weight:700; margin-bottom:6px;">X33 neighbourhood — Both alarms fire</p>
+      <img src="figures/dag_neighborhood_X33_linear_conf_f50_s1000_p30.png" alt="X33 DAG" style="max-height:240px;" />
+      <p class="fig-caption">PC and LiNGAM disagree on X33's parent set AND children → ΔM<sub>base</sub> and ΔM<sub>disc</sub> both elevated</p>
+    </div>
+    <div>
+      <img src="figures/shap_scatter_flow_X33_linear_conf_f50_s1000_p30.png" alt="X33 SHAP" style="max-height:240px;" />
+      <p class="fig-caption">Three distinct clusters for Flow+PC, Flow+LiNGAM, Flow+True — none coincide</p>
+      <div class="alarm alarm-disc" style="font-size:0.6em; margin-top:10px;">
+        <div class="alarm-icon">🔷</div>
+        <div>
+          <strong>Two-signal pattern:</strong> ΔM<sub>base</sub> AND ΔM<sub>disc</sub> elevated simultaneously → neighbourhood is both <em>influential</em> and <em>contested</em>. Validate the specific flagged edges before using any structure-aware Shapley method for this node.
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SLIDE 22b — Archetype 1: pka (Sachs)
+     ═══════════════════════════════════════════════════════════ -->
+<section>
+  <div class="section-label">Case Studies · Archetype 1</div>
+  <h2>Correlated &amp; Contested Failures — pka (Sachs)</h2>
+  <div class="cols2" style="gap:14px;">
+    <div>
+      <p style="font-size:0.6em; color:var(--accent2); font-weight:700; margin-bottom:6px;">pka neighbourhood — Both alarms fire</p>
+      <img src="figures/dag_neighborhood_pka_sachs.png" alt="pka DAG" style="max-height:240px;" />
+      <p class="fig-caption">PC reverses pka's outgoing edges (3 in/3 out); LiNGAM keeps it near-root (7 out/0 in)</p>
+    </div>
+    <div>
+      <img src="figures/shap_scatter_flow_pka_sachs.png" alt="pka SHAP" style="max-height:240px;" />
+      <p class="fig-caption">Flow+PC inflated cluster vs Flow+LiNGAM close to oracle — clear PC/LiNGAM axis separation</p>
+      <div class="alarm alarm-disc" style="font-size:0.6em; margin-top:10px;">
+        <div class="alarm-icon">🔷</div>
+        <div>
+          <strong>Two-signal pattern:</strong> Same as X33 — ΔM<sub>base</sub> AND ΔM<sub>disc</sub> both elevated. The compact Sachs network (10 nodes) amplifies this: each disputed edge constrains a larger share of all possible orderings.
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SLIDE 23 — Archetype 2: Edge Inversion (Graphs)
+     ═══════════════════════════════════════════════════════════ -->
+<section>
+  <div class="section-label">Case Studies · Archetype 2</div>
+  <h2>Directed Edge Inversion — Neighbourhood Graphs</h2>
+  <div class="cols2" style="gap:14px; margin-bottom:10px;">
+    <div>
+      <p style="font-size:0.6em; color:var(--accent); font-weight:700; margin-bottom:6px;">X47 neighbourhood</p>
+      <img src="figures/dag_neighborhood_X47_linear_conf_f50_s1000_p30.png" alt="X47 DAG" style="max-height:220px;" />
+      <p class="fig-caption">True: 3 in / 1 out · PC: correct · LiNGAM: 0 in / 5 out (apparent root)</p>
+    </div>
+    <div>
+      <p style="font-size:0.6em; color:var(--accent); font-weight:700; margin-bottom:6px;">X21 neighbourhood</p>
+      <img src="figures/dag_neighborhood_X21_linear_conf_f50_s1000_p30.png" alt="X21 DAG" style="max-height:220px;" />
+      <p class="fig-caption">True: X21→X47 · LiNGAM reverses to X47→X21 — credit transfer</p>
+    </div>
+  </div>
+  <div class="card card-warn" style="font-size:0.62em;">
+    <strong>Mechanism:</strong> LiNGAM reverses edge X21→X47 to X47→X21. Under Flow, outgoing edge X47→X21 routes X47's credit toward X21 → X47 under-attributed, X21 inflated. Under Causal, reversed edge injects X47 into X21's parent set → both contaminated.
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SLIDE 23b — Archetype 2: Edge Inversion (SHAP + Lesson)
+     ═══════════════════════════════════════════════════════════ -->
+<section>
+  <div class="section-label">Case Studies · Archetype 2</div>
+  <h2>Directed Edge Inversion — SHAP Attribution Shift</h2>
+  <div class="cols2" style="gap:14px; margin-bottom:10px;">
+    <div>
+      <p style="font-size:0.6em; color:var(--accent2); font-weight:700; margin-bottom:6px;">SHAP scatter (X47 &amp; X21)</p>
+      <img src="figures/shap_scatter_flow_X47_X21_linear_conf_f50_s1000_p30.png" alt="X47 X21 SHAP" style="max-height:280px;" />
+      <p class="fig-caption">Flow+PC agrees with oracle · Flow+LiNGAM: X47 suppressed, X21 inflated</p>
+    </div>
+    <div>
+      <div class="card card-warn" style="margin-bottom:10px;">
+        <h3>What the inversion does</h3>
+        <ul>
+          <li>LiNGAM makes X47 an apparent root node (0 incoming edges)</li>
+          <li>Flow then routes X47's credit outward along the inverted edge toward X21</li>
+          <li>Result: X47 under-attributed, X21 over-attributed — both wrong</li>
+        </ul>
+      </div>
+      <div class="alarm alarm-disc" style="font-size:0.62em;">
+        <div class="alarm-icon">🔷</div>
+        <div>
+          <strong>Lesson:</strong> Don't prune the X21–X47 edge — it's real. Invest in resolving its correct <em>orientation</em>. Correcting direction (as PC does) restores oracle-consistent attributions without discarding structural information.
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SLIDE 24 — Archetype 3: Structural Role Error
+     ═══════════════════════════════════════════════════════════ -->
+<section>
+  <div class="section-label">Case Studies · Archetype 3</div>
+  <h2>Structural Role Error Resolved by Domain Knowledge</h2>
+  <div class="cols2" style="gap:12px; margin-bottom:6px;">
+    <div>
+      <p style="font-size:0.58em; color:var(--danger); font-weight:700; margin-bottom:2px;">erk (Sachs) — highest intensity alarm in the experiment</p>
+      <img src="figures/dag_neighborhood_erk_sachs.png" alt="erk DAG" style="max-height:160px;" />
+      <p class="fig-caption">Consensus: erk receives from pka and mek · PC: removes all incoming edges, erk becomes isolated root · LiNGAM: recovers some incoming connections</p>
+    </div>
+    <div>
+      <img src="figures/shap_scatter_flow_erk_sachs.png" alt="erk SHAP" style="max-height:160px;" />
+      <p class="fig-caption">Flow+PC: inflated cluster (source-node overloading) · Flow+LiNGAM: less distorted, closer to oracle · Oracle deviation: 49.2% σ̂ for Flow+PC — largest in the experiment</p>
+    </div>
+  </div>
+  <div class="cols2" style="gap:16px;">
+    <div class="alarm alarm-disc" style="font-size:0.6em;">
+      <div class="alarm-icon">🔷</div>
+      <div>
+        ΔM<sub>base</sub> fired across ALL three methods · ΔM<sub>disc</sub> reached 57.5% σ̂ (Flow) and 35.8% (ASV) — highest ASV disc deviation in either dataset. Both alarms fire simultaneously with maximum intensity.
+      </div>
+    </div>
+    <div class="card card-ok" style="font-size:0.6em;">
+      <strong>Domain knowledge resolves:</strong> Biology confirms erk is a downstream kinase receiving pka/mek input — not a root source. LiNGAM's partial recovery is closer to reality. Alarms pointed at erk <em>without oracle access</em>; validation confirmed which graph to trust.
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SLIDE 25 — Archetype 4: Near-Zero Sign Explosion
+     ═══════════════════════════════════════════════════════════ -->
+<section>
+  <div class="section-label">Case Studies · Archetype 4</div>
+  <h2>Near-Zero Attributions &amp; Sign Disagreement Explosion</h2>
+  <div class="cols2" style="gap:10px; margin-bottom:6px;">
+    <div>
+      <p style="font-size:0.58em; color:var(--danger); font-weight:700; margin-bottom:2px;">X10 (Synthetic) — D<sub>base</sub> = 96% for Causal+PC</p>
+      <img src="figures/shap_vs_feature_Scratch_vs_Causal__PC__linear_conf_f50_s1000_p30.png" alt="X10 SHAP scatter" class="img-sm" style="max-height:160px;" />
+      <p class="fig-caption">Tight near-zero Traditional cluster fans out to broad, sign-mixed Causal+PC distribution</p>
+    </div>
+    <div>
+      <p style="font-size:0.58em; color:var(--danger); font-weight:700; margin-bottom:2px;">pkc (Sachs) — leads Sachs sign heatmaps; invisible in magnitude</p>
+      <img src="figures/shap_vs_feature_Scratch_vs_Causal__LiNGAM__sachs.png" alt="pkc SHAP scatter" class="img-sm" style="max-height:160px;" />
+      <p class="fig-caption">Traditional near zero · Causal+LiNGAM disperses to both sides — small magnitude, high sign flip</p>
+    </div>
+  </div>
+  <div class="alarm alarm-sign" style="font-size:0.6em;">
+    <div class="alarm-icon">🔴</div>
+    <div>
+      <strong>Sign-only alarm:</strong> X10 and pkc were not on the radar under Traditional Shapley. The sign heatmap is the <em>only</em> signal that brings them to attention. D fires; ΔM stays quiet. These features acquire meaningful (and potentially inverted) explanatory weight once a graph is introduced.
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SLIDE 26 — Conclusion: Why ASV
+     ═══════════════════════════════════════════════════════════ -->
+<section>
+  <div class="section-label">Conclusion</div>
+  <h2>ASV: The Recommended Default</h2>
+
+  <!-- Top row: image + Why ASV card side by side -->
+  <div class="cols2" style="gap:14px; margin-bottom:10px;">
+    <div style="text-align:center;">
+      <img src="figures/gss_sss_scatter_sachs.png" alt="Discovery scatter Sachs conclusion" style="max-height:180px;" />
+      <p class="fig-caption">Sachs discovery scatter — ASV lower-left (most stable) but feature-level metrics still flag erk &amp; pka even under ASV</p>
+    </div>
+    <div class="card card-ok">
+      <h3>Why ASV?</h3>
+      <ul>
+        <li>Changes only the permutation space — graph errors absorbed, not inherited</li>
+        <li>Synthetic: ΔM<sub>base</sub> &lt;1% σ̂, D<sub>base</sub> &lt;6%, ΔM<sub>oracle</sub> &lt;1%</li>
+        <li>Sachs: still best on magnitude — ΔM<sub>oracle</sub>=2.84% under LiNGAM</li>
+        <li>No additional computational cost over standard Monte Carlo SHAP</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Bottom row: two cards spanning full width -->
+  <div class="cols2" style="gap:14px;">
+    <div class="card card-warn">
+      <h3>Even ASV needs the diagnostic framework</h3>
+      <ul>
+        <li>On Sachs, erk and pka show elevated ΔM<sub>disc</sub> even under ASV</li>
+        <li>Small networks: each discovery edge constrains a larger ordering fraction</li>
+        <li>The framework identifies <em>exactly which nodes to validate</em></li>
+      </ul>
+    </div>
+    <div class="card card-accent">
+      <h3>Key numbers</h3>
+      <table>
+        <thead><tr><th>Metric</th><th>ASV (Synth)</th><th>ASV (Sachs)</th></tr></thead>
+        <tbody>
+          <tr class="lo-row"><td>ΔM<sub>base</sub></td><td>&lt;1% σ̂</td><td>4–5% σ̂</td></tr>
+          <tr class="lo-row"><td>D<sub>base</sub></td><td>&lt;6%</td><td>16–17%</td></tr>
+          <tr class="lo-row"><td>ΔM<sub>oracle</sub></td><td>&lt;1% σ̂</td><td>2.84% σ̂</td></tr>
+          <tr class="lo-row"><td>ΔM<sub>disc</sub></td><td>1.07% σ̂</td><td>8.46% σ̂</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SLIDE 26b — CSV & Flow: Only With Validated Graphs
+     ═══════════════════════════════════════════════════════════ -->
+<section>
+  <div class="section-label">Conclusion</div>
+  <h2>CSV &amp; Flow: Only With a Validated Graph</h2>
+
+  <!-- Top: table full width -->
+  <table style="margin-bottom:10px;">
+    <caption style="font-size:0.65em; color:var(--accent);">Method Selection Guide</caption>
+    <thead><tr><th>Scenario</th><th>Recommended</th></tr></thead>
+    <tbody>
+      <tr class="lo-row"><td>Unknown graph quality</td><td><strong>ASV</strong></td></tr>
+      <tr class="lo-row"><td>ΔM<sub>disc</sub> low on all features</td><td><strong>ASV or CSV</strong></td></tr>
+      <tr><td>D<sub>disc</sub> elevated on any feature</td><td><span class="hl3">Re-validate edges first</span></td></tr>
+      <tr class="lo-row"><td>Graph fully domain-validated</td><td><strong>CSV or Flow</strong></td></tr>
+      <tr><td>ΔM<sub>base</sub> or D<sub>base</sub> high</td><td><span class="hl3">Check discovery first</span></td></tr>
+    </tbody>
+  </table>
+
+  <!-- Bottom: two cards side by side -->
+  <div class="cols2" style="gap:14px;">
+    <div class="card card-danger">
+      <h3>CSV &amp; Flow Require Graph Validation</h3>
+      <ul>
+        <li>Use only when ΔM<sub>disc</sub> and D<sub>disc</sub> are low across <em>all</em> features</li>
+        <li>Or when domain experts have validated the specific graph structure</li>
+        <li>CSV: each wrong edge corrupts an attribution via do-calculus directly</li>
+        <li>Flow: errors cascade along all connected paths simultaneously</li>
+      </ul>
+    </div>
+    <div class="card card-ok">
+      <h3>Decision Rule</h3>
+      <ul>
+        <li><span class="hl">Start with ASV</span> — lowest risk under any graph quality</li>
+        <li>Run the diagnostic framework first, even with ASV</li>
+        <li>Upgrade to CSV/Flow only after feature-level validation passes</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SLIDE 27 — Practitioner Workflow: Steps 1–3
+     ═══════════════════════════════════════════════════════════ -->
+<section>
+  <div class="section-label">Practical Recommendations</div>
+  <h2>Practitioner Workflow — Steps 1–3</h2>
+  <div class="cols2" style="gap:14px;">
+    <div>
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <strong>Run two discovery algorithms</strong> on the same data (e.g. PC and LiNGAM). Never rely on a single algorithm.
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <strong>Compute baseline comparison</strong> (ΔM<sub>base</sub>, D<sub>base</sub>) vs Traditional Shapley. Identify features where graph injection causes large magnitude shifts or sign flips — <span class="hl2">first alarm</span>.
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <strong>Compute cross-discovery comparison</strong> (ΔM<sub>disc</sub>, D<sub>disc</sub>). Features high on both _base and _disc have a neighbourhood that is influential AND contested — <span class="hl">double alarm, highest priority</span>.
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="card card-accent">
+        <h3>What these steps give you</h3>
+        <ul>
+          <li><strong>Step 1:</strong> Two independent graph estimates — required for cross-discovery metrics</li>
+          <li><strong>Step 2:</strong> Baseline alarm — identifies which features are structurally sensitive</li>
+          <li><strong>Step 3:</strong> Cross-discovery alarm — identifies features that are additionally graph-contested</li>
+        </ul>
+      </div>
+      <div class="alarm alarm-disc" style="margin-top:10px; font-size:0.62em;">
+        <div class="alarm-icon">🔷</div>
+        <div>
+          Steps 1–3 require <strong>no ground-truth graph</strong> and no oracle. They only need two discovery algorithm runs and a Traditional Shapley baseline — fully computable in any real-world setting.
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SLIDE 27b — Practitioner Workflow: Steps 4–6
+     ═══════════════════════════════════════════════════════════ -->
+<section>
+  <div class="section-label">Practical Recommendations</div>
+  <h2>Practitioner Workflow — Steps 4–6</h2>
+  <div class="cols2" style="gap:14px;">
+    <div>
+      <div class="step">
+        <div class="step-num">4</div>
+        <div class="step-body">
+          <strong>Validate flagged nodes</strong>: consult domain knowledge, literature, or experts to resolve edge orientation or presence for contested neighbourhoods. Do not prune real edges — resolve their direction.
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">5</div>
+        <div class="step-body">
+          <strong>Choose Shapley method</strong>: use the validated graph. Start with <span class="hl">ASV as the default</span> — lowest risk under any graph quality.
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">6</div>
+        <div class="step-body">
+          <strong>Upgrade to CSV or Flow</strong> only if the cross-discovery metrics are low across all features AND most discovered causal relationships are validated and make domain sense.
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="card card-ok" style="margin-bottom:10px;">
+        <h3>Default recommendation</h3>
+        <p style="font-size:0.65em;">
+          <span class="hl">ASV</span> — delivers oracle-level alignment, absorbs graph errors, zero additional computational cost.
+          Always run the diagnostic framework first, even with ASV.
+        </p>
+      </div>
+      <div class="card card-warn" style="margin-bottom:10px;">
+        <h3>Reporting</h3>
+        <p style="font-size:0.65em;">
+          Report ΔM<sub>base</sub> and D<sub>base</sub> alongside any structure-aware explanation to make the causal modelling decision <em>transparent and auditable</em>.
+        </p>
+      </div>
+      <div class="card" style="background:rgba(79,163,224,0.1); border:1px solid rgba(79,163,224,0.3);">
+        <h3 style="font-size:0.85em;">Key insight</h3>
+        <p style="font-size:0.62em;">
+          ΔM<sub>base</sub> + D<sub>base</sub> only require a Traditional Shapley run as reference.<br/>
+          ΔM<sub>disc</sub> + D<sub>disc</sub> only require two discovery runs on the same data.<br/>
+          <span class="hl">Both are fully computable in any real-world setting.</span>
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+</div><!-- /slides -->
+</div><!-- /reveal -->
+
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.js"></script>
+<script>
+  Reveal.initialize({
+    hash: true,
+    transition: 'fade',
+    transitionSpeed: 'fast',
+    controls: true,
+    progress: true,
+    slideNumber: 'c/t',
+    center: false,
+    width: 1280,
+    height: 720,
+    margin: 0.04,
+    minScale: 0.2,
+    maxScale: 2.0,
+    pdfSeparateFragments: false,
+    pdfMaxPagesPerSlide: 1,
+  });
+</script>
+</body>
+</html>
