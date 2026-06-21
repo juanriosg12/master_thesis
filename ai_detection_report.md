@@ -10,9 +10,9 @@
 |--------|-------|
 | **Overall AI-signal score** | **4/100** |
 | Assessment | Natural — minimal rework needed |
-| Signal density | 0.38 pts / 100 words |
-| Total prose words | 12,936 |
-| Total signal points | 49 |
+| Signal density | 0.39 pts / 100 words |
+| Total prose words | 4,587 |
+| Total signal points | 18 |
 
 ██░░░░░░░░ `4/100`
 
@@ -22,15 +22,15 @@
 
 | Section | Score | Density | Assessment | Flags |
 |---------|-------|---------|------------|-------|
-| § Introduction | `10/100` ██░░░░░░░░ | 0.8 | Natural — minimal rework needed | 5 |
-| § Conceptual Framework and Methodology | `2/100` ██░░░░░░░░ | 0.2 | Natural — minimal rework needed | 3 |
-| § Experimental Setup and Practical Implementation | `3/100` ██░░░░░░░░ | 0.3 | Natural — minimal rework needed | 4 |
-| § Results and Empirical Analysis | `5/100` ██░░░░░░░░ | 0.5 | Natural — minimal rework needed | 15 |
-| § Conclusion | `5/100` ██░░░░░░░░ | 0.4 | Natural — minimal rework needed | 4 |
-| § Declaration on the Use of Artificial Intelligence | `0/100` ██░░░░░░░░ | 0.0 | Natural — minimal rework needed | 0 |
-| § Declaration on the Use of Data | `0/100` ██░░░░░░░░ | 0.0 | Natural — minimal rework needed | 0 |
+| § Introduction | `7/100` ██░░░░░░░░ | 0.6 | Natural — minimal rework needed | 2 |
+| § Conceptual Framework | `3/100` ██░░░░░░░░ | 0.3 | Natural — minimal rework needed | 1 |
+| § Experimental Setup | `0/100` ██░░░░░░░░ | 0.0 | Natural — minimal rework needed | 0 |
+| § Results and Empirical Analysis | `2/100` ██░░░░░░░░ | 0.2 | Natural — minimal rework needed | 3 |
+| § Conclusion | `18/100` ██░░░░░░░░ | 1.5 | Natural — minimal rework needed | 6 |
 | Appendix A | `0/100` ██░░░░░░░░ | 0.0 | N/A (too short) | 0 |
-| Appendix — Appendix: Shapley Method Subroutines | `0/100` ██░░░░░░░░ | 0.0 | Natural — minimal rework needed | 0 |
+| Appendix — Detailed Results Tables | `0/100` ██░░░░░░░░ | 0.0 | Natural — minimal rework needed | 0 |
+| Appendix — Case Study Neighbourhood Diagrams | `0/100` ██░░░░░░░░ | 0.0 | Natural — minimal rework needed | 0 |
+| Appendix — Algorithm Pseudocode | `0/100` ██░░░░░░░░ | 0.0 | N/A (too short) | 0 |
 
 ---
 
@@ -41,194 +41,82 @@
 > 💡 Suggested rewrite direction
 
 
-### § Introduction  `10/100`
+### § Introduction  `7/100`
 
-- **`critical`** · ◆ MED · line 112
+- **`critical`** · ◆ MED · line 129
   > "Introduction Explainable AI has moved from a research preference to a deployment
-  requirement, particularly across critical decisioning socioeconomic domains such as
-  credit scoring, healthcare access, and public resource allocation, where deci"
+  requirement across critical decisioning domains such as credit scoring, healthcare, and
+  public resource allocation, where model decisions must be j"
   💡 Overused. Only keep if you mean 'the experiment fails without this'.
 
-- **`systematically`** · ◆ MED · line 114
-  > "This assumption treats all feature permutations as equally probable during coalition
-  formation, which can systematically misattribute credit when the true generative process
-  involves structured causal dependencies among inputs . In scenario"
-  💡 Often redundant if the method is already described; delete or specify how.
-
-- **`demonstrate`** · ◆ MED · line 118
-  > "The metrics defined here give it one, and the experimental results that follow
-  demonstrate their diagnostic value across two datasets with structurally different
-  discovery failure modes. To articulate that fram"
-  💡 'Shows', 'confirms', or 'proves' — pick the strongest that's accurate.
-
-- **`robust`** · ◆ MED · line 122
-  > "pley method faces the same open question: does graph injection actually improve the
-  explanation, and is the improvement robust enough to be trusted in a consequential
-  decision? Without a replicable measurement framework, that question has no syst"
-  💡 Say what specifically makes it robust, or what it's robust to.
-
-- **`emerged`** · ◇ low · line 114
-  > "While Shapley values derived from cooperative game theory have emerged as a gold standard
-  for local feature attribution due to their unique axiomatic foundations, traditional
-  implementations"
+- **`emerged`** · ◇ low · line 131
+  > "Shapley values have emerged as a gold standard for local feature attribution, but
+  traditional implementations assume feature independence, which in"
   💡 'Appear', 'arise', 'we find' — watch for AI-favored usage.
 
 
-### § Conceptual Framework and Methodology  `2/100`
+### § Conceptual Framework  `3/100`
 
-- **`addresses`** · ◆ MED · line 147
-  > "counterfactual methods face causal feasibility constraints in practice, how the
-  Structural Causal Model (SCM) framework addresses those constraints, and why the SCM
-  also provides the theoretical underpinning for Shapley Flow. Counterfactual explanat"
-  💡 Prefer concrete verbs: 'fixes', 'removes', 'resolves'.
-
-- **`robustness`** · ◆ MED · line 163
-  > "This is a realistic robustness test, reflecting the natural unmeasured confounding and
-  structural uncertainty practitioners face in real-world applica"
-  💡 Say what specifically makes it robust, or what it's robust to.
-
-- **`ensures that`** · ◆ MED · line 227
-  > "Randomly shuffling the edges ensures that, roughly half the time, an intermediate
-  feature's effect on the target is evaluated before its parents update it. This"
-  💡 Try 'so that' or restructure.
+- **`systematically`** · ◆ MED · line 241
+  > "ting MATHEXPR and its child MATHEXPR as interchangeable lets MATHEXPR absorb credit that
+  causally belongs to MATHEXPR , systematically misattributing upstream causes to
+  downstream effects. Structure-Aware Methods All three methods preserve Efficiency, Li"
+  💡 Often redundant if the method is already described; delete or specify how.
 
 
-### § Experimental Setup and Practical Implementation  `3/100`
+### § Results and Empirical Analysis  `2/100`
 
-- **`critical`** · ◆ MED · line 234
-  > "re attributions are measured along two primary dimensions: magnitude deviation and sign
-  disagreement, both of which are critical for ensuring the reliability of local
-  explanations. Data Synthesis and Target Datasets The experimental pipeline employ"
-  💡 Overused. Only keep if you mean 'the experiment fails without this'.
-
-- **`fundamental`** · ◆ MED · line 245
-  > "er, ensuring that the errors observed downstream can be attributed to confounding and
-  finite-sample noise rather than a fundamental mismatch between the data and the
-  estimators' functional assumptions. The deliberate addition of hidden confounders the"
+- **`fundamentally`** · ◆ MED · line 709
+  > "The two algorithms therefore disagree fundamentally on erk's structural position. Both
+  observable signals flag this directly. First, MATHEXPR is elevated on erk across all"
   💡 Delete or replace with what makes it foundational.
 
-- **`leverage`** · ◆ MED · line 312
-  > "protein concentrations retain non-Gaussian residuals that LiNGAM can exploit, a property
-  that PC's Fisher-z test cannot leverage. Notably, both algorithms perform substantially
-  worse on the real data despite the larger sample size, and PC's output"
-  💡 'Uses', 'applies', or name the technique directly.
+- **`emerges`** · ◇ low · line 595
+  > "A consistent pattern emerges: the discovery algorithm with better F1 produces smaller
+  oracle deviation on both dimensions. On synthetic, CSV under P"
+  💡 'Appear', 'arise', 'we find' — watch for AI-favored usage.
 
-- **`Notably`** · ◇ low · line 312
-  > "Notably, both algorithms perform substantially worse on the real data despite the larger
-  sample size, and PC's output required"
-  💡 Often fine; flag when used as sentence-opener to pad a finding.
+- **`reveals`** · ◇ low · line 754
+  > "Running all four metrics together is what makes the framework diagnostic: each alarm
+  pattern reveals a failure mode the others cannot detect."
+  💡 Often fine; flag if the sentence could just state the finding directly.
 
 
-### § Results and Empirical Analysis  `5/100`
+### § Conclusion  `18/100`
 
-- **`plays the same role`** · ⚠ HIGH · line 818
-  > "On the synthetic track the oracle is the True DAG; on Sachs it is the consensus reference
-  DAG, which plays the same role. Tables~-- report MATHEXPR and MATHEXPR for each track,
-  and Figures~ place every configuration on the magnitude axis ("
-  💡 Replace with a concrete verb: 'controls', 'determines', 'drives'.
-
-- **`Robustness`** · ◆ MED · line 678
-  > "Asymmetric Shapley, High Robustness to Graph Injection Asymmetric Shapley achieves the
-  closest agreement with the Traditional Shapley baseline across both"
-  💡 Say what specifically makes it robust, or what it's robust to.
-
-- **`fundamentally`** · ◆ MED · line 684
-  > "On Sachs the situation is fundamentally different: the ordering universe is only MATHEXPR
-  , and each directed edge in the 10-node discovered graph eliminates a"
-  💡 Delete or replace with what makes it foundational.
-
-- **`fundamentally`** · ◆ MED · line 684
-  > "The two discovered graphs therefore disagree fundamentally on erk's role: source versus
-  intermediate node, and that structural disagreement is precisely what MATHEXPR measures.
-  W"
-  💡 Delete or replace with what makes it foundational.
-
-- **`key`** · ◆ MED · line 684
-  > "A key reason why this buffer is so effective on the synthetic dataset is the vast scale
-  of MATHEXPR : even a graph with hundr"
+- **`key`** · ◆ MED · line 784
+  > "nt driver is the method's structural coupling to any graph rather than the specific graph
+  supplied, making MATHEXPR the key tool to navigate structural uncertainty and identify
+  which nodes need validation before trusting any structure-aware at"
   💡 Delete — everything in a thesis is 'key'.
 
-- **`systematically`** · ◆ MED · line 818
-  > "t injecting a causal graph moves attributions away from the graph-free baseline, and that
-  the size of this shift varies systematically depending on which discovery algorithm is
-  used. Neither analysis, however, can say whether the shift moves the explanat"
-  💡 Often redundant if the method is already described; delete or specify how.
-
-- **`emerge`** · ◇ low · line 585
-  > "Two cross-cutting patterns emerge from Tables~-- and are visible immediately in the
-  scatter plots. First, sign disagreement ( MATHEXPR ) occurs more freq"
-  💡 'Appear', 'arise', 'we find' — watch for AI-favored usage.
-
-- **`emerge`** · ◇ low · line 585
-  > "e effect concentrates on erk: even Asymmetric under PC produces a feature-level MATHEXPR
-  of roughly 39\ Two conclusions emerge from the oracle sign heatmaps. First, ASV's
-  sparsity buffer holds on the synthetic track,global MATHEXPR stays at rough"
-  💡 'Appear', 'arise', 'we find' — watch for AI-favored usage.
-
-- **`reveals`** · ◇ low · line 774
-  > "The feature-level breakdown of MATHEXPR reveals which features have contested causal
-  connections, nodes whose discovered neighbourhood differs materially between PC an"
-  💡 Often fine; flag if the sentence could just state the finding directly.
-
-- **`reveals`** · ◇ low · line 774
-  > "60\ The feature-level breakdown of these oracle deviations reveals a qualitative
-  difference between the two experimental tracks. On the synthetic dataset, the Asymmetric
-  rows stay pale a"
-  💡 Often fine; flag if the sentence could just state the finding directly.
-
-- **`reveal`** · ◇ low · line 774
-  > "( MATHEXPR , MATHEXPR ) comparisons serve as the practical equivalents: together they
-  approximate what the oracle would reveal without requiring a ground-truth graph.
-  Asymmetric Shapley, Near-Perfect Oracle Fidelity ASV achieves the highest oracl"
-  💡 Often fine; flag if the sentence could just state the finding directly.
-
-- **`reveals`** · ◇ low · line 774
-  > "arrow attention to the specific nodes driving that movement; and inspecting the
-  discovered neighbourhood of those nodes reveals the structural error responsible. The
-  True DAG (or the Sachs consensus DAG) is then used only to confirm that the obser"
-  💡 Often fine; flag if the sentence could just state the finding directly.
-
-- **`reveals`** · ◇ low · line 774
-  > "8\ Inspecting X47's causal neighbourhood (Figure~) reveals the cause. In the True DAG and
-  under PC, X47 is a well-connected mid-graph node with 3 incoming edges. LiNGAM reverses"
-  💡 Often fine; flag if the sentence could just state the finding directly.
-
-- **`reveals`** · ◇ low · line 774
-  > "Inspecting the neighbourhood (Figure~) reveals what drives the disagreement. PC removes
-  erk's incoming edges entirely, isolating it as an apparent root node with outg"
-  💡 Often fine; flag if the sentence could just state the finding directly.
-
-- **`reveals`** · ◇ low · line 774
-  > "ses also illustrate that no single alarm pattern is sufficient on its own: a high
-  MATHEXPR paired with a quiet MATHEXPR reveals a correlated failure where both algorithms
-  converge on the same wrong structure (X24); simultaneous elevation on both m"
-  💡 Often fine; flag if the sentence could just state the finding directly.
-
-
-### § Conclusion  `5/100`
-
-- **`important`** · ◆ MED · line 1180
-  > "Main Contribution and Practical Recommendations The most important contribution of this
-  work is the evaluation framework itself. Before this work, a practitioner who wanted to
-  add a disc"
+- **`important`** · ◆ MED · line 786
+  > "identify which nodes need validation before trusting any structure-aware attribution; and
+  sign disagreement is equally important because it changes the meaning of explanations,
+  not just their size, and it surfaces on a broader set of features, incl"
   💡 Say WHY it is important instead of asserting it.
 
-- **`reveal`** · ◇ low · line 1158
-  > "In real-world scenarios the experimental pipeline does not reveal which graph structure
-  is truly correct: the discovered graph will always be imperfect. When the causal
-  structure of the"
+- **`important`** · ◆ MED · line 786
+  > "Main Contribution and Practical Recommendations The most important contribution is the
+  evaluation framework itself: the first systematic method for measuring attribution
+  quality degradat"
+  💡 Say WHY it is important instead of asserting it.
+
+- **`reveal`** · ◇ low · line 789
+  > "The evaluation metrics reveal structure invisible when looking at attributions alone:
+  MATHEXPR flags nodes where the injected graph moves attribution"
   💡 Often fine; flag if the sentence could just state the finding directly.
 
-- **`reveals`** · ◇ low · line 1176
-  > "ur metrics together is therefore what makes the framework diagnostic rather than merely
-  descriptive: each alarm pattern reveals a structurally distinct failure mode that the
-  others cannot detect. Main Contribution and Practical Recommendations The"
+- **`reveals`** · ◇ low · line 806
+  > "Running all four metrics together makes the framework diagnostic: each pattern reveals a
+  failure mode the others cannot detect. Main Contribution and Practical Recommendations
+  The most important contributio"
   💡 Often fine; flag if the sentence could just state the finding directly.
 
-- **`explore`** · ◇ low · line 1196
-  > "Future work should extend the evaluation to nonlinear Shapley variants, explore ensemble
-  approaches that average attributions across multiple discovered graphs to reduce cross-
-  discovery instability,"
+- **`explore`** · ◇ low · line 841
+  > "Future work should extend to nonlinear Shapley variants, explore ensemble approaches
+  averaging attributions across multiple discovered graphs, and investigate using MATHEXPR
+  as an acti"
   💡 Name what you actually did instead.
 
 ---

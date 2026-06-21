@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.29 (TeX Live 2026) (preloaded format=pdflatex 2026.3.22)  14 JUN 2026 17:50
+This is pdfTeX, Version 3.141592653-2.6-1.40.29 (TeX Live 2026) (preloaded format=pdflatex 2026.3.22)  20 JUN 2026 22:52
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -1069,29 +1069,22 @@ ocal/texlive/2026/texmf-dist/fonts/enc/dvips/newtx/ntx-ec-tlf.enc}
 
 ]
 LaTeX Font Info:    Font shape `T1/ntxtlf/m/it' will be
-(Font)              scaled to size 12.0pt on input line 167.
+(Font)              scaled to size 12.0pt on input line 165.
 LaTeX Font Info:    Font shape `T1/ntxtlf/m/n' will be
-(Font)              scaled to size 14.4pt on input line 182.
+(Font)              scaled to size 14.4pt on input line 180.
 LaTeX Font Info:    Font shape `T1/ntxtlf/b/n' will be
-(Font)              scaled to size 14.4pt on input line 182.
+(Font)              scaled to size 14.4pt on input line 180.
 
-Underfull \hbox (badness 4108) in paragraph at lines 194--194
+Underfull \hbox (badness 4108) in paragraph at lines 192--192
 []\T1/ntxtlf/b/n/14.4 (+20) Structural Causal Mod-els and
  []
 
-
-Underfull \vbox (badness 10000) has occurred while \output is active []
-
 LaTeX Font Info:    Font shape `T1/ntxtlf/b/n' will be
-(Font)              scaled to size 12.0pt on input line 217.
+(Font)              scaled to size 12.0pt on input line 209.
 LaTeX Font Info:    Font shape `T1/ntxtlf/m/n' will be
-(Font)              scaled to size 8.8pt on input line 224.
+(Font)              scaled to size 8.8pt on input line 217.
 LaTeX Font Info:    Font shape `T1/ntxtlf/m/n' will be
-(Font)              scaled to size 6.6pt on input line 224.
-
-Underfull \vbox (badness 1221) has occurred while \output is active []
-
-
+(Font)              scaled to size 6.6pt on input line 217.
 
 Package fancyhdr Warning: \headheight is too small (12.0pt): 
 (fancyhdr)                Make it at least 13.59999pt, for example:
@@ -1100,20 +1093,29 @@ Package fancyhdr Warning: \headheight is too small (12.0pt):
 (fancyhdr)                \addtolength{\topmargin}{-1.59999pt}.
 
 [2{/usr/local/texlive/2026/texmf-dist/fonts/enc/dvips/newtx/ntx-ot1-tlf.enc}]
-<figures/experimental_pipeline_diagram.png, id=191, 1364.09625pt x 514.92375pt>
+<figures/experimental_pipeline_diagram.png, id=200, 1364.09625pt x 514.92375pt>
 
 File: figures/experimental_pipeline_diagram.png Graphic file (type png)
 <use figures/experimental_pipeline_diagram.png>
 Package pdftex.def Info: figures/experimental_pipeline_diagram.png  used on inp
-ut line 300.
+ut line 286.
 (pdftex.def)             Requested size: 511.86491pt x 193.22163pt.
 LaTeX Font Info:    Font shape `T1/ntxtlf/m/n' will be
-(Font)              scaled to size 10.0pt on input line 304.
+(Font)              scaled to size 10.0pt on input line 290.
 LaTeX Font Info:    Font shape `T1/ntxtlf/b/n' will be
-(Font)              scaled to size 10.0pt on input line 304.
+(Font)              scaled to size 10.0pt on input line 290.
+LaTeX Font Info:    Trying to load font information for T1+ntxtt on input line 
+313.
 
-Underfull \vbox (badness 1325) has occurred while \output is active []
-
+(/usr/local/texlive/2026/texmf-dist/tex/latex/newtx/t1ntxtt.fd
+File: t1ntxtt.fd 2012/04/20 v3.1
+)
+LaTeX Font Info:    Font shape `T1/ntxtt/m/n' will be
+(Font)              scaled to size 12.0pt on input line 313.
+Package microtype Info: Loading generic protrusion settings for font family
+(microtype)             `ntxtt' (encoding: T1).
+(microtype)             For optimal results, create family-specific settings.
+(microtype)             See the microtype manual for details.
 
 
 Package fancyhdr Warning: \headheight is too small (12.0pt): 
@@ -1123,98 +1125,87 @@ Package fancyhdr Warning: \headheight is too small (12.0pt):
 (fancyhdr)                \addtolength{\topmargin}{-1.59999pt}.
 
 [3]
-LaTeX Font Info:    Trying to load font information for T1+ntxtt on input line 
-323.
- (/usr/local/texlive/2026/texmf-dist/tex/latex/newtx/t1ntxtt.fd
-File: t1ntxtt.fd 2012/04/20 v3.1
-)
-LaTeX Font Info:    Font shape `T1/ntxtt/m/n' will be
-(Font)              scaled to size 12.0pt on input line 323.
-Package microtype Info: Loading generic protrusion settings for font family
-(microtype)             `ntxtt' (encoding: T1).
-(microtype)             For optimal results, create family-specific settings.
-(microtype)             See the microtype manual for details.
 LaTeX Font Info:    Font shape `OT1/minntx/m/n' will be
-(Font)              scaled to size 10.0pt on input line 339.
+(Font)              scaled to size 10.0pt on input line 331.
 LaTeX Font Info:    Font shape `OT1/minntx/m/n' will be
-(Font)              scaled to size 7.3pt on input line 339.
+(Font)              scaled to size 7.3pt on input line 331.
 LaTeX Font Info:    Font shape `OT1/minntx/m/n' will be
-(Font)              scaled to size 5.5pt on input line 339.
+(Font)              scaled to size 5.5pt on input line 331.
 LaTeX Font Info:    Font shape `OML/ntxmi/m/it' will be
-(Font)              scaled to size 10.0pt on input line 339.
+(Font)              scaled to size 10.0pt on input line 331.
 LaTeX Font Info:    Font shape `OML/ntxmi/m/it' will be
-(Font)              scaled to size 7.3pt on input line 339.
+(Font)              scaled to size 7.3pt on input line 331.
 LaTeX Font Info:    Font shape `OML/ntxmi/m/it' will be
-(Font)              scaled to size 5.5pt on input line 339.
+(Font)              scaled to size 5.5pt on input line 331.
 LaTeX Font Info:    Font shape `LMS/ntxsy/m/n' will be
-(Font)              scaled to size 10.0pt on input line 339.
+(Font)              scaled to size 10.0pt on input line 331.
 LaTeX Font Info:    Font shape `LMS/ntxsy/m/n' will be
-(Font)              scaled to size 7.3pt on input line 339.
+(Font)              scaled to size 7.3pt on input line 331.
 LaTeX Font Info:    Font shape `LMS/ntxsy/m/n' will be
-(Font)              scaled to size 5.5pt on input line 339.
+(Font)              scaled to size 5.5pt on input line 331.
 LaTeX Font Info:    Font shape `LMX/ntxexx/m/n' will be
-(Font)              scaled to size 10.0pt on input line 339.
+(Font)              scaled to size 10.0pt on input line 331.
 LaTeX Font Info:    Font shape `LMX/ntxexx/m/n' will be
-(Font)              scaled to size 7.3pt on input line 339.
+(Font)              scaled to size 7.3pt on input line 331.
 LaTeX Font Info:    Font shape `LMX/ntxexx/m/n' will be
-(Font)              scaled to size 5.5pt on input line 339.
+(Font)              scaled to size 5.5pt on input line 331.
 LaTeX Font Info:    Font shape `U/ntxmia/m/it' will be
-(Font)              scaled to size 10.0pt on input line 339.
+(Font)              scaled to size 10.0pt on input line 331.
 LaTeX Font Info:    Font shape `U/ntxmia/m/it' will be
-(Font)              scaled to size 7.3pt on input line 339.
+(Font)              scaled to size 7.3pt on input line 331.
 LaTeX Font Info:    Font shape `U/ntxmia/m/it' will be
-(Font)              scaled to size 5.5pt on input line 339.
+(Font)              scaled to size 5.5pt on input line 331.
 LaTeX Font Info:    Font shape `U/ntxsym/m/n' will be
-(Font)              scaled to size 10.0pt on input line 339.
+(Font)              scaled to size 10.0pt on input line 331.
 LaTeX Font Info:    Font shape `U/ntxsym/m/n' will be
-(Font)              scaled to size 7.3pt on input line 339.
+(Font)              scaled to size 7.3pt on input line 331.
 LaTeX Font Info:    Font shape `U/ntxsym/m/n' will be
-(Font)              scaled to size 5.5pt on input line 339.
+(Font)              scaled to size 5.5pt on input line 331.
 LaTeX Font Info:    Font shape `U/ntxsyc/m/n' will be
-(Font)              scaled to size 10.0pt on input line 339.
+(Font)              scaled to size 10.0pt on input line 331.
 LaTeX Font Info:    Font shape `U/ntxsyc/m/n' will be
-(Font)              scaled to size 7.3pt on input line 339.
+(Font)              scaled to size 7.3pt on input line 331.
 LaTeX Font Info:    Font shape `U/ntxsyc/m/n' will be
-(Font)              scaled to size 5.5pt on input line 339.
+(Font)              scaled to size 5.5pt on input line 331.
 LaTeX Font Info:    Font shape `U/ntxexa/m/n' will be
-(Font)              scaled to size 10.0pt on input line 339.
+(Font)              scaled to size 10.0pt on input line 331.
 LaTeX Font Info:    Font shape `U/ntxexa/m/n' will be
-(Font)              scaled to size 7.3pt on input line 339.
+(Font)              scaled to size 7.3pt on input line 331.
 LaTeX Font Info:    Font shape `U/ntxexa/m/n' will be
-(Font)              scaled to size 5.5pt on input line 339.
+(Font)              scaled to size 5.5pt on input line 331.
 LaTeX Font Info:    Font shape `OT1/minntx/b/n' will be
-(Font)              scaled to size 10.0pt on input line 339.
+(Font)              scaled to size 10.0pt on input line 331.
 LaTeX Font Info:    Font shape `OT1/minntx/b/n' will be
-(Font)              scaled to size 7.3pt on input line 339.
+(Font)              scaled to size 7.3pt on input line 331.
 LaTeX Font Info:    Font shape `OT1/minntx/b/n' will be
-(Font)              scaled to size 5.5pt on input line 339.
+(Font)              scaled to size 5.5pt on input line 331.
 LaTeX Font Info:    Font shape `OML/ntxmi/b/it' will be
-(Font)              scaled to size 10.0pt on input line 339.
+(Font)              scaled to size 10.0pt on input line 331.
 LaTeX Font Info:    Font shape `OML/ntxmi/b/it' will be
-(Font)              scaled to size 7.3pt on input line 339.
+(Font)              scaled to size 7.3pt on input line 331.
 LaTeX Font Info:    Font shape `OML/ntxmi/b/it' will be
-(Font)              scaled to size 5.5pt on input line 339.
+(Font)              scaled to size 5.5pt on input line 331.
 LaTeX Font Info:    Font shape `LMS/ntxsy/b/n' will be
-(Font)              scaled to size 10.0pt on input line 339.
+(Font)              scaled to size 10.0pt on input line 331.
 LaTeX Font Info:    Font shape `LMS/ntxsy/b/n' will be
-(Font)              scaled to size 7.3pt on input line 339.
+(Font)              scaled to size 7.3pt on input line 331.
 LaTeX Font Info:    Font shape `LMS/ntxsy/b/n' will be
-(Font)              scaled to size 5.5pt on input line 339.
+(Font)              scaled to size 5.5pt on input line 331.
 LaTeX Font Info:    Font shape `LMX/ntxexx/b/n' will be
-(Font)              scaled to size 10.0pt on input line 339.
+(Font)              scaled to size 10.0pt on input line 331.
 LaTeX Font Info:    Font shape `LMX/ntxexx/b/n' will be
-(Font)              scaled to size 7.3pt on input line 339.
+(Font)              scaled to size 7.3pt on input line 331.
 LaTeX Font Info:    Font shape `LMX/ntxexx/b/n' will be
-(Font)              scaled to size 5.5pt on input line 339.
+(Font)              scaled to size 5.5pt on input line 331.
 LaTeX Font Info:    Font shape `T1/ntxtlf/b/n' will be
-(Font)              scaled to size 7.3pt on input line 343.
+(Font)              scaled to size 7.3pt on input line 335.
 
-Underfull \hbox (badness 10000) in paragraph at lines 380--380
+Underfull \hbox (badness 10000) in paragraph at lines 374--374
 []|\T1/ntxtlf/m/n/10 (+20) Graph
  []
 
 
-Overfull \hbox (3.89603pt too wide) in paragraph at lines 380--380
+Overfull \hbox (3.89603pt too wide) in paragraph at lines 374--374
 []|\T1/ntxtlf/m/n/10 (-20) Order+cond.| 
  []
 
@@ -1226,20 +1217,18 @@ Package fancyhdr Warning: \headheight is too small (12.0pt):
 (fancyhdr)                \addtolength{\topmargin}{-1.59999pt}.
 
 [4 <./figures/experimental_pipeline_diagram.png>]
-Underfull \vbox (badness 10000) has occurred while \output is active []
-
 LaTeX Font Info:    Trying to load font information for TS1+ntxtlf on input lin
-e 432.
+e 422.
 
 (/usr/local/texlive/2026/texmf-dist/tex/latex/newtx/ts1ntxtlf.fd
 File: ts1ntxtlf.fd 2015/01/18 v1.0 fd file for TS1/ntxtlf
 )
 LaTeX Font Info:    Font shape `TS1/ntxtlf/m/n' will be
-(Font)              scaled to size 12.0pt on input line 432.
+(Font)              scaled to size 12.0pt on input line 422.
 LaTeX Font Info:    Font shape `T1/ntxtlf/b/n' will be
-(Font)              scaled to size 8.8pt on input line 432.
+(Font)              scaled to size 8.8pt on input line 422.
 LaTeX Font Info:    Font shape `T1/ntxtlf/b/n' will be
-(Font)              scaled to size 6.6pt on input line 432.
+(Font)              scaled to size 6.6pt on input line 422.
 
 
 Package fancyhdr Warning: \headheight is too small (12.0pt): 
@@ -1249,21 +1238,21 @@ Package fancyhdr Warning: \headheight is too small (12.0pt):
 (fancyhdr)                \addtolength{\topmargin}{-1.59999pt}.
 
 [5{/usr/local/texlive/2026/texmf-dist/fonts/enc/dvips/tex-gyre/q-ts1.enc}]
-<figures/tga_sa_scatter_traditional_linear_conf_f50_s1000_p30.png, id=247, 467.
+<figures/tga_sa_scatter_traditional_linear_conf_f50_s1000_p30.png, id=255, 467.
 346pt x 352.1958pt>
 File: figures/tga_sa_scatter_traditional_linear_conf_f50_s1000_p30.png Graphic 
 file (type png)
 <use figures/tga_sa_scatter_traditional_linear_conf_f50_s1000_p30.png>
 Package pdftex.def Info: figures/tga_sa_scatter_traditional_linear_conf_f50_s10
-00_p30.png  used on input line 526.
+00_p30.png  used on input line 519.
 (pdftex.def)             Requested size: 114.17471pt x 86.03883pt.
 LaTeX Font Info:    Font shape `T1/ntxtlf/b/n' will be
-(Font)              scaled to size 8.0pt on input line 527.
-<figures/tga_sa_scatter_traditional_sachs.png, id=248, 467.346pt x 352.1958pt>
+(Font)              scaled to size 8.0pt on input line 520.
+<figures/tga_sa_scatter_traditional_sachs.png, id=256, 467.346pt x 352.1958pt>
 File: figures/tga_sa_scatter_traditional_sachs.png Graphic file (type png)
 <use figures/tga_sa_scatter_traditional_sachs.png>
 Package pdftex.def Info: figures/tga_sa_scatter_traditional_sachs.png  used on 
-input line 532.
+input line 525.
 (pdftex.def)             Requested size: 114.17471pt x 86.03883pt.
 
 
@@ -1275,34 +1264,37 @@ Package fancyhdr Warning: \headheight is too small (12.0pt):
 
 [6 <./figures/tga_sa_scatter_traditional_linear_conf_f50_s1000_p30.png> <./figu
 res/tga_sa_scatter_traditional_sachs.png>]
-<figures/tga_sa_scatter_true_linear_conf_f50_s1000_p30.png, id=265, 467.346pt x
- 352.1958pt>
-File: figures/tga_sa_scatter_true_linear_conf_f50_s1000_p30.png Graphic file (t
-ype png)
-<use figures/tga_sa_scatter_true_linear_conf_f50_s1000_p30.png>
-Package pdftex.def Info: figures/tga_sa_scatter_true_linear_conf_f50_s1000_p30.
-png  used on input line 579.
-(pdftex.def)             Requested size: 114.17471pt x 86.03883pt.
-<figures/tga_sa_scatter_true_sachs.png, id=266, 467.346pt x 352.1958pt>
-File: figures/tga_sa_scatter_true_sachs.png Graphic file (type png)
-<use figures/tga_sa_scatter_true_sachs.png>
-Package pdftex.def Info: figures/tga_sa_scatter_true_sachs.png  used on input l
-ine 585.
-(pdftex.def)             Requested size: 114.17471pt x 86.03883pt.
-<figures/gss_sss_scatter_linear_conf_f50_s1000_p30.png, id=271, 445.1832pt x 35
+<figures/gss_sss_scatter_linear_conf_f50_s1000_p30.png, id=269, 445.1832pt x 35
 2.1958pt>
 File: figures/gss_sss_scatter_linear_conf_f50_s1000_p30.png Graphic file (type 
 png)
 <use figures/gss_sss_scatter_linear_conf_f50_s1000_p30.png>
 Package pdftex.def Info: figures/gss_sss_scatter_linear_conf_f50_s1000_p30.png 
- used on input line 623.
+ used on input line 570.
 (pdftex.def)             Requested size: 114.17471pt x 90.32196pt.
-<figures/gss_sss_scatter_sachs.png, id=272, 423.5022pt x 352.1958pt>
+<figures/gss_sss_scatter_sachs.png, id=270, 423.5022pt x 352.1958pt>
 File: figures/gss_sss_scatter_sachs.png Graphic file (type png)
 <use figures/gss_sss_scatter_sachs.png>
 Package pdftex.def Info: figures/gss_sss_scatter_sachs.png  used on input line 
-629.
+576.
 (pdftex.def)             Requested size: 114.17471pt x 94.94904pt.
+<figures/tga_sa_scatter_true_linear_conf_f50_s1000_p30.png, id=278, 467.346pt x
+ 352.1958pt>
+File: figures/tga_sa_scatter_true_linear_conf_f50_s1000_p30.png Graphic file (t
+ype png)
+<use figures/tga_sa_scatter_true_linear_conf_f50_s1000_p30.png>
+Package pdftex.def Info: figures/tga_sa_scatter_true_linear_conf_f50_s1000_p30.
+png  used on input line 627.
+(pdftex.def)             Requested size: 114.17471pt x 86.03883pt.
+<figures/tga_sa_scatter_true_sachs.png, id=279, 467.346pt x 352.1958pt>
+File: figures/tga_sa_scatter_true_sachs.png Graphic file (type png)
+<use figures/tga_sa_scatter_true_sachs.png>
+Package pdftex.def Info: figures/tga_sa_scatter_true_sachs.png  used on input l
+ine 633.
+(pdftex.def)             Requested size: 114.17471pt x 86.03883pt.
+
+Underfull \vbox (badness 10000) has occurred while \output is active []
+
 
 
 Package fancyhdr Warning: \headheight is too small (12.0pt): 
@@ -1311,54 +1303,20 @@ Package fancyhdr Warning: \headheight is too small (12.0pt):
 (fancyhdr)                You might also make \topmargin smaller:
 (fancyhdr)                \addtolength{\topmargin}{-1.59999pt}.
 
-[7 <./figures/tga_sa_scatter_true_linear_conf_f50_s1000_p30.png> <./figures/tga
-_sa_scatter_true_sachs.png> <./figures/gss_sss_scatter_linear_conf_f50_s1000_p3
-0.png> <./figures/gss_sss_scatter_sachs.png>]
-<figures/dag_neighborhood_X24_linear_conf_f50_s1000_p30.png, id=285, 1291.224pt
- x 481.8pt>
-File: figures/dag_neighborhood_X24_linear_conf_f50_s1000_p30.png Graphic file (
-type png)
-<use figures/dag_neighborhood_X24_linear_conf_f50_s1000_p30.png>
-Package pdftex.def Info: figures/dag_neighborhood_X24_linear_conf_f50_s1000_p30
-.png  used on input line 666.
-(pdftex.def)             Requested size: 250.93245pt x 93.63081pt.
-<figures/shap_scatter_flow_X24_linear_conf_f50_s1000_p30.png, id=286, 2168.1pt 
-x 602.25pt>
-File: figures/shap_scatter_flow_X24_linear_conf_f50_s1000_p30.png Graphic file 
-(type png)
-<use figures/shap_scatter_flow_X24_linear_conf_f50_s1000_p30.png>
-Package pdftex.def Info: figures/shap_scatter_flow_X24_linear_conf_f50_s1000_p3
-0.png  used on input line 675.
-(pdftex.def)             Requested size: 250.93245pt x 69.70299pt.
-LaTeX Font Info:    Font shape `T1/ntxtlf/m/n' will be
-(Font)              scaled to size 7.3pt on input line 679.
-LaTeX Font Info:    Font shape `T1/ntxtlf/m/n' will be
-(Font)              scaled to size 5.5pt on input line 679.
-
-Underfull \hbox (badness 10000) in paragraph at lines 683--693
+[7 <./figures/gss_sss_scatter_linear_conf_f50_s1000_p30.png> <./figures/gss_sss
+_scatter_sachs.png> <./figures/tga_sa_scatter_true_linear_conf_f50_s1000_p30.pn
+g> <./figures/tga_sa_scatter_true_sachs.png>]
+Underfull \hbox (badness 10000) in paragraph at lines 668--678
 []\T1/ntxtlf/m/n/12 (+20) X33 pro-vides the con-trast-ing contested-
  []
 
 
-Package fancyhdr Warning: \headheight is too small (12.0pt): 
-(fancyhdr)                Make it at least 13.59999pt, for example:
-(fancyhdr)                \setlength{\headheight}{13.59999pt}.
-(fancyhdr)                You might also make \topmargin smaller:
-(fancyhdr)                \addtolength{\topmargin}{-1.59999pt}.
+Underfull \hbox (badness 3449) in paragraph at lines 668--678
+\T1/ntxtlf/m/n/12 (+20) neighbourhood case: un-like X24, PC and
+ []
 
-[8 <./figures/dag_neighborhood_X24_linear_conf_f50_s1000_p30.png> <./figures/sh
-ap_scatter_flow_X24_linear_conf_f50_s1000_p30.png>]
 
-LaTeX Warning: Reference `fig:dag_erk' on page 9 undefined on input line 722.
-
-<figures/shap_scatter_flow_erk_sachs.png, id=296, 2168.1pt x 602.25pt>
-File: figures/shap_scatter_flow_erk_sachs.png Graphic file (type png)
-<use figures/shap_scatter_flow_erk_sachs.png>
-Package pdftex.def Info: figures/shap_scatter_flow_erk_sachs.png  used on input
- line 743.
-(pdftex.def)             Requested size: 250.93245pt x 69.70299pt.
-
-Underfull \vbox (badness 10000) has occurred while \output is active []
+Underfull \vbox (badness 1325) has occurred while \output is active []
 
 
 
@@ -1368,10 +1326,15 @@ Package fancyhdr Warning: \headheight is too small (12.0pt):
 (fancyhdr)                You might also make \topmargin smaller:
 (fancyhdr)                \addtolength{\topmargin}{-1.59999pt}.
 
-[9 <./figures/shap_scatter_flow_erk_sachs.png>]
-Underfull \vbox (badness 10000) has occurred while \output is active []
+[8]
 
+Package fancyhdr Warning: \headheight is too small (12.0pt): 
+(fancyhdr)                Make it at least 13.59999pt, for example:
+(fancyhdr)                \setlength{\headheight}{13.59999pt}.
+(fancyhdr)                You might also make \topmargin smaller:
+(fancyhdr)                \addtolength{\topmargin}{-1.59999pt}.
 
+[9]
 
 Package fancyhdr Warning: \headheight is too small (12.0pt): 
 (fancyhdr)                Make it at least 13.59999pt, for example:
@@ -1382,7 +1345,7 @@ Package fancyhdr Warning: \headheight is too small (12.0pt):
 [10] (./memo_thesis.bbl
 Underfull \vbox (badness 10000) has occurred while \output is active []
 
-
+)
 
 Package fancyhdr Warning: \headheight is too small (12.0pt): 
 (fancyhdr)                Make it at least 13.59999pt, for example:
@@ -1390,7 +1353,15 @@ Package fancyhdr Warning: \headheight is too small (12.0pt):
 (fancyhdr)                You might also make \topmargin smaller:
 (fancyhdr)                \addtolength{\topmargin}{-1.59999pt}.
 
-[11])
+[11]
+LaTeX Font Info:    Font shape `T1/ntxtlf/m/n' will be
+(Font)              scaled to size 7.3pt on input line 903.
+LaTeX Font Info:    Font shape `T1/ntxtlf/m/n' will be
+(Font)              scaled to size 5.5pt on input line 903.
+
+Underfull \vbox (badness 10000) has occurred while \output is active []
+
+
 
 Package fancyhdr Warning: \headheight is too small (12.0pt): 
 (fancyhdr)                Make it at least 13.59999pt, for example:
@@ -1401,158 +1372,145 @@ Package fancyhdr Warning: \headheight is too small (12.0pt):
 [12
 
 ]
-Underfull \vbox (badness 10000) has occurred while \output is active []
-
-
-
-Package fancyhdr Warning: \headheight is too small (12.0pt): 
-(fancyhdr)                Make it at least 13.59999pt, for example:
-(fancyhdr)                \setlength{\headheight}{13.59999pt}.
-(fancyhdr)                You might also make \topmargin smaller:
-(fancyhdr)                \addtolength{\topmargin}{-1.59999pt}.
-
-[13
-
-]
-<figures/adjacency_comparison_linear_conf_f50_s1000_p30.png, id=326, 1074.414pt
+<figures/adjacency_comparison_linear_conf_f50_s1000_p30.png, id=353, 1074.414pt
  x 378.213pt>
 File: figures/adjacency_comparison_linear_conf_f50_s1000_p30.png Graphic file (
 type png)
 <use figures/adjacency_comparison_linear_conf_f50_s1000_p30.png>
 Package pdftex.def Info: figures/adjacency_comparison_linear_conf_f50_s1000_p30
-.png  used on input line 987.
+.png  used on input line 975.
 (pdftex.def)             Requested size: 245.69296pt x 86.48508pt.
-<figures/adjacency_comparison_sachs.png, id=327, 1074.414pt x 378.213pt>
+<figures/adjacency_comparison_sachs.png, id=354, 1074.414pt x 378.213pt>
 File: figures/adjacency_comparison_sachs.png Graphic file (type png)
 <use figures/adjacency_comparison_sachs.png>
 Package pdftex.def Info: figures/adjacency_comparison_sachs.png  used on input 
-line 994.
+line 982.
 (pdftex.def)             Requested size: 245.69296pt x 86.48508pt.
 LaTeX Font Info:    Font shape `OT1/minntx/m/n' will be
-(Font)              scaled to size 14.4pt on input line 1005.
+(Font)              scaled to size 14.4pt on input line 993.
 LaTeX Font Info:    Font shape `OT1/minntx/m/n' will be
-(Font)              scaled to size 10.5pt on input line 1005.
+(Font)              scaled to size 10.5pt on input line 993.
 LaTeX Font Info:    Font shape `OT1/minntx/m/n' will be
-(Font)              scaled to size 7.9pt on input line 1005.
+(Font)              scaled to size 7.9pt on input line 993.
 LaTeX Font Info:    Font shape `OML/ntxmi/m/it' will be
-(Font)              scaled to size 14.4pt on input line 1005.
+(Font)              scaled to size 14.4pt on input line 993.
 LaTeX Font Info:    Font shape `OML/ntxmi/m/it' will be
-(Font)              scaled to size 10.5pt on input line 1005.
+(Font)              scaled to size 10.5pt on input line 993.
 LaTeX Font Info:    Font shape `OML/ntxmi/m/it' will be
-(Font)              scaled to size 7.9pt on input line 1005.
+(Font)              scaled to size 7.9pt on input line 993.
 LaTeX Font Info:    Font shape `LMS/ntxsy/m/n' will be
-(Font)              scaled to size 14.4pt on input line 1005.
+(Font)              scaled to size 14.4pt on input line 993.
 LaTeX Font Info:    Font shape `LMS/ntxsy/m/n' will be
-(Font)              scaled to size 10.5pt on input line 1005.
+(Font)              scaled to size 10.5pt on input line 993.
 LaTeX Font Info:    Font shape `LMS/ntxsy/m/n' will be
-(Font)              scaled to size 7.9pt on input line 1005.
+(Font)              scaled to size 7.9pt on input line 993.
 LaTeX Font Info:    Font shape `LMX/ntxexx/m/n' will be
-(Font)              scaled to size 14.4pt on input line 1005.
+(Font)              scaled to size 14.4pt on input line 993.
 LaTeX Font Info:    Font shape `LMX/ntxexx/m/n' will be
-(Font)              scaled to size 10.5pt on input line 1005.
+(Font)              scaled to size 10.5pt on input line 993.
 LaTeX Font Info:    Font shape `LMX/ntxexx/m/n' will be
-(Font)              scaled to size 7.9pt on input line 1005.
+(Font)              scaled to size 7.9pt on input line 993.
 LaTeX Font Info:    Font shape `U/ntxmia/m/it' will be
-(Font)              scaled to size 14.4pt on input line 1005.
+(Font)              scaled to size 14.4pt on input line 993.
 LaTeX Font Info:    Font shape `U/ntxmia/m/it' will be
-(Font)              scaled to size 10.5pt on input line 1005.
+(Font)              scaled to size 10.5pt on input line 993.
 LaTeX Font Info:    Font shape `U/ntxmia/m/it' will be
-(Font)              scaled to size 7.9pt on input line 1005.
+(Font)              scaled to size 7.9pt on input line 993.
 LaTeX Font Info:    Font shape `U/ntxsym/m/n' will be
-(Font)              scaled to size 14.4pt on input line 1005.
+(Font)              scaled to size 14.4pt on input line 993.
 LaTeX Font Info:    Font shape `U/ntxsym/m/n' will be
-(Font)              scaled to size 10.5pt on input line 1005.
+(Font)              scaled to size 10.5pt on input line 993.
 LaTeX Font Info:    Font shape `U/ntxsym/m/n' will be
-(Font)              scaled to size 7.9pt on input line 1005.
+(Font)              scaled to size 7.9pt on input line 993.
 LaTeX Font Info:    Font shape `U/ntxsyc/m/n' will be
-(Font)              scaled to size 14.4pt on input line 1005.
+(Font)              scaled to size 14.4pt on input line 993.
 LaTeX Font Info:    Font shape `U/ntxsyc/m/n' will be
-(Font)              scaled to size 10.5pt on input line 1005.
+(Font)              scaled to size 10.5pt on input line 993.
 LaTeX Font Info:    Font shape `U/ntxsyc/m/n' will be
-(Font)              scaled to size 7.9pt on input line 1005.
+(Font)              scaled to size 7.9pt on input line 993.
 LaTeX Font Info:    Font shape `U/ntxexa/m/n' will be
-(Font)              scaled to size 14.4pt on input line 1005.
+(Font)              scaled to size 14.4pt on input line 993.
 LaTeX Font Info:    Font shape `U/ntxexa/m/n' will be
-(Font)              scaled to size 10.5pt on input line 1005.
+(Font)              scaled to size 10.5pt on input line 993.
 LaTeX Font Info:    Font shape `U/ntxexa/m/n' will be
-(Font)              scaled to size 7.9pt on input line 1005.
+(Font)              scaled to size 7.9pt on input line 993.
 LaTeX Font Info:    Font shape `OT1/minntx/b/n' will be
-(Font)              scaled to size 14.4pt on input line 1005.
+(Font)              scaled to size 14.4pt on input line 993.
 LaTeX Font Info:    Font shape `OT1/minntx/b/n' will be
-(Font)              scaled to size 10.5pt on input line 1005.
+(Font)              scaled to size 10.5pt on input line 993.
 LaTeX Font Info:    Font shape `OT1/minntx/b/n' will be
-(Font)              scaled to size 7.9pt on input line 1005.
+(Font)              scaled to size 7.9pt on input line 993.
 LaTeX Font Info:    Font shape `OML/ntxmi/b/it' will be
-(Font)              scaled to size 14.4pt on input line 1005.
+(Font)              scaled to size 14.4pt on input line 993.
 LaTeX Font Info:    Font shape `OML/ntxmi/b/it' will be
-(Font)              scaled to size 10.5pt on input line 1005.
+(Font)              scaled to size 10.5pt on input line 993.
 LaTeX Font Info:    Font shape `OML/ntxmi/b/it' will be
-(Font)              scaled to size 7.9pt on input line 1005.
+(Font)              scaled to size 7.9pt on input line 993.
 LaTeX Font Info:    Font shape `LMS/ntxsy/b/n' will be
-(Font)              scaled to size 14.4pt on input line 1005.
+(Font)              scaled to size 14.4pt on input line 993.
 LaTeX Font Info:    Font shape `LMS/ntxsy/b/n' will be
-(Font)              scaled to size 10.5pt on input line 1005.
+(Font)              scaled to size 10.5pt on input line 993.
 LaTeX Font Info:    Font shape `LMS/ntxsy/b/n' will be
-(Font)              scaled to size 7.9pt on input line 1005.
+(Font)              scaled to size 7.9pt on input line 993.
 LaTeX Font Info:    Font shape `LMX/ntxexx/b/n' will be
-(Font)              scaled to size 14.4pt on input line 1005.
+(Font)              scaled to size 14.4pt on input line 993.
 LaTeX Font Info:    Font shape `LMX/ntxexx/b/n' will be
-(Font)              scaled to size 10.5pt on input line 1005.
+(Font)              scaled to size 10.5pt on input line 993.
 LaTeX Font Info:    Font shape `LMX/ntxexx/b/n' will be
-(Font)              scaled to size 7.9pt on input line 1005.
+(Font)              scaled to size 7.9pt on input line 993.
 
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 1005.
+(hyperref)                removing `math shift' on input line 993.
 
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `\Delta' on input line 1005.
+(hyperref)                removing `\Delta' on input line 993.
 
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 1005.
+(hyperref)                removing `math shift' on input line 993.
 
-<figures/tga_heatmap_traditional_linear_conf_f50_s1000_p30.png, id=328, 568.524
+<figures/tga_heatmap_traditional_linear_conf_f50_s1000_p30.png, id=355, 568.524
 pt x 358.941pt>
 File: figures/tga_heatmap_traditional_linear_conf_f50_s1000_p30.png Graphic fil
 e (type png)
 <use figures/tga_heatmap_traditional_linear_conf_f50_s1000_p30.png>
 Package pdftex.def Info: figures/tga_heatmap_traditional_linear_conf_f50_s1000_
-p30.png  used on input line 1016.
+p30.png  used on input line 1004.
 (pdftex.def)             Requested size: 245.69296pt x 155.11934pt.
-<figures/tga_heatmap_traditional_sachs.png, id=329, 568.524pt x 358.941pt>
+<figures/tga_heatmap_traditional_sachs.png, id=356, 568.524pt x 358.941pt>
 File: figures/tga_heatmap_traditional_sachs.png Graphic file (type png)
 <use figures/tga_heatmap_traditional_sachs.png>
 Package pdftex.def Info: figures/tga_heatmap_traditional_sachs.png  used on inp
-ut line 1023.
+ut line 1011.
 (pdftex.def)             Requested size: 245.69296pt x 155.11934pt.
 LaTeX Font Info:    Font shape `OT1/minntx/m/n' will be
-(Font)              scaled to size 6.0pt on input line 1025.
+(Font)              scaled to size 6.0pt on input line 1013.
 LaTeX Font Info:    Font shape `OML/ntxmi/m/it' will be
-(Font)              scaled to size 6.0pt on input line 1025.
+(Font)              scaled to size 6.0pt on input line 1013.
 LaTeX Font Info:    Font shape `LMS/ntxsy/m/n' will be
-(Font)              scaled to size 6.0pt on input line 1025.
+(Font)              scaled to size 6.0pt on input line 1013.
 LaTeX Font Info:    Font shape `LMX/ntxexx/m/n' will be
-(Font)              scaled to size 6.0pt on input line 1025.
+(Font)              scaled to size 6.0pt on input line 1013.
 LaTeX Font Info:    Font shape `U/ntxmia/m/it' will be
-(Font)              scaled to size 6.0pt on input line 1025.
+(Font)              scaled to size 6.0pt on input line 1013.
 LaTeX Font Info:    Font shape `U/ntxsym/m/n' will be
-(Font)              scaled to size 6.0pt on input line 1025.
+(Font)              scaled to size 6.0pt on input line 1013.
 LaTeX Font Info:    Font shape `U/ntxsyc/m/n' will be
-(Font)              scaled to size 6.0pt on input line 1025.
+(Font)              scaled to size 6.0pt on input line 1013.
 LaTeX Font Info:    Font shape `U/ntxexa/m/n' will be
-(Font)              scaled to size 6.0pt on input line 1025.
+(Font)              scaled to size 6.0pt on input line 1013.
 LaTeX Font Info:    Font shape `OT1/minntx/b/n' will be
-(Font)              scaled to size 6.0pt on input line 1025.
+(Font)              scaled to size 6.0pt on input line 1013.
 LaTeX Font Info:    Font shape `OML/ntxmi/b/it' will be
-(Font)              scaled to size 6.0pt on input line 1025.
+(Font)              scaled to size 6.0pt on input line 1013.
 LaTeX Font Info:    Font shape `LMS/ntxsy/b/n' will be
-(Font)              scaled to size 6.0pt on input line 1025.
+(Font)              scaled to size 6.0pt on input line 1013.
 LaTeX Font Info:    Font shape `LMX/ntxexx/b/n' will be
-(Font)              scaled to size 6.0pt on input line 1025.
+(Font)              scaled to size 6.0pt on input line 1013.
 LaTeX Font Info:    Font shape `T1/ntxtlf/b/n' will be
-(Font)              scaled to size 5.5pt on input line 1028.
+(Font)              scaled to size 5.5pt on input line 1016.
 
 Package fancyhdr Warning: \headheight is too small (12.0pt): 
 (fancyhdr)                Make it at least 13.59999pt, for example:
@@ -1560,44 +1518,44 @@ Package fancyhdr Warning: \headheight is too small (12.0pt):
 (fancyhdr)                You might also make \topmargin smaller:
 (fancyhdr)                \addtolength{\topmargin}{-1.59999pt}.
 
-[14 <./figures/adjacency_comparison_linear_conf_f50_s1000_p30.png> <./figures/a
+[13 <./figures/adjacency_comparison_linear_conf_f50_s1000_p30.png> <./figures/a
 djacency_comparison_sachs.png>]
-<figures/tga_heatmap_true_linear_conf_f50_s1000_p30.png, id=340, 568.524pt x 35
+<figures/tga_heatmap_true_linear_conf_f50_s1000_p30.png, id=367, 568.524pt x 35
 8.941pt>
 File: figures/tga_heatmap_true_linear_conf_f50_s1000_p30.png Graphic file (type
  png)
 <use figures/tga_heatmap_true_linear_conf_f50_s1000_p30.png>
 Package pdftex.def Info: figures/tga_heatmap_true_linear_conf_f50_s1000_p30.png
-  used on input line 1035.
+  used on input line 1023.
 (pdftex.def)             Requested size: 245.69296pt x 155.11934pt.
-<figures/tga_heatmap_true_sachs.png, id=341, 568.524pt x 358.941pt>
+<figures/tga_heatmap_true_sachs.png, id=368, 568.524pt x 358.941pt>
 File: figures/tga_heatmap_true_sachs.png Graphic file (type png)
 <use figures/tga_heatmap_true_sachs.png>
 Package pdftex.def Info: figures/tga_heatmap_true_sachs.png  used on input line
- 1042.
+ 1030.
 (pdftex.def)             Requested size: 245.69296pt x 155.11934pt.
-<figures/gss_heatmap_linear_conf_f50_s1000_p30.png, id=342, 568.524pt x 337.26p
+<figures/gss_heatmap_linear_conf_f50_s1000_p30.png, id=369, 568.524pt x 337.26p
 t>
 File: figures/gss_heatmap_linear_conf_f50_s1000_p30.png Graphic file (type png)
 
 <use figures/gss_heatmap_linear_conf_f50_s1000_p30.png>
 Package pdftex.def Info: figures/gss_heatmap_linear_conf_f50_s1000_p30.png  use
-d on input line 1054.
+d on input line 1042.
 (pdftex.def)             Requested size: 245.69296pt x 145.74973pt.
-<figures/gss_heatmap_sachs.png, id=343, 568.524pt x 337.26pt>
+<figures/gss_heatmap_sachs.png, id=370, 568.524pt x 337.26pt>
 File: figures/gss_heatmap_sachs.png Graphic file (type png)
 <use figures/gss_heatmap_sachs.png>
-Package pdftex.def Info: figures/gss_heatmap_sachs.png  used on input line 1061
+Package pdftex.def Info: figures/gss_heatmap_sachs.png  used on input line 1049
 .
 (pdftex.def)             Requested size: 245.69296pt x 145.74973pt.
 
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 1071.
+(hyperref)                removing `math shift' on input line 1059.
 
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 1071.
+(hyperref)                removing `math shift' on input line 1059.
 
 
 Package fancyhdr Warning: \headheight is too small (12.0pt): 
@@ -1606,52 +1564,52 @@ Package fancyhdr Warning: \headheight is too small (12.0pt):
 (fancyhdr)                You might also make \topmargin smaller:
 (fancyhdr)                \addtolength{\topmargin}{-1.59999pt}.
 
-[15 <./figures/tga_heatmap_traditional_linear_conf_f50_s1000_p30.png> <./figure
+[14 <./figures/tga_heatmap_traditional_linear_conf_f50_s1000_p30.png> <./figure
 s/tga_heatmap_traditional_sachs.png> <./figures/tga_heatmap_true_linear_conf_f5
 0_s1000_p30.png> <./figures/tga_heatmap_true_sachs.png> <./figures/gss_heatmap_
 linear_conf_f50_s1000_p30.png> <./figures/gss_heatmap_sachs.png>]
 <figures/sign_alignment_heatmap_traditional_linear_conf_f50_s1000_p30.png, id=3
-57, 568.524pt x 358.941pt>
+84, 568.524pt x 358.941pt>
 File: figures/sign_alignment_heatmap_traditional_linear_conf_f50_s1000_p30.png 
 Graphic file (type png)
 <use figures/sign_alignment_heatmap_traditional_linear_conf_f50_s1000_p30.png>
 Package pdftex.def Info: figures/sign_alignment_heatmap_traditional_linear_conf
-_f50_s1000_p30.png  used on input line 1083.
+_f50_s1000_p30.png  used on input line 1071.
 (pdftex.def)             Requested size: 245.69296pt x 155.11934pt.
-<figures/sign_alignment_heatmap_traditional_sachs.png, id=358, 568.524pt x 358.
+<figures/sign_alignment_heatmap_traditional_sachs.png, id=385, 568.524pt x 358.
 941pt>
 File: figures/sign_alignment_heatmap_traditional_sachs.png Graphic file (type p
 ng)
 <use figures/sign_alignment_heatmap_traditional_sachs.png>
 Package pdftex.def Info: figures/sign_alignment_heatmap_traditional_sachs.png  
-used on input line 1090.
+used on input line 1078.
 (pdftex.def)             Requested size: 245.69296pt x 155.11934pt.
-<figures/sign_alignment_heatmap_true_linear_conf_f50_s1000_p30.png, id=359, 568
+<figures/sign_alignment_heatmap_true_linear_conf_f50_s1000_p30.png, id=386, 568
 .524pt x 358.941pt>
 File: figures/sign_alignment_heatmap_true_linear_conf_f50_s1000_p30.png Graphic
  file (type png)
 <use figures/sign_alignment_heatmap_true_linear_conf_f50_s1000_p30.png>
 Package pdftex.def Info: figures/sign_alignment_heatmap_true_linear_conf_f50_s1
-000_p30.png  used on input line 1102.
+000_p30.png  used on input line 1090.
 (pdftex.def)             Requested size: 245.69296pt x 155.11934pt.
-<figures/sign_alignment_heatmap_true_sachs.png, id=360, 568.524pt x 358.941pt>
+<figures/sign_alignment_heatmap_true_sachs.png, id=387, 568.524pt x 358.941pt>
 File: figures/sign_alignment_heatmap_true_sachs.png Graphic file (type png)
 <use figures/sign_alignment_heatmap_true_sachs.png>
 Package pdftex.def Info: figures/sign_alignment_heatmap_true_sachs.png  used on
- input line 1109.
+ input line 1097.
 (pdftex.def)             Requested size: 245.69296pt x 155.11934pt.
-<figures/sss_heatmap_linear_conf_f50_s1000_p30.png, id=361, 568.524pt x 337.26p
+<figures/sss_heatmap_linear_conf_f50_s1000_p30.png, id=388, 568.524pt x 337.26p
 t>
 File: figures/sss_heatmap_linear_conf_f50_s1000_p30.png Graphic file (type png)
 
 <use figures/sss_heatmap_linear_conf_f50_s1000_p30.png>
 Package pdftex.def Info: figures/sss_heatmap_linear_conf_f50_s1000_p30.png  use
-d on input line 1121.
+d on input line 1109.
 (pdftex.def)             Requested size: 245.69296pt x 145.74973pt.
-<figures/sss_heatmap_sachs.png, id=362, 568.524pt x 337.26pt>
+<figures/sss_heatmap_sachs.png, id=389, 568.524pt x 337.26pt>
 File: figures/sss_heatmap_sachs.png Graphic file (type png)
 <use figures/sss_heatmap_sachs.png>
-Package pdftex.def Info: figures/sss_heatmap_sachs.png  used on input line 1128
+Package pdftex.def Info: figures/sss_heatmap_sachs.png  used on input line 1116
 .
 (pdftex.def)             Requested size: 245.69296pt x 145.74973pt.
 
@@ -1665,14 +1623,186 @@ Package fancyhdr Warning: \headheight is too small (12.0pt):
 (fancyhdr)                You might also make \topmargin smaller:
 (fancyhdr)                \addtolength{\topmargin}{-1.59999pt}.
 
-[16 <./figures/sign_alignment_heatmap_traditional_linear_conf_f50_s1000_p30.png
+[15 <./figures/sign_alignment_heatmap_traditional_linear_conf_f50_s1000_p30.png
 > <./figures/sign_alignment_heatmap_traditional_sachs.png> <./figures/sign_alig
 nment_heatmap_true_linear_conf_f50_s1000_p30.png> <./figures/sign_alignment_hea
 tmap_true_sachs.png>]
+<figures/dag_neighborhood_X24_linear_conf_f50_s1000_p30.png, id=400, 1291.224pt
+ x 481.8pt>
+File: figures/dag_neighborhood_X24_linear_conf_f50_s1000_p30.png Graphic file (
+type png)
+<use figures/dag_neighborhood_X24_linear_conf_f50_s1000_p30.png>
+Package pdftex.def Info: figures/dag_neighborhood_X24_linear_conf_f50_s1000_p30
+.png  used on input line 1133.
+(pdftex.def)             Requested size: 358.30386pt x 133.69005pt.
+<figures/shap_scatter_flow_X24_linear_conf_f50_s1000_p30.png, id=401, 2168.1pt 
+x 602.25pt>
+File: figures/shap_scatter_flow_X24_linear_conf_f50_s1000_p30.png Graphic file 
+(type png)
+<use figures/shap_scatter_flow_X24_linear_conf_f50_s1000_p30.png>
+Package pdftex.def Info: figures/shap_scatter_flow_X24_linear_conf_f50_s1000_p3
+0.png  used on input line 1140.
+(pdftex.def)             Requested size: 358.30386pt x 99.52318pt.
+<figures/dag_neighborhood_X33_linear_conf_f50_s1000_p30.png, id=402, 1291.224pt
+ x 481.8pt>
+File: figures/dag_neighborhood_X33_linear_conf_f50_s1000_p30.png Graphic file (
+type png)
+<use figures/dag_neighborhood_X33_linear_conf_f50_s1000_p30.png>
+Package pdftex.def Info: figures/dag_neighborhood_X33_linear_conf_f50_s1000_p30
+.png  used on input line 1149.
+(pdftex.def)             Requested size: 358.30386pt x 133.69005pt.
+
+Underfull \vbox (badness 5817) has occurred while \output is active []
+
+
+
+Package fancyhdr Warning: \headheight is too small (12.0pt): 
+(fancyhdr)                Make it at least 13.59999pt, for example:
+(fancyhdr)                \setlength{\headheight}{13.59999pt}.
+(fancyhdr)                You might also make \topmargin smaller:
+(fancyhdr)                \addtolength{\topmargin}{-1.59999pt}.
+
+[16 <./figures/sss_heatmap_linear_conf_f50_s1000_p30.png> <./figures/sss_heatma
+p_sachs.png> <./figures/dag_neighborhood_X24_linear_conf_f50_s1000_p30.png> <./
+figures/shap_scatter_flow_X24_linear_conf_f50_s1000_p30.png>]
+<figures/shap_scatter_flow_X33_linear_conf_f50_s1000_p30.png, id=413, 2168.1pt 
+x 602.25pt>
+File: figures/shap_scatter_flow_X33_linear_conf_f50_s1000_p30.png Graphic file 
+(type png)
+<use figures/shap_scatter_flow_X33_linear_conf_f50_s1000_p30.png>
+Package pdftex.def Info: figures/shap_scatter_flow_X33_linear_conf_f50_s1000_p3
+0.png  used on input line 1156.
+(pdftex.def)             Requested size: 358.30386pt x 99.52318pt.
+<figures/dag_neighborhood_pka_sachs.png, id=414, 1291.224pt x 481.8pt>
+File: figures/dag_neighborhood_pka_sachs.png Graphic file (type png)
+<use figures/dag_neighborhood_pka_sachs.png>
+Package pdftex.def Info: figures/dag_neighborhood_pka_sachs.png  used on input 
+line 1165.
+(pdftex.def)             Requested size: 358.30386pt x 133.69005pt.
+<figures/shap_scatter_flow_pka_sachs.png, id=415, 2168.1pt x 602.25pt>
+File: figures/shap_scatter_flow_pka_sachs.png Graphic file (type png)
+<use figures/shap_scatter_flow_pka_sachs.png>
+Package pdftex.def Info: figures/shap_scatter_flow_pka_sachs.png  used on input
+ line 1172.
+(pdftex.def)             Requested size: 358.30386pt x 99.52318pt.
+
+Underfull \vbox (badness 10000) has occurred while \output is active []
+
+
+
+Package fancyhdr Warning: \headheight is too small (12.0pt): 
+(fancyhdr)                Make it at least 13.59999pt, for example:
+(fancyhdr)                \setlength{\headheight}{13.59999pt}.
+(fancyhdr)                You might also make \topmargin smaller:
+(fancyhdr)                \addtolength{\topmargin}{-1.59999pt}.
+
+[17 <./figures/dag_neighborhood_X33_linear_conf_f50_s1000_p30.png> <./figures/s
+hap_scatter_flow_X33_linear_conf_f50_s1000_p30.png> <./figures/dag_neighborhood
+_pka_sachs.png>]
+<figures/dag_neighborhood_X47_linear_conf_f50_s1000_p30.png, id=425, 1291.224pt
+ x 481.8pt>
+File: figures/dag_neighborhood_X47_linear_conf_f50_s1000_p30.png Graphic file (
+type png)
+<use figures/dag_neighborhood_X47_linear_conf_f50_s1000_p30.png>
+Package pdftex.def Info: figures/dag_neighborhood_X47_linear_conf_f50_s1000_p30
+.png  used on input line 1181.
+(pdftex.def)             Requested size: 358.30386pt x 133.69005pt.
+<figures/dag_neighborhood_X21_linear_conf_f50_s1000_p30.png, id=426, 1291.224pt
+ x 481.8pt>
+File: figures/dag_neighborhood_X21_linear_conf_f50_s1000_p30.png Graphic file (
+type png)
+<use figures/dag_neighborhood_X21_linear_conf_f50_s1000_p30.png>
+Package pdftex.def Info: figures/dag_neighborhood_X21_linear_conf_f50_s1000_p30
+.png  used on input line 1188.
+(pdftex.def)             Requested size: 358.30386pt x 133.69005pt.
+<figures/shap_scatter_flow_X47_X21_linear_conf_f50_s1000_p30.png, id=427, 2168.
+1pt x 1043.9pt>
+File: figures/shap_scatter_flow_X47_X21_linear_conf_f50_s1000_p30.png Graphic f
+ile (type png)
+<use figures/shap_scatter_flow_X47_X21_linear_conf_f50_s1000_p30.png>
+Package pdftex.def Info: figures/shap_scatter_flow_X47_X21_linear_conf_f50_s100
+0_p30.png  used on input line 1195.
+(pdftex.def)             Requested size: 358.30386pt x 172.50685pt.
+
+Underfull \vbox (badness 10000) has occurred while \output is active []
+
+
+
+Package fancyhdr Warning: \headheight is too small (12.0pt): 
+(fancyhdr)                Make it at least 13.59999pt, for example:
+(fancyhdr)                \setlength{\headheight}{13.59999pt}.
+(fancyhdr)                You might also make \topmargin smaller:
+(fancyhdr)                \addtolength{\topmargin}{-1.59999pt}.
+
+[18 <./figures/shap_scatter_flow_pka_sachs.png> <./figures/dag_neighborhood_X47
+_linear_conf_f50_s1000_p30.png> <./figures/dag_neighborhood_X21_linear_conf_f50
+_s1000_p30.png>]
+<figures/dag_neighborhood_erk_sachs.png, id=436, 1291.224pt x 481.8pt>
+File: figures/dag_neighborhood_erk_sachs.png Graphic file (type png)
+<use figures/dag_neighborhood_erk_sachs.png>
+Package pdftex.def Info: figures/dag_neighborhood_erk_sachs.png  used on input 
+line 1204.
+(pdftex.def)             Requested size: 358.30386pt x 133.69005pt.
+<figures/shap_scatter_flow_erk_sachs.png, id=437, 2168.1pt x 602.25pt>
+File: figures/shap_scatter_flow_erk_sachs.png Graphic file (type png)
+<use figures/shap_scatter_flow_erk_sachs.png>
+Package pdftex.def Info: figures/shap_scatter_flow_erk_sachs.png  used on input
+ line 1211.
+(pdftex.def)             Requested size: 358.30386pt x 99.52318pt.
+<figures/dag_neighborhood_X10_linear_conf_f50_s1000_p30.png, id=438, 1291.224pt
+ x 481.8pt>
+File: figures/dag_neighborhood_X10_linear_conf_f50_s1000_p30.png Graphic file (
+type png)
+<use figures/dag_neighborhood_X10_linear_conf_f50_s1000_p30.png>
+Package pdftex.def Info: figures/dag_neighborhood_X10_linear_conf_f50_s1000_p30
+.png  used on input line 1220.
+(pdftex.def)             Requested size: 358.30386pt x 133.69005pt.
+
+Underfull \vbox (badness 10000) has occurred while \output is active []
+
+
+
+Package fancyhdr Warning: \headheight is too small (12.0pt): 
+(fancyhdr)                Make it at least 13.59999pt, for example:
+(fancyhdr)                \setlength{\headheight}{13.59999pt}.
+(fancyhdr)                You might also make \topmargin smaller:
+(fancyhdr)                \addtolength{\topmargin}{-1.59999pt}.
+
+[19 <./figures/shap_scatter_flow_X47_X21_linear_conf_f50_s1000_p30.png> <./figu
+res/dag_neighborhood_erk_sachs.png> <./figures/shap_scatter_flow_erk_sachs.png>
+]
+<figures/shap_vs_feature_Scratch_vs_Causal__PC__linear_conf_f50_s1000_p30.png, 
+id=449, 923.45pt x 923.45pt>
+File: figures/shap_vs_feature_Scratch_vs_Causal__PC__linear_conf_f50_s1000_p30.
+png Graphic file (type png)
+<use figures/shap_vs_feature_Scratch_vs_Causal__PC__linear_conf_f50_s1000_p30.p
+ng>
+Package pdftex.def Info: figures/shap_vs_feature_Scratch_vs_Causal__PC__linear_
+conf_f50_s1000_p30.png  used on input line 1227.
+(pdftex.def)             Requested size: 358.30386pt x 358.29817pt.
+<figures/dag_neighborhood_pkc_sachs.png, id=450, 1291.224pt x 481.8pt>
+File: figures/dag_neighborhood_pkc_sachs.png Graphic file (type png)
+<use figures/dag_neighborhood_pkc_sachs.png>
+Package pdftex.def Info: figures/dag_neighborhood_pkc_sachs.png  used on input 
+line 1236.
+(pdftex.def)             Requested size: 358.30386pt x 133.69005pt.
+
+Underfull \vbox (badness 10000) has occurred while \output is active []
+
+
+
+Package fancyhdr Warning: \headheight is too small (12.0pt): 
+(fancyhdr)                Make it at least 13.59999pt, for example:
+(fancyhdr)                \setlength{\headheight}{13.59999pt}.
+(fancyhdr)                You might also make \topmargin smaller:
+(fancyhdr)                \addtolength{\topmargin}{-1.59999pt}.
+
+[20 <./figures/dag_neighborhood_X10_linear_conf_f50_s1000_p30.png> <./figures/s
+hap_vs_feature_Scratch_vs_Causal__PC__linear_conf_f50_s1000_p30.png>]
 Package hyperref Info: bookmark level for unknown algorithm defaults to 0 on in
-put line 1147.
+put line 1251.
 LaTeX Font Info:    Font shape `T1/ntxtlf/m/sc' will be
-(Font)              scaled to size 12.0pt on input line 1154.
+(Font)              scaled to size 12.0pt on input line 1258.
 Package microtype Info: Character `029' is missing
 (microtype)             in font `T1/ntxtlf/m/sc/12'.
 (microtype)             Ignoring protrusion settings for this character.
@@ -1687,9 +1817,8 @@ Package fancyhdr Warning: \headheight is too small (12.0pt):
 (fancyhdr)                You might also make \topmargin smaller:
 (fancyhdr)                \addtolength{\topmargin}{-1.59999pt}.
 
-[17{/usr/local/texlive/2026/texmf-dist/fonts/enc/dvips/newtx/ntx-ec-tlf-pc.enc}
- <./figures/sss_heatmap_linear_conf_f50_s1000_p30.png> <./figures/sss_heatmap_s
-achs.png>]
+[21{/usr/local/texlive/2026/texmf-dist/fonts/enc/dvips/newtx/ntx-ec-tlf-pc.enc}
+ <./figures/dag_neighborhood_pkc_sachs.png>]
 Underfull \vbox (badness 10000) has occurred while \output is active []
 
 
@@ -1700,7 +1829,7 @@ Package fancyhdr Warning: \headheight is too small (12.0pt):
 (fancyhdr)                You might also make \topmargin smaller:
 (fancyhdr)                \addtolength{\topmargin}{-1.59999pt}.
 
-[18]
+[22]
 Underfull \vbox (badness 1694) has occurred while \output is active []
 
 
@@ -1711,7 +1840,7 @@ Package fancyhdr Warning: \headheight is too small (12.0pt):
 (fancyhdr)                You might also make \topmargin smaller:
 (fancyhdr)                \addtolength{\topmargin}{-1.59999pt}.
 
-[19]
+[23]
 
 Package fancyhdr Warning: \headheight is too small (12.0pt): 
 (fancyhdr)                Make it at least 13.59999pt, for example:
@@ -1719,24 +1848,20 @@ Package fancyhdr Warning: \headheight is too small (12.0pt):
 (fancyhdr)                You might also make \topmargin smaller:
 (fancyhdr)                \addtolength{\topmargin}{-1.59999pt}.
 
-[20] (./memo_thesis.aux)
+[24] (./memo_thesis.aux)
  ***********
 LaTeX2e <2025-11-01>
 L3 programming layer <2020/03/25>
  ***********
-
-
-LaTeX Warning: There were undefined references.
-
 Package rerunfilecheck Info: File `memo_thesis.out' has not changed.
-(rerunfilecheck)             Checksum: B2AF5691EA639D7AC4916979AA88D8C0;7352.
+(rerunfilecheck)             Checksum: 7AC5D7CD66BE5F3643A45B5CF46D5225;7571.
  ) 
 Here is how much of TeX's memory you used:
- 21447 strings out of 467525
- 345340 string characters out of 5418982
- 787710 words of memory out of 5000000
- 49635 multiletter control sequences out of 15000+600000
- 817184 words of font info for 397 fonts, out of 8000000 for 9000
+ 21583 strings out of 467525
+ 350868 string characters out of 5418982
+ 787588 words of memory out of 5000000
+ 49724 multiletter control sequences out of 15000+600000
+ 819329 words of font info for 410 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
  83i,14n,131p,1008b,706s stack positions out of 10000i,1000n,20000p,200000b,200000s
 </usr/local/texlive/2026/texmf-dist/fonts/type1/public/newtx/NewTXMI.pfb></us
@@ -1750,10 +1875,10 @@ pe1/public/newtx/txsys.pfb></usr/local/texlive/2026/texmf-dist/fonts/type1/publ
 ic/newtx/ztmb.pfb></usr/local/texlive/2026/texmf-dist/fonts/type1/public/newtx/
 ztmr.pfb></usr/local/texlive/2026/texmf-dist/fonts/type1/public/newtx/ztmri.pfb
 >
-Output written on memo_thesis.pdf (20 pages, 2203005 bytes).
+Output written on memo_thesis.pdf (24 pages, 3729578 bytes).
 PDF statistics:
- 490 PDF objects out of 1000 (max. 8388607)
- 391 compressed objects within 4 object streams
- 115 named destinations out of 1000 (max. 500000)
- 70545 words of extra memory for PDF output out of 74296 (max. 10000000)
+ 576 PDF objects out of 1000 (max. 8388607)
+ 450 compressed objects within 5 object streams
+ 138 named destinations out of 1000 (max. 500000)
+ 70608 words of extra memory for PDF output out of 74296 (max. 10000000)
 
